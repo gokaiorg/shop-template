@@ -1,0 +1,28 @@
+{
+    "admin": {
+        "dashboard": "Tableau de bord",
+        "products": "Produits",
+        "orders": "Commandes",
+        "title": "Panneau d'administration",
+        "welcome_title": "Bienvenue",
+        "welcome_text": "Bienvenue dans le tableau de bord d'administration, {email} !"
+    },
+    "auth": {
+        "login_title": "Se Connecter",
+        "login_desc": "Connectez-vous avec votre compte administrateur",
+        "email": "E-mail",
+        "email_placeholder": "m@example.com",
+        "password": "Mot de passe",
+        "login_btn": "Connexion",
+        "login_btn_loading": "Connexion en cours...",
+        "invalid_creds": "E-mail ou mot de passe invalide",
+        "unexpected_err": "Une erreur inattendue est survenue."
+    },
+    "header": {
+        "shop": "Boutique",
+        "about": "À propos",
+        "login": "Connexion",
+        "dashboard": "Tableau de bord",
+        "toggle_language": "Changer de langue"
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "admin": {
+        "dashboard": "Dashboard",
+        "products": "Products",
+        "orders": "Orders",
+        "title": "Admin Panel",
+        "welcome_title": "Welcome",
+        "welcome_text": "Welcome to the Admin Dashboard, {email}!"
+    },
+    "auth": {
+        "login_title": "Welcome back",
+        "login_desc": "Login with your admin account",
+        "email": "Email",
+        "email_placeholder": "m@example.com",
+        "password": "Password",
+        "login_btn": "Login",
+        "login_btn_loading": "Signing in...",
+        "invalid_creds": "Invalid email or password",
+        "unexpected_err": "An unexpected error occurred."
+    },
+    "header": {
+        "shop": "Shop",
+        "about": "About",
+        "login": "Login",
+        "dashboard": "Dashboard",
+        "toggle_language": "Toggle Language"
+    }
+}
