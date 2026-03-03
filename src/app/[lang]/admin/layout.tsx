@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LangToggle } from "@/components/layout/LangToggle";
-import { CopyrightFooter } from "@/components/layout/CopyrightFooter";
+import { Footer } from "@/components/layout/Footer";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 
@@ -57,7 +57,7 @@ export default async function AdminLayout({
                 <div className="flex-1">
                     {children}
                 </div>
-                <CopyrightFooter />
+                <Footer />
             </main>
             <Toaster />
         </div>
