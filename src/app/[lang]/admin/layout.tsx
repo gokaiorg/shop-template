@@ -44,12 +44,11 @@ export default async function AdminLayout({
                     </nav>
                 </div>
                 <div className="p-6 border-t flex flex-col gap-4">
-                    <SignOutButton />
-
-                    <div className="flex items-center gap-2 justify-center border-t border-border/50 pt-4">
+                    <div className="flex items-center gap-2 justify-center border-b border-border/50 pb-4">
                         <ThemeToggle dict={dict.header} />
                         <LangToggle lang={lang} dict={dict.header} />
                     </div>
+                    <SignOutButton />
                 </div>
             </aside>
             <main className="flex-1 p-6 md:p-10">
