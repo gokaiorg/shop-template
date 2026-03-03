@@ -42,12 +42,13 @@ export default async function AdminLayout({
                             {dict.admin.orders}
                         </Link>
                     </nav>
-                </div>
-                <div className="p-6 border-t flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex items-center gap-2 mt-8">
                         <ThemeToggle dict={dict.header} />
                         <LangToggle lang={lang} dict={dict.header} />
                     </div>
+                </div>
+                <div className="p-6 border-t">
                     <SignOutButton />
                 </div>
             </aside>
