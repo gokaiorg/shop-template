@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LangToggle } from "@/components/layout/LangToggle";
+import { CopyrightFooter } from "@/components/layout/CopyrightFooter";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 
@@ -56,9 +57,7 @@ export default async function AdminLayout({
                 <div className="flex-1">
                     {children}
                 </div>
-                <footer className="pt-10 mt-auto text-center text-sm text-muted-foreground">
-                    &copy; 2026. Made with AI by <a href="https://gokai.org" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-foreground transition-colors">Gokai Labs</a>
-                </footer>
+                <CopyrightFooter />
             </main>
             <Toaster />
         </div>
