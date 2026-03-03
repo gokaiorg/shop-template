@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Toaster } from "@/components/ui/sonner";
-import { Footer } from "@/components/layout/Footer";
 import { Aside } from "@/components/admin/Aside";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
@@ -28,7 +27,6 @@ export default async function AdminLayout({
                 <div className="flex-1">
                     {children}
                 </div>
-                <Footer />
             </main>
             <Toaster />
         </div>
