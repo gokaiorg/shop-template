@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Toaster } from "@/components/ui/sonner";
 import { SignOutButton } from "@/components/SignOutButton";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { LangToggle } from "@/components/layout/LangToggle";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 
@@ -41,7 +43,11 @@ export default async function AdminLayout({
                         </Link>
                     </nav>
                 </div>
-                <div className="p-6 border-t">
+                <div className="p-6 border-t flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <ThemeToggle dict={dict.header} />
+                        <LangToggle lang={lang} dict={dict.header} />
+                    </div>
                     <SignOutButton />
                 </div>
             </aside>

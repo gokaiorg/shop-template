@@ -1,23 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSession, signOut } from "next-auth/react";
 import { SessionProvider } from "next-auth/react";
+import { ThemeToggle } from "./ThemeToggle";
+import { LangToggle } from "./LangToggle";
+import { AccountToggle } from "./AccountToggle";
 
 function HeaderContent({ lang, dict }: { lang: string, dict: Record<string, string> }) {
-    const pathname = usePathname();
-    const router = useRouter();
-    const { data: session, status } = useSession();
-
-    // Toggle between en and fr
-    const handleLanguageToggle = () => {
-        const nextLang = lang === "en" ? "fr" : "en";
-        // pathname always starts with /lang, e.g., /en/about
-        const newPathname = pathname.replace(`/${lang}`, `/${nextLang}`);
-        router.push(newPathname || `/${nextLang}`);
-    };
+    const { status } = useSession();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -46,28 +38,10 @@ function HeaderContent({ lang, dict }: { lang: string, dict: Record<string, stri
                 </div>
 
                 {/* Right Actions */}
-                <div className="flex flex-1 items-center justify-end space-x-4">
-                    <Button variant="ghost" size="sm" onClick={handleLanguageToggle} title={dict.toggle_language}>
-                        {lang === "en" ? "FR" : "EN"}
-                    </Button>
-
-                    {status === "loading" ? (
-                        <div className="h-8 w-16 animate-pulse rounded-md bg-muted"></div>
-                    ) : session ? (
-                        <>
-                            <Link href={`/${lang}/admin/dashboard`}>
-                                <Button variant="default" size="sm">
-                                    {dict.dashboard}
-                                </Button>
-                            </Link>
-                        </>
-                    ) : (
-                        <Link href={`/${lang}/login`}>
-                            <Button variant="outline" size="sm">
-                                {dict.login}
-                            </Button>
-                        </Link>
-                    )}
+                <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
+                    <ThemeToggle dict={dict} />
+                    <LangToggle lang={lang} dict={dict} />
+                    <AccountToggle lang={lang} dict={dict} />
                 </div>
             </div>
         </header>

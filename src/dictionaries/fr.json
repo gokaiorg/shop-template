@@ -48,6 +48,10 @@
         "about": "À propos",
         "login": "Connexion",
         "dashboard": "Tableau de bord",
-        "toggle_language": "Changer de langue"
+        "toggle_language": "Changer de langue",
+        "theme_light": "Clair",
+        "theme_dark": "Sombre",
+        "theme_system": "Système",
+        "toggle_theme": "Changer de thème"
     }
 }
