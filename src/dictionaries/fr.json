@@ -2,10 +2,35 @@
     "admin": {
         "dashboard": "Tableau de bord",
         "products": "Produits",
+        "categories": "Catégories",
         "orders": "Commandes",
         "title": "Panneau d'administration",
         "welcome_title": "Bienvenue",
-        "welcome_text": "Bienvenue dans le tableau de bord d'administration, {email} !"
+        "welcome_text": "Bienvenue dans le tableau de bord d'administration, {email} !",
+        "products_create": "Créer un produit",
+        "categories_create": "Créer une catégorie",
+        "dashboard_seedButton": "Générer des données de démo",
+        "dashboard_seedWarning": "Attention : Ceci supprimera tous les produits et catégories existants.",
+        "dashboard_seedSuccess": "Données de démo générées avec succès !",
+        "dashboard_seedError": "Échec de la génération des données de démo.",
+        "forms": {
+            "nameFr": "Nom (FR)",
+            "nameEn": "Nom (EN)",
+            "slugFr": "Slug (FR)",
+            "slugEn": "Slug (EN)",
+            "introFr": "Introduction (FR)",
+            "introEn": "Introduction (EN)",
+            "descriptionFr": "Description (FR)",
+            "descriptionEn": "Description (EN)",
+            "statusFr": "Statut (FR)",
+            "statusEn": "Statut (EN)",
+            "price": "Prix",
+            "stock": "Stock",
+            "categoryId": "Catégorie",
+            "submit": "Enregistrer",
+            "submitting": "Enregistrement en cours...",
+            "success": "Enregistré avec succès !"
+        }
     },
     "auth": {
         "login_title": "Se Connecter",

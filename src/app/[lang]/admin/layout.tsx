@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Toaster } from "@/components/ui/sonner";
 import { SignOutButton } from "@/components/SignOutButton";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
@@ -29,6 +30,9 @@ export default async function AdminLayout({
                         <Link href={`/${lang}/admin/dashboard`} className="block text-sm font-medium hover:underline">
                             {dict.admin.dashboard}
                         </Link>
+                        <Link href={`/${lang}/admin/categories`} className="block text-sm font-medium hover:underline">
+                            {dict.admin.categories}
+                        </Link>
                         <Link href={`/${lang}/admin/products`} className="block text-sm font-medium hover:underline">
                             {dict.admin.products}
                         </Link>
@@ -44,6 +48,7 @@ export default async function AdminLayout({
             <main className="flex-1 p-6 md:p-10">
                 {children}
             </main>
+            <Toaster />
         </div>
     );
 }

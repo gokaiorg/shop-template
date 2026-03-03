@@ -29,29 +29,58 @@ model User {
   @@map("users")
 }
 
-model Category {
-  id       String    @id @default(cuid())
-  name     String
-  slug     String    @unique
-  products Product[]
-
-  @@map("categories")
-}
-
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String
-  price       Float
-  stock       Int
-  images      String[]
-  categoryId  String   @map("category_id")
-  category    Category @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(cuid())
+  
+  nameFr        String   @map("name_fr")
+  nameEn        String   @map("name_en")
+  
+  slugFr        String   @unique @map("slug_fr")
+  slugEn        String   @unique @map("slug_en")
+  
+  introFr       String?  @map("intro_fr")
+  introEn       String?  @map("intro_en")
+  
+  descriptionFr String   @map("description_fr")
+  descriptionEn String   @map("description_en")
+  
+  statusFr      String   @default("brouillon") @map("status_fr")
+  statusEn      String   @default("draft")     @map("status_en")
+  
+  price         Float
+  stock         Int
+  images        String[]
+  
+  categoryId    String   @map("category_id")
+  category      Category @relation(fields: [categoryId], references: [id])
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt      @map("updated_at")
 
   @@map("products")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  
+  nameFr    String    @map("name_fr")
+  nameEn    String    @map("name_en")
+  
+  slugFr    String    @unique @map("slug_fr")
+  slugEn    String    @unique @map("slug_en")
+
+  introFr       String?  @map("intro_fr")
+  introEn       String?  @map("intro_en")
+  
+  descriptionFr String   @map("description_fr")
+  descriptionEn String   @map("description_en")
+  
+  products  Product[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt      @map("updated_at")
+
+  @@map("categories")
 }
 
 model Order {

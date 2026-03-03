@@ -2,15 +2,17 @@ import { auth } from "@/auth";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default async function AdminDashboardPage({
     params,
 }: {
-    params: Promise<{ lang: Locale }>
+    params: Promise<{ lang: string }>
 }) {
     const session = await auth();
     const { lang } = await params;
-    const dict = await getDictionary(lang);
+    const dict = await getDictionary(lang as Locale);
 
     return (
         <div className="space-y-6">
@@ -20,8 +22,21 @@ export default async function AdminDashboardPage({
                 <CardHeader>
                     <CardTitle>{dict.admin.welcome_title}</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
                     <p>{dict.admin.welcome_text.replace("{email}", session?.user?.email ?? "")}</p>
+
+                    <div className="pt-4 border-t flex gap-4">
+                        <Button asChild>
+                            <Link href={`/${lang}/admin/categories`}>
+                                {dict.admin.categories}
+                            </Link>
+                        </Button>
+                        <Button asChild variant="secondary">
+                            <Link href={`/${lang}/admin/products`}>
+                                {dict.admin.products}
+                            </Link>
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
         </div>

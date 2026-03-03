@@ -2,10 +2,35 @@
     "admin": {
         "dashboard": "Dashboard",
         "products": "Products",
+        "categories": "Categories",
         "orders": "Orders",
         "title": "Admin Panel",
         "welcome_title": "Welcome",
-        "welcome_text": "Welcome to the Admin Dashboard, {email}!"
+        "welcome_text": "Welcome to the Admin Dashboard, {email}!",
+        "products_create": "Create Product",
+        "categories_create": "Create Category",
+        "dashboard_seedButton": "Generate Demo Data",
+        "dashboard_seedWarning": "Warning: This will clear all existing products and categories.",
+        "dashboard_seedSuccess": "Demo data generated successfully!",
+        "dashboard_seedError": "Failed to generate demo data.",
+        "forms": {
+            "nameFr": "Name (FR)",
+            "nameEn": "Name (EN)",
+            "slugFr": "Slug (FR)",
+            "slugEn": "Slug (EN)",
+            "introFr": "Introduction (FR)",
+            "introEn": "Introduction (EN)",
+            "descriptionFr": "Description (FR)",
+            "descriptionEn": "Description (EN)",
+            "statusFr": "Status (FR)",
+            "statusEn": "Status (EN)",
+            "price": "Price",
+            "stock": "Stock",
+            "categoryId": "Category",
+            "submit": "Save",
+            "submitting": "Saving...",
+            "success": "Saved successfully!"
+        }
     },
     "auth": {
         "login_title": "Welcome back",
