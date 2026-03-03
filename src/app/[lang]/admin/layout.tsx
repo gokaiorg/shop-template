@@ -43,16 +43,22 @@ export default async function AdminLayout({
                         </Link>
                     </nav>
                 </div>
+                <div className="pb-4 mt-auto ml-4">
+                    <ThemeToggle dict={dict.header} />
+                    <LangToggle lang={lang} dict={dict.header} />
+                </div>
                 <div className="p-6 border-t flex flex-col gap-4">
-                    <div className="flex items-center gap-2 justify-center border-b border-border/50 pb-4">
-                        <ThemeToggle dict={dict.header} />
-                        <LangToggle lang={lang} dict={dict.header} />
-                    </div>
+
                     <SignOutButton />
                 </div>
             </aside>
-            <main className="flex-1 p-6 md:p-10">
-                {children}
+            <main className="flex-1 p-6 md:p-10 flex flex-col">
+                <div className="flex-1">
+                    {children}
+                </div>
+                <footer className="pt-10 mt-auto text-center text-sm text-muted-foreground">
+                    &copy; 2026. Made with AI by <a href="https://gokai.org" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-foreground transition-colors">Gokai Labs</a>
+                </footer>
             </main>
             <Toaster />
         </div>
