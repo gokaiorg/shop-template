@@ -7,6 +7,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { AccountToggle } from "./AccountToggle";
+import { PrimaryNav } from "./PrimaryNav";
 
 function HeaderContent({ lang, dict }: { lang: string, dict: Record<string, string> }) {
     const { status } = useSession();
@@ -17,24 +18,11 @@ function HeaderContent({ lang, dict }: { lang: string, dict: Record<string, stri
                 {/* Brand Logo */}
                 <div className="flex items-center gap-6 md:gap-10">
                     <Link href={`/${lang}`} className="flex items-center space-x-2">
-                        <span className="inline-block font-bold sm:text-lg">ShopTemplate</span>
+                        <span className="inline-block font-bold sm:text-lg">Shop Template</span>
                     </Link>
 
                     {/* Primary Navigation */}
-                    <nav className="hidden md:flex gap-6">
-                        <Link
-                            href={`/${lang}/categories`}
-                            className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                            {dict.shop}
-                        </Link>
-                        <Link
-                            href={`/${lang}/about`}
-                            className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                            {dict.about}
-                        </Link>
-                    </nav>
+                    <PrimaryNav lang={lang} dict={dict} />
                 </div>
 
                 {/* Right Actions */}
