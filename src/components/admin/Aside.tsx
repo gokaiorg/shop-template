@@ -5,7 +5,7 @@ import { LangToggle } from "@/components/layout/LangToggle";
 
 export function Aside({ lang, dict }: { lang: string, dict: any }) {
     return (
-        <aside className="w-full md:w-64 bg-background border-r flex flex-col justify-between">
+        <aside className="hidden md:flex w-64 bg-background border-r flex-col justify-between">
             <div className="p-6">
                 <h2 className="text-lg font-bold tracking-tight mb-6">{dict.admin.title}</h2>
                 <nav className="space-y-4">

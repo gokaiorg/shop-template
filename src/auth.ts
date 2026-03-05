@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import prisma from "@/lib/prisma";
 import { authConfig } from "./auth.config";
 
@@ -12,6 +13,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         signIn: '/login',
     },
     providers: [
+        Google(),
         Credentials({
             name: "Credentials",
             credentials: {

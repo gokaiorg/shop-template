@@ -15,7 +15,7 @@ export default async function ShopLayout({
 
     return (
         <div className="flex min-h-screen flex-col">
-            <Header lang={lang} dict={dict.header} />
+            <Header lang={lang} dict={dict} />
             <main className="flex-1 flex flex-col">
                 <div className="flex-1">
                     {children}

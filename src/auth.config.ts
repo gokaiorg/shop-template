@@ -1,6 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 
 export const authConfig = {
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
     pages: {
         signIn: "/api/auth/signin",
     },
@@ -8,7 +9,14 @@ export const authConfig = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
-                token.role = user.role;
+
+                // RBAC Logic: Check if user email is in ADMIN_EMAILS
+                const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
+                if (user.email && adminEmails.includes(user.email)) {
+                    token.role = "ADMIN";
+                } else {
+                    token.role = user.role || "CUSTOMER";
+                }
             }
             return token;
         },
