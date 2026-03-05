@@ -53,5 +53,10 @@
         "theme_dark": "Dark",
         "theme_system": "System",
         "toggle_theme": "Toggle theme"
+    },
+    "shop": {
+        "all_categories": "All Categories",
+        "add_to_cart": "Add to cart",
+        "empty_state": "No products found."
     }
 }

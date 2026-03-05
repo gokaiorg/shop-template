@@ -53,5 +53,10 @@
         "theme_dark": "Sombre",
         "theme_system": "Système",
         "toggle_theme": "Changer de thème"
+    },
+    "shop": {
+        "all_categories": "Toutes les catégories",
+        "add_to_cart": "Ajouter au panier",
+        "empty_state": "Aucun produit trouvé."
     }
 }
