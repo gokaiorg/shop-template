@@ -6,17 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  ADMIN
-  CUSTOMER
-}
-
-enum OrderStatus {
-  PENDING
-  COMPLETED
-  CANCELLED
-}
-
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -30,68 +19,91 @@ model User {
 }
 
 model Product {
-  id            String   @id @default(cuid())
-  
-  nameFr        String   @map("name_fr")
-  nameEn        String   @map("name_en")
-  
-  slugFr        String   @unique @map("slug_fr")
-  slugEn        String   @unique @map("slug_en")
-  
-  introFr       String?  @map("intro_fr")
-  introEn       String?  @map("intro_en")
-  
-  descriptionFr String   @map("description_fr")
-  descriptionEn String   @map("description_en")
-  
-  statusFr      String   @default("brouillon") @map("status_fr")
-  statusEn      String   @default("draft")     @map("status_en")
-  
+  id            String      @id @default(cuid())
   price         Float
   stock         Int
   images        String[]
-  
-  categoryId    String   @map("category_id")
-  category      Category @relation(fields: [categoryId], references: [id])
-  
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt      @map("updated_at")
+  categoryId    String      @map("category_id")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  descriptionEn String      @map("description_en")
+  descriptionFr String      @map("description_fr")
+  introEn       String?     @map("intro_en")
+  introFr       String?     @map("intro_fr")
+  nameEn        String      @map("name_en")
+  nameFr        String      @map("name_fr")
+  slugEn        String      @unique @map("slug_en")
+  slugFr        String      @unique @map("slug_fr")
+  statusEn      String      @default("draft") @map("status_en")
+  statusFr      String      @default("brouillon") @map("status_fr")
+  category      Category    @relation(fields: [categoryId], references: [id])
+  orderItems    OrderItem[]
 
   @@map("products")
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  
-  nameFr    String    @map("name_fr")
-  nameEn    String    @map("name_en")
-  
-  slugFr    String    @unique @map("slug_fr")
-  slugEn    String    @unique @map("slug_en")
-
-  introFr       String?  @map("intro_fr")
-  introEn       String?  @map("intro_en")
-  
-  descriptionFr String   @map("description_fr")
-  descriptionEn String   @map("description_en")
-  
-  products  Product[]
-
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt      @map("updated_at")
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now()) @map("created_at")
+  descriptionEn String    @map("description_en")
+  descriptionFr String    @map("description_fr")
+  introEn       String?   @map("intro_en")
+  introFr       String?   @map("intro_fr")
+  nameEn        String    @map("name_en")
+  nameFr        String    @map("name_fr")
+  slugEn        String    @unique @map("slug_en")
+  slugFr        String    @unique @map("slug_fr")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  products      Product[]
 
   @@map("categories")
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  userId      String      @map("user_id")
-  user        User        @relation(fields: [userId], references: [id])
-  totalAmount Float       @map("total_amount")
-  status      OrderStatus @default(PENDING)
-  items       Json
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  id     String  @id @default(cuid())
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id])
+
+  status      String @default("PENDING") // PENDING, PAID, SHIPPED, CANCELLED
+  totalAmount Float  @map("total_amount")
+
+  // Coordonnées du client (remplies par Stripe)
+  customerEmail String? @map("customer_email")
+  customerName  String? @map("customer_name")
+
+  // Identifiant de la transaction Stripe
+  stripeSessionId String? @unique @map("stripe_session_id")
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("orders")
+}
+
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String @map("order_id")
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id])
+
+  quantity Int
+  price    Float // On fige le prix au moment de l'achat (si le prix du produit change demain, l'historique reste bon)
+
+  @@map("order_items")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
 }

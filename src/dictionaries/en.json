@@ -30,6 +30,16 @@
             "submit": "Save",
             "submitting": "Saving...",
             "success": "Saved successfully!"
+        },
+        "orders": {
+            "title": "Manage Orders",
+            "columns": {
+                "id": "Order ID",
+                "date": "Date",
+                "customer": "Customer",
+                "total": "Total",
+                "status": "Status"
+            }
         }
     },
     "auth": {

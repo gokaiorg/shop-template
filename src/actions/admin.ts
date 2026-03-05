@@ -18,7 +18,18 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
         });
         revalidatePath('/[lang]/admin', 'layout');
         return { success: true, category };
-    } catch (error) {
+    } catch (error: any) {
+        console.error("CREATE_CATEGORY_ERROR:", error);
+
+        // Handle Prisma unique constraint error
+        if (error.code === 'P2002') {
+            const field = error.meta?.target?.[0];
+            return {
+                success: false,
+                error: `A category with this ${field === 'slug_fr' ? 'French slug' : field === 'slug_en' ? 'English slug' : 'slug'} already exists.`
+            };
+        }
+
         return { success: false, error: "Failed to create category." };
     }
 }
@@ -36,6 +47,7 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
         revalidatePath('/[lang]/admin', 'layout');
         return { success: true, product };
     } catch (error) {
+        console.error("CREATE_PRODUCT_ERROR:", error);
         return { success: false, error: "Failed to create product." };
     }
 }

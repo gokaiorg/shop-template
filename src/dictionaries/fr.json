@@ -30,6 +30,16 @@
             "submit": "Enregistrer",
             "submitting": "Enregistrement en cours...",
             "success": "Enregistré avec succès !"
+        },
+        "orders": {
+            "title": "Gérer les commandes",
+            "columns": {
+                "id": "ID Commande",
+                "date": "Date",
+                "customer": "Client",
+                "total": "Total",
+                "status": "Statut"
+            }
         }
     },
     "auth": {

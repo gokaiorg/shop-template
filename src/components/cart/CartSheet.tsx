@@ -8,15 +8,37 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useMounted } from "@/hooks/useMounted";
+import { createCheckoutSession } from "@/actions/checkout";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 
 export function CartSheet() {
     const { items, totalItems, totalPrice, removeItem, updateQuantity } = useCart();
+    const params = useParams();
+    const lang = (params?.lang as string) || "en";
+    const [isLoading, setIsLoading] = useState(false);
+
     // useMounted hook to prevent hydration mismatch since we are using localStorage
     const mounted = useMounted();
+
+    const handleCheckout = async () => {
+        try {
+            setIsLoading(true);
+            const { url } = await createCheckoutSession(items, lang);
+            if (url) {
+                window.location.href = url;
+            }
+        } catch (error) {
+            console.error("Checkout error:", error);
+            // You might want to add a toast notification here
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     if (!mounted) {
         return (
@@ -70,7 +92,9 @@ export function CartSheet() {
                                         <div className="flex flex-1 flex-col justify-between">
                                             <div className="flex items-start justify-between gap-4">
                                                 <div className="flex flex-col gap-1">
-                                                    <h3 className="line-clamp-1 font-medium">{item.nameEn}</h3>
+                                                    <h3 className="line-clamp-1 font-medium">
+                                                        {lang === "fr" ? item.nameFr : item.nameEn}
+                                                    </h3>
                                                     <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
                                                 </div>
                                                 <Button
@@ -91,6 +115,7 @@ export function CartSheet() {
                                                         size="icon"
                                                         className="h-8 w-8 rounded-none cursor-pointer"
                                                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                        disabled={isLoading}
                                                     >
                                                         <Minus className="h-3 w-3" />
                                                     </Button>
@@ -102,6 +127,7 @@ export function CartSheet() {
                                                         size="icon"
                                                         className="h-8 w-8 rounded-none cursor-pointer"
                                                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                        disabled={isLoading}
                                                     >
                                                         <Plus className="h-3 w-3" />
                                                     </Button>
@@ -124,8 +150,14 @@ export function CartSheet() {
                         <p className="text-xs text-muted-foreground">
                             Shipping and taxes calculated at checkout.
                         </p>
-                        <Button className="w-full cursor-pointer" size="lg">
-                            Checkout
+                        <Button
+                            className="w-full cursor-pointer"
+                            size="lg"
+                            onClick={handleCheckout}
+                            disabled={isLoading}
+                        >
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isLoading ? "Processing..." : "Checkout"}
                         </Button>
                     </div>
                 )}

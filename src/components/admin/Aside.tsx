@@ -19,7 +19,7 @@ export function Aside({ lang, dict }: { lang: string, dict: any }) {
                         {dict.admin.products}
                     </Link>
                     <Link href={`/${lang}/admin/orders`} className="block text-sm font-medium hover:underline">
-                        {dict.admin.orders}
+                        {dict.admin.orders.title}
                     </Link>
                 </nav>
             </div>
