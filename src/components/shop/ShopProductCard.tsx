@@ -1,7 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Product } from "@prisma/client";
+import { useCart } from "@/store/useCart";
+import { toast } from "sonner";
 
 interface ShopProductCardProps {
     product: Product;
@@ -13,6 +17,14 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
     const title = lang === 'fr' ? product.nameFr : product.nameEn;
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
     const slug = lang === 'fr' ? product.slugFr : product.slugEn;
+    const { addItem } = useCart();
+
+    const handleAddToCart = () => {
+        addItem(product);
+        toast.success(dict.added_to_cart || "Added to cart", {
+            description: title,
+        });
+    };
 
     // We get the first image or a placeholder
     const imageUrl = product.images && product.images.length > 0
@@ -44,7 +56,11 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     <p className="text-lg font-bold">
                         ${product.price.toFixed(2)}
                     </p>
-                    <Button size="sm" className="rounded-full shadow-xs cursor-pointer">
+                    <Button
+                        size="sm"
+                        className="rounded-full shadow-xs cursor-pointer"
+                        onClick={handleAddToCart}
+                    >
                         {dict.add_to_cart || "Add to cart"}
                     </Button>
                 </div>

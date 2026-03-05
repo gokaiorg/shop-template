@@ -8,6 +8,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { AccountToggle } from "./AccountToggle";
 import { PrimaryNav } from "./PrimaryNav";
+import { CartSheet } from "../cart/CartSheet";
 
 function HeaderContent({ lang, dict }: { lang: string, dict: Record<string, string> }) {
     const { status } = useSession();
@@ -30,6 +31,7 @@ function HeaderContent({ lang, dict }: { lang: string, dict: Record<string, stri
                     <ThemeToggle dict={dict} />
                     <LangToggle lang={lang} dict={dict} />
                     <AccountToggle lang={lang} dict={dict} />
+                    <CartSheet />
                 </div>
             </div>
         </header>
