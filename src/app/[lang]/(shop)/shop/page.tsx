@@ -18,14 +18,6 @@ export default async function ShopPage(
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
-    // Load dictionary based on the locale
-    const dict = await getDictionary(lang as Locale);
-
-    // Fetch all categories
-    const categories = await prisma.category.findMany({
-        orderBy: { nameEn: 'asc' },
-    });
-
     // Build the query for products based on the requested category
     // If we have a category slug, we find the corresponding category record 
     // depending on the active language slug
@@ -38,20 +30,28 @@ export default async function ShopPage(
         }
     }
 
-    const products = await prisma.product.findMany({
-        where: {
-            ...categoryFilter,
-            // To ensure we only load visible products,
-            // optionally you can filter by status. 
-            // e.g., OR: [{ statusEn: 'published' }, { statusFr: 'publié' }]
-        },
-        orderBy: {
-            createdAt: 'desc',
-        },
-        include: {
-            category: true, // we can include the category if we need its details later
-        }
-    });
+    // Execute data fetching and dictionary loading in parallel
+    // This optimization reduces TTFB by fetching independent data concurrently
+    const [dict, categories, products] = await Promise.all([
+        getDictionary(lang as Locale),
+        prisma.category.findMany({
+            orderBy: { nameEn: 'asc' },
+        }),
+        prisma.product.findMany({
+            where: {
+                ...categoryFilter,
+                // To ensure we only load visible products,
+                // optionally you can filter by status.
+                // e.g., OR: [{ statusEn: 'published' }, { statusFr: 'publié' }]
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+            include: {
+                category: true, // we can include the category if we need its details later
+            }
+        })
+    ]);
 
     return (
         <main className="container mx-auto px-4 md:px-8 py-8">
