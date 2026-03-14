@@ -6,19 +6,21 @@ import prisma from "@/lib/prisma";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
-    const dict = await getDictionary(lang as Locale);
 
-    // Fetch products
-    const products = await prisma.product.findMany({
-        include: { category: true },
-        orderBy: { createdAt: "desc" }
-    });
+    // Fetch products and dictionary concurrently
+    const [dict, products] = await Promise.all([
+        getDictionary(lang as Locale),
+        prisma.product.findMany({
+            include: { category: true },
+            orderBy: { createdAt: "desc" }
+        })
+    ]);
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">{dict.admin.products}</h1>
                     <p className="text-muted-foreground">Manage your store products.</p>
                 </div>
                 <Button asChild>

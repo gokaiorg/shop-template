@@ -5,11 +5,13 @@ import prisma from "@/lib/prisma";
 
 export default async function NewProductPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
-    const dict = await getDictionary(lang as Locale);
 
-    const categories = await prisma.category.findMany({
-        orderBy: { nameEn: "asc" }
-    });
+    const [dict, categories] = await Promise.all([
+        getDictionary(lang as Locale),
+        prisma.category.findMany({
+            orderBy: { nameEn: "asc" }
+        })
+    ]);
 
     return (
         <div className="space-y-6">

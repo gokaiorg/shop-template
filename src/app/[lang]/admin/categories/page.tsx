@@ -6,13 +6,15 @@ import prisma from "@/lib/prisma";
 
 export default async function AdminCategoriesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
-    const dict = await getDictionary(lang as Locale);
 
-    // Fetch categories
-    const categories = await prisma.category.findMany({
-        include: { _count: { select: { products: true } } },
-        orderBy: { createdAt: "desc" }
-    });
+    // Fetch dictionary and categories concurrently to reduce TTFB
+    const [dict, categories] = await Promise.all([
+        getDictionary(lang as Locale),
+        prisma.category.findMany({
+            include: { _count: { select: { products: true } } },
+            orderBy: { createdAt: "desc" }
+        })
+    ]);
 
     return (
         <div className="space-y-6">

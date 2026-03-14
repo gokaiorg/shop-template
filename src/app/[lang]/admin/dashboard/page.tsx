@@ -10,8 +10,10 @@ export default async function AdminDashboardPage({
 }: {
     params: Promise<{ lang: string }>
 }) {
-    const session = await auth();
-    const { lang } = await params;
+    const [session, { lang }] = await Promise.all([
+        auth(),
+        params,
+    ]);
     const dict = await getDictionary(lang as Locale);
 
     return (

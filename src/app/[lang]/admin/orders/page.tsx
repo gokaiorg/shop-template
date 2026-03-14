@@ -12,19 +12,21 @@ interface AdminOrdersPageProps {
 
 export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) {
     const { lang } = await params;
-    const dict = await getDictionary(lang);
-    const ordersDict = dict.admin.orders;
 
-    const orders = await prisma.order.findMany({
-        orderBy: {
-            createdAt: "desc",
-        },
-        include: {
-            _count: {
-                select: { items: true },
+    const [dict, orders] = await Promise.all([
+        getDictionary(lang),
+        prisma.order.findMany({
+            orderBy: {
+                createdAt: "desc",
             },
-        },
-    });
+            include: {
+                _count: {
+                    select: { items: true },
+                },
+            },
+        })
+    ]);
+    const ordersDict = dict.admin.orders;
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat(lang === "fr" ? "fr-FR" : "en-US", {
