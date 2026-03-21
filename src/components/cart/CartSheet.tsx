@@ -104,7 +104,7 @@ export function CartSheet() {
                                                     onClick={() => removeItem(item.id)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
-                                                    <span className="sr-only">Remove item</span>
+                                                    <span className="sr-only">Remove {lang === "fr" ? item.nameFr : item.nameEn}</span>
                                                 </Button>
                                             </div>
 
@@ -118,6 +118,7 @@ export function CartSheet() {
                                                         disabled={isLoading}
                                                     >
                                                         <Minus className="h-3 w-3" />
+                                                        <span className="sr-only">Decrease quantity of {lang === "fr" ? item.nameFr : item.nameEn}</span>
                                                     </Button>
                                                     <div className="flex h-8 w-8 items-center justify-center text-sm">
                                                         {item.quantity}
@@ -130,6 +131,7 @@ export function CartSheet() {
                                                         disabled={isLoading}
                                                     >
                                                         <Plus className="h-3 w-3" />
+                                                        <span className="sr-only">Increase quantity of {lang === "fr" ? item.nameFr : item.nameEn}</span>
                                                     </Button>
                                                 </div>
                                             </div>
