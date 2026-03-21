@@ -17,7 +17,7 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
     const title = lang === 'fr' ? product.nameFr : product.nameEn;
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
     const slug = lang === 'fr' ? product.slugFr : product.slugEn;
-    const { addItem } = useCart();
+    const addItem = useCart(state => state.addItem);
 
     const handleAddToCart = () => {
         addItem(product);
