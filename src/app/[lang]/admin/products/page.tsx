@@ -22,6 +22,8 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
     });
 
     // Fetch products
+const categoryMap = new Map(categoriesList.map(c => [c.id, c]));
+
     const productsSnapshot = await adminDb.collection("products").orderBy("createdAt", "desc").get();
     const products = productsSnapshot.docs.map(doc => {
        const data = doc.data();
@@ -31,7 +33,7 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
            createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
            updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
        };
-       return { ...prod, category: categoriesList.find((c: any) => c.id === prod.categoryId)! };
+       return { ...prod, category: categoryMap.get(prod.categoryId) || null };
     });
 
     return (

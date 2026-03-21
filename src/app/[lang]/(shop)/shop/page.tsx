@@ -61,9 +61,11 @@ export default async function ShopPage(
         } as any;
     });
 
+    const categoryMap = new Map(categories.map(c => [c.id, c]));
+
     const products = productsList.map(product => ({
         ...product,
-        category: categories.find((c: any) => c.id === product.categoryId)!
+        category: categoryMap.get(product.categoryId) || null
     }));
 
     return (
