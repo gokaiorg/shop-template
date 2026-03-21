@@ -1,0 +1,4 @@
+## 2024-05-18 - Fix plaintext password comparison
+**Vulnerability:** The Credentials authentication provider used a direct string comparison (`user.password === credentials.password`) to verify user passwords from the Firestore database.
+**Learning:** This codebase previously lacked a proper secure password comparison mechanism because it was a "basic lookup for now" implementation. A critical vulnerability is present whenever plain-text passwords are stored or compared directly instead of utilizing a secure one-way hashing algorithm like bcrypt.
+**Prevention:** Always use an established cryptographic hash comparison library (like `bcrypt.compare`) for authenticating user passwords, never compare plain text directly, and ensure that passwords are hashed before being stored. Also, it's critical to ensure users without a password (e.g., from an OAuth provider) are handled gracefully before attempting to perform a comparison.
