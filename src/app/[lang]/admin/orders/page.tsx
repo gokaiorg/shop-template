@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { adminDb } from "@/lib/firebase-admin";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +15,15 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
     const dict = await getDictionary(lang);
     const ordersDict = dict.admin.orders;
 
-    const orders = await prisma.order.findMany({
-        orderBy: {
-            createdAt: "desc",
-        },
-        include: {
-            _count: {
-                select: { items: true },
-            },
-        },
+    const ordersSnapshot = await adminDb.collection("orders").orderBy("createdAt", "desc").get();
+    const orders = ordersSnapshot.docs.map(doc => {
+        const orderData = doc.data() as any;
+        return {
+            ...orderData,
+            id: doc.id,
+            createdAt: orderData.createdAt?.toDate ? orderData.createdAt.toDate() : new Date(orderData.createdAt),
+            _count: { items: Array.isArray(orderData.items) ? orderData.items.length : 0 }
+        };
     });
 
     const formatCurrency = (amount: number) => {

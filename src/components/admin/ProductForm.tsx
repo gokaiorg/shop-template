@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
-import { Category } from "@prisma/client";
+import { Category } from "@/types/database";
 
 export function ProductForm({ categories, dict, lang }: { categories: Category[]; dict: Record<string, string>; lang: string }) {
     const router = useRouter();

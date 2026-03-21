@@ -2,17 +2,26 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import prisma from "@/lib/prisma";
+import { adminDb } from "@/lib/firebase-admin";
+import { Category } from "@/types/database";
 
 export default async function AdminCategoriesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
     const dict = await getDictionary(lang as Locale);
 
     // Fetch categories
-    const categories = await prisma.category.findMany({
-        include: { _count: { select: { products: true } } },
-        orderBy: { createdAt: "desc" }
-    });
+    const categoriesSnapshot = await adminDb.collection("categories").orderBy("createdAt", "desc").get();
+    const categories = await Promise.all(categoriesSnapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        const cat: any = { 
+            id: doc.id, 
+            ...data,
+            createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
+            updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
+        };
+        const countSnap = await adminDb.collection("products").where("categoryId", "==", cat.id).count().get();
+        return { ...cat, _count: { products: countSnap.data().count } };
+    }));
 
     return (
         <div className="space-y-6">
@@ -56,7 +65,7 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
                                         {category._count.products}
                                     </td>
                                     <td className="px-6 py-4">
-                                        {category.createdAt.toLocaleDateString(lang)}
+                                        {category.createdAt ? new Date(category.createdAt).toLocaleDateString(lang) : 'N/A'}
                                     </td>
                                 </tr>
                             ))

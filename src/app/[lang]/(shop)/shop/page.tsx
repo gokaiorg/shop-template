@@ -1,6 +1,7 @@
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
-import prisma from "@/lib/prisma";
+import { adminDb } from "@/lib/firebase-admin";
+import { Category, Product } from "@/types/database";
 import { ShopCategoryFilter } from "@/components/shop/ShopCategoryFilter";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 
@@ -18,40 +19,52 @@ export default async function ShopPage(
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
+    // Execute data fetching in parallel where possible
+    const [dict, categoriesSnapshot] = await Promise.all([
+        getDictionary(lang as Locale),
+        adminDb.collection('categories').orderBy('nameEn', 'asc').get()
+    ]);
+
+    const categories = categoriesSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
+            updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
+        } as any;
+    });
+
     // Build the query for products based on the requested category
-    // If we have a category slug, we find the corresponding category record 
-    // depending on the active language slug
-    let categoryFilter = {};
+    let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
+    
     if (currentCategorySlug) {
-        if (lang === 'fr') {
-            categoryFilter = { category: { slugFr: currentCategorySlug } };
+        // We first need the categoryId to query products
+        const catId = categories.find((c: any) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+        if (catId) {
+            productsQuery = productsQuery.where('categoryId', '==', catId);
         } else {
-            categoryFilter = { category: { slugEn: currentCategorySlug } };
+            productsQuery = productsQuery.where('categoryId', '==', 'NOT_FOUND');
         }
     }
 
-    // Execute data fetching and dictionary loading in parallel
-    // This optimization reduces TTFB by fetching independent data concurrently
-    const [dict, categories, products] = await Promise.all([
-        getDictionary(lang as Locale),
-        prisma.category.findMany({
-            orderBy: { nameEn: 'asc' },
-        }),
-        prisma.product.findMany({
-            where: {
-                ...categoryFilter,
-                // To ensure we only load visible products,
-                // optionally you can filter by status.
-                // e.g., OR: [{ statusEn: 'published' }, { statusFr: 'publié' }]
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-            include: {
-                category: true, // we can include the category if we need its details later
-            }
-        })
-    ]);
+    productsQuery = productsQuery.orderBy('createdAt', 'desc');
+
+    const productsSnapshot = await productsQuery.get();
+    const productsList = productsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
+            updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
+        } as any;
+    });
+
+    const products = productsList.map(product => ({
+        ...product,
+        category: categories.find((c: any) => c.id === product.categoryId)!
+    }));
 
     return (
         <main className="container mx-auto px-4 md:px-8 py-8">
@@ -75,7 +88,7 @@ export default async function ShopPage(
                     {products.map((product) => (
                         <ShopProductCard
                             key={product.id}
-                            product={product}
+                            product={product as any}
                             lang={lang}
                             dict={dict.shop || dict}
                         />

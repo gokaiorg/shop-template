@@ -1,13 +1,13 @@
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { FirestoreAdapter } from "@auth/firebase-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import prisma from "@/lib/prisma";
+import { adminDb } from "@/lib/firebase-admin";
 import { authConfig } from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig,
-    adapter: PrismaAdapter(prisma),
+    adapter: FirestoreAdapter(adminDb),
     session: { strategy: "jwt" },
     pages: {
         signIn: '/login',
@@ -25,18 +25,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     return null;
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: credentials.email as string },
-                });
+                try {
+                    const usersRef = adminDb.collection('users');
+                    const snapshot = await usersRef.where('email', '==', credentials.email).limit(1).get();
 
-                // Basic lookup for now (will implement proper password hashing comparison later)
-                // If user exists and password matches (assuming plaintext for this initial setup step until bcrypt is wired up)
-                if (user && user.password === credentials.password) {
-                    return {
-                        id: user.id,
-                        email: user.email,
-                        role: user.role,
-                    };
+                    if (snapshot.empty) {
+                        return null;
+                    }
+
+                    const userDoc = snapshot.docs[0];
+                    const user = userDoc.data();
+
+                    // Basic lookup for now (will implement proper password hashing comparison later)
+                    if (user && user.password === credentials.password) {
+                        return {
+                            id: userDoc.id,
+                            email: user.email,
+                            role: user.role || "CUSTOMER",
+                        };
+                    }
+                } catch (error) {
+                    console.error("Error authorizing via Firebase:", error);
                 }
 
                 return null;

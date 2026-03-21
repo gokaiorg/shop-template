@@ -1,14 +1,22 @@
 import { ProductForm } from "@/components/admin/ProductForm";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
-import prisma from "@/lib/prisma";
+import { adminDb } from "@/lib/firebase-admin";
+import { Category } from "@/types/database";
 
 export default async function NewProductPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
     const dict = await getDictionary(lang as Locale);
 
-    const categories = await prisma.category.findMany({
-        orderBy: { nameEn: "asc" }
+    const categoriesSnapshot = await adminDb.collection("categories").orderBy("nameEn", "asc").get();
+    const categories = categoriesSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate().toISOString() || null,
+            updatedAt: data.updatedAt?.toDate().toISOString() || null,
+        } as any;
     });
 
     return (

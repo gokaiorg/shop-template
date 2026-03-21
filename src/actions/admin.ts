@@ -1,7 +1,7 @@
 "use server"
 
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import { adminDb } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 
 import { categorySchema, productSchema } from "@/schemas/admin";
@@ -13,23 +13,26 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
     }
 
     try {
-        const category = await prisma.category.create({
-            data: result.data,
-        });
+        // Basic unique slug check
+        const existingFr = await adminDb.collection("categories").where("slugFr", "==", result.data.slugFr).get();
+        if (!existingFr.empty) return { success: false, error: "A category with this French slug already exists." };
+        
+        const existingEn = await adminDb.collection("categories").where("slugEn", "==", result.data.slugEn).get();
+        if (!existingEn.empty) return { success: false, error: "A category with this English slug already exists." };
+
+        const ref = adminDb.collection("categories").doc();
+        const categoryData = {
+            id: ref.id,
+            ...result.data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+        await ref.set(categoryData);
+
         revalidatePath('/[lang]/admin', 'layout');
-        return { success: true, category };
+        return { success: true, category: categoryData };
     } catch (error: any) {
         console.error("CREATE_CATEGORY_ERROR:", error);
-
-        // Handle Prisma unique constraint error
-        if (error.code === 'P2002') {
-            const field = error.meta?.target?.[0];
-            return {
-                success: false,
-                error: `A category with this ${field === 'slug_fr' ? 'French slug' : field === 'slug_en' ? 'English slug' : 'slug'} already exists.`
-            };
-        }
-
         return { success: false, error: "Failed to create category." };
     }
 }
@@ -41,11 +44,17 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
     }
 
     try {
-        const product = await prisma.product.create({
-            data: result.data,
-        });
+        const ref = adminDb.collection("products").doc();
+        const productData = {
+            id: ref.id,
+            ...result.data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+        await ref.set(productData);
+
         revalidatePath('/[lang]/admin', 'layout');
-        return { success: true, product };
+        return { success: true, product: productData };
     } catch (error) {
         console.error("CREATE_PRODUCT_ERROR:", error);
         return { success: false, error: "Failed to create product." };
@@ -54,11 +63,16 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
 
 export async function seedDemoData() {
     try {
-        // Clear existing
-        await prisma.product.deleteMany();
-        await prisma.category.deleteMany();
+        // Instead of deleteMany, in Firestore we should delete docs individually or in batches
+        // Wait: for a demo seed, this might be complex if there are many. Since it's a template, we just get them and delete.
+        const prevProducts = await adminDb.collection("products").get();
+        const prevCategories = await adminDb.collection("categories").get();
+        
+        const batch = adminDb.batch();
+        prevProducts.docs.forEach(doc => batch.delete(doc.ref));
+        prevCategories.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
 
-        // Create 4 Categories
         const categoriesData = [
             { nameFr: "Forfaits Web", nameEn: "Web Packages", slugFr: "forfaits-web", slugEn: "web-packages", introFr: "Création de sites internet.", introEn: "Website creation.", descriptionFr: "Des forfaits complets pour votre présence en ligne.", descriptionEn: "Complete packages for your online presence." },
             { nameFr: "Maintenance", nameEn: "Maintenance", slugFr: "maintenance", slugEn: "maintenance-en", introFr: "Gardez votre site à jour.", introEn: "Keep your site up to date.", descriptionFr: "Services de maintenance mensuelle ou annuelle.", descriptionEn: "Monthly or yearly maintenance services." },
@@ -68,10 +82,12 @@ export async function seedDemoData() {
 
         const categories = [];
         for (const cat of categoriesData) {
-            categories.push(await prisma.category.create({ data: cat }));
+            const ref = adminDb.collection("categories").doc();
+            const data = { id: ref.id, ...cat, createdAt: new Date(), updatedAt: new Date() };
+            await ref.set(data);
+            categories.push(data);
         }
 
-        // Create Products (10 total)
         const productsData = [
             // Web Packages
             { nameFr: "Site Vitrine", nameEn: "Showcase Website", slugFr: "site-vitrine", slugEn: "showcase-website", introFr: "Présentez votre entreprise.", introEn: "Present your business.", descriptionFr: "Un site simple et efficace de 5 pages.", descriptionEn: "A simple and effective 5-page website.", price: 999, stock: 10, categoryId: categories[0].id, statusFr: "publié", statusEn: "published" },
@@ -89,7 +105,13 @@ export async function seedDemoData() {
             { nameFr: "Feuilles RAW", nameEn: "RAW Papers", slugFr: "feuilles-raw", slugEn: "raw-papers", introFr: "Naturelles et non blanchies.", introEn: "Natural and unbleached.", descriptionFr: "Carnet de feuilles slim.", descriptionEn: "Slim rolling papers booklet.", price: 1.50, stock: 500, categoryId: categories[3].id, statusFr: "publié", statusEn: "published" },
         ];
 
-        await prisma.product.createMany({ data: productsData });
+        const productBatch = adminDb.batch();
+        productsData.forEach(prod => {
+            const ref = adminDb.collection("products").doc();
+            productBatch.set(ref, { id: ref.id, ...prod, createdAt: new Date(), updatedAt: new Date(), images: [] });
+        });
+        await productBatch.commit();
+
         revalidatePath('/[lang]/admin', 'layout');
         return { success: true };
     } catch (error) {

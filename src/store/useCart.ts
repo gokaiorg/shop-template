@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Product } from '@prisma/client';
+import { Product } from '@/types/database';
 
 export interface CartItem extends Product {
     quantity: number;

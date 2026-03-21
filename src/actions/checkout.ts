@@ -1,7 +1,7 @@
 "use server";
 
 import { stripe } from "@/lib/stripe";
-import prisma from "@/lib/prisma";
+import { adminDb } from "@/lib/firebase-admin";
 
 export async function createCheckoutSession(items: any[], lang: string) {
     try {
@@ -10,20 +10,23 @@ export async function createCheckoutSession(items: any[], lang: string) {
             0
         );
 
-        // 1. Create Order in Prisma
-        const order = await prisma.order.create({
-            data: {
-                status: "PENDING",
-                totalAmount: totalAmount,
-                userId: null,
-                items: {
-                    create: items.map((item) => ({
-                        productId: item.id,
-                        quantity: item.quantity,
-                        price: item.price,
-                    })),
-                },
-            },
+        // 1. Create Order in Firestore
+        const orderRef = adminDb.collection("orders").doc();
+        const orderId = orderRef.id;
+
+        await orderRef.set({
+            id: orderId,
+            status: "PENDING",
+            totalAmount: totalAmount,
+            userId: null,
+            items: items.map((item) => ({
+                id: adminDb.collection("orders").doc().id, // Random ID
+                productId: item.id,
+                quantity: item.quantity,
+                price: item.price,
+            })),
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
 
         // 2. Create Stripe Checkout Session
@@ -37,6 +40,9 @@ export async function createCheckoutSession(items: any[], lang: string) {
                     product_data: {
                         name: lang === "fr" ? item.nameFr : item.nameEn,
                         images: item.images && item.images.length > 0 ? [item.images[0]] : [],
+                        metadata: {
+                            productId: item.id
+                        }
                     },
                     unit_amount: Math.round(item.price * 100), // Stripe expects cents
                 },
@@ -46,7 +52,7 @@ export async function createCheckoutSession(items: any[], lang: string) {
             success_url: `${origin}/${lang}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${origin}/${lang}/cart`,
             metadata: {
-                orderId: order.id,
+                orderId: orderId,
             },
         });
 

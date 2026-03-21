@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Category } from "@prisma/client";
+import { Category } from "@/types/database";
 
 interface ShopCategoryFilterProps {
     categories: Category[];

@@ -2,16 +2,36 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import prisma from "@/lib/prisma";
+import { adminDb } from "@/lib/firebase-admin";
+import { Category, Product } from "@/types/database";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
     const dict = await getDictionary(lang as Locale);
 
+    // Fetch categories to populate relation manually
+    const categoriesSnapshot = await adminDb.collection("categories").get();
+    const categoriesList = categoriesSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
+            updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
+        } as any;
+    });
+
     // Fetch products
-    const products = await prisma.product.findMany({
-        include: { category: true },
-        orderBy: { createdAt: "desc" }
+    const productsSnapshot = await adminDb.collection("products").orderBy("createdAt", "desc").get();
+    const products = productsSnapshot.docs.map(doc => {
+       const data = doc.data();
+       const prod: any = { 
+           id: doc.id, 
+           ...data,
+           createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
+           updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
+       };
+       return { ...prod, category: categoriesList.find((c: any) => c.id === prod.categoryId)! };
     });
 
     return (

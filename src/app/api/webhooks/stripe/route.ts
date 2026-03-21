@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
-import prisma from "@/lib/prisma";
+import { adminDb } from "@/lib/firebase-admin";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -37,14 +37,31 @@ export async function POST(req: Request) {
         }
 
         try {
-            await prisma.order.update({
-                where: { id: orderId },
-                data: {
-                    status: "PAID",
-                    customerEmail: session.customer_details?.email,
-                    customerName: session.customer_details?.name,
-                    stripeSessionId: session.id,
-                },
+            const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
+                expand: ['data.price.product']
+            });
+
+            const itemsList = lineItems.data.map(item => {
+                const product = item.price?.product as Stripe.Product | undefined;
+                return {
+                    id: adminDb.collection('orders').doc().id,
+                    productId: product?.metadata?.productId || "unknown",
+                    quantity: item.quantity || 1,
+                    price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0
+                };
+            });
+
+            await adminDb.collection("orders").doc(orderId).set({
+                id: orderId,
+                status: "PAID",
+                totalAmount: session.amount_total ? session.amount_total / 100 : 0,
+                userId: null,
+                items: itemsList,
+                customerEmail: session.customer_details?.email || null,
+                customerName: session.customer_details?.name || null,
+                stripeSessionId: session.id,
+                createdAt: new Date(),
+                updatedAt: new Date(),
             });
         } catch (error: any) {
             console.error(`[DATABASE_UPDATE_ERROR] ${error.message}`);
