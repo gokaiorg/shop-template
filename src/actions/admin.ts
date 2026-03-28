@@ -3,10 +3,16 @@
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
 
 import { categorySchema, productSchema } from "@/schemas/admin";
 
 export async function createCategory(data: z.infer<typeof categorySchema>) {
+    const session = await auth();
+    if (session?.user?.role !== "ADMIN") {
+        return { success: false, error: "Unauthorized" };
+    }
+
     const result = categorySchema.safeParse(data);
     if (!result.success) {
         return { success: false, errors: result.error.flatten().fieldErrors };
@@ -31,13 +37,18 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
 
         revalidatePath('/[lang]/admin', 'layout');
         return { success: true, category: categoryData };
-    } catch (error: any) {
+    } catch (error) {
         console.error("CREATE_CATEGORY_ERROR:", error);
         return { success: false, error: "Failed to create category." };
     }
 }
 
 export async function createProduct(data: z.infer<typeof productSchema>) {
+    const session = await auth();
+    if (session?.user?.role !== "ADMIN") {
+        return { success: false, error: "Unauthorized" };
+    }
+
     const result = productSchema.safeParse(data);
     if (!result.success) {
         return { success: false, errors: result.error.flatten().fieldErrors };
@@ -62,6 +73,11 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
 }
 
 export async function seedDemoData() {
+    const session = await auth();
+    if (session?.user?.role !== "ADMIN") {
+        return { success: false, error: "Unauthorized" };
+    }
+
     try {
         // Instead of deleteMany, in Firestore we should delete docs individually or in batches
         // Wait: for a demo seed, this might be complex if there are many. Since it's a template, we just get them and delete.
@@ -115,6 +131,7 @@ export async function seedDemoData() {
         revalidatePath('/[lang]/admin', 'layout');
         return { success: true };
     } catch (error) {
+        console.error("SEED_DEMO_DATA_ERROR:", error);
         return { success: false, error: "Failed to seed demo data." };
     }
 }
