@@ -12,10 +12,14 @@ interface AdminOrdersPageProps {
 
 export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) {
     const { lang } = await params;
-    const dict = await getDictionary(lang);
+
+    // Fetch dictionary and orders in parallel to reduce TTFB
+    const [dict, ordersSnapshot] = await Promise.all([
+        getDictionary(lang),
+        adminDb.collection("orders").orderBy("createdAt", "desc").get()
+    ]);
     const ordersDict = dict.admin.orders;
 
-    const ordersSnapshot = await adminDb.collection("orders").orderBy("createdAt", "desc").get();
     const orders = ordersSnapshot.docs.map(doc => {
         const orderData = doc.data() as any;
         return {

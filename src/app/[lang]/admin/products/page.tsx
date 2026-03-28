@@ -7,10 +7,14 @@ import { Category, Product } from "@/types/database";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
-    const dict = await getDictionary(lang as Locale);
 
-    // Fetch categories to populate relation manually
-    const categoriesSnapshot = await adminDb.collection("categories").get();
+    // Fetch dictionary, categories, and products in parallel to reduce TTFB
+    const [dict, categoriesSnapshot, productsSnapshot] = await Promise.all([
+        getDictionary(lang as Locale),
+        adminDb.collection("categories").get(),
+        adminDb.collection("products").orderBy("createdAt", "desc").get()
+    ]);
+
     const categoriesList = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -21,8 +25,6 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
         } as any;
     });
 
-    // Fetch products
-    const productsSnapshot = await adminDb.collection("products").orderBy("createdAt", "desc").get();
     const products = productsSnapshot.docs.map(doc => {
        const data = doc.data();
        const prod: any = { 
