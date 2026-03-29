@@ -11,6 +11,29 @@ export default async function ShopPage(
         searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
     }
 ) {
+    // Safety map to convert Firestore Timestamps to strings
+    const serializeFirestoreData = (docId: string, data: any) => {
+        const result = { ...data, id: docId };
+        
+        if (result.createdAt) {
+            result.createdAt = typeof result.createdAt.toDate === 'function' 
+                ? result.createdAt.toDate().toISOString() 
+                : new Date(result.createdAt).toISOString();
+        } else {
+            result.createdAt = null;
+        }
+        
+        if (result.updatedAt) {
+            result.updatedAt = typeof result.updatedAt.toDate === 'function' 
+                ? result.updatedAt.toDate().toISOString() 
+                : new Date(result.updatedAt).toISOString();
+        } else {
+            result.updatedAt = null;
+        }
+
+        return result;
+    };
+
     const params = await props.params;
     const searchParams = await props.searchParams;
     const { lang } = params;
@@ -25,15 +48,9 @@ export default async function ShopPage(
         adminDb.collection('categories').orderBy('nameEn', 'asc').get()
     ]);
 
-    const categories = categoriesSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
-            updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
-        } as any;
-    });
+    const categories = categoriesSnapshot.docs.map(doc => 
+        serializeFirestoreData(doc.id, doc.data()) as any
+    );
 
     // Build the query for products based on the requested category
     let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
@@ -51,15 +68,9 @@ export default async function ShopPage(
     productsQuery = productsQuery.orderBy('createdAt', 'desc');
 
     const productsSnapshot = await productsQuery.get();
-    const productsList = productsSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
-            updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
-        } as any;
-    });
+    const productsList = productsSnapshot.docs.map(doc => 
+        serializeFirestoreData(doc.id, doc.data()) as any
+    );
 
     const categoryMap = new Map(categories.map(c => [c.id, c]));
 

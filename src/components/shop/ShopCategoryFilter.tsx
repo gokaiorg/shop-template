@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Category } from "@/types/database";
@@ -15,6 +16,11 @@ interface ShopCategoryFilterProps {
 export function ShopCategoryFilter({ categories, currentCategorySlug, lang, dict }: ShopCategoryFilterProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
+    
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => { setIsMounted(true) }, []);
+
+    if (!isMounted) return <div className="h-14 w-full animate-pulse bg-muted rounded-full mb-8" />;
 
     const handleCategoryClick = (slug: string | null) => {
         const params = new URLSearchParams(searchParams.toString());

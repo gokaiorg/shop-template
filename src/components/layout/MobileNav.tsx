@@ -6,11 +6,23 @@ import { Menu } from "lucide-react";
 import { PrimaryNav } from "./PrimaryNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export function MobileNav({ lang, dict }: { lang: string, dict: Record<string, string> }) {
     const [open, setOpen] = useState(false);
+    
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => { setIsMounted(true) }, []);
+
+    if (!isMounted) {
+        return (
+            <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle Menu</span>
+            </Button>
+        );
+    }
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>

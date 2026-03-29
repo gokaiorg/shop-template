@@ -2,6 +2,7 @@
 
 import { stripe } from "@/lib/stripe";
 import { adminDb } from "@/lib/firebase-admin";
+import { headers } from "next/headers";
 
 export async function createCheckoutSession(items: any[], lang: string) {
     try {
@@ -30,7 +31,8 @@ export async function createCheckoutSession(items: any[], lang: string) {
         });
 
         // 2. Create Stripe Checkout Session
-        const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const headersList = await headers();
+        const origin = headersList.get('origin') || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
