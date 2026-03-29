@@ -24,17 +24,25 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
             updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
         } as any;
     });
+    const categoryMap = new Map(categoriesList.map((c: any) => [c.id, c]));
 
-    const products = productsSnapshot.docs.map(doc => {
-       const data = doc.data();
-       const prod: any = { 
-           id: doc.id, 
-           ...data,
-           createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
-           updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
-       };
-       return { ...prod, category: categoriesList.find((c: any) => c.id === prod.categoryId)! };
-    });
+    const products = productsSnapshot.docs
+        .map(doc => {
+            const data = doc.data();
+            const prod: any = {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
+                updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
+            };
+            const category = categoryMap.get(prod.categoryId);
+            if (!category) {
+                console.warn(`Product with id ${prod.id} has an invalid categoryId ${prod.categoryId}`);
+                return null;
+            }
+            return { ...prod, category };
+        })
+        .filter(Boolean);
 
     return (
         <div className="space-y-6">
