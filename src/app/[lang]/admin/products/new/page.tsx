@@ -6,9 +6,12 @@ import { Category } from "@/types/database";
 
 export default async function NewProductPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
-    const dict = await getDictionary(lang as Locale);
 
-    const categoriesSnapshot = await adminDb.collection("categories").orderBy("nameEn", "asc").get();
+    // Fetch dictionary and categories in parallel to reduce TTFB
+    const [dict, categoriesSnapshot] = await Promise.all([
+        getDictionary(lang as Locale),
+        adminDb.collection("categories").orderBy("nameEn", "asc").get()
+    ]);
     const categories = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
         return {

@@ -7,10 +7,14 @@ import { Category, Product } from "@/types/database";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
-    const dict = await getDictionary(lang as Locale);
 
-    // Fetch categories to populate relation manually
-    const categoriesSnapshot = await adminDb.collection("categories").get();
+    // Fetch dictionary, categories, and products in parallel to reduce TTFB
+    const [dict, categoriesSnapshot, productsSnapshot] = await Promise.all([
+        getDictionary(lang as Locale),
+        adminDb.collection("categories").get(),
+        adminDb.collection("products").orderBy("createdAt", "desc").get()
+    ]);
+
     const categoriesList = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -20,21 +24,25 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
             updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
         } as any;
     });
+    const categoryMap = new Map(categoriesList.map((c: any) => [c.id, c]));
 
-    // Fetch products
-const categoryMap = new Map(categoriesList.map(c => [c.id, c]));
-
-    const productsSnapshot = await adminDb.collection("products").orderBy("createdAt", "desc").get();
-    const products = productsSnapshot.docs.map(doc => {
-       const data = doc.data();
-       const prod: any = { 
-           id: doc.id, 
-           ...data,
-           createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
-           updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
-       };
-       return { ...prod, category: categoryMap.get(prod.categoryId) || null };
-    });
+    const products = productsSnapshot.docs
+        .map(doc => {
+            const data = doc.data();
+            const prod: any = {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
+                updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
+            };
+            const category = categoryMap.get(prod.categoryId);
+            if (!category) {
+                console.warn(`Product with id ${prod.id} has an invalid categoryId ${prod.categoryId}`);
+                return null;
+            }
+            return { ...prod, category };
+        })
+        .filter(Boolean);
 
     return (
         <div className="space-y-6">
