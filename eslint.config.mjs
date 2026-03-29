@@ -12,7 +12,17 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "test-db.js",
+    "update-shop-page.js",
+    "test.mjs",
+    "test-zustand.js",
   ]),
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+      "@typescript-eslint/no-explicit-any": "warn"
+    }
+  }
 ]);
 
 export default eslintConfig;

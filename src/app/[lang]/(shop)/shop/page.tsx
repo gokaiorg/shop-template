@@ -12,8 +12,8 @@ export default async function ShopPage(
     }
 ) {
     // Safety map to convert Firestore Timestamps to strings
-    const serializeFirestoreData = (docId: string, data: any) => {
-        const result = { ...data, id: docId };
+    const serializeFirestoreData = (docId: string, data: Record<string, any>) => {
+        const result = { ...data, id: docId } as any;
         
         if (result.createdAt) {
             result.createdAt = typeof result.createdAt.toDate === 'function' 
@@ -49,7 +49,7 @@ export default async function ShopPage(
     ]);
 
     const categories = categoriesSnapshot.docs.map(doc => 
-        serializeFirestoreData(doc.id, doc.data()) as any
+        serializeFirestoreData(doc.id, doc.data()) as Category
     );
 
     // Build the query for products based on the requested category
@@ -57,7 +57,7 @@ export default async function ShopPage(
     
     if (currentCategorySlug) {
         // We first need the categoryId to query products
-        const catId = categories.find((c: any) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+        const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
         if (catId) {
             productsQuery = productsQuery.where('categoryId', '==', catId);
         } else {
@@ -69,7 +69,7 @@ export default async function ShopPage(
 
     const productsSnapshot = await productsQuery.get();
     const productsList = productsSnapshot.docs.map(doc => 
-        serializeFirestoreData(doc.id, doc.data()) as any
+        serializeFirestoreData(doc.id, doc.data()) as Product
     );
 
     const categoryMap = new Map(categories.map(c => [c.id, c]));
@@ -101,7 +101,7 @@ export default async function ShopPage(
                     {products.map((product) => (
                         <ShopProductCard
                             key={product.id}
-                            product={product as any}
+                            product={product}
                             lang={lang}
                             dict={dict.shop || dict}
                         />
