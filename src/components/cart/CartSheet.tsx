@@ -118,6 +118,7 @@ export function CartSheet() {
                                                         disabled={isLoading}
                                                     >
                                                         <Minus className="h-3 w-3" />
+                                                        <span className="sr-only">Decrease quantity</span>
                                                     </Button>
                                                     <div className="flex h-8 w-8 items-center justify-center text-sm">
                                                         {item.quantity}
@@ -130,6 +131,7 @@ export function CartSheet() {
                                                         disabled={isLoading}
                                                     >
                                                         <Plus className="h-3 w-3" />
+                                                        <span className="sr-only">Increase quantity</span>
                                                     </Button>
                                                 </div>
                                             </div>
