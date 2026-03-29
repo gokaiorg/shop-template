@@ -1,5 +1,5 @@
 import time
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 
 def run():
     with sync_playwright() as p:
@@ -11,7 +11,8 @@ def run():
         print("Navigating to /en/shop...")
         try:
             page.goto("http://localhost:3000/en/shop")
-            page.wait_for_timeout(3000)
+            # Wait for the main heading or shop container to appear instead of fixed timeout
+            expect(page.get_by_role("main")).to_be_visible(timeout=10000)
 
             # The page should just load fine. We just want to make sure it doesn't crash since we changed the data logic
             page.screenshot(path="/tmp/shop_page.png")
