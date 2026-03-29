@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { FirestoreAdapter } from "@auth/firebase-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+import bcrypt from "bcryptjs";
 import { adminDb } from "@/lib/firebase-admin";
 import { authConfig } from "./auth.config";
 
@@ -36,13 +37,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     const userDoc = snapshot.docs[0];
                     const user = userDoc.data();
 
-                    // Basic lookup for now (will implement proper password hashing comparison later)
-                    if (user && user.password === credentials.password) {
-                        return {
-                            id: userDoc.id,
-                            email: user.email,
-                            role: user.role || "CUSTOMER",
-                        };
+                    // Compare provided password against stored hashed password securely
+                    if (user && user.password) {
+                        let isValidPassword = false;
+
+                        // Try bcrypt compare first
+                        isValidPassword = await bcrypt.compare(
+                            credentials.password as string,
+                            user.password
+                        );
+
+                        // Fallback for existing plaintext passwords (migration path)
+                        if (!isValidPassword && user.password === credentials.password) {
+                            isValidPassword = true;
+                            // Hash the password for future logins
+                            const hashedPassword = await bcrypt.hash(credentials.password as string, 10);
+                            await usersRef.doc(userDoc.id).update({
+                                password: hashedPassword
+                            });
+                        }
+
+                        if (isValidPassword) {
+                            return {
+                                id: userDoc.id,
+                                email: user.email,
+                                role: user.role || "CUSTOMER",
+                            };
+                        }
                     }
                 } catch (error) {
                     console.error("Error authorizing via Firebase:", error);
