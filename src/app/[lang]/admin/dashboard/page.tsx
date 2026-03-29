@@ -10,9 +10,13 @@ export default async function AdminDashboardPage({
 }: {
     params: Promise<{ lang: string }>
 }) {
-    const session = await auth();
     const { lang } = await params;
-    const dict = await getDictionary(lang as Locale);
+
+    // Fetch session and dictionary in parallel to reduce TTFB
+    const [session, dict] = await Promise.all([
+        auth(),
+        getDictionary(lang as Locale)
+    ]);
 
     return (
         <div className="space-y-6">
