@@ -6,29 +6,27 @@ The ultimate full-stack boilerplate for launching premium e-commerce brands or r
 
 This project is built using modern, production-ready technologies:
 
-### Framework & Language
-* **[Next.js 16](https://nextjs.org/)** - App Router, React Server Components (RSC), and Server Actions.
-* **[React 19](https://react.dev/)** - The library for web and native user interfaces.
-* **[TypeScript 5](https://www.typescriptlang.org/)** - Static type checking for robust, error-free code.
+- **Stack**: Next.js 14+ (App Router), Tailwind CSS, TypeScript, pnpm.
+- **Backend**: Firebase (Auth, Firestore, Storage).
+- **Payments**: Stripe.
+- **Infrastructure**: Google Cloud Platform (Cloud Run, Cloud Build via Developer Connect).
 
-### Database & ORM
-* **[PostgreSQL](https://www.postgresql.org/)** - Powerful, open-source object-relational database system.
-* **[Prisma](https://www.prisma.io/)** - Next-generation Node.js and TypeScript ORM.
+## 🚀 Agency Workflow: How to clone for a new project
 
-### Authentication & Security
-* **[Auth.js (NextAuth v5)](https://authjs.dev/)** - Complete open-source authentication for Next.js.
-* **[Bcrypt.js](https://www.npmjs.com/package/bcryptjs)** - Optimized password hashing.
-
-### Styling & UI Components
-* **[Tailwind CSS v4](https://tailwindcss.com/)** - Utility-first CSS framework for rapid UI development.
-* **[shadcn/ui](https://ui.shadcn.com/)** - Beautifully designed components built with Radix UI and Tailwind CSS.
-* **[Next Themes](https://github.com/pacocoursey/next-themes)** - Perfect Dark/Light mode implementation.
-* **[Lucide Icons](https://lucide.dev/)** - Beautiful & consistent icon toolkit.
-* **[Sonner](https://sonner.emilkowal.ski/)** - An opinionated toast component for React.
-
-### Forms & Validation
-* **[React Hook Form](https://react-hook-form.com/)** - Performant, flexible, and extensible forms.
-* **[Zod](https://zod.dev/)** - TypeScript-first schema declaration and validation library.
+1. **Repository Setup**:
+   - Create a new empty repository on GitHub.
+   - `git clone` this template.
+   - `git remote add template [URL-ST]` and `git remote set-url origin [URL-NEW-REPO]`.
+2. **Project Identity**: 
+   - Update `package.json` name and metadata in `src/app/layout.tsx`.
+3. **GCP Deployment**:
+   - Create a new GCP Project.
+   - Connect GitHub via "Developer Connect" (don't forget to authorize the new repo).
+   - Create a Cloud Build Trigger for the `dev` branch.
+   - Allow public access, Container port 3000, Memory 2GiB, CPU 2, Request timeout 3600s.
+   - Add IAM role "Developer Connect Read-only Access" to the Cloud Build Service Account.
+4. **Environment Variables**: 
+   - Use `.env.example` as a reference to populate Cloud Run variables (Firebase & Stripe).
 
 ## 🌍 Features
 * **Full i18n Localization**: Built-in multi-language support (English and French included by default).
