@@ -25,11 +25,15 @@ When I trigger these keywords, execute the following sequences:
 6. Output: "🚀 Client project updated with the latest Template features."
 
 ### "ST-Push"
-1. `git add .`
-2. Prompt Jérémy: "What is the commit message for this update?"
-3. `git commit -m "[User Input]"`
-4. `git push origin [Current Branch Name]`
-5. Output: "🚀 Changes pushed to [Current Branch Name]. Ready for Pull Request."
+1. **Pre-check**: Run `pnpm install` to ensure `pnpm-lock.yaml` is synced.
+2. **Local Build**: Run `pnpm build`.
+   - *If build fails*: STOP, show the error, and do NOT push.
+   - *If build succeeds*: Proceed to step 3.
+3. **Commit**: 
+   - Prompt: "Build successful!"
+   - Execute: `git add .` and `git commit -m "[User Input]"`
+4. **Push**: `git push origin [Current Branch Name]`
+5. **Output**: "🚀 Build passed and changes pushed to [Current Branch Name]."
 
 ---
 
