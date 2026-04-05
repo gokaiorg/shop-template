@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/database";
 import { useCart } from "@/store/useCart";
@@ -18,11 +17,6 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
     // const slug = lang === 'fr' ? product.slugFr : product.slugEn;
     const addItem = useCart(state => state.addItem);
-    
-    const [isMounted, setIsMounted] = useState(false);
-    useEffect(() => { setIsMounted(true) }, []);
-
-    if (!isMounted) return <div className="animate-pulse bg-muted rounded-lg h-[360px] w-full" />;
 
     const handleAddToCart = () => {
         addItem(product);
