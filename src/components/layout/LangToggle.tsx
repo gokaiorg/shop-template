@@ -16,20 +16,6 @@ export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, 
     const pathname = usePathname();
     const router = useRouter();
 
-    const [isMounted, setIsMounted] = React.useState(false);
-    
-    React.useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    if (!isMounted) {
-        return (
-            <Button variant="ghost" size="icon">
-                <span className="sr-only">{dict.toggle_language || "Toggle language"}</span>
-            </Button>
-        )
-    }
-
     const switchLanguage = (targetLang: string) => {
         if (lang === targetLang) return;
         const newPathname = pathname.replace(`/${lang}`, `/${targetLang}`);
