@@ -7,6 +7,7 @@ import {
     SheetHeader,
     SheetTitle,
     SheetTrigger,
+    SheetClose,
 } from "@/components/ui/sheet";
 import { ShoppingCart, Trash2, Plus, Minus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,8 +69,16 @@ export function CartSheet() {
 
                 <div className="flex flex-1 flex-col gap-4">
                     {items.length === 0 ? (
-                        <div className="flex flex-1 items-center justify-center">
-                            <p className="text-muted-foreground">Your cart is empty.</p>
+                        <div className="flex flex-1 flex-col items-center justify-center gap-4">
+                            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+                                <ShoppingCart className="h-10 w-10 text-muted-foreground" aria-hidden="true" />
+                            </div>
+                            <p className="text-lg font-medium">Your cart is empty</p>
+                            <SheetClose asChild>
+                                <Button variant="outline" className="mt-2 cursor-pointer">
+                                    Continue Shopping
+                                </Button>
+                            </SheetClose>
                         </div>
                     ) : (
                         <div className="flex flex-1 flex-col gap-6">
