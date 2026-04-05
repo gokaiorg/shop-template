@@ -6,7 +6,24 @@ import { headers } from "next/headers";
 
 export async function createCheckoutSession(items: any[], lang: string) {
     try {
-        const totalAmount = items.reduce(
+        // Fetch source of truth for products to avoid trusting client-provided prices
+        const verifiedItems = await Promise.all(
+            items.map(async (item) => {
+                const productDoc = await adminDb.collection("products").doc(item.id).get();
+                if (!productDoc.exists) {
+                    throw new Error(`Product not found: ${item.id}`);
+                }
+                const productData = productDoc.data();
+                return {
+                    ...item,
+                    price: productData?.price || 0,
+                    nameFr: productData?.nameFr || item.nameFr,
+                    nameEn: productData?.nameEn || item.nameEn,
+                };
+            })
+        );
+
+        const totalAmount = verifiedItems.reduce(
             (acc, item) => acc + item.price * item.quantity,
             0
         );
@@ -20,7 +37,7 @@ export async function createCheckoutSession(items: any[], lang: string) {
             status: "PENDING",
             totalAmount: totalAmount,
             userId: null,
-            items: items.map((item) => ({
+            items: verifiedItems.map((item) => ({
                 id: adminDb.collection("orders").doc().id, // Random ID
                 productId: item.id,
                 quantity: item.quantity,
@@ -36,7 +53,7 @@ export async function createCheckoutSession(items: any[], lang: string) {
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
-            line_items: items.map((item) => ({
+            line_items: verifiedItems.map((item) => ({
                 price_data: {
                     currency: "usd",
                     product_data: {
