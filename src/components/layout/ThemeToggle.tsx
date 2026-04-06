@@ -14,19 +14,6 @@ import {
 
 export function ThemeToggle({ dict }: { dict: Record<string, string> }) {
     const { setTheme } = useTheme()
-    const [isMounted, setIsMounted] = React.useState(false)
-    
-    React.useEffect(() => {
-        setIsMounted(true)
-    }, [])
-
-    if (!isMounted) {
-        return (
-            <Button variant="ghost" size="icon">
-                <span className="sr-only">{dict.toggle_theme || "Toggle theme"}</span>
-            </Button>
-        )
-    }
 
     return (
         <DropdownMenu>
