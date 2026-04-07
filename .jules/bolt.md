@@ -1,3 +1,6 @@
 ## 2025-04-04 - Remove unnecessary `isMounted` hydration checks to enable SSR
 **Learning:** Components like `ShopProductCard` often cargo-cult the `isMounted` hydration-safe pattern from components that actually need it (like a `CartSheet` that reads persisted local storage). If a component only *modifies* state (e.g., uses `addItem` from a Zustand store) or relies on stable server-provided props, the `isMounted` check forces it to render a skeleton on the server.
 **Action:** Remove `isMounted` hydration checks from components that do not render dynamic client-side state. This immediately enables full Server-Side Rendering (SSR) for those components, dramatically improving SEO, First Contentful Paint (FCP), and Largest Contentful Paint (LCP).
+## 2026-04-07 - Redundant Hydration Checks with next-auth
+**Learning:** NextAuth's `useSession()` manages its own hydration state via its `status` property. Wrapping it in an `isMounted` check causes an unnecessary double-render on the client and blocks initial Server-Side Rendering.
+**Action:** Remove redundant `isMounted` hooks in components using `useSession` and rely purely on `if (status === 'loading')` for the loading state to allow immediate SSR.

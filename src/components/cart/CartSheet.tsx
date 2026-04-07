@@ -18,7 +18,11 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 
 export function CartSheet() {
-    const { items, totalItems, totalPrice, removeItem, updateQuantity } = useCart();
+    const items = useCart(state => state.items);
+    const totalItems = useCart(state => state.totalItems);
+    const totalPrice = useCart(state => state.totalPrice);
+    const removeItem = useCart(state => state.removeItem);
+    const updateQuantity = useCart(state => state.updateQuantity);
     const params = useParams();
     const lang = (params?.lang as string) || "en";
     const [isLoading, setIsLoading] = useState(false);
