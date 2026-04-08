@@ -2,3 +2,8 @@
 **Vulnerability:** Critical authorization bypass in `/admin` functionalities. Server Actions defined in `src/actions/admin.ts` (`createCategory`, `createProduct`, `seedDemoData`) lacked explicit authentication/authorization checks. Although the `/admin` routes are protected by `middleware.ts`, Server Actions can be invoked directly from anywhere, allowing unauthenticated users to modify the database.
 **Learning:** In Next.js App Router, `middleware.ts` protection on routes does not automatically secure Server Actions used by those routes. Server Actions are independent endpoints.
 **Prevention:** Every Server Action performing sensitive operations must include direct session validation (e.g., `const session = await auth(); if (session?.user?.role !== "ADMIN") return { error: "Unauthorized" };`) regardless of the route middleware.
+
+## 2025-04-08 - Pass-the-Hash Vulnerability in Password Migration
+**Vulnerability:** A Pass-the-Hash vulnerability existed in `src/auth.ts` during the legacy plaintext password fallback check. If `bcrypt.compare` failed, the system blindly compared `user.password === credentials.password`. An attacker with a user's password hash could provide the hash as their password, bypassing authentication since the stored hash matched the provided "password" exactly.
+**Learning:** When implementing authentication fallbacks for legacy plaintext password migrations, you must ensure the stored password is not already a hash before performing a direct string comparison.
+**Prevention:** Explicitly verify that the stored string does not start with bcrypt prefixes (e.g., `$2a$`, `$2b$`, `$2y$`) or other hashing algorithms before allowing direct string matching for password verification. Also ensure type safety before string operations.

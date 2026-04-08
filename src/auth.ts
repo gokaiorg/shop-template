@@ -48,7 +48,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         );
 
                         // Fallback for existing plaintext passwords (migration path)
-                        if (!isValidPassword && user.password === credentials.password) {
+                        // Verify that the stored string is not already a hash to prevent Pass-the-Hash
+                        const isHashFormat = typeof user.password === 'string' &&
+                            (user.password.startsWith('$2a$') ||
+                             user.password.startsWith('$2b$') ||
+                             user.password.startsWith('$2y$'));
+
+                        if (!isValidPassword && !isHashFormat && user.password === credentials.password) {
                             isValidPassword = true;
                             // Hash the password for future logins
                             const hashedPassword = await bcrypt.hash(credentials.password as string, 10);
