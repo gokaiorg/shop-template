@@ -9,6 +9,11 @@ export async function createCheckoutSession(items: any[], lang: string) {
         // Fetch source of truth for products to avoid trusting client-provided prices
         const verifiedItems = await Promise.all(
             items.map(async (item) => {
+                const quantity = Number(item.quantity);
+                if (!Number.isInteger(quantity) || quantity <= 0) {
+                    throw new Error(`Invalid quantity for product: ${item.id}`);
+                }
+
                 const productDoc = await adminDb.collection("products").doc(item.id).get();
                 if (!productDoc.exists) {
                     throw new Error(`Product not found: ${item.id}`);
@@ -16,6 +21,7 @@ export async function createCheckoutSession(items: any[], lang: string) {
                 const productData = productDoc.data();
                 return {
                     ...item,
+                    quantity,
                     price: productData?.price || 0,
                     nameFr: productData?.nameFr || item.nameFr,
                     nameEn: productData?.nameEn || item.nameEn,
