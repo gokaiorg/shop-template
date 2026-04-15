@@ -36,6 +36,7 @@ export function ShopCategoryFilter({ categories, currentCategorySlug, lang, dict
                         currentCategorySlug === null ? "shadow-sm pointer-events-none" : ""
                     )}
                     onClick={() => handleCategoryClick(null)}
+                    aria-current={currentCategorySlug === null ? "true" : undefined}
                 >
                     {dict.all_categories || "All Categories"}
                 </Button>
@@ -54,6 +55,7 @@ export function ShopCategoryFilter({ categories, currentCategorySlug, lang, dict
                                 isActive ? "shadow-sm pointer-events-none" : ""
                             )}
                             onClick={() => handleCategoryClick(categorySlug)}
+                            aria-current={isActive ? "true" : undefined}
                         >
                             {categoryName}
                         </Button>
