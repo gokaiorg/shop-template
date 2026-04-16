@@ -7,21 +7,27 @@ import { headers } from "next/headers";
 export async function createCheckoutSession(items: any[], lang: string) {
     try {
         // Fetch source of truth for products to avoid trusting client-provided prices
-        const verifiedItems = await Promise.all(
-            items.map(async (item) => {
-                const productDoc = await adminDb.collection("products").doc(item.id).get();
-                if (!productDoc.exists) {
-                    throw new Error(`Product not found: ${item.id}`);
-                }
-                const productData = productDoc.data();
-                return {
-                    ...item,
-                    price: productData?.price || 0,
-                    nameFr: productData?.nameFr || item.nameFr,
-                    nameEn: productData?.nameEn || item.nameEn,
-                };
-            })
-        );
+        // Optimization: Use getAll to batch database requests and prevent N+1 query problem
+        if (items.length === 0) {
+            throw new Error("No items in cart");
+        }
+
+        const productRefs = items.map((item) => adminDb.collection("products").doc(item.id));
+        const productDocs = await adminDb.getAll(...productRefs);
+
+        const verifiedItems = items.map((item, index) => {
+            const productDoc = productDocs[index];
+            if (!productDoc.exists) {
+                throw new Error(`Product not found: ${item.id}`);
+            }
+            const productData = productDoc.data();
+            return {
+                ...item,
+                price: productData?.price || 0,
+                nameFr: productData?.nameFr || item.nameFr,
+                nameEn: productData?.nameEn || item.nameEn,
+            };
+        });
 
         const totalAmount = verifiedItems.reduce(
             (acc, item) => acc + item.price * item.quantity,
