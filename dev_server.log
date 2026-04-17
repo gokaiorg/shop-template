@@ -1,0 +1,30 @@
+
+> shop-template@0.1.0 dev /app
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+- Environments: .env
+
+✓ Starting...
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 1732ms
+○ Compiling /[lang]/shop ...
+Firebase Admin environment variables are missing.
+Firebase Admin environment variables are missing.
+⨯ Error: Unable to detect a Project Id in the current environment.
+To learn more about authentication and Google APIs, visit:
+https://cloud.google.com/docs/authentication/getting-started
+    at <unknown> (https://cloud.google.com/docs/authentication/getting-started)
+    at ShopPage (src/app/[lang]/(shop)/shop/page.tsx:48:67)
+  46 |     const [dict, categoriesSnapshot] = await Promise.all([
+  47 |         getDictionary(lang as Locale),
+> 48 |         adminDb.collection('categories').orderBy('nameEn', 'asc').get()
+     |                                                                   ^
+  49 |     ]);
+  50 |
+  51 |     const categories = categoriesSnapshot.docs.map(doc =>  {
+  digest: '1908329866'
+}
+ GET /en/shop 500 in 8.9s (compile: 5.6s, proxy.ts: 153ms, render: 3.2s)
