@@ -17,6 +17,7 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
     // const slug = lang === 'fr' ? product.slugFr : product.slugEn;
     const addItem = useCart(state => state.addItem);
+    const addToCartText = dict.add_to_cart || "Add to cart";
 
     const handleAddToCart = () => {
         addItem(product);
@@ -59,9 +60,9 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                         size="sm"
                         className="rounded-full shadow-xs cursor-pointer"
                         onClick={handleAddToCart}
-                        aria-label={`${dict["add_to_cart"] || "Add to cart"} ${title}`}
+                        aria-label={`${addToCartText} ${title}`}
                     >
-                        {dict["add_to_cart"] || "Add to cart"}
+                        {addToCartText}
                     </Button>
                 </div>
             </div>
