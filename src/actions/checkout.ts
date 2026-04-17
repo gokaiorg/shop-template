@@ -4,47 +4,35 @@ import { stripe } from "@/lib/stripe";
 import { adminDb } from "@/lib/firebase-admin";
 import { headers } from "next/headers";
 
-export async function createCheckoutSession(items: any[], lang: string) {
+export async function createCheckoutSession(items: { id: string, quantity: number, nameFr?: string, nameEn?: string, images?: string[] }[], lang: string) {
     try {
-        if (!Array.isArray(items) || items.length === 0) {
-            throw new Error("Invalid or empty items array");
-        }
-
-        // Validate all items before proceeding to DB calls
-        for (const item of items) {
-            if (!item || typeof item !== 'object' || !item.id || typeof item.id !== 'string') {
-                throw new Error("Invalid item format or missing ID");
-            }
-            if (typeof item.quantity !== 'number' || !Number.isInteger(item.quantity) || item.quantity <= 0) {
-                throw new Error(`Invalid quantity for item ${item.id}`);
-            }
-        }
-
         // Fetch source of truth for products to avoid trusting client-provided prices
-        const verifiedItems = await Promise.all(
-            items.map(async (item) => {
-                if (!item || typeof item !== 'object' || typeof item.id !== 'string') {
-                    throw new Error("Invalid item format");
-                }
-                const quantity = Number(item.quantity);
-                if (!Number.isSafeInteger(quantity) || quantity <= 0) {
-                    throw new Error(`Invalid quantity for product: ${item.id}`);
-                }
+        // Optimization: Use getAll to batch database requests and prevent N+1 query problem
+        if (items.length === 0) {
+            throw new Error("No items in cart");
+        }
 
-                const productDoc = await adminDb.collection("products").doc(item.id).get();
-                if (!productDoc.exists) {
-                    throw new Error(`Product not found: ${item.id}`);
-                }
-                const productData = productDoc.data();
-                return {
-                    ...item,
-                    quantity,
-                    price: productData?.price || 0,
-                    nameFr: productData?.nameFr || item.nameFr,
-                    nameEn: productData?.nameEn || item.nameEn,
-                };
-            })
-        );
+        const productRefs = items.map((item) => adminDb.collection("products").doc(item.id));
+        const productDocs = await adminDb.getAll(...productRefs);
+
+        const productDocMap = new Map();
+        productDocs.forEach(doc => {
+            productDocMap.set(doc.id, doc);
+        });
+
+        const verifiedItems = items.map((item) => {
+            const productDoc = productDocMap.get(item.id);
+            if (!productDoc || !productDoc.exists) {
+                throw new Error(`Product not found: ${item.id}`);
+            }
+            const productData = productDoc.data();
+            return {
+                ...item,
+                price: productData?.price || 0,
+                nameFr: productData?.nameFr || item.nameFr,
+                nameEn: productData?.nameEn || item.nameEn,
+            };
+        });
 
         const totalAmount = verifiedItems.reduce(
             (acc, item) => acc + item.price * item.quantity,
