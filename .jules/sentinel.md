@@ -3,7 +3,7 @@
 **Learning:** In Next.js App Router, `middleware.ts` protection on routes does not automatically secure Server Actions used by those routes. Server Actions are independent endpoints.
 **Prevention:** Every Server Action performing sensitive operations must include direct session validation (e.g., `const session = await auth(); if (session?.user?.role !== "ADMIN") return { error: "Unauthorized" };`) regardless of the route middleware.
 
-## 2024-04-09 - Prevent Pass-the-Hash in Plaintext Password Fallbacks
-**Vulnerability:** A "Pass-the-Hash" vulnerability existed in `src/auth.ts` where the authentication logic attempted a fallback plain-text comparison (`user.password === credentials.password`) if the `bcrypt.compare` failed. This means if an attacker obtained a user's bcrypt hash, they could supply the hash as their password to authenticate, bypassing the intended security.
-**Learning:** This occurred because the plaintext password fallback check (intended for migration purposes) did not ensure that the stored password it was comparing against was *not* already a hash. `user.password` was used directly in the strict equality check.
-**Prevention:** Before performing any string matching for authentication fallback migrations, explicitly check that the stored string does not resemble a bcrypt hash (e.g., checking that it doesn't start with `$2a$` or `$2b$`) and is of type string.
+## 2024-05-25 - Pass-the-Hash Vulnerability in Plaintext Migration Fallback
+**Vulnerability:** A "Pass-the-Hash" vulnerability existed in the credentials authorization logic (`src/auth.ts`) used to migrate plaintext passwords to bcrypt. The fallback allowed login if `user.password === credentials.password`, meaning if an attacker obtained the bcrypt hash from the database, they could supply the hash string itself as their password.
+**Learning:** Fallback mechanisms intended for migration can be exploited if they don't explicitly exclude modernized/secure data formats (like bcrypt hashes).
+**Prevention:** Always scope down migration fallbacks. Ensure that a plaintext fallback condition explicitly checks that the stored value is not already a hashed value (e.g., `!user.password.startsWith('$2a$') && !user.password.startsWith('$2b$')`).
