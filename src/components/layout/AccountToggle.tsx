@@ -18,9 +18,6 @@ import { AuthSheet } from "@/components/auth/AuthSheet"
 export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
     const { data: session, status } = useSession()
 
-    // ⚡ Bolt: Removed redundant isMounted check. useSession provides a loading status,
-    // and removing this allows immediate SSR rendering instead of unnecessary skeletons,
-    // improving SEO and Largest Contentful Paint (LCP).
     if (status === "loading") {
         return <div className="h-8 w-16 animate-pulse rounded-md bg-muted"></div>
     }
