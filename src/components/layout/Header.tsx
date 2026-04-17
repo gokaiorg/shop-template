@@ -41,9 +41,9 @@ function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
     );
 }
 
-export function Header({ lang, dict }: { lang: string, dict: any }) {
+export function Header({ lang, dict, session }: { lang: string, dict: any, session: any }) {
     return (
-        <SessionProvider>
+        <SessionProvider session={session}>
             <HeaderContent lang={lang} dict={dict} />
         </SessionProvider>
     );
