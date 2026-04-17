@@ -33,10 +33,11 @@ export function ShopCategoryFilter({ categories, currentCategorySlug, lang, dict
                     variant={currentCategorySlug === null ? "default" : "outline"}
                     className={cn(
                         "rounded-full whitespace-nowrap",
-                        currentCategorySlug === null ? "shadow-sm pointer-events-none" : ""
+                        currentCategorySlug === null ? "shadow-sm disabled:opacity-100" : ""
                     )}
                     onClick={() => handleCategoryClick(null)}
                     aria-current={currentCategorySlug === null ? "true" : undefined}
+                    disabled={currentCategorySlug === null}
                 >
                     {dict.all_categories || "All Categories"}
                 </Button>
@@ -52,10 +53,11 @@ export function ShopCategoryFilter({ categories, currentCategorySlug, lang, dict
                             variant={isActive ? "default" : "outline"}
                             className={cn(
                                 "rounded-full whitespace-nowrap",
-                                isActive ? "shadow-sm pointer-events-none" : ""
+                                isActive ? "shadow-sm disabled:opacity-100" : ""
                             )}
                             onClick={() => handleCategoryClick(categorySlug)}
                             aria-current={isActive ? "true" : undefined}
+                            disabled={isActive}
                         >
                             {categoryName}
                         </Button>
