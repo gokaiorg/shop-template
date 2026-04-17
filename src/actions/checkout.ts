@@ -9,12 +9,12 @@ export async function createCheckoutSession(items: any[], lang: string) {
         // Fetch source of truth for products to avoid trusting client-provided prices
         const verifiedItems = await Promise.all(
             items.map(async (item) => {
-                if (!item || !item.id) {
-                    throw new Error("Invalid item structure or missing product ID");
+                if (!item || typeof item !== 'object' || typeof item.id !== 'string') {
+                    throw new Error("Invalid item format");
                 }
-
-                if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-                    throw new Error(`Invalid quantity for product: ${item?.id}`);
+                const quantity = Number(item.quantity);
+                if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+                    throw new Error(`Invalid quantity for product: ${item.id}`);
                 }
 
                 const productDoc = await adminDb.collection("products").doc(item.id).get();
