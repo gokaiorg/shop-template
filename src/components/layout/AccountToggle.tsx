@@ -17,11 +17,14 @@ import { AuthSheet } from "@/components/auth/AuthSheet"
 
 export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
     const { data: session, status } = useSession()
-    
-    // ⚡ Bolt: Removed isMounted check. useSession's 'status' inherently manages
-    // the loading state, allowing the component to be server-side rendered (SSR)
-    // immediately without forcing unnecessary skeletons, improving LCP and SEO.
-    if (status === "loading") {
+
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted || status === "loading") {
         return <div className="h-8 w-16 animate-pulse rounded-md bg-muted"></div>
     }
 
