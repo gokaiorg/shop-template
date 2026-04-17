@@ -10,6 +10,9 @@ export async function createCheckoutSession(items: any[], lang: string) {
         const verifiedItems = await Promise.all(
             items.map(async (item) => {
                 const quantity = Number(item.quantity);
+                if (!item.id || typeof item.id !== 'string') {
+                    throw new Error("Invalid or missing product ID");
+                }
                 if (!Number.isInteger(quantity) || quantity <= 0) {
                     throw new Error(`Invalid quantity for item: ${item.id}`);
                 }
