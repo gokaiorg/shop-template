@@ -3,7 +3,7 @@
 **Learning:** In Next.js App Router, `middleware.ts` protection on routes does not automatically secure Server Actions used by those routes. Server Actions are independent endpoints.
 **Prevention:** Every Server Action performing sensitive operations must include direct session validation (e.g., `const session = await auth(); if (session?.user?.role !== "ADMIN") return { error: "Unauthorized" };`) regardless of the route middleware.
 
-## 2024-05-24 - Pass-the-Hash Vulnerability in Authentication Migration
-**Vulnerability:** A Pass-the-Hash vulnerability existed in `src/auth.ts` where a user could potentially log in by supplying the hashed password instead of the plain-text password, if the stored password was already a hash and the fallback matched them directly.
-**Learning:** During plaintext password migration, comparing a user's input directly against the database stored password without verifying if the stored password is a plain-text password or a hash creates an authorization bypass.
-**Prevention:** Always verify type safety (e.g. `typeof user.password === 'string'`) and ensure the string is not already a hash (e.g. checking that it doesn't start with bcrypt prefixes like `$2a$`, `$2b$`, or `$2y$`) before comparing the input as a plaintext fallback.
+## 2024-05-25 - Pass-the-Hash Vulnerability in Plaintext Migration Fallback
+**Vulnerability:** A "Pass-the-Hash" vulnerability existed in the credentials authorization logic (`src/auth.ts`) used to migrate plaintext passwords to bcrypt. The fallback allowed login if `user.password === credentials.password`, meaning if an attacker obtained the bcrypt hash from the database, they could supply the hash string itself as their password.
+**Learning:** Fallback mechanisms intended for migration can be exploited if they don't explicitly exclude modernized/secure data formats (like bcrypt hashes).
+**Prevention:** Always scope down migration fallbacks. Ensure that a plaintext fallback condition explicitly checks that the stored value is not already a hashed value (e.g., `!user.password.startsWith('$2a$') && !user.password.startsWith('$2b$')`).
