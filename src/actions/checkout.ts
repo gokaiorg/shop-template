@@ -10,16 +10,19 @@ export async function createCheckoutSession(items: any[], lang: string) {
             throw new Error("Invalid or empty items array");
         }
 
+        // Validate all items before proceeding to DB calls
+        for (const item of items) {
+            if (!item || typeof item !== 'object' || !item.id || typeof item.id !== 'string') {
+                throw new Error("Invalid item format or missing ID");
+            }
+            if (typeof item.quantity !== 'number' || !Number.isInteger(item.quantity) || item.quantity <= 0) {
+                throw new Error(`Invalid quantity for item ${item.id}`);
+            }
+        }
+
         // Fetch source of truth for products to avoid trusting client-provided prices
         const verifiedItems = await Promise.all(
             items.map(async (item) => {
-                if (!item.id || typeof item.id !== 'string') {
-                    throw new Error("Invalid item id");
-                }
-                if (typeof item.quantity !== 'number' || !Number.isInteger(item.quantity) || item.quantity <= 0) {
-                    throw new Error(`Invalid quantity for item ${item.id}`);
-                }
-
                 const productDoc = await adminDb.collection("products").doc(item.id).get();
                 if (!productDoc.exists) {
                     throw new Error(`Product not found: ${item.id}`);
