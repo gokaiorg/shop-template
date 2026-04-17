@@ -6,15 +6,29 @@ import { headers } from "next/headers";
 
 export async function createCheckoutSession(items: any[], lang: string) {
     try {
+        if (!Array.isArray(items) || items.length === 0) {
+            throw new Error("Invalid or empty items array");
+        }
+
+        // Validate all items before proceeding to DB calls
+        for (const item of items) {
+            if (!item || typeof item !== 'object' || !item.id || typeof item.id !== 'string') {
+                throw new Error("Invalid item format or missing ID");
+            }
+            if (typeof item.quantity !== 'number' || !Number.isInteger(item.quantity) || item.quantity <= 0) {
+                throw new Error(`Invalid quantity for item ${item.id}`);
+            }
+        }
+
         // Fetch source of truth for products to avoid trusting client-provided prices
         const verifiedItems = await Promise.all(
             items.map(async (item) => {
-                const quantity = Number(item.quantity);
-                if (!item.id || typeof item.id !== 'string') {
-                    throw new Error("Invalid or missing product ID");
+                if (!item || typeof item !== 'object' || typeof item.id !== 'string') {
+                    throw new Error("Invalid item format");
                 }
-                if (!Number.isInteger(quantity) || quantity <= 0) {
-                    throw new Error(`Invalid quantity for item: ${item.id}`);
+                const quantity = Number(item.quantity);
+                if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+                    throw new Error(`Invalid quantity for product: ${item.id}`);
                 }
 
                 const productDoc = await adminDb.collection("products").doc(item.id).get();
