@@ -41,22 +41,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     if (user && user.password) {
                         let isValidPassword = false;
 
-                        // Try bcrypt compare first
-                        isValidPassword = await bcrypt.compare(
-                            credentials.password as string,
-                            user.password
-                        );
+                        const isHash = typeof user.password === 'string' && /^\$2[abyxs]\$/.test(user.password);
 
-                        // Fallback for existing plaintext passwords (migration path)
-                        // Make sure to not compare against a hashed password to prevent pass-the-hash
-                        const isHash = typeof user.password === 'string' && (user.password.startsWith('$2a$') || user.password.startsWith('$2b$') || user.password.startsWith('$2y$'));
-                        if (!isValidPassword && !isHash && user.password === credentials.password) {
-                            isValidPassword = true;
-                            // Hash the password for future logins
-                            const hashedPassword = await bcrypt.hash(credentials.password as string, 10);
-                            await usersRef.doc(userDoc.id).update({
-                                password: hashedPassword
-                            });
+                        if (isHash) {
+                            // Try bcrypt compare first
+                            isValidPassword = await bcrypt.compare(
+                                credentials.password as string,
+                                user.password
+                            );
+                        } else {
+                            // Fallback for existing plaintext passwords (migration path)
+                            // Make sure to not compare against a hashed password to prevent pass-the-hash
+                            if (user.password === credentials.password) {
+                                isValidPassword = true;
+                                // Hash the password for future logins
+                                const hashedPassword = await bcrypt.hash(credentials.password as string, 10);
+                                await usersRef.doc(userDoc.id).update({
+                                    password: hashedPassword
+                                });
+                            }
                         }
 
                         if (isValidPassword) {
