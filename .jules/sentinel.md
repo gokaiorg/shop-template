@@ -2,3 +2,7 @@
 **Vulnerability:** Critical authorization bypass in `/admin` functionalities. Server Actions defined in `src/actions/admin.ts` (`createCategory`, `createProduct`, `seedDemoData`) lacked explicit authentication/authorization checks. Although the `/admin` routes are protected by `middleware.ts`, Server Actions can be invoked directly from anywhere, allowing unauthenticated users to modify the database.
 **Learning:** In Next.js App Router, `middleware.ts` protection on routes does not automatically secure Server Actions used by those routes. Server Actions are independent endpoints.
 **Prevention:** Every Server Action performing sensitive operations must include direct session validation (e.g., `const session = await auth(); if (session?.user?.role !== "ADMIN") return { error: "Unauthorized" };`) regardless of the route middleware.
+## 2024-05-24 - Input Validation in Checkout Action
+**Vulnerability:** Missing server-side validation for numerical inputs (specifically `quantity`) in `createCheckoutSession` within `src/actions/checkout.ts`.
+**Learning:** Client-side values can easily be manipulated. Trusting the client to provide positive integers for checkout item quantities can lead to application logic issues (like negative totals, or unexpected errors).
+**Prevention:** Always perform strict server-side type and bound validation (e.g., `Number.isInteger(quantity) && quantity > 0`) for numerical input provided by users before performing backend logic, especially in billing actions.
