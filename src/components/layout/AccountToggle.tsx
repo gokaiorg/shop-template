@@ -17,7 +17,7 @@ import { AuthSheet } from "@/components/auth/AuthSheet"
 
 export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
     const { data: session, status } = useSession()
-    
+
     if (status === "loading") {
         return <div className="h-8 w-16 animate-pulse rounded-md bg-muted"></div>
     }
