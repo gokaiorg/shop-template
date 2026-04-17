@@ -17,12 +17,11 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
     // const slug = lang === 'fr' ? product.slugFr : product.slugEn;
     const addItem = useCart(state => state.addItem);
-
-    const fallbackAddToCart = lang === 'fr' ? "Ajouter au panier" : "Add to cart";
+    const addToCartText = dict.add_to_cart || "Add to cart";
 
     const handleAddToCart = () => {
         addItem(product);
-        toast.success(dict.added_to_cart || fallbackAddToCart, {
+        toast.success(dict.added_to_cart || "Added to cart", {
             description: title,
         });
     };
@@ -61,9 +60,9 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                         size="sm"
                         className="rounded-full shadow-xs cursor-pointer"
                         onClick={handleAddToCart}
-                        aria-label={`${dict.add_to_cart || fallbackAddToCart} ${title}`}
+                        aria-label={`${addToCartText} ${title}`}
                     >
-                        {dict.add_to_cart || fallbackAddToCart}
+                        {addToCartText}
                     </Button>
                 </div>
             </div>
