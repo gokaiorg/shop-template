@@ -59,7 +59,6 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                         size="sm"
                         className="rounded-full shadow-xs cursor-pointer"
                         onClick={handleAddToCart}
-                        aria-label={dict.add_product_to_cart ? dict.add_product_to_cart.replace("{product}", title) : `Add ${title} to cart`}
                     >
                         {dict.add_to_cart || "Add to cart"}
                     </Button>

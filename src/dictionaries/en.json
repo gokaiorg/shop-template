@@ -67,7 +67,6 @@
     "shop": {
         "all_categories": "All Categories",
         "add_to_cart": "Add to cart",
-        "add_product_to_cart": "Add {product} to cart",
         "empty_state": "No products found."
     }
 }
