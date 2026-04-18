@@ -32,7 +32,10 @@ export default function LoginPage() {
                     <div className="rounded-md shadow-sm -space-y-px">
                         <div>
                             <input
+                                id="email"
+                                name="email"
                                 type="email"
+                                autoComplete="email"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-black focus:border-black focus:z-10 sm:text-sm"
                                 placeholder="Email address"
@@ -42,7 +45,10 @@ export default function LoginPage() {
                         </div>
                         <div>
                             <input
+                                id="password"
+                                name="password"
                                 type="password"
+                                autoComplete="current-password"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-black focus:border-black focus:z-10 sm:text-sm"
                                 placeholder="Password"
