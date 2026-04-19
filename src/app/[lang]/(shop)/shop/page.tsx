@@ -34,18 +34,23 @@ export default async function ShopPage(
         return result;
     };
 
-    const params = await props.params;
-    const searchParams = await props.searchParams;
+    // Start the DB fetch immediately without waiting for params to resolve
+    const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
+
+    const [params, searchParams] = await Promise.all([
+        props.params,
+        props.searchParams
+    ]);
     const { lang } = params;
 
     // Parse the category from search parameters
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
-    // Execute data fetching in parallel where possible
+    // Execute dictionary fetch and await the already-started categories fetch in parallel
     const [dict, categoriesSnapshot] = await Promise.all([
         getDictionary(lang as Locale),
-        adminDb.collection('categories').orderBy('nameEn', 'asc').get()
+        categoriesPromise
     ]);
 
     const categories = categoriesSnapshot.docs.map(doc => 
