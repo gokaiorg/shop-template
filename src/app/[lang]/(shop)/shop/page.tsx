@@ -42,32 +42,43 @@ export default async function ShopPage(
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
-    // Execute data fetching in parallel where possible
-    const [dict, categoriesSnapshot] = await Promise.all([
-        getDictionary(lang as Locale),
-        adminDb.collection('categories').orderBy('nameEn', 'asc').get()
-    ]);
+    // Optimization: Avoid data fetching waterfall by starting independent requests concurrently
+    const dictPromise = getDictionary(lang as Locale);
+    const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
+
+    // If no category filter is applied, we can start fetching products concurrently to reduce TTFB
+    // We attach a dummy catch to prevent unhandled promise rejections if Promise.all fails before we await this.
+    let productsPromise: Promise<FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>> | undefined;
+    if (!currentCategorySlug) {
+        productsPromise = adminDb.collection('products').orderBy('createdAt', 'desc').get();
+        productsPromise.catch(() => {});
+    }
+
+    // Await dictionary and categories as an explicit tuple to maintain typing,
+    // and let productsPromise run in the background (to be awaited later if needed).
+    const [dict, categoriesSnapshot] = await Promise.all([dictPromise, categoriesPromise]);
 
     const categories = categoriesSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Category
     );
 
-    // Build the query for products based on the requested category
-    let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
-    
+    let productsSnapshot;
     if (currentCategorySlug) {
-        // We first need the categoryId to query products
+        // We must wait to build the query for products based on the requested category
+        let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
         const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+
         if (catId) {
             productsQuery = productsQuery.where('categoryId', '==', catId);
         } else {
             productsQuery = productsQuery.where('categoryId', '==', 'NOT_FOUND');
         }
+        productsQuery = productsQuery.orderBy('createdAt', 'desc');
+        productsSnapshot = await productsQuery.get();
+    } else {
+        // Use the concurrently started products fetch result
+        productsSnapshot = await productsPromise!;
     }
-
-    productsQuery = productsQuery.orderBy('createdAt', 'desc');
-
-    const productsSnapshot = await productsQuery.get();
     const productsList = productsSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Product
     );

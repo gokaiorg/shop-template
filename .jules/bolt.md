@@ -5,3 +5,6 @@
 ## 2024-05-24 - Prevent N+1 queries in Firestore lookups
 **Learning:** Using `Promise.all(items.map(... => adminDb.collection("...").doc(id).get()))` creates an N+1 query problem, causing multiple network roundtrips to Firestore. This significantly degrades backend performance, especially when checking out carts with multiple items.
 **Action:** Always batch Firestore document lookups by ID into a single network call using `adminDb.getAll(...documentRefs)` instead of looping. Note that `getAll()` expects arguments to be spread and requires at least one document reference, so always add an empty array check (`if (items.length === 0) return/throw`).
+## 2024-05-30 - Unhandled Rejections in Concurrent Data Fetching
+**Learning:** When starting independent data fetches concurrently in Next.js Server Components, any un-awaited promises that fail while other promises are still resolving or failing will cause an unhandled promise rejection. This can crash Node.js or cause Next.js builds to fail if they aren't caught correctly.
+**Action:** Always attach a dummy `.catch(() => {})` to floating promises that are started concurrently and may not be explicitly awaited inside a `Promise.all`, or ensure they are explicitly included inside the `Promise.all` array right from the start.
