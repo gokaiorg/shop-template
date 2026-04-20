@@ -51,6 +51,7 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                     type="button"
                     variant="outline"
                     className="w-full"
+                    disabled={loading}
                     onClick={() => signIn("google", { callbackUrl: `/${params.lang || 'en'}/admin/dashboard` })}
                 >
                     <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -74,7 +75,9 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                     <Label htmlFor="email">{dict.email}</Label>
                     <Input
                         id="email"
+                        name="email"
                         type="email"
+                        autoComplete="email"
                         placeholder={dict.email_placeholder}
                         required
                         value={email}
@@ -88,7 +91,9 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                     <div className="relative">
                         <Input
                             id="password"
+                            name="password"
                             type={showPassword ? "text" : "password"}
+                            autoComplete="current-password"
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
