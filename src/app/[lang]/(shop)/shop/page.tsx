@@ -42,7 +42,16 @@ export default async function ShopPage(
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
-    // Execute data fetching in parallel where possible
+    // Execute data fetching in parallel where possible.
+    // If no category filter is applied, we can fetch products concurrently with categories and dictionary
+    // to prevent a data fetching waterfall and improve TTFB.
+    let backgroundProductsPromise: Promise<FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>> | null = null;
+    if (!currentCategorySlug) {
+        backgroundProductsPromise = adminDb.collection('products').orderBy('createdAt', 'desc').get();
+        // Attach dummy catch to prevent unhandled rejections if the primary promises fail first
+        backgroundProductsPromise.catch(() => {});
+    }
+
     const [dict, categoriesSnapshot] = await Promise.all([
         getDictionary(lang as Locale),
         adminDb.collection('categories').orderBy('nameEn', 'asc').get()
@@ -52,10 +61,13 @@ export default async function ShopPage(
         serializeFirestoreData(doc.id, doc.data()) as Category
     );
 
-    // Build the query for products based on the requested category
-    let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
-    
-    if (currentCategorySlug) {
+    let productsSnapshot;
+    if (backgroundProductsPromise) {
+        productsSnapshot = await backgroundProductsPromise;
+    } else {
+        // Build the query for products based on the requested category
+        let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
+
         // We first need the categoryId to query products
         const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
         if (catId) {
@@ -63,11 +75,10 @@ export default async function ShopPage(
         } else {
             productsQuery = productsQuery.where('categoryId', '==', 'NOT_FOUND');
         }
+
+        productsQuery = productsQuery.orderBy('createdAt', 'desc');
+        productsSnapshot = await productsQuery.get();
     }
-
-    productsQuery = productsQuery.orderBy('createdAt', 'desc');
-
-    const productsSnapshot = await productsQuery.get();
     const productsList = productsSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Product
     );
