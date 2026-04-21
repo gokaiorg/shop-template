@@ -10,4 +10,4 @@
 ## 2024-04-17 - Missing checkout quantity validation
 **Vulnerability:** The `createCheckoutSession` server action did not validate the client-provided `quantity` for checkout items. Since `quantity` is multiplied by `price` to determine the order total, a negative or fractional quantity from a malicious payload could lead to negative order totals, underflow, or bypassing proper pricing rules.
 **Learning:** Even when product *prices* are securely fetched from the backend (source of truth), any mathematical multipliers provided by the client (like `quantity`) must be strictly validated before calculation.
-**Prevention:** Always assert `Number.isInteger()` and `> 0` for any multiplier/quantity input originating from the client payload in sensitive calculations.
+**Prevention:** Always assert `Number.isSafeInteger()` and `> 0` for any multiplier/quantity input originating from the client payload in sensitive calculations.

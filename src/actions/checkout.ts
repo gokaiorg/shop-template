@@ -21,7 +21,11 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
         });
 
         const verifiedItems = items.map((item) => {
-            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+            if (!item || typeof item !== 'object') {
+                throw new Error('Invalid item object');
+            }
+
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
                 throw new Error(`Invalid quantity for item: ${item.id}`);
             }
 
