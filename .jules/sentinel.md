@@ -7,3 +7,7 @@
 **Vulnerability:** A "Pass-the-Hash" vulnerability existed in the credentials authorization logic (`src/auth.ts`) used to migrate plaintext passwords to bcrypt. The fallback allowed login if `user.password === credentials.password`, meaning if an attacker obtained the bcrypt hash from the database, they could supply the hash string itself as their password.
 **Learning:** Fallback mechanisms intended for migration can be exploited if they don't explicitly exclude modernized/secure data formats (like bcrypt hashes).
 **Prevention:** Always scope down migration fallbacks. Ensure that a plaintext fallback condition explicitly checks that the stored value is not already a hashed value (e.g., `!user.password.startsWith('$2a$') && !user.password.startsWith('$2b$')`).
+## 2024-05-18 - Missing Quantity Validation in Checkout
+**Vulnerability:** The `createCheckoutSession` action accepted quantities directly from the client without validating if they were positive integers.
+**Learning:** Client-provided numerical inputs, even within complex objects, must always be explicitly validated on the server. Failure to do so can lead to logic bugs, negative total order amounts, or issues downstream (like Stripe expecting positive integer amounts).
+**Prevention:** Always use `Number.isInteger()` and check for `> 0` for any quantity or count values received from the client before using them in calculations or third-party APIs.
