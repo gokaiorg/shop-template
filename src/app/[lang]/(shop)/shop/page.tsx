@@ -42,6 +42,16 @@ export default async function ShopPage(
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
+    // Optimization: Initiate independent products fetch early when no category filter is applied
+    // to avoid waterfall delay waiting for categories
+    const backgroundProductsPromise = !currentCategorySlug
+        ? adminDb.collection('products').orderBy('createdAt', 'desc').get()
+        : null;
+
+    if (backgroundProductsPromise) {
+        backgroundProductsPromise.catch(() => {});
+    }
+
     // Execute data fetching in parallel where possible
     const [dict, categoriesSnapshot] = await Promise.all([
         getDictionary(lang as Locale),
@@ -53,9 +63,10 @@ export default async function ShopPage(
     );
 
     // Build the query for products based on the requested category
-    let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
+    let productsSnapshot;
     
     if (currentCategorySlug) {
+        let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
         // We first need the categoryId to query products
         const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
         if (catId) {
@@ -63,11 +74,11 @@ export default async function ShopPage(
         } else {
             productsQuery = productsQuery.where('categoryId', '==', 'NOT_FOUND');
         }
+        productsQuery = productsQuery.orderBy('createdAt', 'desc');
+        productsSnapshot = await productsQuery.get();
+    } else {
+        productsSnapshot = await backgroundProductsPromise!;
     }
-
-    productsQuery = productsQuery.orderBy('createdAt', 'desc');
-
-    const productsSnapshot = await productsQuery.get();
     const productsList = productsSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Product
     );
