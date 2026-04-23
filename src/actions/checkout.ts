@@ -12,6 +12,13 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
             throw new Error("No items in cart");
         }
 
+        // Validate quantity to prevent negative total amounts and integer overflow
+        for (const item of items) {
+            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+                throw new Error("Invalid quantity");
+            }
+        }
+
         const productRefs = items.map((item) => adminDb.collection("products").doc(item.id));
         const productDocs = await adminDb.getAll(...productRefs);
 

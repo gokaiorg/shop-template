@@ -7,3 +7,7 @@
 **Vulnerability:** A "Pass-the-Hash" vulnerability existed in the credentials authorization logic (`src/auth.ts`) used to migrate plaintext passwords to bcrypt. The fallback allowed login if `user.password === credentials.password`, meaning if an attacker obtained the bcrypt hash from the database, they could supply the hash string itself as their password.
 **Learning:** Fallback mechanisms intended for migration can be exploited if they don't explicitly exclude modernized/secure data formats (like bcrypt hashes).
 **Prevention:** Always scope down migration fallbacks. Ensure that a plaintext fallback condition explicitly checks that the stored value is not already a hashed value (e.g., `!user.password.startsWith('$2a$') && !user.password.startsWith('$2b$')`).
+## 2024-05-24 - [Quantity Validation in Server Actions]
+**Vulnerability:** The checkout server action accepted item quantities from the client payload without validation, allowing negative quantities, decimal values, or zeros.
+**Learning:** In Next.js Server Actions, trusting unvalidated numerical inputs for critical financial operations (like creating a checkout session or order) can lead to logic bugs, negative total order amounts, or integer overflow/underflow vulnerabilities. Client-side validation is insufficient.
+**Prevention:** Always perform strict server-side validation on client-provided numerical inputs, especially quantities and prices. Use type checks (e.g., `Number.isInteger`) and boundary checks (e.g., `> 0`) before processing the data or using it in calculations.
