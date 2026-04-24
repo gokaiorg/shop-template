@@ -62,7 +62,7 @@ export async function POST(req: Request) {
                 stripeSessionId: session.id,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-            });
+            }, { merge: true });
         } catch (error: any) {
             console.error(`[DATABASE_UPDATE_ERROR] ${error.message}`);
             return new NextResponse("Failed to update order", { status: 500 });
