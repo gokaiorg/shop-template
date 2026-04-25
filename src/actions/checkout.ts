@@ -25,6 +25,11 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
             if (!productDoc || !productDoc.exists) {
                 throw new Error(`Product not found: ${item.id}`);
             }
+
+            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+                throw new Error(`Invalid quantity for product ${item.id}`);
+            }
+
             const productData = productDoc.data();
             return {
                 ...item,
