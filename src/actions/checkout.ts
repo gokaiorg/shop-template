@@ -8,8 +8,14 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
     try {
         // Fetch source of truth for products to avoid trusting client-provided prices
         // Optimization: Use getAll to batch database requests and prevent N+1 query problem
-        if (items.length === 0) {
+        if (!Array.isArray(items) || items.length === 0) {
             throw new Error("No items in cart");
+        }
+
+        for (const item of items) {
+            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+                throw new Error(`Invalid quantity for item: ${item.id}`);
+            }
         }
 
         const productRefs = items.map((item) => adminDb.collection("products").doc(item.id));
