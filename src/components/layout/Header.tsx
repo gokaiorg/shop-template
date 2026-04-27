@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useSession, signOut, SessionProvider } from "next-auth/react";
+import { SessionProvider } from "next-auth/react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { AccountToggle } from "./AccountToggle";
@@ -11,8 +11,9 @@ import { CartSheet } from "../cart/CartSheet";
 import { MobileNav } from "./MobileNav";
 
 function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
-    const { status } = useSession();
-
+    // ⚡ Bolt Optimization: Removed unused useSession hook
+    // Subscribing to useSession causes the component to re-render whenever the session state changes.
+    // Since HeaderContent doesn't actively use the session, removing it prevents unnecessary cascading re-renders.
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
