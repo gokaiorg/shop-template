@@ -49,9 +49,10 @@ export function CartSheet() {
 
     if (!mounted) {
         return (
-            <div className="relative p-2">
+            <Button variant="ghost" size="icon" disabled className="relative cursor-pointer disabled:opacity-100">
                 <ShoppingCart className="h-5 w-5" />
-            </div>
+                <span className="sr-only">Cart loading</span>
+            </Button>
         );
     }
 
@@ -61,11 +62,13 @@ export function CartSheet() {
                 <Button variant="ghost" size="icon" className="relative cursor-pointer">
                     <ShoppingCart className="h-5 w-5" />
                     {totalItems > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                        <span aria-hidden="true" className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                             {totalItems}
                         </span>
                     )}
-                    <span className="sr-only">Open cart</span>
+                    <span className="sr-only">
+                        {totalItems > 0 ? `Open cart, ${totalItems} items` : "Open cart"}
+                    </span>
                 </Button>
             </SheetTrigger>
             <SheetContent className="flex w-full flex-col sm:max-w-lg overflow-y-auto p-6">
