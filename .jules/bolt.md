@@ -5,7 +5,6 @@
 ## 2024-05-24 - Prevent N+1 queries in Firestore lookups
 **Learning:** Using `Promise.all(items.map(... => adminDb.collection("...").doc(id).get()))` creates an N+1 query problem, causing multiple network roundtrips to Firestore. This significantly degrades backend performance, especially when checking out carts with multiple items.
 **Action:** Always batch Firestore document lookups by ID into a single network call using `adminDb.getAll(...documentRefs)` instead of looping. Note that `getAll()` expects arguments to be spread and requires at least one document reference, so always add an empty array check (`if (items.length === 0) return/throw`).
-
-## 2025-05-18 - Remove unnecessary `useSession` hooks
-**Learning:** Subscribing to `useSession()` from `next-auth/react` in components that don't actually render user session data forces those components to re-render whenever the global session state changes, which can lead to cascading re-renders in global components like `Header`.
-**Action:** Audit components importing `useSession`. If its returned values (e.g., `session`, `status`) are destructured but ultimately unused, remove the hook entirely to prevent unnecessary context subscriptions and improve client-side rendering performance.
+## 2024-03-21 - Data Fetching Waterfalls in Next.js Server Components
+**Learning:** Sequential await calls on un-started Promises block subsequent queries. In Next.js, `params` and `searchParams` are now asynchronous, and waiting for them before starting a database query creates a waterfall.
+**Action:** Start the database fetch Promise immediately (without `await`), then resolve it concurrently with the parameter Promises using `Promise.all()`.
