@@ -76,7 +76,10 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                         id="email"
                         name="email"
                         type="email"
-                        autoComplete="email"
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        disabled={loading}
                         placeholder={dict.email_placeholder}
                         required
                         value={email}
@@ -93,6 +96,7 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                             name="password"
                             type={showPassword ? "text" : "password"}
                             autoComplete="current-password"
+                            disabled={loading}
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
