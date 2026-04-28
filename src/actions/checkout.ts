@@ -21,7 +21,10 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
         });
 
         const verifiedItems = items.map((item) => {
-            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+            if (!item || typeof item.id !== "string") {
+                throw new Error("Invalid item format");
+            }
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
                 throw new Error(`Invalid quantity for product: ${item.id}`);
             }
 
