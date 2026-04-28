@@ -11,7 +11,6 @@ import { CartSheet } from "../cart/CartSheet";
 import { MobileNav } from "./MobileNav";
 
 function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
-    // Optimization: Removed unused `useSession()` hook to prevent unnecessary client-side re-renders of the global Header component when session state changes.
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
