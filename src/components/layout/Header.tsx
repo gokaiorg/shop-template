@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { SessionProvider } from "next-auth/react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
