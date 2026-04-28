@@ -52,17 +52,23 @@ export default async function ShopPage(
         serializeFirestoreData(doc.id, doc.data()) as Category
     );
 
-    // Build the query for products based on the requested category
-    let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
-    
+    let productsSnapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>;
     if (currentCategorySlug) {
-        // We first need the categoryId to query products
+        // We must wait to build the query for products based on the requested category
+        let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
         const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+
         if (catId) {
             productsQuery = productsQuery.where('categoryId', '==', catId);
         } else {
             productsQuery = productsQuery.where('categoryId', '==', 'NOT_FOUND');
         }
+        productsQuery = productsQuery.orderBy('createdAt', 'desc');
+        productsSnapshot = await productsQuery.get();
+    } else {
+        // Use the concurrently started products fetch result
+        if (!preFetchedProducts) throw new Error("Products fetch failed to initialize");
+        productsSnapshot = preFetchedProducts;
     }
 
     productsQuery = productsQuery.orderBy('createdAt', 'desc');
