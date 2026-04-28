@@ -15,8 +15,13 @@ interface PrimaryNavProps {
 export function PrimaryNav({ lang, dict, className, onNavClick }: PrimaryNavProps) {
     const pathname = usePathname();
 
-    const isShopActive = pathname === `/${lang}/shop` || pathname.startsWith(`/${lang}/shop/`);
-    const isAboutActive = pathname === `/${lang}/about` || pathname.startsWith(`/${lang}/about/`);
+    const isActive = (path: string) => {
+        if (!pathname) return false;
+        return pathname === path || pathname.startsWith(`${path}/`);
+    };
+
+    const isShopActive = isActive(`/${lang}/shop`);
+    const isAboutActive = isActive(`/${lang}/about`);
 
     return (
         <nav className={cn("gap-6", className)}>
