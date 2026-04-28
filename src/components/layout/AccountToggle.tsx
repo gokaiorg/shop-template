@@ -19,7 +19,12 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
     const { data: session, status } = useSession()
 
     if (status === "loading") {
-        return <div className="h-8 w-16 animate-pulse rounded-md bg-muted"></div>
+        return (
+            <Button variant="ghost" size="icon" disabled>
+                <User className="h-[1.2rem] w-[1.2rem] opacity-50" />
+                <span className="sr-only">Account</span>
+            </Button>
+        )
     }
 
     if (session) {
