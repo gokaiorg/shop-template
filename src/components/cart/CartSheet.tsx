@@ -66,7 +66,9 @@ export function CartSheet() {
                         </span>
                     )}
                     <span className="sr-only">
-                        Open cart{totalItems > 0 ? `, ${totalItems} item${totalItems === 1 ? '' : 's'}` : ''}
+                        {lang === "fr"
+                            ? "Ouvrir le panier" + (totalItems > 0 ? ", " + totalItems + " article" + (totalItems === 1 ? "" : "s") : "")
+                            : "Open cart" + (totalItems > 0 ? `, ${totalItems} item${totalItems === 1 ? '' : 's'}` : "")}
                     </span>
                 </Button>
             </SheetTrigger>
