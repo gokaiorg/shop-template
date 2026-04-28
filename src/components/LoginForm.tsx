@@ -82,6 +82,7 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        disabled={loading}
                     />
                 </div>
                 <div className="grid gap-2">
@@ -98,6 +99,7 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="pr-12"
+                            disabled={loading}
                         />
                         <Button
                             type="button"
