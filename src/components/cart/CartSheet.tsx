@@ -17,7 +17,7 @@ import { createCheckoutSession } from "@/actions/checkout";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
-export function CartSheet() {
+export function CartSheet({ dict }: { dict?: any }) {
     // Optimization: Use individual selectors to prevent unnecessary re-renders when other parts of the cart state change
     const items = useCart(state => state.items);
     const totalItems = useCart(state => state.totalItems);
@@ -47,11 +47,17 @@ export function CartSheet() {
         }
     };
 
+    const openCartLabel = dict?.open_cart || "Open cart";
+    const itemsLabel = dict?.cart_items || "items";
+    const srOnlyLabel = totalItems > 0
+        ? `${openCartLabel} (${totalItems} ${itemsLabel})`
+        : openCartLabel;
+
     if (!mounted) {
         return (
             <Button variant="ghost" size="icon" className="relative" disabled>
                 <ShoppingCart className="h-5 w-5" />
-                <span className="sr-only">Open cart</span>
+                <span className="sr-only">{openCartLabel}</span>
             </Button>
         );
     }
@@ -66,9 +72,7 @@ export function CartSheet() {
                             {totalItems}
                         </span>
                     )}
-                    <span className="sr-only">
-                        Open cart {totalItems > 0 ? `(${totalItems} items)` : ''}
-                    </span>
+                    <span className="sr-only">{srOnlyLabel}</span>
                 </Button>
             </SheetTrigger>
             <SheetContent className="flex w-full flex-col sm:max-w-lg overflow-y-auto p-6">

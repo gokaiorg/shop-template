@@ -34,7 +34,7 @@ function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
                         <LangToggle lang={lang} dict={dict.header} />
                     </div>
                     <AccountToggle lang={lang} dict={dict} />
-                    <CartSheet />
+                    <CartSheet dict={dict.header} />
                 </div>
             </div>
         </header>
