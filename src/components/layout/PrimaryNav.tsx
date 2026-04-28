@@ -1,8 +1,5 @@
-"use client";
-
 import Link from "next/link";
 import React from "react";
-import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface PrimaryNavProps {
@@ -13,37 +10,19 @@ interface PrimaryNavProps {
 }
 
 export function PrimaryNav({ lang, dict, className, onNavClick }: PrimaryNavProps) {
-    const pathname = usePathname();
-
-    const isActive = (path: string) => {
-        if (!pathname) return false;
-        return pathname === path || pathname.startsWith(`${path}/`);
-    };
-
-    const isShopActive = isActive(`/${lang}/shop`);
-    const isAboutActive = isActive(`/${lang}/about`);
-
     return (
         <nav className={cn("gap-6", className)}>
             <Link
                 href={`/${lang}/shop`}
                 onClick={onNavClick}
-                aria-current={isShopActive ? "page" : undefined}
-                className={cn(
-                    "flex items-center text-sm font-medium transition-colors hover:text-foreground",
-                    isShopActive ? "text-foreground" : "text-muted-foreground"
-                )}
+                className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
                 {dict.shop}
             </Link>
             <Link
                 href={`/${lang}/about`}
                 onClick={onNavClick}
-                aria-current={isAboutActive ? "page" : undefined}
-                className={cn(
-                    "flex items-center text-sm font-medium transition-colors hover:text-foreground",
-                    isAboutActive ? "text-foreground" : "text-muted-foreground"
-                )}
+                className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
                 {dict.about}
             </Link>
