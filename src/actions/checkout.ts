@@ -8,11 +8,16 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
     try {
         // Fetch source of truth for products to avoid trusting client-provided prices
         // Optimization: Use getAll to batch database requests and prevent N+1 query problem
-        if (items.length === 0) {
+        if (!Array.isArray(items) || items.length === 0) {
             throw new Error("No items in cart");
         }
 
-        const productRefs = items.map((item) => adminDb.collection("products").doc(item.id));
+        const productRefs = items.map((item) => {
+            if (!item || typeof item.id !== "string") {
+                throw new Error("Invalid item format");
+            }
+            return adminDb.collection("products").doc(item.id);
+        });
         const productDocs = await adminDb.getAll(...productRefs);
 
         const productDocMap = new Map();
@@ -26,7 +31,7 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
                 throw new Error(`Product not found: ${item.id}`);
             }
 
-            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
                 throw new Error(`Invalid quantity for product ${item.id}`);
             }
 
