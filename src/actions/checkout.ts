@@ -14,7 +14,7 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
 
         // Validate quantities
         for (const item of items) {
-            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
                 throw new Error(`Invalid quantity for item ${item.id}`);
             }
         }

@@ -55,13 +55,10 @@ export async function POST(req: Request) {
                 id: orderId,
                 status: "PAID",
                 totalAmount: session.amount_total ? session.amount_total / 100 : 0,
-                userId: null,
                 items: itemsList,
                 customerEmail: session.customer_details?.email || null,
                 customerName: session.customer_details?.name || null,
                 stripeSessionId: session.id,
-                createdAt: new Date(),
-                updatedAt: new Date(),
             }, { merge: true });
         } catch (error: any) {
             console.error(`[DATABASE_UPDATE_ERROR] ${error.message}`);
