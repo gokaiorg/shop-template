@@ -34,27 +34,19 @@ export default async function ShopPage(
         return result;
     };
 
-    const params = await props.params;
-    const searchParams = await props.searchParams;
+    // Start the DB fetch immediately without waiting for params to resolve
+    const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
+
+    const [params, searchParams, categoriesSnapshot] = await Promise.all([
+        props.params,
+        props.searchParams,
+        categoriesPromise
+    ]);
     const { lang } = params;
 
     // Parse the category from search parameters
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
-
-    // Optimization: Avoid data fetching waterfall by starting independent requests concurrently
-    const dictPromise = getDictionary(lang as Locale);
-    const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
-
-    const productsPromise = !currentCategorySlug
-        ? adminDb.collection('products').orderBy('createdAt', 'desc').get()
-        : null;
-
-    const [dict, categoriesSnapshot, preFetchedProducts] = await Promise.all([
-        dictPromise,
-        categoriesPromise,
-        productsPromise
-    ]);
 
     const categories = categoriesSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Category
@@ -78,6 +70,14 @@ export default async function ShopPage(
         if (!preFetchedProducts) throw new Error("Products fetch failed to initialize");
         productsSnapshot = preFetchedProducts;
     }
+
+    productsQuery = productsQuery.orderBy('createdAt', 'desc');
+
+    // Execute dictionary and products fetch in parallel
+    const [dict, productsSnapshot] = await Promise.all([
+        getDictionary(lang as Locale),
+        productsQuery.get()
+    ]);
     const productsList = productsSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Product
     );
