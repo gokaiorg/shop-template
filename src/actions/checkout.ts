@@ -12,9 +12,16 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
             throw new Error("No items in cart");
         }
 
+        if (items.length > 100) {
+            throw new Error("Too many items in cart");
+        }
+
         // Validate quantity to prevent negative total amounts and integer overflow
         for (const item of items) {
-            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+            if (typeof item.id !== "string" || !item.id) {
+                throw new Error("Invalid product ID");
+            }
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
                 throw new Error("Invalid quantity");
             }
         }
