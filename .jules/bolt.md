@@ -5,6 +5,6 @@
 ## 2024-05-24 - Prevent N+1 queries in Firestore lookups
 **Learning:** Using `Promise.all(items.map(... => adminDb.collection("...").doc(id).get()))` creates an N+1 query problem, causing multiple network roundtrips to Firestore. This significantly degrades backend performance, especially when checking out carts with multiple items.
 **Action:** Always batch Firestore document lookups by ID into a single network call using `adminDb.getAll(...documentRefs)` instead of looping. Note that `getAll()` expects arguments to be spread and requires at least one document reference, so always add an empty array check (`if (items.length === 0) return/throw`).
-## 2024-04-21 - [Preventing Data Fetching Waterfalls in Next.js Server Components]
-**Learning:** Found a waterfall on `src/app/[lang]/(shop)/shop/page.tsx` where products were fetched only after the dictionary and categories were resolved, even when no category filter was applied.
-**Action:** Always check if dependent data queries can be separated into an independent branch of logic. If no dependencies exist in the default path, group the independent fetches using a single `Promise.all` to safely handle all promises concurrently without the risk of swallowed errors from floating promises.
+## 2024-03-21 - Data Fetching Waterfalls in Next.js Server Components
+**Learning:** Sequential await calls on un-started Promises block subsequent queries. In Next.js, `params` and `searchParams` are now asynchronous, and waiting for them before starting a database query creates a waterfall.
+**Action:** Start the database fetch Promise immediately (without `await`), then resolve it concurrently with the parameter Promises using `Promise.all()`.
