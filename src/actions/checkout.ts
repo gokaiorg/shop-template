@@ -12,6 +12,16 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
             throw new Error("No items in cart");
         }
 
+        // Validate items synchronously before initiating async database requests
+        items.forEach((item) => {
+            if (!item.id || typeof item.id !== 'string') {
+                throw new Error("Invalid item id");
+            }
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
+                throw new Error(`Invalid quantity for item: ${item.id}`);
+            }
+        });
+
         const productRefs = items.map((item) => adminDb.collection("products").doc(item.id));
         const productDocs = await adminDb.getAll(...productRefs);
 
@@ -21,10 +31,6 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
         });
 
         const verifiedItems = items.map((item) => {
-            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-                throw new Error(`Invalid quantity for item: ${item.id}`);
-            }
-
             const productDoc = productDocMap.get(item.id);
             if (!productDoc || !productDoc.exists) {
                 throw new Error(`Product not found: ${item.id}`);
