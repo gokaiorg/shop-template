@@ -37,21 +37,16 @@ export default async function ShopPage(
     // Start the DB fetch immediately without waiting for params to resolve
     const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
 
-    const [params, searchParams] = await Promise.all([
+    const [params, searchParams, categoriesSnapshot] = await Promise.all([
         props.params,
-        props.searchParams
+        props.searchParams,
+        categoriesPromise
     ]);
     const { lang } = params;
 
     // Parse the category from search parameters
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
-
-    // Execute dictionary fetch and await the already-started categories fetch in parallel
-    const [dict, categoriesSnapshot] = await Promise.all([
-        getDictionary(lang as Locale),
-        categoriesPromise
-    ]);
 
     const categories = categoriesSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Category
@@ -72,7 +67,11 @@ export default async function ShopPage(
 
     productsQuery = productsQuery.orderBy('createdAt', 'desc');
 
-    const productsSnapshot = await productsQuery.get();
+    // Execute dictionary and products fetch in parallel
+    const [dict, productsSnapshot] = await Promise.all([
+        getDictionary(lang as Locale),
+        productsQuery.get()
+    ]);
     const productsList = productsSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Product
     );
