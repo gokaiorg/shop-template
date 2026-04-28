@@ -22,7 +22,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) {
+                if (typeof credentials?.email !== 'string' || typeof credentials?.password !== 'string') {
                     return null;
                 }
 
@@ -38,7 +38,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     const user = userDoc.data();
 
                     // Compare provided password against stored hashed password securely
-                    if (user && user.password) {
+                    if (user && typeof user.password === 'string') {
                         let isValidPassword = false;
 
                         // Try bcrypt compare first
