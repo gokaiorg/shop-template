@@ -62,7 +62,9 @@
         "theme_light": "Clair",
         "theme_dark": "Sombre",
         "theme_system": "Système",
-        "toggle_theme": "Changer de thème"
+        "toggle_theme": "Changer de thème",
+        "open_cart": "Ouvrir le panier",
+        "cart_items": "articles"
     },
     "shop": {
         "all_categories": "Toutes les catégories",
