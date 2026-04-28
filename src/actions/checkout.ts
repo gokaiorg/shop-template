@@ -13,7 +13,7 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
         }
 
         for (const item of items) {
-            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
                 throw new Error("Invalid quantity provided");
             }
         }
