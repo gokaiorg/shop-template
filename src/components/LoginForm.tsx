@@ -84,7 +84,7 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                 </div>
 
                 <div className="grid gap-2">
-                    <Label htmlFor="email">{dict.email}</Label>
+                    <Label htmlFor="email">{dict.email || "Email address"}</Label>
                     <Input
                         id="email"
                         name="email"
@@ -99,7 +99,7 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                 </div>
                 <div className="grid gap-2">
                     <div className="flex items-center">
-                        <Label htmlFor="password">{dict.password}</Label>
+                        <Label htmlFor="password">{dict.password || "Password"}</Label>
                     </div>
                     <div className="relative">
                         <Input
