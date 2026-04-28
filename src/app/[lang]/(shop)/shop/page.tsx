@@ -42,33 +42,45 @@ export default async function ShopPage(
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
-    // Execute data fetching in parallel where possible.
-    // If no category filter is applied, we can fetch products concurrently with categories and dictionary
-    // to prevent a data fetching waterfall and improve TTFB.
-    let backgroundProductsPromise: Promise<FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>> | null = null;
-    if (!currentCategorySlug) {
-        backgroundProductsPromise = adminDb.collection('products').orderBy('createdAt', 'desc').get();
-        // Attach dummy catch to prevent unhandled rejections if the primary promises fail first
-        backgroundProductsPromise.catch(() => {});
-    }
-
-    const [dict, categoriesSnapshot] = await Promise.all([
-        getDictionary(lang as Locale),
-        adminDb.collection('categories').orderBy('nameEn', 'asc').get()
-    ]);
-
-    const categories = categoriesSnapshot.docs.map(doc => 
-        serializeFirestoreData(doc.id, doc.data()) as Category
-    );
-
+    let dict;
+    let categoriesSnapshot;
     let productsSnapshot;
-    if (backgroundProductsPromise) {
-        productsSnapshot = await backgroundProductsPromise;
+    let categories: Category[] = [];
+
+    // Execute data fetching in parallel where possible.
+    if (!currentCategorySlug) {
+        // If no category filter is applied, we can fetch products concurrently with categories and dictionary
+        // to prevent a data fetching waterfall and improve TTFB.
+        const [resolvedDict, resolvedCategoriesSnapshot, resolvedProductsSnapshot] = await Promise.all([
+            getDictionary(lang as Locale),
+            adminDb.collection('categories').orderBy('nameEn', 'asc').get(),
+            adminDb.collection('products').orderBy('createdAt', 'desc').limit(20).get()
+        ]);
+
+        dict = resolvedDict;
+        categoriesSnapshot = resolvedCategoriesSnapshot;
+        productsSnapshot = resolvedProductsSnapshot;
+
+        categories = categoriesSnapshot.docs.map(doc =>
+            serializeFirestoreData(doc.id, doc.data()) as Category
+        );
     } else {
+        // If a category filter is applied, we must wait for the categories to resolve to find the categoryId
+        const [resolvedDict, resolvedCategoriesSnapshot] = await Promise.all([
+            getDictionary(lang as Locale),
+            adminDb.collection('categories').orderBy('nameEn', 'asc').get()
+        ]);
+
+        dict = resolvedDict;
+        categoriesSnapshot = resolvedCategoriesSnapshot;
+
+        categories = categoriesSnapshot.docs.map(doc =>
+            serializeFirestoreData(doc.id, doc.data()) as Category
+        );
+
         // Build the query for products based on the requested category
         let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
 
-        // We first need the categoryId to query products
         const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
         if (catId) {
             productsQuery = productsQuery.where('categoryId', '==', catId);
@@ -76,7 +88,7 @@ export default async function ShopPage(
             productsQuery = productsQuery.where('categoryId', '==', 'NOT_FOUND');
         }
 
-        productsQuery = productsQuery.orderBy('createdAt', 'desc');
+        productsQuery = productsQuery.orderBy('createdAt', 'desc').limit(20);
         productsSnapshot = await productsQuery.get();
     }
     const productsList = productsSnapshot.docs.map(doc => 
