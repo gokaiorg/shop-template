@@ -12,9 +12,16 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
             throw new Error("No items in cart");
         }
 
+        // Validate payload structure and ensure quantities are positive safe integers
         for (const item of items) {
-            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-                throw new Error("Invalid quantity");
+            if (!item || typeof item !== 'object') {
+                throw new Error("Invalid item format in payload");
+            }
+            if (typeof item.id !== 'string' || !item.id.trim()) {
+                throw new Error("Missing or invalid item ID");
+            }
+            if (typeof item.quantity !== "number" || !Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
+                throw new Error(`Invalid quantity for item ${item.id}`);
             }
         }
 
@@ -27,6 +34,14 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
         });
 
         const verifiedItems = items.map((item) => {
+            if (!item || typeof item !== 'object') {
+                throw new Error('Invalid item object');
+            }
+
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
+                throw new Error(`Invalid quantity for item: ${item.id}`);
+            }
+
             const productDoc = productDocMap.get(item.id);
             if (!productDoc || !productDoc.exists) {
                 throw new Error(`Product not found: ${item.id}`);
