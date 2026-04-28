@@ -74,7 +74,9 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                     <Label htmlFor="email">{dict.email}</Label>
                     <Input
                         id="email"
+                        name="email"
                         type="email"
+                        autoComplete="email"
                         placeholder={dict.email_placeholder}
                         required
                         value={email}
@@ -88,7 +90,9 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                     <div className="relative">
                         <Input
                             id="password"
+                            name="password"
                             type={showPassword ? "text" : "password"}
+                            autoComplete="current-password"
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}

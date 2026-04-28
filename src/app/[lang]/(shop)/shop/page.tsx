@@ -54,7 +54,7 @@ export default async function ShopPage(
 
     // Build the query for products based on the requested category
     let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
-    
+
     if (currentCategorySlug) {
         // We first need the categoryId to query products
         const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;

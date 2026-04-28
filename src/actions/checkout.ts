@@ -13,8 +13,8 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
         }
 
         for (const item of items) {
-            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-                throw new Error(`Invalid quantity for item: ${item.id}`);
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
+                throw new Error("Invalid quantity provided");
             }
         }
 
@@ -31,6 +31,11 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
             if (!productDoc || !productDoc.exists) {
                 throw new Error(`Product not found: ${item.id}`);
             }
+
+            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
+                throw new Error(`Invalid quantity for product ${item.id}`);
+            }
+
             const productData = productDoc.data();
             return {
                 ...item,

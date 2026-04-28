@@ -7,8 +7,7 @@
 **Vulnerability:** A "Pass-the-Hash" vulnerability existed in the credentials authorization logic (`src/auth.ts`) used to migrate plaintext passwords to bcrypt. The fallback allowed login if `user.password === credentials.password`, meaning if an attacker obtained the bcrypt hash from the database, they could supply the hash string itself as their password.
 **Learning:** Fallback mechanisms intended for migration can be exploited if they don't explicitly exclude modernized/secure data formats (like bcrypt hashes).
 **Prevention:** Always scope down migration fallbacks. Ensure that a plaintext fallback condition explicitly checks that the stored value is not already a hashed value (e.g., `!user.password.startsWith('$2a$') && !user.password.startsWith('$2b$')`).
-
-## 2024-05-27 - Server-Side Data Validation for Checkout Quantities
-**Vulnerability:** The `createCheckoutSession` action accepted an array of items with arbitrary client-provided `quantity` fields. A malicious user could supply negative, zero, or non-integer quantities (e.g., `-5`, `0.5`), which could lead to negative total order amounts or logic failures when iterating items for calculations or Stripe metadata.
-**Learning:** Client-provided numerical inputs are untrustworthy and must be strictly validated server-side, especially when dealing with financial transactions or inventory.
-**Prevention:** Always perform robust server-side validation on client-provided numerical inputs, ensuring they are strictly valid, positive integers (e.g., `Number.isInteger(quantity) && quantity > 0`) before using them in calculations or queries.
+## 2026-04-26 - Server-side Input Validation in Checkout
+**Vulnerability:** Client-provided item quantities were trusted implicitly in the checkout action, allowing negative or non-integer values.
+**Learning:** This could lead to logic bugs, integer underflow, negative total order amounts, or manipulated inventory counts since the server action directly calculated total amounts based on these quantities.
+**Prevention:** Always perform robust server-side validation on client-provided numerical inputs (e.g., quantities) inside server actions to ensure values are strict, positive integers before processing.
