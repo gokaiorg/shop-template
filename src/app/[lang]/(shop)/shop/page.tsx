@@ -46,23 +46,21 @@ export default async function ShopPage(
     const dictPromise = getDictionary(lang as Locale);
     const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
 
-    // If no category filter is applied, we can start fetching products concurrently to reduce TTFB
-    // We attach a dummy catch to prevent unhandled promise rejections if Promise.all fails before we await this.
-    let productsPromise: Promise<FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>> | undefined;
-    if (!currentCategorySlug) {
-        productsPromise = adminDb.collection('products').orderBy('createdAt', 'desc').get();
-        productsPromise.catch(() => {});
-    }
+    const productsPromise = !currentCategorySlug
+        ? adminDb.collection('products').orderBy('createdAt', 'desc').get()
+        : null;
 
-    // Await dictionary and categories as an explicit tuple to maintain typing,
-    // and let productsPromise run in the background (to be awaited later if needed).
-    const [dict, categoriesSnapshot] = await Promise.all([dictPromise, categoriesPromise]);
+    const [dict, categoriesSnapshot, preFetchedProducts] = await Promise.all([
+        dictPromise,
+        categoriesPromise,
+        productsPromise
+    ]);
 
     const categories = categoriesSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Category
     );
 
-    let productsSnapshot;
+    let productsSnapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>;
     if (currentCategorySlug) {
         // We must wait to build the query for products based on the requested category
         let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
@@ -77,7 +75,8 @@ export default async function ShopPage(
         productsSnapshot = await productsQuery.get();
     } else {
         // Use the concurrently started products fetch result
-        productsSnapshot = await productsPromise!;
+        if (!preFetchedProducts) throw new Error("Products fetch failed to initialize");
+        productsSnapshot = preFetchedProducts;
     }
     const productsList = productsSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Product
