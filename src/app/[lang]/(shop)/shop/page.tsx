@@ -47,22 +47,23 @@ export default async function ShopPage(
     const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
 
     // If no category is selected, start fetching products immediately
-    let productsPromise;
+    let productsPromise = null;
     if (!currentCategorySlug) {
         productsPromise = adminDb.collection('products').orderBy('createdAt', 'desc').get();
-        productsPromise.catch(() => {});
     }
 
-    const [dict, categoriesSnapshot] = await Promise.all([dictPromise, categoriesPromise]);
+    const [dict, categoriesSnapshot, initialProductsSnapshot] = await Promise.all([
+        dictPromise,
+        categoriesPromise,
+        productsPromise || null
+    ]);
 
     const categories = categoriesSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Category
     );
 
-    let productsSnapshot;
-    if (productsPromise) {
-        productsSnapshot = await productsPromise;
-    } else {
+    let productsSnapshot = initialProductsSnapshot;
+    if (!productsSnapshot) {
         // currentCategorySlug is present, we need the categoryId first
         let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
         const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
