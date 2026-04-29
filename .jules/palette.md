@@ -9,3 +9,6 @@
 ## $(date +%Y-%m-%d) - Consistent SSR/Hydration Skeletons for Interactive Components
 **Learning:** Using generic HTML elements (like a `<div>`) as a loading skeleton or SSR fallback for complex interactive components (like shadcn/radix buttons with variants) causes layout shifts and semantic inconsistency before hydration.
 **Action:** For SSR/unmounted fallback states of interactive components, use structurally equivalent disabled semantic elements (e.g., a disabled `Button` with the same sizing variants) rather than generic divs.
+## 2024-04-29 - Loading Skeleton Layout Shifts
+**Learning:** Loading skeleton dimensions that do not perfectly match the final loaded component size (e.g., `h-8 w-16` placeholder for a `size-9` icon button) cause jarring layout shifts when the async state resolves.
+**Action:** Always ensure fallback/loading skeleton UI elements match the exact dimensions of their interactive counterparts to provide a seamless, non-janky UX loading experience.
