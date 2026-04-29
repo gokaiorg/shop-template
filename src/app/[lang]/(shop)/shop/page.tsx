@@ -42,32 +42,45 @@ export default async function ShopPage(
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
-    // Execute data fetching in parallel where possible
-    const [dict, categoriesSnapshot] = await Promise.all([
-        getDictionary(lang as Locale),
-        adminDb.collection('categories').orderBy('nameEn', 'asc').get()
-    ]);
+    // Break Data Fetching Waterfall: Initiate promises concurrently
+    const dictPromise = getDictionary(lang as Locale);
+    dictPromise.catch(() => {});
 
-    const categories = categoriesSnapshot.docs.map(doc => 
-        serializeFirestoreData(doc.id, doc.data()) as Category
-    );
+    const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
+    categoriesPromise.catch(() => {});
 
     // Build the query for products based on the requested category
-    let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
+    let productsPromise: Promise<FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>>;
 
     if (currentCategorySlug) {
-        // We first need the categoryId to query products
-        const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+        // We first need the categoryId to query products, so we wait for categories
+        const categoriesSnapshot = await categoriesPromise;
+        const categoriesData = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const catId = categoriesData.find((c: any) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+
+        let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
         if (catId) {
             productsQuery = productsQuery.where('categoryId', '==', catId);
         } else {
             productsQuery = productsQuery.where('categoryId', '==', 'NOT_FOUND');
         }
+        productsPromise = productsQuery.orderBy('createdAt', 'desc').get();
+    } else {
+        // No category filter, fetch all products concurrently
+        productsPromise = adminDb.collection('products').orderBy('createdAt', 'desc').get();
     }
+    productsPromise.catch(() => {});
 
-    productsQuery = productsQuery.orderBy('createdAt', 'desc');
+    // Await all concurrent fetches
+    const [dict, categoriesSnapshot, productsSnapshot] = await Promise.all([
+        dictPromise,
+        categoriesPromise,
+        productsPromise
+    ]);
 
-    const productsSnapshot = await productsQuery.get();
+    const categories = categoriesSnapshot.docs.map(doc =>
+        serializeFirestoreData(doc.id, doc.data()) as Category
+    );
     const productsList = productsSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Product
     );
