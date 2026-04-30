@@ -1,13 +1,9 @@
 "use server";
 
-import { stripe } from "@/lib/stripe";
 import { adminDb } from "@/lib/firebase-admin";
-import { headers } from "next/headers";
 
-export async function createCheckoutSession(items: { id: string, quantity: number, nameFr?: string, nameEn?: string, images?: string[] }[], lang: string) {
+export async function checkoutOrder(items: { id: string, quantity: number, nameFr?: string, nameEn?: string, price?: number }[]) {
     try {
-        // Fetch source of truth for products to avoid trusting client-provided prices
-        // Optimization: Use getAll to batch database requests and prevent N+1 query problem
         if (!Array.isArray(items) || items.length === 0) {
             throw new Error("No items in cart");
         }
@@ -32,10 +28,6 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
                 throw new Error(`Product not found: ${item.id}`);
             }
 
-            if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
-                throw new Error(`Invalid quantity for product ${item.id}`);
-            }
-
             const productData = productDoc.data();
             return {
                 ...item,
@@ -50,7 +42,6 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
             0
         );
 
-        // 1. Create Order in Firestore
         const orderRef = adminDb.collection("orders").doc();
         const orderId = orderRef.id;
 
@@ -69,41 +60,9 @@ export async function createCheckoutSession(items: { id: string, quantity: numbe
             updatedAt: new Date()
         });
 
-        // 2. Create Stripe Checkout Session
-        const headersList = await headers();
-        const origin = headersList.get('origin') || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ["card"],
-            line_items: verifiedItems.map((item) => ({
-                price_data: {
-                    currency: "usd",
-                    product_data: {
-                        name: lang === "fr" ? item.nameFr : item.nameEn,
-                        images: item.images && item.images.length > 0 ? [item.images[0]] : [],
-                        metadata: {
-                            productId: item.id
-                        }
-                    },
-                    unit_amount: Math.round(item.price * 100), // Stripe expects cents
-                },
-                quantity: item.quantity,
-            })),
-            mode: "payment",
-            success_url: `${origin}/${lang}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${origin}/${lang}/cart`,
-            metadata: {
-                orderId: orderId,
-            },
-        });
-
-        if (!session.url) {
-            throw new Error("Failed to create Stripe session URL");
-        }
-
-        return { url: session.url };
+        return { success: true, orderId };
     } catch (error) {
         console.error("[CHECKOUT_ACTION_ERROR]", error);
-        throw new Error("Failed to initiate checkout");
+        return { success: false, error: "Failed to initiate checkout" };
     }
 }

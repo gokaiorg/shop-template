@@ -26,6 +26,13 @@ export function PrimaryNav({ lang, dict, className, onNavClick }: PrimaryNavProp
             >
                 {dict.about}
             </Link>
+            <Link
+                href={`/${lang}/contact`}
+                onClick={onNavClick}
+                className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+                {dict.contact}
+            </Link>
         </nav>
     );
 }

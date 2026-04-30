@@ -4,6 +4,42 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product } from "@/types/database";
 import { ShopCategoryFilter } from "@/components/shop/ShopCategoryFilter";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
+import { Metadata } from "next";
+
+export async function generateMetadata(
+    props: {
+        params: Promise<{ lang: string }>;
+        searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+    }
+): Promise<Metadata> {
+    const params = await props.params;
+    const searchParams = await props.searchParams;
+    const { lang } = params;
+    const categoryQuery = searchParams.category;
+    const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
+
+    if (currentCategorySlug) {
+        const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
+        const catSnap = await adminDb.collection('categories').where(slugField, '==', currentCategorySlug).limit(1).get();
+        
+        if (!catSnap.empty) {
+            const category = catSnap.docs[0].data() as Category;
+            const title = lang === 'fr' ? category.introFr : category.introEn;
+            const description = lang === 'fr' ? category.descriptionFr : category.descriptionEn;
+            
+            return {
+                title: title ? `${title} | Shop` : `Shop | Gokai`,
+                description: description || `Explore our ${title} products.`
+            };
+        }
+    }
+
+    const dict = await getDictionary(lang as Locale);
+    return {
+        title: dict.header?.shop ? `${dict.header.shop} | Gokai` : "Shop | Gokai",
+        description: "Browse our complete collection of premium products."
+    };
+}
 
 export default async function ShopPage(
     props: {

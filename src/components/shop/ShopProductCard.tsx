@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/database";
 import { useCart } from "@/store/useCart";
@@ -15,7 +16,7 @@ interface ShopProductCardProps {
 export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
     const title = lang === 'fr' ? product.nameFr : product.nameEn;
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
-    // const slug = lang === 'fr' ? product.slugFr : product.slugEn;
+    const slug = lang === 'fr' ? product.slugFr : product.slugEn;
     const addItem = useCart(state => state.addItem);
 
     const handleAddToCart = () => {
@@ -33,7 +34,7 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-background">
             {/* Image Container */}
-            <div className="relative aspect-square overflow-hidden bg-muted">
+            <Link href={`/${lang}/product/${slug}`} className="relative aspect-square overflow-hidden bg-muted block">
                 <Image
                     src={imageUrl}
                     alt={title}
@@ -41,11 +42,13 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-            </div>
+            </Link>
 
             {/* Content Container */}
             <div className="flex flex-1 flex-col p-4">
-                <h3 className="text-lg font-semibold">{title}</h3>
+                <Link href={`/${lang}/product/${slug}`} className="hover:underline">
+                    <h3 className="text-lg font-semibold">{title}</h3>
+                </Link>
                 <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                     {description}
                 </p>

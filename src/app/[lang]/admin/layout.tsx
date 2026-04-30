@@ -21,19 +21,22 @@ export default async function AdminLayout({
         getDictionary(lang as Locale)
     ]);
 
-    if (!session || session.user?.role !== "ADMIN") {
+    const userRole = (session?.user?.role || "").toLowerCase();
+    const isAuthorized = userRole === "admin" || userRole === "user";
+
+    if (!session || !isAuthorized) {
         redirect(`/${lang}/login`);
     }
 
     return (
         <div className="flex min-h-screen flex-col md:flex-row bg-muted/40">
             {/* Desktop Sidebar */}
-            <Aside lang={lang} dict={dict} />
+            <Aside lang={lang} dict={dict} session={session} />
 
             <main className="flex-1 flex flex-col">
                 {/* Mobile Header containing Hamburger Menu */}
                 <header className="md:hidden flex items-center gap-4 border-b bg-background p-4 sticky top-0 z-10">
-                    <MobileAside lang={lang} dict={dict} />
+                    <MobileAside lang={lang} dict={dict} session={session} />
                     <h1 className="text-lg font-bold">{dict.admin.title}</h1>
                 </header>
 
