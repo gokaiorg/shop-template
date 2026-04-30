@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { seedDemoData } from "@/actions/admin";
@@ -30,7 +31,8 @@ export function SeedDemoDataButton({ dict }: {
 
     return (
         <Button variant="destructive" onClick={handleSeed} disabled={isPending}>
-            {isPending ? "..." : dict.dashboard_seedButton}
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {dict.dashboard_seedButton}
         </Button>
     );
 }
