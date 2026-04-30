@@ -16,3 +16,7 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+
+## 2024-05-18 - Icon-Only Button Accessibility Pattern
+**Learning:** In this application, many icon-only buttons already achieve accessibility by including a `<span className="sr-only">Label</span>` element inside the `<Button>`. Adding an explicit `aria-label` attribute directly to the `<Button>` component when an `sr-only` span is already present is redundant, although harmless (the screen reader prioritizes the `aria-label`).
+**Action:** When looking for missing ARIA labels on icon-only buttons in the future, first check if the button contains a `span` with the `sr-only` class. If it does, the accessibility requirement is already met, and you should look for a different UX/accessibility improvement opportunity instead of adding `aria-label`.
