@@ -1,6 +1,6 @@
 export enum Role {
-  ADMIN = "ADMIN",
-  CUSTOMER = "CUSTOMER"
+  ADMIN = "admin",
+  USER = "user"
 }
 
 export enum OrderStatus {
@@ -58,11 +58,12 @@ export interface Category {
 export interface Order {
   id: string;
   userId?: string | null;
-  status: string; // PENDING, PAID, SHIPPED, CANCELLED
+  status: string; // Pending, Completed, Cancelled
   totalAmount: number;
   customerEmail?: string | null;
   customerName?: string | null;
   stripeSessionId?: string | null;
+  items?: OrderItem[];
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -101,4 +102,17 @@ export interface VerificationToken {
   identifier: string;
   token: string;
   expires: Date | string;
+}
+
+export interface Page {
+  id: string; // The slug (e.g., 'about')
+  title_en: string;
+  title_fr: string;
+  content_en: string;
+  content_fr: string;
+  meta_title_en: string;
+  meta_title_fr: string;
+  meta_description_en: string;
+  meta_description_fr: string;
+  updatedAt?: Date | string;
 }
