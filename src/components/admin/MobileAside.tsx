@@ -24,7 +24,7 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden cursor-pointer">
+                <Button variant="ghost" size="icon" className="md:hidden cursor-pointer" aria-label="Toggle Menu">
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Toggle Menu</span>
                 </Button>
