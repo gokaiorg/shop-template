@@ -16,3 +16,6 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+## 2024-05-01 - [DropdownMenu State Visualization]
+**Learning:** Adding explicit visual indicators (like a checkmark and bold text) to the currently active item in a language switcher or theme toggle (using Radix UI / shadcn DropdownMenu) significantly improves immediate state recognition for users without needing custom ARIA labels, as it provides structural cues visually.
+**Action:** When working with DropdownMenu configurations for options (like Language or Theme), always ensure the active choice is structurally and visually distinguished from inactive options (e.g. `lang === "en" && <Check />`), not just via semantic ARIA.
