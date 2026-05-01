@@ -19,3 +19,8 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+
+## 2026-05-01 - Lockfile Corruption via PM mismatches
+**Vulnerability:** Not a direct application security vulnerability, but a process issue. The project's pnpm lockfile was on a v9.0 format, but older versions of pnpm trigger massive downgrades (v6.0) causing >8000 line changes, violating scope rules and polluting PRs.
+**Learning:** Running 'pnpm install' in mismatched environments aggressively alters lockfiles.
+**Prevention:** Always check 'git status' before committing to ensure unintended lockfile changes like 'pnpm-lock.yaml' aren't included, especially when working under line-count boundaries.
