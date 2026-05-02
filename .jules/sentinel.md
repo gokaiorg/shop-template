@@ -19,3 +19,7 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+## 2024-05-02 - [Authorization Bypass in Profile Update]
+**Vulnerability:** The `updateProfile` server action accepted a `uid` parameter to update a user document, but lacked any authorization check to ensure the calling user owned that `uid` (IDOR / Broken Access Control).
+**Learning:** Next.js Server Actions bypass route-level middleware protections, so sensitive actions must independently enforce authorization checks using the active session.
+**Prevention:** Always verify `session?.user?.id === uid` (or admin roles) directly within mutation server actions before interacting with the database.
