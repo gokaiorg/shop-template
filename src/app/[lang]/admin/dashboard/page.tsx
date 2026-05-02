@@ -18,23 +18,37 @@ export default async function AdminDashboardPage({
 }) {
     const { lang } = await params;
 
-    // Fetch session and dictionary
-    const [session, dict] = await Promise.all([
-        auth(),
-        getDictionary(lang as Locale)
-    ]);
+    // Initiate independent fetch requests concurrently to reduce TTFB
+    const dictPromise = getDictionary(lang as Locale);
+    dictPromise.catch(() => {});
+
+    const productsSnapPromise = adminDb.collection("products").count().get();
+    productsSnapPromise.catch(() => {});
+
+    const categoriesSnapPromise = adminDb.collection("categories").count().get();
+    categoriesSnapPromise.catch(() => {});
+
+    const recentOrdersPromise = getRecentOrders();
+    recentOrdersPromise.catch(() => {});
+
+    const pendingOrdersPromise = getPendingOrdersCount();
+    pendingOrdersPromise.catch(() => {});
+
+    // Fetch session
+    const session = await auth();
 
     if (!session?.user?.id) {
         return null;
     }
 
-    // Fetch up-to-date user data and stats in parallel
-    const [userDoc, productsSnap, categoriesSnap, recentOrders, pendingOrdersCount] = await Promise.all([
+    // Fetch up-to-date user data and await all other background promises
+    const [userDoc, dict, productsSnap, categoriesSnap, recentOrders, pendingOrdersCount] = await Promise.all([
         adminDb.collection("users").doc(session.user.id).get(),
-        adminDb.collection("products").count().get(),
-        adminDb.collection("categories").count().get(),
-        getRecentOrders(),
-        getPendingOrdersCount()
+        dictPromise,
+        productsSnapPromise,
+        categoriesSnapPromise,
+        recentOrdersPromise,
+        pendingOrdersPromise
     ]);
     
     const userData = userDoc.data();
