@@ -19,3 +19,8 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+
+## 2024-05-03 - [Missing Authorization in Server Action (IDOR)]
+**Vulnerability:** The `updateProfile` server action accepted a `uid` parameter from the client and used it directly to modify user profiles (including passwords) in the database without verifying if the authenticated user owned that `uid` or had admin privileges.
+**Learning:** Next.js Server Actions bypass `middleware.ts` protections if they don't explicitly require authentication checks internally. Data passed as function parameters (like `uid`) are entirely user-controllable.
+**Prevention:** Always implement explicit session verification within sensitive server actions and strictly authorize that the requester is allowed to modify the requested resource ID.
