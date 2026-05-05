@@ -19,3 +19,7 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+## 2024-05-24 - Authorization Bypass in updateProfile Server Action
+**Vulnerability:** Critical authorization bypass in `/admin/profile` functionality. The Server Action `updateProfile` in `src/actions/auth.ts` lacked explicit authentication/authorization checks. This allows any user to modify any other user's profile, including changing their password and gaining access to their account, representing an Insecure Direct Object Reference (IDOR) / Broken Access Control vulnerability.
+**Learning:** Even though the profile page itself might be protected, Server Actions can be invoked directly by an attacker passing arbitrary UIDs.
+**Prevention:** Every Server Action performing user-specific sensitive operations must include direct session validation matching the session user ID against the target resource user ID (unless the user is an admin).
