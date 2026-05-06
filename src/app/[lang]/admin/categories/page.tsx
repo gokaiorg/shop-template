@@ -4,9 +4,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { adminDb } from "@/lib/firebase-admin";
 import { Category } from "@/types/database";
+import { Pencil } from "lucide-react";
+import { protectAdminRoute } from "@/lib/auth-utils";
 
 export default async function AdminCategoriesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
+    await protectAdminRoute(lang);
 
     // Fetch dictionary and categories in parallel to reduce TTFB
     const [dict, categoriesSnapshot] = await Promise.all([
@@ -52,12 +55,13 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
                             <th className="px-6 py-3">Slug</th>
                             <th className="px-6 py-3">Products Count</th>
                             <th className="px-6 py-3">Created At</th>
+                            <th className="px-6 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {categories.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">
+                                <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
                                     {lang === 'fr' ? 'Aucune catégorie trouvée. Créez une nouvelle catégorie.' : 'No categories found. Create a new category.'}
                                 </td>
                             </tr>
@@ -75,6 +79,13 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
                                     </td>
                                     <td className="px-6 py-4">
                                         {category.createdAt ? new Date(category.createdAt).toLocaleDateString(lang) : 'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <Button variant="ghost" size="icon" asChild>
+                                            <Link href={`/${lang}/admin/categories/${category.id}/edit`}>
+                                                <Pencil className="w-4 h-4" />
+                                            </Link>
+                                        </Button>
                                     </td>
                                 </tr>
                             ))

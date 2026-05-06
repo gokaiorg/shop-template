@@ -4,9 +4,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product } from "@/types/database";
+import { Pencil } from "lucide-react";
+import { protectAdminRoute } from "@/lib/auth-utils";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
+    await protectAdminRoute(lang);
 
     // Fetch dictionary, categories, and products in parallel to reduce TTFB
     const [dict, categoriesSnapshot, productsSnapshot] = await Promise.all([
@@ -65,12 +68,13 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                             <th className="px-6 py-3">Status</th>
                             <th className="px-6 py-3">Price</th>
                             <th className="px-6 py-3">Stock</th>
+                            <th className="px-6 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {products.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                                <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
                                     No products found. Generate demo data or create a new product.
                                 </td>
                             </tr>
@@ -93,6 +97,13 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                                     </td>
                                     <td className="px-6 py-4">${product.price.toFixed(2)}</td>
                                     <td className="px-6 py-4">{product.stock}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <Button variant="ghost" size="icon" asChild>
+                                            <Link href={`/${lang}/admin/products/${product.id}/edit`}>
+                                                <Pencil className="w-4 h-4" />
+                                            </Link>
+                                        </Button>
+                                    </td>
                                 </tr>
                             ))
                         )}

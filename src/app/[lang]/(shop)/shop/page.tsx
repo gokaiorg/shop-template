@@ -4,6 +4,42 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product } from "@/types/database";
 import { ShopCategoryFilter } from "@/components/shop/ShopCategoryFilter";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
+import { Metadata } from "next";
+
+export async function generateMetadata(
+    props: {
+        params: Promise<{ lang: string }>;
+        searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+    }
+): Promise<Metadata> {
+    const params = await props.params;
+    const searchParams = await props.searchParams;
+    const { lang } = params;
+    const categoryQuery = searchParams.category;
+    const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
+
+    if (currentCategorySlug) {
+        const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
+        const catSnap = await adminDb.collection('categories').where(slugField, '==', currentCategorySlug).limit(1).get();
+        
+        if (!catSnap.empty) {
+            const category = catSnap.docs[0].data() as Category;
+            const title = lang === 'fr' ? category.introFr : category.introEn;
+            const description = lang === 'fr' ? category.descriptionFr : category.descriptionEn;
+            
+            return {
+                title: title ? `${title} | Shop` : `Shop | Gokai`,
+                description: description || `Explore our ${title} products.`
+            };
+        }
+    }
+
+    const dict = await getDictionary(lang as Locale);
+    return {
+        title: dict.header?.shop ? `${dict.header.shop} | Gokai` : "Shop | Gokai",
+        description: "Browse our complete collection of premium products."
+    };
+}
 
 export default async function ShopPage(
     props: {
@@ -42,32 +78,41 @@ export default async function ShopPage(
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
-    // Execute data fetching in parallel where possible
-    const [dict, categoriesSnapshot] = await Promise.all([
-        getDictionary(lang as Locale),
-        adminDb.collection('categories').orderBy('nameEn', 'asc').get()
+    // Initiate independent fetch requests concurrently to prevent waterfall
+    const dictPromise = getDictionary(lang as Locale);
+    const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
+
+    // If no category is selected, start fetching products immediately
+    let productsPromise = null;
+    if (!currentCategorySlug) {
+        productsPromise = adminDb.collection('products').orderBy('createdAt', 'desc').get();
+    }
+
+    const [dict, categoriesSnapshot, initialProductsSnapshot] = await Promise.all([
+        dictPromise,
+        categoriesPromise,
+        productsPromise || null
     ]);
 
     const categories = categoriesSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Category
     );
 
-    // Build the query for products based on the requested category
-    let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
-
-    if (currentCategorySlug) {
-        // We first need the categoryId to query products
+    let productsSnapshot = initialProductsSnapshot;
+    if (!productsSnapshot) {
+        // currentCategorySlug is present, we need the categoryId first
+        let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
         const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+
         if (catId) {
             productsQuery = productsQuery.where('categoryId', '==', catId);
         } else {
             productsQuery = productsQuery.where('categoryId', '==', 'NOT_FOUND');
         }
+
+        productsQuery = productsQuery.orderBy('createdAt', 'desc');
+        productsSnapshot = await productsQuery.get();
     }
-
-    productsQuery = productsQuery.orderBy('createdAt', 'desc');
-
-    const productsSnapshot = await productsQuery.get();
     const productsList = productsSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Product
     );

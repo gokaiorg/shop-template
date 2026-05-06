@@ -11,6 +11,7 @@
   "dependencies": {
     "@auth/firebase-adapter": "^2.11.1",
     "@hookform/resolvers": "^5.2.2",
+    "@tailwindcss/typography": "^0.5.19",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -19,6 +20,7 @@
     "firebase": "^12.11.0",
     "firebase-admin": "^13.7.0",
     "googleapis": "^171.4.0",
+    "html-react-parser": "^6.0.1",
     "lucide-react": "^0.576.0",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
