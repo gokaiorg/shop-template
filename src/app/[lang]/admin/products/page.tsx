@@ -101,6 +101,7 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                                         <Button variant="ghost" size="icon" asChild>
                                             <Link href={`/${lang}/admin/products/${product.id}/edit`}>
                                                 <Pencil className="w-4 h-4" />
+                                                <span className="sr-only">{dict.admin.products_edit || 'Edit Product'}</span>
                                             </Link>
                                         </Button>
                                     </td>
