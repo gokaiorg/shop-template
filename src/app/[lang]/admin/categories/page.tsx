@@ -84,6 +84,7 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
                                         <Button variant="ghost" size="icon" asChild>
                                             <Link href={`/${lang}/admin/categories/${category.id}/edit`}>
                                                 <Pencil className="w-4 h-4" />
+                                                <span className="sr-only">{dict.admin.categories_edit || 'Edit Category'}</span>
                                             </Link>
                                         </Button>
                                     </td>

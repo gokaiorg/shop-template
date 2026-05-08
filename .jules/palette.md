@@ -16,3 +16,7 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+
+## 2025-05-08 - Accessible Links vs Actionable Icons
+**Learning:** Using an icon inside an `a` or `Link` tag, visually styled as a `Button`, without accompanying text makes the link completely inaccessible to screen reader users (it announces as just "link" or nothing). Adding `aria-label` directly to the `Link` component can sometimes be stripped or handled inconsistently by Next.js or React depending on version.
+**Action:** The safest and most robust way to make icon-only links accessible in React is to insert a visually hidden `span` with the `sr-only` class *inside* the link element, containing the localized descriptive text.
