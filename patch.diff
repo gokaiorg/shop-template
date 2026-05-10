@@ -1,0 +1,28 @@
+<<<<<<< SEARCH
+import { z } from "zod";
+
+const registerSchema = z.object({
+=======
+import { z } from "zod";
+import { auth } from "@/auth";
+
+const registerSchema = z.object({
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+export async function updateProfile(uid: string, data: { name?: string, email?: string, password?: string }) {
+    const { adminAuth, adminDb } = await import("@/lib/firebase-admin");
+
+    try {
+=======
+export async function updateProfile(uid: string, data: { name?: string, email?: string, password?: string }) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+
+    if (!session?.user?.id || (session.user.id !== uid && userRole !== "admin")) {
+        return { error: "Unauthorized" };
+    }
+
+    const { adminAuth, adminDb } = await import("@/lib/firebase-admin");
+
+    try {
+>>>>>>> REPLACE
