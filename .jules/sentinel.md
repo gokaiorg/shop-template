@@ -19,3 +19,7 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+## 2024-05-11 - Server Action Import Order
+**Vulnerability:** Import statement order matters.
+**Learning:** During review, I placed an import inside a file but not at the top. While technically valid ES modules, it failed linting maintainability standards and was rejected.
+**Prevention:** Always place imports at the top of the file when modifying server actions.
