@@ -1,3 +1,4 @@
+import React from "react";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { adminDb } from "@/lib/firebase-admin";
@@ -5,6 +6,11 @@ import { Category, Product } from "@/types/database";
 import { ShopCategoryFilter } from "@/components/shop/ShopCategoryFilter";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { Metadata } from "next";
+
+const getCategoryBySlug = React.cache(async (lang: string, slug: string) => {
+    const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
+    return await adminDb.collection('categories').where(slugField, '==', slug).limit(1).get();
+});
 
 export async function generateMetadata(
     props: {
@@ -19,8 +25,7 @@ export async function generateMetadata(
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
     if (currentCategorySlug) {
-        const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-        const catSnap = await adminDb.collection('categories').where(slugField, '==', currentCategorySlug).limit(1).get();
+        const catSnap = await getCategoryBySlug(lang, currentCategorySlug);
         
         if (!catSnap.empty) {
             const category = catSnap.docs[0].data() as Category;
@@ -102,7 +107,14 @@ export default async function ShopPage(
     if (!productsSnapshot) {
         // currentCategorySlug is present, we need the categoryId first
         let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
-        const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+        let catId = undefined;
+
+        if (currentCategorySlug) {
+            const catSnap = await getCategoryBySlug(lang, currentCategorySlug);
+            if (!catSnap.empty) {
+                catId = catSnap.docs[0].id;
+            }
+        }
 
         if (catId) {
             productsQuery = productsQuery.where('categoryId', '==', catId);
