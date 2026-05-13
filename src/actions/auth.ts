@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Role } from "@/types/database";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { auth } from "@/auth";
 
 const registerSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -56,6 +57,17 @@ export async function registerUser(formData: FormData) {
 }
 
 export async function updateProfile(uid: string, data: { name?: string, email?: string, password?: string }) {
+    const session = await auth();
+
+    // Explicitly verify the session ID matches the target UID or user is admin
+    if (!session?.user?.id) {
+        return { error: "Unauthorized" };
+    }
+
+    if (session.user.id !== uid && session.user.role?.toLowerCase() !== "admin") {
+        return { error: "Forbidden: You cannot update another user's profile" };
+    }
+
     const { adminAuth, adminDb } = await import("@/lib/firebase-admin");
 
     try {
