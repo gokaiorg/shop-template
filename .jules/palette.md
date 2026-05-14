@@ -16,3 +16,6 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+## 2024-05-14 - Redundant cursor-pointer classes on Buttons
+**Learning:** The generic `Button` component from the `shadcn` design system (in `src/components/ui/button.tsx`) already sets the `cursor-pointer` class globally by default.
+**Action:** Do not redundantly add `cursor-pointer` explicitly when creating or modifying `<Button>` instances unless trying to override a disabled state (which is generally an anti-pattern). Let the base component handle the cursor style.
