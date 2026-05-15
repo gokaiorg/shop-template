@@ -2,6 +2,7 @@
 
 import { adminDb } from "@/lib/firebase-admin";
 import { Role } from "@/types/database";
+import { auth } from "@/auth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -56,6 +57,13 @@ export async function registerUser(formData: FormData) {
 }
 
 export async function updateProfile(uid: string, data: { name?: string, email?: string, password?: string }) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+
+    if (!session || (session.user?.id !== uid && userRole !== "admin")) {
+        return { error: "Unauthorized" };
+    }
+
     const { adminAuth, adminDb } = await import("@/lib/firebase-admin");
 
     try {
