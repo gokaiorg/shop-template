@@ -19,3 +19,12 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+
+## 2026-05-17 - [IDOR in Next.js Server Actions]
+**Vulnerability:** Next.js Server Actions bypass route-level middleware protection (). The `updateProfile` action was vulnerable to IDOR because it accepted a `uid` parameter from the client and modified that user's profile without verifying if the authenticated session belonged to that `uid`.
+**Learning:** Global middleware protection does not guarantee authorization for internal Server Action executions. Relying on client-provided IDs for user-specific mutations without server-side validation is a critical security risk.
+**Prevention:** Always implement explicit session authorization checks directly within sensitive Next.js Server Actions (e.g., `const session = await auth(); if (!session || session.user.id !== uid)`) to enforce authorization boundaries.
+## 2024-05-17 - [IDOR in Next.js Server Actions]
+**Vulnerability:** Next.js Server Actions bypass route-level middleware protection (`middleware.ts`). The `updateProfile` action was vulnerable to IDOR because it accepted a `uid` parameter from the client and modified that user's profile without verifying if the authenticated session belonged to that `uid`.
+**Learning:** Global middleware protection does not guarantee authorization for internal Server Action executions. Relying on client-provided IDs for user-specific mutations without server-side validation is a critical security risk.
+**Prevention:** Always implement explicit session authorization checks directly within sensitive Next.js Server Actions (e.g., `const session = await auth(); if (!session || session.user.id !== uid)`) to enforce authorization boundaries.
