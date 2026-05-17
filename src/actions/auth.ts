@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Role } from "@/types/database";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { auth } from "@/auth";
 
 const registerSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -56,6 +57,13 @@ export async function registerUser(formData: FormData) {
 }
 
 export async function updateProfile(uid: string, data: { name?: string, email?: string, password?: string }) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+
+    if (!session || !session.user || (session.user.id !== uid && userRole !== "admin")) {
+        return { error: "Unauthorized" };
+    }
+
     const { adminAuth, adminDb } = await import("@/lib/firebase-admin");
 
     try {
