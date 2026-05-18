@@ -19,3 +19,7 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+## 2024-05-25 - IDOR in Profile Update Server Action
+**Vulnerability:** CRITICAL Insecure Direct Object Reference (IDOR) / Missing Authorization in the `updateProfile` server action. The action accepted a `uid` and update data (name, email, password) but did not verify if the caller owned that `uid` or was an admin, allowing anyone to change any other user's credentials or email.
+**Learning:** Functions handling user data updates must always verify that the requester is authorized to modify the target resource, especially when IDs are passed as arguments to Server Actions.
+**Prevention:** Always verify `session?.user?.id === targetId` or `session?.user?.role === 'admin'` before allowing state mutations in Server Actions.
