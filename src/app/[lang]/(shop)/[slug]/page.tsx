@@ -1,3 +1,4 @@
+import React from "react";
 import { adminDb } from "@/lib/firebase-admin";
 import { notFound } from "next/navigation";
 import parse from "html-react-parser";
@@ -10,11 +11,14 @@ interface PageProps {
   }>;
 }
 
-async function getPage(slug: string) {
+// ⚡ Bolt: Deduplicate Firebase Admin queries using React.cache()
+// Reduces database reads by 50% since Next.js doesn't auto-dedupe non-fetch DB calls
+// called in both generateMetadata and the page component.
+const getPage = React.cache(async (slug: string) => {
   const doc = await adminDb.collection("pages").doc(slug).get();
   if (!doc.exists) return null;
   return doc.data();
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { lang, slug } = await params;
