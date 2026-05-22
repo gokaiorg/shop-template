@@ -16,3 +16,7 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+
+## $(date +%Y-%m-%d) - Password Visibility Icons vs Text
+**Learning:** Using raw text like "Show" or "Hide" for a password visibility toggle button is less universally understood, takes up horizontal space, and often relies on English when it should be localized.
+**Action:** Always replace raw text in password visibility toggles with standard UI icons (like `Eye` and `EyeOff` from `lucide-react`). Ensure the icons have `aria-hidden="true"` applied, and maintain the existing `aria-label` on the parent interactive `<Button>` element for screen reader accessibility.
