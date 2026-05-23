@@ -9,3 +9,7 @@
 ## 2024-05-24 - [Plan Review Groundedness Rule]
 **Learning:** When using `cat` for large files, terminal output is easily truncated in the trace history. This leads to Groundedness Rule violations when proposing to remove variables or imports that are assumed to be unused.
 **Action:** Before proposing to remove any variables, imports, or code in an execution plan, explicitly verify they are genuinely unused in the entire file using targeted tools (like `grep -rn "variableName" file.tsx` or `read_file`) instead of relying solely on the potentially truncated output of `cat`.
+
+## 2024-05-25 - Deduplicate Next.js data fetching with React.cache()
+**Learning:** In Next.js App Router, while native `fetch` requests are automatically deduplicated during a single request lifecycle (e.g., between `generateMetadata` and the page component), SDK calls like `firebase-admin` database queries are NOT. Without deduplication, these SDK calls will execute twice, hitting the database multiple times per page load.
+**Action:** When extracting database queries that are shared between `generateMetadata` and the page component, always import `cache` from `"react"` and wrap the data fetching function (e.g., `const getProduct = cache(async (id) => { ... })`). This memoizes the result for the duration of the request, eliminating duplicate database operations.
