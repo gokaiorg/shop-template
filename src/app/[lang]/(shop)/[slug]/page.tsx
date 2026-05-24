@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase-admin";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import parse from "html-react-parser";
 import { Metadata } from "next";
@@ -10,11 +11,12 @@ interface PageProps {
   }>;
 }
 
-async function getPage(slug: string) {
+// ⚡ Bolt: Use React.cache() to deduplicate Firestore queries between generateMetadata and the page component, cutting database reads in half
+const getPage = cache(async (slug: string) => {
   const doc = await adminDb.collection("pages").doc(slug).get();
   if (!doc.exists) return null;
   return doc.data();
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { lang, slug } = await params;
