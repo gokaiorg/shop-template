@@ -19,3 +19,7 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+## 2024-05-25 - IDOR in Profile Update Server Action
+**Vulnerability:** The `updateProfile` server action in `src/actions/auth.ts` accepted a `uid` parameter to update a user's profile data (including password) in Firestore, but it completely lacked an authorization check to verify the caller was actually that user.
+**Learning:** Any server action that modifies a user-specific resource using a client-provided ID must authenticate the caller and ensure the caller owns that ID (or has explicit administrative privileges) before taking action.
+**Prevention:** Always add a session check (`const session = await auth()`) and explicitly verify `session?.user?.id === uid || session?.user?.role === 'admin'` before performing database updates to prevent IDOR (Insecure Direct Object Reference).
