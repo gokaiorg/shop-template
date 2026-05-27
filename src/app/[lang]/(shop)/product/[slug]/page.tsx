@@ -6,24 +6,31 @@ import Image from "next/image";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
+import { cache } from "react";
 
 interface PageProps {
     params: Promise<{ lang: string; slug: string }>;
 }
 
+const getProduct = cache(async (slugField: string, slug: string) => {
+    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    if (snapshot.empty) return null;
+    const doc = snapshot.docs[0];
+    return { doc, data: doc.data() as Product };
+});
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { lang, slug } = await params;
     const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const productData = await getProduct(slugField, slug);
     
-    if (snapshot.empty) {
+    if (!productData) {
         return {
             title: "Product Not Found",
         };
     }
 
-    const doc = snapshot.docs[0];
-    const product = doc.data() as Product;
+    const product = productData.data;
     const title = lang === 'fr' ? product.nameFr : product.nameEn;
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
 
@@ -36,14 +43,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ProductPage({ params }: PageProps) {
     const { lang, slug } = await params;
     const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const productData = await getProduct(slugField, slug);
 
-    if (snapshot.empty) {
+    if (!productData) {
         notFound();
     }
 
-    const doc = snapshot.docs[0];
-    const data = doc.data();
+    const doc = productData.doc;
+    const data = productData.data as any;
     const product = {
         ...data,
         id: doc.id,
