@@ -19,3 +19,8 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+
+## 2024-05-30 - Prevent IDOR in User Profile Updates
+**Vulnerability:** The `updateProfile` server action accepted a `uid` parameter to target the Firestore document for update, but lacked any authorization check to ensure the authenticated user actually owned that `uid` or had an `admin` role. This allowed any user to overwrite other users' profile data (names, emails, passwords) by simply passing their `uid`.
+**Learning:** Server Actions in Next.js bypass route-level middleware. Even if the `/profile` UI page is protected by middleware, the underlying Server Action can be called directly by any client with arbitrary parameters.
+**Prevention:** Always implement explicit session authorization checks directly within sensitive Server Actions (e.g., `const session = await auth(); if (session?.user?.id !== targetId && session?.user?.role !== 'admin') return { error: 'Unauthorized' };`) before performing any database mutations.
