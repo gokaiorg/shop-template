@@ -16,3 +16,7 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+
+## 2025-05-31 - Password Visibility Toggle UX
+**Learning:** Text labels like "Show" or "Hide" on small password toggle buttons can feel clunky and inconsistent with modern UI patterns, taking up unnecessary space in the input field. Using universally recognized icons (like the open/closed eye) creates a cleaner aesthetic and aligns better with standard icon-only button patterns in design systems like shadcn.
+**Action:** When implementing password visibility toggles, prefer standard `Eye` and `EyeOff` icons over raw text labels. Ensure the parent button includes an explicit `aria-label` (e.g., "Show password") and the icons use `aria-hidden="true"` to maintain accessibility while improving visual polish.
