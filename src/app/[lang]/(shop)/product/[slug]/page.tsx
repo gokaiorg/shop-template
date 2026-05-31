@@ -6,15 +6,21 @@ import Image from "next/image";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
+import { cache } from "react";
 
 interface PageProps {
     params: Promise<{ lang: string; slug: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-    const { lang, slug } = await params;
+const getProductBySlug = cache(async (lang: string, slug: string) => {
     const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
     const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    return snapshot;
+});
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { lang, slug } = await params;
+    const snapshot = await getProductBySlug(lang, slug);
     
     if (snapshot.empty) {
         return {
@@ -35,8 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductPage({ params }: PageProps) {
     const { lang, slug } = await params;
-    const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const snapshot = await getProductBySlug(lang, slug);
 
     if (snapshot.empty) {
         notFound();
