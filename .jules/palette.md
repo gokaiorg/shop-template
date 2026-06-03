@@ -16,3 +16,7 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+
+## 2024-05-15 - Testing Isolated Components for UI Verification
+**Learning:** When performing frontend verification on complex apps (like those requiring Firebase Admin or next-auth in the root layout), testing specific components (like `LoginForm`) in the main route will fail due to missing environment variables and backend errors.
+**Action:** Instead of fixing the complex root layout or mocking entire databases for a simple visual check, create a temporary test route (e.g., `src/app/[lang]/test-login/page.tsx`) that renders *only* the isolated component with mocked props and necessary providers (e.g., `<ThemeProvider>`). Clean up these artifacts before submitting.
