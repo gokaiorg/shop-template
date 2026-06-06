@@ -2,6 +2,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { notFound } from "next/navigation";
 import parse from "html-react-parser";
 import { Metadata } from "next";
+import { cache } from "react";
 
 interface PageProps {
   params: Promise<{
@@ -10,11 +11,13 @@ interface PageProps {
   }>;
 }
 
-async function getPage(slug: string) {
+// ⚡ Bolt: Deduplicate identical Firestore queries across generateMetadata and the page component during SSR using React.cache().
+// Impact: Reduces database reads for the dynamic page route by 50% per request.
+const getPage = cache(async (slug: string) => {
   const doc = await adminDb.collection("pages").doc(slug).get();
   if (!doc.exists) return null;
   return doc.data();
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { lang, slug } = await params;
