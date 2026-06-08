@@ -19,3 +19,7 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+## 2024-06-08 - Fixed IDOR Vulnerability in Auth Actions
+**Vulnerability:** The `updateProfile` server action was lacking authorization checks. A malicious user could send a request to update another user's profile information by providing a different user's `uid` in the argument.
+**Learning:** Next.js server actions are publicly accessible endpoints. Even if the client-side UI prevents it, the action can be invoked directly. Simply importing Firebase Admin functions is not enough; explicit session authorization checks are required inside sensitive server actions.
+**Prevention:** Always verify that the authenticated `session.user.id` matches the target resource ID parameter being mutated (e.g., `uid`), or verify that the session user has an explicit admin role before allowing the mutation.
