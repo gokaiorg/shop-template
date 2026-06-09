@@ -19,3 +19,8 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+
+## 2026-06-09 - Authorization Bypass in updateProfile Server Action
+**Vulnerability:** The `updateProfile` Server Action in `src/actions/auth.ts` lacked authorization checks, allowing any unauthenticated user or an attacker to modify any user's profile (including passwords) via IDOR (Insecure Direct Object Reference) by simply providing a target `uid`.
+**Learning:** Route-level middleware does not protect Server Actions. Actions can be directly invoked by clients.
+**Prevention:** Always implement explicit session authorization checks directly within sensitive server actions, verifying both authentication status and resource ownership (e.g., `session?.user?.id === targetId`) or administrative privileges.
