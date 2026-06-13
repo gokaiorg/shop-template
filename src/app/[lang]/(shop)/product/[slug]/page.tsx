@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { cache } from "react";
 import { adminDb } from "@/lib/firebase-admin";
 import { Product } from "@/types/database";
 import { notFound } from "next/navigation";
@@ -11,18 +12,26 @@ interface PageProps {
     params: Promise<{ lang: string; slug: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-    const { lang, slug } = await params;
+// ⚡ Bolt: Deduplicate Firebase query using React.cache().
+// This prevents the same query from running twice per request
+// (once in generateMetadata and once in ProductPage), halving database reads and improving TTFB.
+const getProduct = cache(async (lang: string, slug: string) => {
     const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
     const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    if (snapshot.empty) return null;
+    return snapshot.docs[0];
+});
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { lang, slug } = await params;
+    const doc = await getProduct(lang, slug);
     
-    if (snapshot.empty) {
+    if (!doc) {
         return {
             title: "Product Not Found",
         };
     }
 
-    const doc = snapshot.docs[0];
     const product = doc.data() as Product;
     const title = lang === 'fr' ? product.nameFr : product.nameEn;
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
@@ -35,14 +44,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductPage({ params }: PageProps) {
     const { lang, slug } = await params;
-    const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const doc = await getProduct(lang, slug);
 
-    if (snapshot.empty) {
+    if (!doc) {
         notFound();
     }
 
-    const doc = snapshot.docs[0];
     const data = doc.data();
     const product = {
         ...data,
