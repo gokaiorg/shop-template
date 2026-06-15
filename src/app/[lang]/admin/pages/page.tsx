@@ -67,6 +67,7 @@ export default async function AdminPagesPage({ params }: { params: Promise<{ lan
                                         <Button variant="ghost" size="icon" asChild>
                                             <Link href={`/${lang}/admin/pages/${page.id}/edit`}>
                                                 <Pencil className="w-4 h-4" />
+                                                <span className="sr-only">Edit {lang === 'fr' ? page.title_fr : page.title_en}</span>
                                             </Link>
                                         </Button>
                                     </td>

@@ -16,3 +16,7 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+
+## $(date +%Y-%m-%d) - Context-Aware sr-only Tags vs aria-labels in Translated Content
+**Learning:** For interactive elements in dynamic lists (like "Edit" buttons in a table), using a visibly hidden `<span className="sr-only">` is often preferable to an `aria-label` attribute, particularly in applications utilizing internationalization (`lang`). Automatic translation services frequently ignore `aria-label` attributes but reliably translate standard DOM text nodes, ensuring screen reader users receive localized context.
+**Action:** Default to using `sr-only` spans for screen reader context instead of `aria-label` attributes for icon-only buttons when the application heavily relies on dynamic internationalization or when text needs to be dynamically built using state/props.
