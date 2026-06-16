@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { cache } from "react";
 import { adminDb } from "@/lib/firebase-admin";
 import { Product } from "@/types/database";
 import { notFound } from "next/navigation";
@@ -11,18 +12,23 @@ interface PageProps {
     params: Promise<{ lang: string; slug: string }>;
 }
 
+const getProductBySlug = cache(async (slug: string, slugField: string) => {
+    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    if (snapshot.empty) return null;
+    return snapshot.docs[0];
+});
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { lang, slug } = await params;
     const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const doc = await getProductBySlug(slug, slugField);
     
-    if (snapshot.empty) {
+    if (!doc) {
         return {
             title: "Product Not Found",
         };
     }
 
-    const doc = snapshot.docs[0];
     const product = doc.data() as Product;
     const title = lang === 'fr' ? product.nameFr : product.nameEn;
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
@@ -36,13 +42,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ProductPage({ params }: PageProps) {
     const { lang, slug } = await params;
     const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const doc = await getProductBySlug(slug, slugField);
 
-    if (snapshot.empty) {
+    if (!doc) {
         notFound();
     }
 
-    const doc = snapshot.docs[0];
     const data = doc.data();
     const product = {
         ...data,
