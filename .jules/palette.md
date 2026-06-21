@@ -16,3 +16,6 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+## 2024-05-24 - Testing Isolated Components with Empty Dictionaries
+**Learning:** When using Playwright to visually test an isolated React component (like `LoginForm`) that relies on a localization `dict` prop, passing an empty object (`dict={{}}`) causes text-based labels to render empty. This causes Playwright locators relying on text, like `get_by_label("Email")` or `get_by_role("textbox", name="Email")`, to fail and timeout.
+**Action:** When creating a mock page to test an isolated localized component, either supply realistic mock values in the `dict` object (e.g., `dict={{ email: "Email", password: "Password" }}`) or use robust CSS ID locators (e.g., `page.locator("#email")`) in the Playwright script to bypass missing text dependencies.
