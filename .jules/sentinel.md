@@ -19,3 +19,7 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+## 2024-06-24 - IDOR Vulnerability in Profile Update Action
+**Vulnerability:** The `updateProfile` server action in `src/actions/auth.ts` accepted a `uid` and update data without verifying if the authenticated user making the request actually owned that `uid` or had an administrative role. This allows any authenticated user to potentially overwrite the name, email, or password of any other user if they know or can guess their `uid`.
+**Learning:** Even though the function receives a `uid` as an argument, you cannot implicitly trust that the caller is authorized to modify that specific resource. Authentication (knowing *who* the user is) does not automatically imply authorization (knowing *what* they are allowed to do).
+**Prevention:** Always verify that the authenticated user's ID (`session.user.id`) strictly matches the target resource ID parameter being mutated. If the operation should also be accessible by admins, explicitly check for the admin role (e.g., `userRole === "admin"`). Return a 403/Forbidden equivalent if neither condition is met.
