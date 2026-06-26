@@ -16,3 +16,7 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+
+## 2024-05-18 - Tooling Cleanup Awareness
+**Learning:** Running `pnpm install` in this environment updates the lockfile from v6.0 to v9.0+ because of the system's pnpm version. This causes a massive (> 1000 lines) unintended file modification.
+**Action:** Always restore the `pnpm-lock.yaml` file after running `pnpm install` and before committing to ensure the change stays within the 50-line boundary.
