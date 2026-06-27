@@ -5,6 +5,11 @@ import { Category, Product } from "@/types/database";
 import { ShopCategoryFilter } from "@/components/shop/ShopCategoryFilter";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { Metadata } from "next";
+import { cache } from "react";
+
+const getCachedCategory = cache(async (slugField: string, slug: string) => {
+    return adminDb.collection('categories').where(slugField, '==', slug).limit(1).get();
+});
 
 export async function generateMetadata(
     props: {
@@ -20,7 +25,7 @@ export async function generateMetadata(
 
     if (currentCategorySlug) {
         const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-        const catSnap = await adminDb.collection('categories').where(slugField, '==', currentCategorySlug).limit(1).get();
+        const catSnap = await getCachedCategory(slugField, currentCategorySlug);
         
         if (!catSnap.empty) {
             const category = catSnap.docs[0].data() as Category;
@@ -82,16 +87,24 @@ export default async function ShopPage(
     const dictPromise = getDictionary(lang as Locale);
     const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
 
+    // Deduplicate the category ID fetch if currentCategorySlug is present
+    let currentCategoryPromise = null;
+    if (currentCategorySlug) {
+        const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
+        currentCategoryPromise = getCachedCategory(slugField, currentCategorySlug);
+    }
+
     // If no category is selected, start fetching products immediately
     let productsPromise = null;
     if (!currentCategorySlug) {
         productsPromise = adminDb.collection('products').orderBy('createdAt', 'desc').get();
     }
 
-    const [dict, categoriesSnapshot, initialProductsSnapshot] = await Promise.all([
+    const [dict, categoriesSnapshot, initialProductsSnapshot, currentCategorySnap] = await Promise.all([
         dictPromise,
         categoriesPromise,
-        productsPromise || null
+        productsPromise || null,
+        currentCategoryPromise || null
     ]);
 
     const categories = categoriesSnapshot.docs.map(doc => 
@@ -102,7 +115,15 @@ export default async function ShopPage(
     if (!productsSnapshot) {
         // currentCategorySlug is present, we need the categoryId first
         let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
-        const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+
+        // We reuse the cached snapshot from getCachedCategory to find the category ID efficiently
+        let catId = undefined;
+        if (currentCategorySnap && !currentCategorySnap.empty) {
+            catId = currentCategorySnap.docs[0].id;
+        } else {
+            // Fallback (just in case the query was missed, though the cache handles this)
+            catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+        }
 
         if (catId) {
             productsQuery = productsQuery.where('categoryId', '==', catId);
