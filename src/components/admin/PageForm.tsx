@@ -10,6 +10,7 @@ import { updatePage } from "@/actions/admin";
 import { pageSchema } from "@/schemas/admin";
 
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
     Form,
     FormControl,
@@ -179,7 +180,14 @@ export function PageForm({ dict, lang, initialData }: { dict: any; lang: string;
                 </Accordion>
 
                 <Button type="submit" disabled={isPending}>
-                    {isPending ? dict.forms.submitting : dict.forms.submit}
+                    {isPending ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {dict.forms.submitting}
+                        </>
+                    ) : (
+                        dict.forms.submit
+                    )}
                 </Button>
             </form>
         </Form>

@@ -10,6 +10,7 @@ import { createProduct, updateProduct } from "@/actions/admin";
 import { productSchema } from "@/schemas/admin";
 
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
     Form,
     FormControl,
@@ -289,7 +290,14 @@ export function ProductForm({ categories, dict, lang, initialData }: { categorie
                 </div>
 
                 <Button type="submit" disabled={isPending}>
-                    {isPending ? dict.submitting : dict.submit}
+                    {isPending ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {dict.submitting}
+                        </>
+                    ) : (
+                        dict.submit
+                    )}
                 </Button>
             </form>
         </Form>
