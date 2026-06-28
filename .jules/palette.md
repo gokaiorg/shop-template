@@ -16,3 +16,8 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+## 2024-10-24 - Interactive Component Fallbacks
+
+**Learning:** When testing standalone Next.js components for frontend UI verification, global layout structures (e.g., `<ThemeProvider>`) and database-driven contexts must be bypassed or mocked using raw HTML injections in Playwright. Interactive components like password toggles require visual confirmation because the raw text ("Show"/"Hide") takes up unexpected spatial room compared to uniform standard icons like `Eye`/`EyeOff`.
+
+**Action:** Before rendering isolated UI elements in verification scripts, always check the `Palette` memory directives to construct a resilient HTML skeleton that includes the CSS CDNs and JS libraries matching the project (like Tailwind and Lucide) rather than attempting to boot up the whole Next.js application if missing local credentials block rendering.
