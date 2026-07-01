@@ -16,3 +16,6 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+## 2024-07-01 - Replace plain text password visibility toggle with standard icons
+**Learning:** Replaced the plain "Show" / "Hide" text in the password input visibility toggle in `LoginForm.tsx` with standard `Eye` / `EyeOff` icons from `lucide-react`. This makes the authentication form visually cleaner and more universally recognizable for users.
+**Action:** Always replace plain text labels on tight input control toggles with standard UI icons (like `lucide-react`), ensuring that the parent button retains a descriptive `aria-label` and the icons use `aria-hidden="true"` to prevent redundant screen reader announcements.
