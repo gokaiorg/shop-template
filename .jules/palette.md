@@ -16,3 +16,6 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+## $(date +%Y-%m-%d) - Standard Icons for Text Labels
+**Learning:** Raw text labels like "Show" or "Hide" for common interactive actions (like password visibility toggles) take up unnecessary space and are less universally recognized than standard icons (like an Eye).
+**Action:** Replace raw text labels for standard toggles with universally recognized lucide-react icons equipped with `aria-hidden="true"`, ensuring the parent interactive element retains its explicit `aria-label`.
