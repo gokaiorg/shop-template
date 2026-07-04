@@ -16,3 +16,7 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+
+## 2024-07-04 - Replace Hardcoded Text Toggles with Standard Icons
+**Learning:** Hardcoding English text like "Show" or "Hide" in interactive toggles (like password visibility) inside components that accept translation dictionaries (e.g., `dict`) breaks internationalization. Replacing them with standard recognizable icons (like `Eye`/`EyeOff` from `lucide-react`) combined with `aria-hidden="true"` and an explicitly translated (or dynamic) `aria-label` on the parent interactive element provides a universally understood UX pattern that automatically bypasses the need for localizing the visible text itself.
+**Action:** When implementing or refactoring interactive toggles (like password visibility, mute, play/pause), prefer using universally recognizable icons over localized text to reduce internationalization overhead while ensuring the parent container retains an accessible, translatable `aria-label`.
