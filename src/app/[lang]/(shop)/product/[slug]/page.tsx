@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { cache } from "react";
 import { adminDb } from "@/lib/firebase-admin";
 import { Product } from "@/types/database";
 import { notFound } from "next/navigation";
@@ -11,10 +12,16 @@ interface PageProps {
     params: Promise<{ lang: string; slug: string }>;
 }
 
+// ⚡ Bolt: Use React.cache() to deduplicate Firestore queries between generateMetadata and the Page component.
+// This optimization halves the number of database reads per request, significantly improving server response time (TTFB).
+const getProductSnapshot = cache(async (slugField: string, slug: string) => {
+    return await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+});
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { lang, slug } = await params;
     const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const snapshot = await getProductSnapshot(slugField, slug);
     
     if (snapshot.empty) {
         return {
@@ -36,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ProductPage({ params }: PageProps) {
     const { lang, slug } = await params;
     const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const snapshot = await getProductSnapshot(slugField, slug);
 
     if (snapshot.empty) {
         notFound();
