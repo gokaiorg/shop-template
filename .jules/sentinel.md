@@ -19,3 +19,7 @@
 **Vulnerability:** Empty string passwords were permitted in the type checking logic allowing authentication bypasses. The pass-the-hash check did not consider all common bcrypt prefixes.
 **Learning:** Checking for string types on passwords does not prevent empty strings. Additionally, pass-the-hash protection must cover all bcrypt formats ($2a$, $2b$, $2y$, $2x$).
 **Prevention:** Ensure explicit \`!credentials.password\` length checks exist, and explicitly verify user IDs are strings.
+## 2024-05-29 - Insecure Direct Object Reference (IDOR) in Server Actions
+**Vulnerability:** Critical IDOR in `src/actions/auth.ts`. The `updateProfile` Server Action took a `uid` as an argument to perform a database update but lacked session validation to verify that the requester actually owned that `uid` (or had an admin role). This allowed any user to modify another user's profile.
+**Learning:** Even if a Server Action only executes on the backend, any parameters specifying target resources (like document IDs or user IDs) passed from the client must be strictly validated against the active authenticated session to prevent IDOR attacks.
+**Prevention:** Always verify that `session?.user?.id` matches the target resource ID parameter in user-specific mutations within Server Actions, unless the session has an explicit administrative role override.
