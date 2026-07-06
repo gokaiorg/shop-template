@@ -8,6 +8,7 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { createCategory, updateCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -181,6 +182,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                 </Accordion>
 
                 <Button type="submit" disabled={isPending}>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isPending ? dict.submitting : dict.submit}
                 </Button>
             </form>

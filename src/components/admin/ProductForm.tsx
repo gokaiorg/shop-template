@@ -8,6 +8,7 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { createProduct, updateProduct } from "@/actions/admin";
 import { productSchema } from "@/schemas/admin";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -289,6 +290,7 @@ export function ProductForm({ categories, dict, lang, initialData }: { categorie
                 </div>
 
                 <Button type="submit" disabled={isPending}>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isPending ? dict.submitting : dict.submit}
                 </Button>
             </form>
