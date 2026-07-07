@@ -9,3 +9,6 @@
 ## 2024-05-24 - [Plan Review Groundedness Rule]
 **Learning:** When using `cat` for large files, terminal output is easily truncated in the trace history. This leads to Groundedness Rule violations when proposing to remove variables or imports that are assumed to be unused.
 **Action:** Before proposing to remove any variables, imports, or code in an execution plan, explicitly verify they are genuinely unused in the entire file using targeted tools (like `grep -rn "variableName" file.tsx` or `read_file`) instead of relying solely on the potentially truncated output of `cat`.
+## 2024-05-24 - Deduplicate App Router Queries with React.cache
+**Learning:** In Next.js App Router, direct database queries (like `firebase-admin` `get()` calls) executed in both `generateMetadata` and the main Page component are NOT automatically deduplicated like native `fetch()` calls. This results in the server running the identical query twice per request, wasting backend resources and slowing down SSR.
+**Action:** Always wrap these custom or non-fetch database query functions with `React.cache()`. Since Firestore `QuerySnapshot` promises returned by `adminDb.collection(...).get()` are serializable, they are perfectly cacheable by `React.cache()`, ensuring the query only executes once per server render lifecycle. Always include comments explaining this to future developers.
