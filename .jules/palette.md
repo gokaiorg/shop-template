@@ -16,3 +16,6 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+## $(date +%Y-%m-%d) - Adding loading states to shadcn forms
+**Learning:** For forms wrapped in shadcn UI or simple Next.js forms, `isPending` state should always trigger a loading indicator to provide visual feedback during async actions. A pattern that works well without breaking layouts is adding `{isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}` inside the submit button.
+**Action:** When adding submit buttons to new forms, ensure they disable and show a `Loader2` or similar spinner alongside the submit text when the operation is pending.

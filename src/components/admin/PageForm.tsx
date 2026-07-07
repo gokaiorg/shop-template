@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { updatePage } from "@/actions/admin";
 import { pageSchema } from "@/schemas/admin";
 
@@ -179,6 +180,7 @@ export function PageForm({ dict, lang, initialData }: { dict: any; lang: string;
                 </Accordion>
 
                 <Button type="submit" disabled={isPending}>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isPending ? dict.forms.submitting : dict.forms.submit}
                 </Button>
             </form>
