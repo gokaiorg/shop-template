@@ -16,3 +16,7 @@
 ## 2025-04-28 - Accessible Skeletons vs Layout Shift
 **Learning:** Using a structurally equivalent disabled component (e.g., `<Button disabled>`) instead of a generic `<div className="animate-pulse w-16">` as an SSR/loading fallback for an icon button provides significantly better semantics for screen readers and avoids width-based Cumulative Layout Shift (CLS) in the header.
 **Action:** Default to using disabled variants of the actual interactive elements for loading skeletons rather than arbitrary div shapes.
+
+## $(date +%Y-%m-%d) - Password Visibility Toggle Icons and Localization
+**Learning:** Hardcoded "Show" or "Hide" text strings in password toggle buttons limit localization and clutter the UI. Relying solely on `aria-label` with decorative icons is standard practice, but the `aria-label` itself should also be dynamically translated using the `dict` dictionary, otherwise screen readers still read English to non-English users.
+**Action:** When converting text buttons to icon-only buttons (like password toggles using `Eye`/`EyeOff`), always ensure `aria-hidden="true"` is on the icon and the parent button's `aria-label` uses the translation dictionary (e.g., `dict.show_password || "Show password"`).
