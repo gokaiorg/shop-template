@@ -6,6 +6,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Category } from "@/types/database";
 import { Pencil } from "lucide-react";
 import { protectAdminRoute } from "@/lib/auth-utils";
+import { getLocalizedField } from "@/lib/i18n";
 
 export default async function AdminCategoriesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -69,10 +70,10 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
                             categories.map((category) => (
                                 <tr key={category.id} className="border-b last:border-0 hover:bg-muted/20">
                                     <td className="px-6 py-4 font-medium">
-                                        {lang === 'fr' ? category.nameFr : category.nameEn}
+                                        {getLocalizedField(category.name, lang) || (lang === 'fr' ? category.nameFr : category.nameEn) || "Unnamed"}
                                     </td>
                                     <td className="px-6 py-4 text-muted-foreground">
-                                        {lang === 'fr' ? category.slugFr : category.slugEn}
+                                        {getLocalizedField(category.slug, lang) || (lang === 'fr' ? category.slugFr : category.slugEn) || "unknown"}
                                     </td>
                                     <td className="px-6 py-4">
                                         {category._count.products}

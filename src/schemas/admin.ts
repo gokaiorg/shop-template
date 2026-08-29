@@ -1,27 +1,18 @@
 import { z } from "zod";
 
 export const categorySchema = z.object({
-    nameEn: z.string().min(1, "Name (EN) is required"),
-    slugEn: z.string().min(1, "Slug (EN) is required"),
-    introEn: z.string().optional(),
-    descriptionEn: z.string().min(1, "Description (EN) is required"),
-    nameFr: z.string().optional(),
-    slugFr: z.string().optional(),
-    introFr: z.string().optional(),
-    descriptionFr: z.string().optional(),
+    name: z.record(z.string(), z.string()),
+    slug: z.record(z.string(), z.string()),
+    intro: z.record(z.string(), z.string()).optional(),
+    description: z.record(z.string(), z.string()),
 });
 
 export const productSchema = z.object({
-    nameEn: z.string().min(1, "Name (EN) is required"),
-    slugEn: z.string().min(1, "Slug (EN) is required"),
-    introEn: z.string().optional(),
-    descriptionEn: z.string().min(1, "Description (EN) is required"),
-    statusEn: z.string().min(1, "Status (EN) is required"),
-    nameFr: z.string().optional(),
-    slugFr: z.string().optional(),
-    introFr: z.string().optional(),
-    descriptionFr: z.string().optional(),
-    statusFr: z.string().optional(),
+    name: z.record(z.string(), z.string()),
+    slug: z.record(z.string(), z.string()),
+    intro: z.record(z.string(), z.string()).optional(),
+    description: z.record(z.string(), z.string()),
+    status: z.record(z.string(), z.string()).optional(),
     price: z.number().min(0),
     stock: z.number().min(0).int(),
     categoryId: z.string().min(1, "Category is required"),

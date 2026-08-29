@@ -23,10 +23,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 import { Page } from "@/types/database";
+import { isMultiLocale } from "@/app/i18n-config";
 
 export function PageForm({ dict, lang, initialData }: { dict: any; lang: string; initialData: Page }) {
     const router = useRouter();
-    const isI18nEnabled = process.env.NEXT_PUBLIC_ENABLE_I18N !== "false";
+    const isI18nEnabled = isMultiLocale();
     const [isPending, startTransition] = useTransition();
 
     const form = useForm<z.infer<typeof pageSchema>>({

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/types/database";
 import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
-
+import { getLocalizedField } from "@/lib/i18n";
 import { brandConfig } from "@/config/brand.config";
 
 interface ShopProductCardProps {
@@ -16,9 +16,9 @@ interface ShopProductCardProps {
 }
 
 export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
-    const title = lang === 'fr' ? product.nameFr : product.nameEn;
-    const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
-    const slug = lang === 'fr' ? product.slugFr : product.slugEn;
+    const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "";
+    const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
+    const slug = getLocalizedField(product.slug, lang) || (lang === 'fr' ? product.slugFr : product.slugEn) || "";
     const addItem = useCart(state => state.addItem);
 
     const handleAddToCart = () => {
@@ -74,12 +74,6 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     )}
                 </div>
             </div>
-
-            {/* Optional wrap the whole card block linking to product detail later  
-            <Link href={`/${lang}/shop/product/${slug}`} className="absolute inset-0">
-                <span className="sr-only">View {title}</span>
-            </Link> 
-            */}
         </div>
     );
 }

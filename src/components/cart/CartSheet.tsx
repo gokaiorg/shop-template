@@ -16,6 +16,7 @@ import { useMounted } from "@/hooks/useMounted";
 import { checkoutOrder } from "@/actions/checkout";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import { getLocalizedField } from "@/lib/i18n";
 
 export function CartSheet({ dict }: { dict?: any }) {
     // Optimization: Use individual selectors to prevent unnecessary re-renders when other parts of the cart state change
@@ -105,7 +106,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                                     ? item.images[0]
                                     : "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=2670&auto=format&fit=crop";
 
-                                const itemName = lang === "fr" ? item.nameFr : item.nameEn;
+                                const itemName = getLocalizedField(item.name, lang) || (lang === "fr" ? item.nameFr : item.nameEn) || "Product";
                                 return (
                                     <div key={item.id} className="flex items-center gap-4">
                                         <div className="relative h-16 w-16 overflow-hidden rounded-md border bg-muted">

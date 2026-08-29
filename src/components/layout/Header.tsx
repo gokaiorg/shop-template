@@ -16,7 +16,6 @@ function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
     const { logo } = brandConfig.assets;
     const brandName = brandConfig.identity.name;
     const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
-    const isI18nEnabled = process.env.NEXT_PUBLIC_ENABLE_I18N !== "false";
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -37,7 +36,7 @@ function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
                 <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
                     <div className="hidden md:flex items-center space-x-2 md:space-x-4">
                         <ThemeToggle dict={dict.header} />
-                        {isI18nEnabled && <LangToggle lang={lang} dict={dict.header} />}
+                        <LangToggle lang={lang} dict={dict.header} />
                     </div>
                     <AccountToggle lang={lang} dict={dict} />
                     {isCartEnabled && <CartSheet dict={dict.header} />}

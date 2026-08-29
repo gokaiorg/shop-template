@@ -21,8 +21,6 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
     const [open, setOpen] = useState(false);
     const isAdmin = (session?.user?.role || "").toLowerCase() === "admin";
 
-    const isI18nEnabled = process.env.NEXT_PUBLIC_ENABLE_I18N !== "false";
-
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -76,7 +74,7 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                 <div>
                     <div className="pb-4 ml-4 flex items-center justify-start gap-2">
                         <ThemeToggle dict={dict.header} />
-                        {isI18nEnabled && <LangToggle lang={lang} dict={dict.header} />}
+                        <LangToggle lang={lang} dict={dict.header} />
                     </div>
                     <div className="pt-4 border-t flex flex-col gap-4">
                         <SignOutButton />

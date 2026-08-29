@@ -17,8 +17,6 @@ export function MobileNav({ lang, dict }: { lang: string, dict: Record<string, s
     const { logo } = brandConfig.assets;
     const brandName = brandConfig.identity.name;
 
-    const isI18nEnabled = process.env.NEXT_PUBLIC_ENABLE_I18N !== "false";
-
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -48,7 +46,7 @@ export function MobileNav({ lang, dict }: { lang: string, dict: Record<string, s
 
                 <div className="mt-auto flex items-center gap-4 pt-6 border-t">
                     <ThemeToggle dict={dict} />
-                    {isI18nEnabled && <LangToggle lang={lang} dict={dict} />}
+                    <LangToggle lang={lang} dict={dict} />
                 </div>
             </SheetContent>
         </Sheet>

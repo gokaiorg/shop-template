@@ -7,6 +7,7 @@ import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { Metadata } from "next";
 import { brandConfig } from "@/config/brand.config";
 import { formatTitle } from "@/config/site";
+import { getLocalizedField } from "@/lib/i18n";
 
 export async function generateMetadata(
     props: {
@@ -22,13 +23,16 @@ export async function generateMetadata(
     const brandName = brandConfig.identity.name;
 
     if (currentCategorySlug) {
-        const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-        const catSnap = await adminDb.collection('categories').where(slugField, '==', currentCategorySlug).limit(1).get();
+        const catSnap = await adminDb.collection('categories').get();
+        const categoryDoc = catSnap.docs.find(d => {
+            const data = d.data() as Category;
+            return getLocalizedField(data.slug, lang) === currentCategorySlug || data.slugEn === currentCategorySlug || data.slugFr === currentCategorySlug;
+        });
         
-        if (!catSnap.empty) {
-            const category = catSnap.docs[0].data() as Category;
-            const title = lang === 'fr' ? category.introFr : category.introEn;
-            const description = lang === 'fr' ? category.descriptionFr : category.descriptionEn;
+        if (categoryDoc) {
+            const category = categoryDoc.data() as Category;
+            const title = getLocalizedField(category.intro, lang) || getLocalizedField(category.name, lang) || (lang === 'fr' ? category.introFr : category.introEn);
+            const description = getLocalizedField(category.description, lang) || (lang === 'fr' ? category.descriptionFr : category.descriptionEn);
             
             return {
                 title: title ? formatTitle(title) : formatTitle("Shop"),
@@ -84,7 +88,7 @@ export default async function ShopPage(
 
     // Initiate independent fetch requests concurrently to prevent waterfall
     const dictPromise = getDictionary(lang as Locale);
-    const categoriesPromise = adminDb.collection('categories').orderBy('nameEn', 'asc').get();
+    const categoriesPromise = adminDb.collection('categories').get();
 
     // If no category is selected, start fetching products immediately
     let productsPromise = null;
@@ -104,9 +108,10 @@ export default async function ShopPage(
 
     let productsSnapshot = initialProductsSnapshot;
     if (!productsSnapshot) {
-        // currentCategorySlug is present, we need the categoryId first
         let productsQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection('products');
-        const catId = categories.find((c: Category) => lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)?.id;
+        const catId = categories.find((c: Category) => 
+            getLocalizedField(c.slug, lang) === currentCategorySlug || (lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)
+        )?.id;
 
         if (catId) {
             productsQuery = productsQuery.where('categoryId', '==', catId);

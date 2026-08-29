@@ -12,6 +12,8 @@ import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { createProduct, updateProduct } from "@/actions/admin";
 import { productSchema } from "@/schemas/admin";
 import { uploadProductImage } from "@/lib/firebase-storage";
+import { getSupportedLocales, getDefaultLocale, isMultiLocale } from "@/app/i18n-config";
+import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +43,10 @@ export function ProductForm({
     initialData?: Product;
 }) {
     const router = useRouter();
-    const isI18nEnabled = process.env.NEXT_PUBLIC_ENABLE_I18N !== "false";
+    const locales = getSupportedLocales();
+    const defaultLocale = getDefaultLocale();
+    const isMulti = isMultiLocale();
+
     const [isPending, startTransition] = useTransition();
     const [isUploading, setIsUploading] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -51,19 +56,29 @@ export function ProductForm({
     const [previewUrl, setPreviewUrl] = useState<string | null>(initialImage);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+    // Prepare default values dynamically for every supported locale
+    const defaultName: Record<string, string> = {};
+    const defaultSlug: Record<string, string> = {};
+    const defaultIntro: Record<string, string> = {};
+    const defaultDesc: Record<string, string> = {};
+    const defaultStatus: Record<string, string> = {};
+
+    locales.forEach((loc) => {
+        defaultName[loc] = initialData?.name?.[loc] || (loc === 'en' ? initialData?.nameEn : loc === 'fr' ? initialData?.nameFr : '') || '';
+        defaultSlug[loc] = initialData?.slug?.[loc] || (loc === 'en' ? initialData?.slugEn : loc === 'fr' ? initialData?.slugFr : '') || '';
+        defaultIntro[loc] = initialData?.intro?.[loc] || (loc === 'en' ? initialData?.introEn : loc === 'fr' ? initialData?.introFr : '') || '';
+        defaultDesc[loc] = initialData?.description?.[loc] || (loc === 'en' ? initialData?.descriptionEn : loc === 'fr' ? initialData?.descriptionFr : '') || '';
+        defaultStatus[loc] = initialData?.status?.[loc] || (loc === 'en' ? initialData?.statusEn : loc === 'fr' ? initialData?.statusFr : 'draft') || 'draft';
+    });
+
     const form = useForm<z.infer<typeof productSchema>>({
         resolver: zodResolver(productSchema),
         defaultValues: {
-            nameFr: initialData?.nameFr || "",
-            nameEn: initialData?.nameEn || "",
-            slugFr: initialData?.slugFr || "",
-            slugEn: initialData?.slugEn || "",
-            introFr: initialData?.introFr || "",
-            introEn: initialData?.introEn || "",
-            descriptionFr: initialData?.descriptionFr || "",
-            descriptionEn: initialData?.descriptionEn || "",
-            statusFr: initialData?.statusFr || "brouillon",
-            statusEn: initialData?.statusEn || "draft",
+            name: defaultName,
+            slug: defaultSlug,
+            intro: defaultIntro,
+            description: defaultDesc,
+            status: defaultStatus,
             price: initialData?.price || 0,
             stock: initialData?.stock || 0,
             categoryId: initialData?.categoryId || "",
@@ -117,6 +132,27 @@ export function ProductForm({
 
     async function onSubmit(values: z.infer<typeof productSchema>) {
         try {
+            // Check default locale fields
+            if (!values.name?.[defaultLocale] || !values.slug?.[defaultLocale] || !values.description?.[defaultLocale]) {
+                toast.error(`Please complete the required fields for ${getLocaleDisplayName(defaultLocale)}.`);
+                return;
+            }
+
+            // Fill missing localized fields with default locale fallback
+            const completeName: Record<string, string> = { ...values.name };
+            const completeSlug: Record<string, string> = { ...values.slug };
+            const completeIntro: Record<string, string> = { ...(values.intro || {}) };
+            const completeDesc: Record<string, string> = { ...values.description };
+            const completeStatus: Record<string, string> = { ...(values.status || {}) };
+
+            locales.forEach((loc) => {
+                if (!completeName[loc]) completeName[loc] = completeName[defaultLocale] || "";
+                if (!completeSlug[loc]) completeSlug[loc] = completeSlug[defaultLocale] || "";
+                if (!completeIntro[loc]) completeIntro[loc] = completeIntro[defaultLocale] || "";
+                if (!completeDesc[loc]) completeDesc[loc] = completeDesc[defaultLocale] || "";
+                if (!completeStatus[loc]) completeStatus[loc] = completeStatus[defaultLocale] || "draft";
+            });
+
             let finalImageUrl = previewUrl;
 
             // If a new local file was selected, upload it to Firebase Storage first
@@ -138,6 +174,11 @@ export function ProductForm({
 
             const payload = {
                 ...values,
+                name: completeName,
+                slug: completeSlug,
+                intro: completeIntro,
+                description: completeDesc,
+                status: completeStatus,
                 imageUrl: finalImageUrl,
                 images: finalImageUrl ? [finalImageUrl] : [],
             };
@@ -185,7 +226,7 @@ export function ProductForm({
                                         <SelectContent>
                                             {categories.map((c) => (
                                                 <SelectItem key={c.id} value={c.id}>
-                                                    {lang === "fr" ? c.nameFr : c.nameEn}
+                                                    {getLocalizedField(c.name, lang, defaultLocale)}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -312,183 +353,104 @@ export function ProductForm({
 
                     {/* Language specific fields */}
                     <div className="col-span-1 md:col-span-2">
-                        {isI18nEnabled ? (
-                            <Accordion type="single" defaultValue="en" collapsible className="w-full">
-                                {/* English Fields */}
-                                <AccordionItem value="en">
-                                    <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                                        English
-                                    </AccordionTrigger>
-                                    <AccordionContent className="space-y-4 pt-4 px-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="nameEn"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.nameEn || "Name (EN)"}</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Name..." {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="slugEn"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.slugEn || "Slug (EN)"}</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="name-slug..." {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="introEn"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.introEn || "Intro (EN)"}</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Short introduction..." {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="descriptionEn"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.descriptionEn || "Description (EN)"}</FormLabel>
-                                                    <FormControl>
-                                                        <Textarea placeholder="Detailed description..." className="min-h-32" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="statusEn"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.statusEn || "Status (EN)"}</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        {isMulti ? (
+                            <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
+                                {locales.map((loc) => (
+                                    <AccordionItem key={loc} value={loc}>
+                                        <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+                                            {getLocaleDisplayName(loc)}
+                                        </AccordionTrigger>
+                                        <AccordionContent className="space-y-4 pt-4 px-2">
+                                            <FormField
+                                                control={form.control}
+                                                name={`name.${loc}`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()})</FormLabel>
                                                         <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
+                                                            <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
                                                         </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="draft">Draft</SelectItem>
-                                                            <SelectItem value="published">Published</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </AccordionContent>
-                                </AccordionItem>
-
-                                {/* French Fields */}
-                                <AccordionItem value="fr">
-                                    <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                                        Français
-                                    </AccordionTrigger>
-                                    <AccordionContent className="space-y-4 pt-4 px-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="nameFr"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.nameFr || "Nom (FR)"}</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Nom..." {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="slugFr"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.slugFr || "Slug (FR)"}</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="nom-slug..." {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="introFr"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.introFr || "Intro (FR)"}</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Introduction courte..." {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="descriptionFr"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.descriptionFr || "Description (FR)"}</FormLabel>
-                                                    <FormControl>
-                                                        <Textarea placeholder="Description détaillée..." className="min-h-32" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="statusFr"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.statusFr || "Statut (FR)"}</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`slug.${loc}`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()})</FormLabel>
                                                         <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
+                                                            <Input placeholder={`slug-${loc}...`} {...field} value={field.value || ""} />
                                                         </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="brouillon">Brouillon</SelectItem>
-                                                            <SelectItem value="publié">Publié</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </AccordionContent>
-                                </AccordionItem>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`intro.${loc}`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{dict.intro || "Intro"} ({loc.toUpperCase()})</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder={`Short introduction (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`description.${loc}`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()})</FormLabel>
+                                                        <FormControl>
+                                                            <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`status.${loc}`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{dict.status || "Status"} ({loc.toUpperCase()})</FormLabel>
+                                                        <Select onValueChange={field.onChange} defaultValue={field.value || "draft"}>
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="draft">Draft</SelectItem>
+                                                                <SelectItem value="published">Published</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
                             </Accordion>
                         ) : (
                             <div className="space-y-4 border rounded-lg p-6 bg-card">
-                                <h3 className="text-base font-semibold text-foreground border-b pb-3">Product Information (EN)</h3>
+                                <h3 className="text-base font-semibold text-foreground border-b pb-3">
+                                    Product Information ({getLocaleDisplayName(locales[0])})
+                                </h3>
                                 <FormField
                                     control={form.control}
-                                    name="nameEn"
+                                    name={`name.${locales[0]}`}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{dict.nameEn || "Name (EN)"}</FormLabel>
+                                            <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()})</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Name..." {...field} />
+                                                <Input placeholder="Name..." {...field} value={field.value || ""} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -496,12 +458,12 @@ export function ProductForm({
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="slugEn"
+                                    name={`slug.${locales[0]}`}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{dict.slugEn || "Slug (EN)"}</FormLabel>
+                                            <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()})</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="name-slug..." {...field} />
+                                                <Input placeholder="name-slug..." {...field} value={field.value || ""} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -509,12 +471,12 @@ export function ProductForm({
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="introEn"
+                                    name={`intro.${locales[0]}`}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{dict.introEn || "Intro (EN)"}</FormLabel>
+                                            <FormLabel>{dict.intro || "Intro"} ({locales[0].toUpperCase()})</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Short introduction..." {...field} />
+                                                <Input placeholder="Short introduction..." {...field} value={field.value || ""} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -522,12 +484,12 @@ export function ProductForm({
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="descriptionEn"
+                                    name={`description.${locales[0]}`}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{dict.descriptionEn || "Description (EN)"}</FormLabel>
+                                            <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()})</FormLabel>
                                             <FormControl>
-                                                <Textarea placeholder="Detailed description..." className="min-h-32" {...field} />
+                                                <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -535,11 +497,11 @@ export function ProductForm({
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="statusEn"
+                                    name={`status.${locales[0]}`}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{dict.statusEn || "Status (EN)"}</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormLabel>{dict.status || "Status"} ({locales[0].toUpperCase()})</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value || "draft"}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue />

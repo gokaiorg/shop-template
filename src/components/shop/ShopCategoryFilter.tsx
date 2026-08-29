@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Category } from "@/types/database";
+import { getLocalizedField } from "@/lib/i18n";
 
 interface ShopCategoryFilterProps {
     categories: Category[];
@@ -43,8 +44,8 @@ export function ShopCategoryFilter({ categories, currentCategorySlug, lang, dict
                 </Button>
 
                 {categories.map((category) => {
-                    const categorySlug = lang === "fr" ? category.slugFr : category.slugEn;
-                    const categoryName = lang === "fr" ? category.nameFr : category.nameEn;
+                    const categorySlug = getLocalizedField(category.slug, lang) || (lang === "fr" ? category.slugFr : category.slugEn) || "";
+                    const categoryName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
                     const isActive = currentCategorySlug === categorySlug;
 
                     return (

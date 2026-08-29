@@ -7,26 +7,70 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { brandConfig } from "@/config/brand.config";
+import { getLocalizedField } from "@/lib/i18n";
 
 interface PageProps {
     params: Promise<{ lang: string; slug: string }>;
 }
 
+async function findProductBySlug(lang: string, slug: string): Promise<Product | null> {
+    // 1. Query nested slug map
+    let snapshot = await adminDb.collection("products").where(`slug.${lang}`, "==", slug).limit(1).get();
+    if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        return {
+            ...data,
+            id: doc.id,
+            createdAt: data?.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data?.createdAt || null),
+            updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data?.updatedAt || null),
+        } as Product;
+    }
+
+    // 2. Query legacy flat slug fields
+    const legacyField = lang === 'fr' ? 'slugFr' : 'slugEn';
+    snapshot = await adminDb.collection("products").where(legacyField, "==", slug).limit(1).get();
+    if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        return {
+            ...data,
+            id: doc.id,
+            createdAt: data?.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data?.createdAt || null),
+            updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data?.updatedAt || null),
+        } as Product;
+    }
+
+    // 3. Fallback: Scan collection
+    const allSnapshot = await adminDb.collection("products").get();
+    for (const doc of allSnapshot.docs) {
+        const data = doc.data() as Product;
+        const localizedSlug = getLocalizedField(data.slug, lang) || (lang === 'fr' ? data.slugFr : data.slugEn);
+        if (localizedSlug === slug || data.slugEn === slug || data.slugFr === slug) {
+            return {
+                ...data,
+                id: doc.id,
+                createdAt: (data?.createdAt as any)?.toDate ? (data.createdAt as any).toDate().toISOString() : (data?.createdAt || null),
+                updatedAt: (data?.updatedAt as any)?.toDate ? (data.updatedAt as any).toDate().toISOString() : (data?.updatedAt || null),
+            } as Product;
+        }
+    }
+
+    return null;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { lang, slug } = await params;
-    const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const product = await findProductBySlug(lang, slug);
     
-    if (snapshot.empty) {
+    if (!product) {
         return {
             title: "Product Not Found",
         };
     }
 
-    const doc = snapshot.docs[0];
-    const product = doc.data() as Product;
-    const title = lang === 'fr' ? product.nameFr : product.nameEn;
-    const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
+    const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "Product";
+    const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
 
     return {
         title: title,
@@ -36,28 +80,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductPage({ params }: PageProps) {
     const { lang, slug } = await params;
-    const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    const snapshot = await adminDb.collection("products").where(slugField, "==", slug).limit(1).get();
+    const product = await findProductBySlug(lang, slug);
 
-    if (snapshot.empty) {
+    if (!product) {
         notFound();
     }
-
-    const doc = snapshot.docs[0];
-    const data = doc.data();
-    const product = {
-        ...data,
-        id: doc.id,
-        createdAt: data?.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data?.createdAt || null),
-        updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data?.updatedAt || null),
-    } as Product;
 
     const dict = await getDictionary(lang as Locale);
     const shopDict = dict.shop;
 
-    const title = lang === 'fr' ? product.nameFr : product.nameEn;
-    const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
-    const intro = lang === 'fr' ? product.introFr : product.introEn;
+    const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "Product";
+    const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
+    const intro = getLocalizedField(product.intro, lang) || (lang === 'fr' ? product.introFr : product.introEn) || "";
     
     const imageUrl = product.imageUrl
         || (product.images && product.images.length > 0 ? product.images[0] : null)

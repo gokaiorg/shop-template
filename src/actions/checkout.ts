@@ -2,7 +2,7 @@
 
 import { adminDb } from "@/lib/firebase-admin";
 
-export async function checkoutOrder(items: { id: string, quantity: number, nameFr?: string, nameEn?: string, price?: number }[]) {
+export async function checkoutOrder(items: { id: string, quantity: number, name?: Record<string, string>, nameFr?: string, nameEn?: string, price?: number }[]) {
     try {
         if (!Array.isArray(items) || items.length === 0) {
             throw new Error("No items in cart");
@@ -32,6 +32,7 @@ export async function checkoutOrder(items: { id: string, quantity: number, nameF
             return {
                 ...item,
                 price: productData?.price || 0,
+                name: productData?.name || item.name,
                 nameFr: productData?.nameFr || item.nameFr,
                 nameEn: productData?.nameEn || item.nameEn,
             };
