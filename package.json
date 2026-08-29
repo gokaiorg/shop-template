@@ -2,6 +2,7 @@
   "name": "shop-template",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.1.0",
   "scripts": {
     "dev:st": "env-cmd -f .env.st next dev",
     "dev:af": "env-cmd -f .env.af next dev",
