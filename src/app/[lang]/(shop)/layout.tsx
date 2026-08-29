@@ -24,7 +24,7 @@ export default async function ShopLayout({
                 <div className="flex-1">
                     {children}
                 </div>
-                <Footer />
+                <Footer lang={lang} dict={dict} />
             </main>
         </div>
     );

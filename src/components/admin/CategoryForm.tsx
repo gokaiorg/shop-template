@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { createCategory } from "@/actions/admin";
+import { createCategory, updateCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
 
 import { Button } from "@/components/ui/button";
@@ -22,32 +22,37 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
-export function CategoryForm({ dict, lang }: { dict: Record<string, string>; lang: string }) {
+import { Category } from "@/types/database";
+
+export function CategoryForm({ dict, lang, initialData }: { dict: Record<string, string>; lang: string; initialData?: Category }) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
     const form = useForm<z.infer<typeof categorySchema>>({
         resolver: zodResolver(categorySchema),
         defaultValues: {
-            nameFr: "",
-            nameEn: "",
-            slugFr: "",
-            slugEn: "",
-            introFr: "",
-            introEn: "",
-            descriptionFr: "",
-            descriptionEn: "",
+            nameFr: initialData?.nameFr || "",
+            nameEn: initialData?.nameEn || "",
+            slugFr: initialData?.slugFr || "",
+            slugEn: initialData?.slugEn || "",
+            introFr: initialData?.introFr || "",
+            introEn: initialData?.introEn || "",
+            descriptionFr: initialData?.descriptionFr || "",
+            descriptionEn: initialData?.descriptionEn || "",
         },
     });
 
     function onSubmit(values: z.infer<typeof categorySchema>) {
         startTransition(async () => {
-            const res = await createCategory(values);
+            const res = initialData
+                ? await updateCategory(initialData.id, values)
+                : await createCategory(values);
+
             if (res.success) {
                 toast.success(dict.success);
                 router.push(`/${lang}/admin/categories`);
             } else {
-                toast.error(res.error || "Failed to create category");
+                toast.error(res.error || "Failed to save category");
             }
         });
     }

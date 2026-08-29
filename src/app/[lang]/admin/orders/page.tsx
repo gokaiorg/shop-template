@@ -3,6 +3,10 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 interface AdminOrdersPageProps {
     params: Promise<{
@@ -13,10 +17,20 @@ interface AdminOrdersPageProps {
 export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) {
     const { lang } = await params;
 
+    const session = await auth();
+    if (!session) redirect(`/${lang}/login`);
+
+    // Build the query based on user role
+    let ordersQuery = adminDb.collection("orders").orderBy("createdAt", "desc");
+    
+    if (session.user?.role === "user") {
+        ordersQuery = ordersQuery.where("userId", "==", session.user.id);
+    }
+
     // Fetch dictionary and orders in parallel to reduce TTFB
     const [dict, ordersSnapshot] = await Promise.all([
         getDictionary(lang),
-        adminDb.collection("orders").orderBy("createdAt", "desc").get()
+        ordersQuery.get()
     ]);
     const ordersDict = dict.admin.orders;
 
@@ -48,67 +62,67 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
                 </div>
             </div>
 
-            <div className="bg-background border rounded-lg p-0 overflow-hidden">
-                <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
-                        <tr>
-                            <th className="px-6 py-3">{ordersDict.columns.id}</th>
-                            <th className="px-6 py-3">{ordersDict.columns.date}</th>
-                            <th className="px-6 py-3">{ordersDict.columns.customer}</th>
-                            <th className="px-6 py-3">{ordersDict.columns.total}</th>
-                            <th className="px-6 py-3 text-right">{ordersDict.columns.status}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {orders.length === 0 ? (
-                            <tr>
-                                <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                                    {lang === 'fr' ? 'Aucune commande trouvée.' : 'No orders found.'}
-                                </td>
-                            </tr>
-                        ) : (
-                            orders.map((order) => (
-                                <tr key={order.id} className="border-b last:border-0 hover:bg-muted/20">
-                                    <td className="px-6 py-4 font-medium">
-                                        {order.id.substring(order.id.length - 8).toUpperCase()}
-                                    </td>
-                                    <td className="px-6 py-4 text-muted-foreground">
-                                        {format(new Date(order.createdAt), "PPP p")}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span>{order.customerName || "Guest"}</span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {order.customerEmail}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="font-semibold">{formatCurrency(order.totalAmount)}</span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {order._count.items} {lang === 'fr' ? 'articles' : 'items'}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <Badge
-                                            variant={order.status === "PAID" ? "default" : "secondary"}
-                                            className={
-                                                order.status === "PAID"
-                                                    ? "bg-green-500 hover:bg-green-600"
-                                                    : ""
-                                            }
-                                        >
-                                            {order.status}
-                                        </Badge>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{ordersDict.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{ordersDict.columns.id}</TableHead>
+                                <TableHead>{ordersDict.columns.date}</TableHead>
+                                <TableHead>{ordersDict.columns.customer}</TableHead>
+                                <TableHead>{ordersDict.columns.total}</TableHead>
+                                <TableHead className="text-right">{ordersDict.columns.status}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {orders.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                        {lang === 'fr' ? 'Aucune commande trouvée.' : 'No orders found.'}
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                orders.map((order) => (
+                                    <TableRow key={order.id}>
+                                        <TableCell className="font-medium">
+                                            {order.id.substring(order.id.length - 8).toUpperCase()}
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {format(new Date(order.createdAt), "PPP p")}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span>{order.customerName || "Guest"}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {order.customerEmail}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold">{formatCurrency(order.totalAmount)}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {order._count.items} {lang === 'fr' ? 'articles' : 'items'}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge
+                                                variant={order.status === "COMPLETED" || order.status === "PAID" ? "default" : order.status === "PENDING" ? "secondary" : "destructive"}
+                                            >
+                                                {order.status}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </div>
     );
 }

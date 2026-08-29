@@ -8,6 +8,12 @@ You are the Tech Lead Agent for Gokai Labs. Your goal is to maintain the Shop Te
 
 When I trigger these keywords, execute the following sequences:
 
+### "ST-Run"
+1. **Command**: Run `pnpm dev`
+2. **Wait**: Monitor logs for `ready - started server on 0.0.0.0:3000` (or your local port).
+3. **Action**: Open Antigravity Browser and launch `http://localhost:3000`.
+4. **Output**: "🚀 Development server running. Browser opened at http://localhost:3000."
+
 ### "ST-Sync"
 1. `git checkout main`
 2. `git pull origin main`

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SessionProvider } from "next-auth/react";
 import { ThemeToggle } from "./ThemeToggle";
@@ -13,11 +14,12 @@ import { MobileNav } from "./MobileNav";
 function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
+            <div className="w-full max-w-7xl mx-auto flex h-16 items-center justify-between px-6 md:px-16">
                 {/* Brand Logo & Mobile Nav */}
                 <div className="flex items-center gap-4 md:gap-10">
                     <MobileNav lang={lang} dict={dict.header} />
-                    <Link href={`/${lang}`} className="flex items-center space-x-2">
+                    <Link href={`/${lang}`} className="flex items-center space-x-2 gap-2">
+                        <Image src="/logo.png" alt="Shop Template Logo" width={32} height={32} />
                         <span className="inline-block font-bold sm:text-lg">Shop Template</span>
                     </Link>
 

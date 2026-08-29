@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { createProduct } from "@/actions/admin";
+import { createProduct, updateProduct } from "@/actions/admin";
 import { productSchema } from "@/schemas/admin";
 
 import { Button } from "@/components/ui/button";
@@ -23,39 +23,42 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
-import { Category } from "@/types/database";
+import { Category, Product } from "@/types/database";
 
-export function ProductForm({ categories, dict, lang }: { categories: Category[]; dict: Record<string, string>; lang: string }) {
+export function ProductForm({ categories, dict, lang, initialData }: { categories: Category[]; dict: Record<string, string>; lang: string; initialData?: Product }) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
     const form = useForm<z.infer<typeof productSchema>>({
         resolver: zodResolver(productSchema),
         defaultValues: {
-            nameFr: "",
-            nameEn: "",
-            slugFr: "",
-            slugEn: "",
-            introFr: "",
-            introEn: "",
-            descriptionFr: "",
-            descriptionEn: "",
-            statusFr: "brouillon",
-            statusEn: "draft",
-            price: 0,
-            stock: 0,
-            categoryId: "",
+            nameFr: initialData?.nameFr || "",
+            nameEn: initialData?.nameEn || "",
+            slugFr: initialData?.slugFr || "",
+            slugEn: initialData?.slugEn || "",
+            introFr: initialData?.introFr || "",
+            introEn: initialData?.introEn || "",
+            descriptionFr: initialData?.descriptionFr || "",
+            descriptionEn: initialData?.descriptionEn || "",
+            statusFr: initialData?.statusFr || "brouillon",
+            statusEn: initialData?.statusEn || "draft",
+            price: initialData?.price || 0,
+            stock: initialData?.stock || 0,
+            categoryId: initialData?.categoryId || "",
         },
     });
 
     function onSubmit(values: z.infer<typeof productSchema>) {
         startTransition(async () => {
-            const res = await createProduct(values);
+            const res = initialData
+                ? await updateProduct(initialData.id, values)
+                : await createProduct(values);
+                
             if (res.success) {
                 toast.success(dict.success);
                 router.push(`/${lang}/admin/products`);
             } else {
-                toast.error(res.error || "Failed to create product");
+                toast.error(res.error || "Failed to save product");
             }
         });
     }

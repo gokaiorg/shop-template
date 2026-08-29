@@ -21,8 +21,11 @@ export default auth((req) => {
         if (!isLoggedIn) {
             return NextResponse.redirect(new URL('/api/auth/signin', nextUrl));
         }
-        // Check if the user is an admin from the token
-        if (req.auth?.user?.role !== 'ADMIN') {
+        
+        const role = (req.auth?.user?.role || "").toLowerCase();
+        const isAuthorized = role === "admin" || role === "user";
+
+        if (!isAuthorized) {
             return NextResponse.redirect(new URL('/', nextUrl));
         }
     }
@@ -44,5 +47,5 @@ export default auth((req) => {
 
 export const config = {
     // Matcher ignoring `/_next/`, api, and standard public files
-    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };

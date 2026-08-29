@@ -3,16 +3,28 @@
         "dashboard": "Dashboard",
         "products": "Products",
         "categories": "Categories",
+        "pages": "Pages",
         "orders": "Orders",
         "title": "Admin Panel",
+        "view_site": "View Site",
         "welcome_title": "Welcome",
-        "welcome_text": "Welcome to the Admin Dashboard, {email}!",
+        "welcome_text": "Welcome to the Admin Dashboard, {name}!",
+        "profile": {
+            "title": "Personal Information",
+            "description": "Update your account details and password."
+        },
+        "name": "Name",
+        "email": "Email",
+        "password": "Password",
         "products_create": "Create Product",
+        "products_edit": "Edit Product",
         "categories_create": "Create Category",
+        "categories_edit": "Edit Category",
         "dashboard_seedButton": "Generate Demo Data",
         "dashboard_seedWarning": "Warning: This will clear all existing products and categories.",
         "dashboard_seedSuccess": "Demo data generated successfully!",
         "dashboard_seedError": "Failed to generate demo data.",
+        "pages_edit": "Edit Page",
         "forms": {
             "nameFr": "Name (FR)",
             "nameEn": "Name (EN)",
@@ -29,7 +41,15 @@
             "categoryId": "Category",
             "submit": "Save",
             "submitting": "Saving...",
-            "success": "Saved successfully!"
+            "success": "Saved successfully!",
+            "titleEn": "Title (EN)",
+            "titleFr": "Title (FR)",
+            "metaTitleEn": "Meta Title (EN)",
+            "metaTitleFr": "Meta Title (FR)",
+            "metaDescriptionEn": "Meta Description (EN)",
+            "metaDescriptionFr": "Meta Description (FR)",
+            "contentEn": "Content (EN)",
+            "contentFr": "Content (FR)"
         },
         "orders": {
             "title": "Manage Orders",
@@ -51,11 +71,14 @@
         "login_btn": "Login",
         "login_btn_loading": "Signing in...",
         "invalid_creds": "Invalid email or password",
-        "unexpected_err": "An unexpected error occurred."
+        "unexpected_err": "An unexpected error occurred.",
+        "name": "Name",
+        "signup_btn": "Create Account"
     },
     "header": {
         "shop": "Shop",
         "about": "About",
+        "contact": "Contact",
         "login": "Login",
         "dashboard": "Dashboard",
         "toggle_language": "Toggle Language",
@@ -70,5 +93,19 @@
         "all_categories": "All Categories",
         "add_to_cart": "Add to cart",
         "empty_state": "No products found."
+    },
+    "home": {
+        "shop_by_category": "Shop by Category",
+        "featured_products": "Featured Products",
+        "hero_title": "One Template. Infinite Possibilities.",
+        "hero_subtitle": "The ultimate full-stack boilerplate. Whether you are launching a premium e-commerce brand or a robust digital agency, start with a secure, fully localized, and beautifully designed architecture.",
+        "explore_all": "Explore All"
+    },
+    "legal": {
+        "title": "Legal",
+        "mentions_legales": "Legal Mentions",
+        "cgv": "Terms & Conditions",
+        "privacy_policy": "Privacy Policy",
+        "returns": "Returns & Refunds"
     }
 }

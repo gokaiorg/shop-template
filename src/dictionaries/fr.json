@@ -3,16 +3,28 @@
         "dashboard": "Tableau de bord",
         "products": "Produits",
         "categories": "Catégories",
+        "pages": "Pages",
         "orders": "Commandes",
         "title": "Panneau d'administration",
+        "view_site": "Voir le site",
         "welcome_title": "Bienvenue",
-        "welcome_text": "Bienvenue dans le tableau de bord d'administration, {email} !",
+        "welcome_text": "Bienvenue dans le tableau de bord d'administration, {name} !",
+        "profile": {
+            "title": "Informations Personnelles",
+            "description": "Mettez à jour vos informations de compte et votre mot de passe."
+        },
+        "name": "Nom",
+        "email": "Email",
+        "password": "Mot de passe",
         "products_create": "Créer un produit",
+        "products_edit": "Modifier le produit",
         "categories_create": "Créer une catégorie",
+        "categories_edit": "Modifier la catégorie",
         "dashboard_seedButton": "Générer des données de démo",
         "dashboard_seedWarning": "Attention : Ceci supprimera tous les produits et catégories existants.",
         "dashboard_seedSuccess": "Données de démo générées avec succès !",
         "dashboard_seedError": "Échec de la génération des données de démo.",
+        "pages_edit": "Modifier la Page",
         "forms": {
             "nameFr": "Nom (FR)",
             "nameEn": "Nom (EN)",
@@ -28,8 +40,16 @@
             "stock": "Stock",
             "categoryId": "Catégorie",
             "submit": "Enregistrer",
-            "submitting": "Enregistrement en cours...",
-            "success": "Enregistré avec succès !"
+            "submitting": "Enregistrement...",
+            "success": "Enregistré avec succès !",
+            "titleEn": "Titre (EN)",
+            "titleFr": "Titre (FR)",
+            "metaTitleEn": "Méta Titre (EN)",
+            "metaTitleFr": "Méta Titre (FR)",
+            "metaDescriptionEn": "Méta Description (EN)",
+            "metaDescriptionFr": "Méta Description (FR)",
+            "contentEn": "Contenu (EN)",
+            "contentFr": "Contenu (FR)"
         },
         "orders": {
             "title": "Gérer les commandes",
@@ -51,11 +71,14 @@
         "login_btn": "Connexion",
         "login_btn_loading": "Connexion en cours...",
         "invalid_creds": "E-mail ou mot de passe invalide",
-        "unexpected_err": "Une erreur inattendue est survenue."
+        "unexpected_err": "Une erreur inattendue est survenue.",
+        "name": "Nom",
+        "signup_btn": "Créer un compte"
     },
     "header": {
         "shop": "Boutique",
         "about": "À propos",
+        "contact": "Contact",
         "login": "Connexion",
         "dashboard": "Tableau de bord",
         "toggle_language": "Changer de langue",
@@ -70,5 +93,19 @@
         "all_categories": "Toutes les catégories",
         "add_to_cart": "Ajouter au panier",
         "empty_state": "Aucun produit trouvé."
+    },
+    "home": {
+        "shop_by_category": "Magasiner par catégorie",
+        "featured_products": "Produits en vedette",
+        "hero_title": "Un modèle. Des possibilités infinies.",
+        "hero_subtitle": "Le boilerplate full-stack ultime. Que vous lanciez une marque de commerce électronique premium ou une agence numérique robuste, commencez avec une architecture sécurisée, entièrement localisée et magnifiquement conçue.",
+        "explore_all": "Tout explorer"
+    },
+    "legal": {
+        "title": "Légal",
+        "mentions_legales": "Mentions Légales",
+        "cgv": "CGV",
+        "privacy_policy": "Politique de Confidentialité",
+        "returns": "Retours & Remboursements"
     }
 }

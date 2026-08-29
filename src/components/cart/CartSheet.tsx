@@ -13,8 +13,8 @@ import { ShoppingCart, Trash2, Plus, Minus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useMounted } from "@/hooks/useMounted";
-import { createCheckoutSession } from "@/actions/checkout";
-import { useParams } from "next/navigation";
+import { checkoutOrder } from "@/actions/checkout";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function CartSheet({ dict }: { dict?: any }) {
@@ -24,8 +24,10 @@ export function CartSheet({ dict }: { dict?: any }) {
     const totalPrice = useCart(state => state.totalPrice);
     const removeItem = useCart(state => state.removeItem);
     const updateQuantity = useCart(state => state.updateQuantity);
+    const clearCart = useCart(state => state.clearCart);
 
     const params = useParams();
+    const router = useRouter();
     const lang = (params?.lang as string) || "en";
     const [isLoading, setIsLoading] = useState(false);
 
@@ -35,9 +37,12 @@ export function CartSheet({ dict }: { dict?: any }) {
     const handleCheckout = async () => {
         try {
             setIsLoading(true);
-            const { url } = await createCheckoutSession(items, lang);
-            if (url) {
-                window.location.href = url;
+            const result = await checkoutOrder(items);
+            if (result.success) {
+                clearCart();
+                router.push(`/${lang}/checkout/success?session_id=${result.orderId}`);
+            } else {
+                console.error("Checkout failed:", result.error);
             }
         } catch (error) {
             console.error("Checkout error:", error);

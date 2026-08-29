@@ -8,6 +8,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export function MobileNav({ lang, dict }: { lang: string, dict: Record<string, string> }) {
     const [open, setOpen] = useState(false);
@@ -23,8 +24,9 @@ export function MobileNav({ lang, dict }: { lang: string, dict: Record<string, s
             <SheetContent side="left" className="w-[300px] p-6 flex flex-col gap-6">
                 <SheetHeader className="text-left">
                     <SheetTitle asChild>
-                        <Link href={`/${lang}`} onClick={() => setOpen(false)} className="inline-block font-bold text-lg">
-                            Shop Template
+                        <Link href={`/${lang}`} onClick={() => setOpen(false)} className="flex items-center gap-2 font-bold text-lg">
+                            <Image src="/logo.png" alt="Shop Template Logo" width={32} height={32} />
+                            <span>Shop Template</span>
                         </Link>
                     </SheetTitle>
                 </SheetHeader>

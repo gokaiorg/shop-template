@@ -13,9 +13,10 @@ export const authConfig = {
                 // RBAC Logic: Check if user email is in ADMIN_EMAILS
                 const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
                 if (user.email && adminEmails.includes(user.email)) {
-                    token.role = "ADMIN";
+                    token.role = "admin";
                 } else {
-                    token.role = user.role || "CUSTOMER";
+                    const role = (user.role as string || "user").toLowerCase();
+                    token.role = role === "customer" ? "user" : role;
                 }
             }
             return token;
