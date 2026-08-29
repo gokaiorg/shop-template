@@ -1,13 +1,25 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { updatePage } from "@/actions/admin";
+import { Trash2, Loader2 } from "lucide-react";
+import { updatePage, deletePage } from "@/actions/admin";
 import { pageSchema } from "@/schemas/admin";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +41,7 @@ export function PageForm({ dict, lang, initialData }: { dict: any; lang: string;
     const router = useRouter();
     const isI18nEnabled = isMultiLocale();
     const [isPending, startTransition] = useTransition();
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const form = useForm<z.infer<typeof pageSchema>>({
         resolver: zodResolver(pageSchema),
@@ -64,6 +77,30 @@ export function PageForm({ dict, lang, initialData }: { dict: any; lang: string;
             }
         });
     }
+
+    async function handleDelete() {
+        if (!initialData?.id) return;
+        setIsDeleting(true);
+        const toastId = toast.loading(dict?.forms?.deleting || "Deleting page...");
+        try {
+            const res = await deletePage(initialData.id);
+            toast.dismiss(toastId);
+            if (res.success) {
+                toast.success(dict?.forms?.deleted || "Page deleted successfully");
+                router.push(`/${lang}/admin/pages`);
+            } else {
+                toast.error(res.error || "Failed to delete page");
+                setIsDeleting(false);
+            }
+        } catch (err) {
+            toast.dismiss(toastId);
+            console.error("DELETE_PAGE_ERROR", err);
+            toast.error("Failed to delete page");
+            setIsDeleting(false);
+        }
+    }
+
+    const isLoading = isPending || isDeleting;
 
     return (
         <Form {...form}>
@@ -246,9 +283,49 @@ export function PageForm({ dict, lang, initialData }: { dict: any; lang: string;
                     </div>
                 )}
 
-                <Button type="submit" disabled={isPending}>
-                    {isPending ? dict.forms.submitting : dict.forms.submit}
-                </Button>
+                <div className="flex items-center gap-4">
+                    <Button type="submit" disabled={isLoading} className="cursor-pointer">
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {isDeleting ? (dict?.forms?.deleting || "Deleting...") : dict.forms.submitting}
+                            </>
+                        ) : (
+                            dict.forms.submit
+                        )}
+                    </Button>
+
+                    {initialData?.id && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button type="button" variant="destructive" disabled={isLoading} className="cursor-pointer">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {dict?.forms?.delete || "Delete"}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>{dict?.forms?.delete_confirm_title || "Are you absolutely sure?"}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        {dict?.forms?.delete_confirm_desc || "This action cannot be undone. This will permanently delete this page."}
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel disabled={isDeleting}>
+                                        {dict?.forms?.cancel || "Cancel"}
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleDelete}
+                                        disabled={isDeleting}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+                                    >
+                                        {isDeleting ? (dict?.forms?.deleting || "Deleting...") : (dict?.forms?.confirm_delete || "Delete Page")}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
             </form>
         </Form>
     );

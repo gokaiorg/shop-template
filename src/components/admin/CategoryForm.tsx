@@ -1,15 +1,27 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { createCategory, updateCategory } from "@/actions/admin";
+import { Trash2, Loader2 } from "lucide-react";
+import { createCategory, updateCategory, deleteCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
 import { getSupportedLocales, getDefaultLocale, isMultiLocale } from "@/app/i18n-config";
 import { getLocaleDisplayName } from "@/lib/i18n";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +44,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
     const defaultLocale = getDefaultLocale();
     const isMulti = isMultiLocale();
     const [isPending, startTransition] = useTransition();
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const defaultName: Record<string, string> = {};
     const defaultSlug: Record<string, string> = {};
@@ -94,6 +107,30 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
             }
         });
     }
+
+    async function handleDelete() {
+        if (!initialData?.id) return;
+        setIsDeleting(true);
+        const toastId = toast.loading(dict.deleting || "Deleting category...");
+        try {
+            const res = await deleteCategory(initialData.id);
+            toast.dismiss(toastId);
+            if (res.success) {
+                toast.success(dict.deleted || "Category deleted successfully");
+                router.push(`/${lang}/admin/categories`);
+            } else {
+                toast.error(res.error || "Failed to delete category");
+                setIsDeleting(false);
+            }
+        } catch (err) {
+            toast.dismiss(toastId);
+            console.error("DELETE_CATEGORY_ERROR", err);
+            toast.error("Failed to delete category");
+            setIsDeleting(false);
+        }
+    }
+
+    const isLoading = isPending || isDeleting;
 
     return (
         <Form {...form}>
@@ -222,9 +259,49 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                     </div>
                 )}
 
-                <Button type="submit" disabled={isPending}>
-                    {isPending ? (dict.submitting || "Saving...") : (dict.submit || "Save")}
-                </Button>
+                <div className="flex items-center gap-4">
+                    <Button type="submit" disabled={isLoading} className="cursor-pointer">
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {isDeleting ? (dict.deleting || "Deleting...") : (dict.submitting || "Saving...")}
+                            </>
+                        ) : (
+                            dict.submit || "Save"
+                        )}
+                    </Button>
+
+                    {initialData?.id && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button type="button" variant="destructive" disabled={isLoading} className="cursor-pointer">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {dict.delete || "Delete"}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>{dict.delete_confirm_title || "Are you absolutely sure?"}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        {dict.delete_confirm_desc || "This action cannot be undone. This will permanently delete this category."}
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel disabled={isDeleting}>
+                                        {dict.cancel || "Cancel"}
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleDelete}
+                                        disabled={isDeleting}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+                                    >
+                                        {isDeleting ? (dict.deleting || "Deleting...") : (dict.confirm_delete || "Delete Category")}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
             </form>
         </Form>
     );

@@ -1,7 +1,7 @@
 "use server"
 
 import { z } from "zod";
-import { adminDb } from "@/lib/firebase-admin";
+import { adminDb, adminStorage } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 
@@ -422,5 +422,93 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
     } catch (error) {
         console.error("UPDATE_PAGE_ERROR:", error);
         return { success: false, error: "Failed to update page." };
+    }
+}
+
+export async function deleteCategory(id: string) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+        await adminDb.collection("categories").doc(id).delete();
+
+        revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/[lang]/shop', 'layout');
+        return { success: true };
+    } catch (error) {
+        console.error("DELETE_CATEGORY_ERROR:", error);
+        return { success: false, error: "Failed to delete category." };
+    }
+}
+
+export async function deleteProduct(id: string) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+        const productRef = adminDb.collection("products").doc(id);
+        const productDoc = await productRef.get();
+
+        if (productDoc.exists) {
+            const productData = productDoc.data();
+            const imagesToDelete = [productData?.imageUrl, ...(productData?.images || [])].filter(Boolean);
+
+            for (const imgUrl of imagesToDelete) {
+                if (typeof imgUrl === 'string') {
+                    try {
+                        let filePath = imgUrl;
+                        if (imgUrl.includes('/o/')) {
+                            const pathPart = imgUrl.split('/o/')[1]?.split('?')[0];
+                            if (pathPart) filePath = decodeURIComponent(pathPart);
+                        }
+                        if (imgUrl.includes('firebasestorage.googleapis.com') || imgUrl.includes('storage.googleapis.com') || (!imgUrl.startsWith('http://') && !imgUrl.startsWith('https://'))) {
+                            const bucket = adminStorage.bucket();
+                            const file = bucket.file(filePath);
+                            const [exists] = await file.exists();
+                            if (exists) {
+                                await file.delete();
+                            }
+                        }
+                    } catch (storageErr) {
+                        console.warn('[STORAGE_CLEANUP_WARNING]', storageErr);
+                    }
+                }
+            }
+        }
+
+        await productRef.delete();
+
+        revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/[lang]/shop', 'layout');
+        revalidatePath('/[lang]/product/[slug]', 'page');
+        return { success: true };
+    } catch (error) {
+        console.error("DELETE_PRODUCT_ERROR:", error);
+        return { success: false, error: "Failed to delete product." };
+    }
+}
+
+export async function deletePage(id: string) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+        await adminDb.collection("pages").doc(id).delete();
+
+        revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/[lang]/(shop)/[slug]', 'page');
+        return { success: true };
+    } catch (error) {
+        console.error("DELETE_PAGE_ERROR:", error);
+        return { success: false, error: "Failed to delete page." };
     }
 }

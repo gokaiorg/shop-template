@@ -7,13 +7,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
 
-import { createProduct, updateProduct } from "@/actions/admin";
+import { createProduct, updateProduct, deleteProduct } from "@/actions/admin";
 import { productSchema } from "@/schemas/admin";
-import { uploadProductImage } from "@/lib/firebase-storage";
+import { uploadProductImage, deleteProductImage } from "@/lib/firebase-storage";
 import { getSupportedLocales, getDefaultLocale, isMultiLocale } from "@/app/i18n-config";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +60,7 @@ export function ProductForm({
 
     const [isPending, startTransition] = useTransition();
     const [isUploading, setIsUploading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -202,7 +214,32 @@ export function ProductForm({
         }
     }
 
-    const isLoading = isPending || isUploading;
+    async function handleDelete() {
+        if (!initialData?.id) return;
+        setIsDeleting(true);
+        const toastId = toast.loading(dict.deleting || "Deleting product...");
+        try {
+            if (initialData.imageUrl) {
+                await deleteProductImage(initialData.imageUrl);
+            }
+            const res = await deleteProduct(initialData.id);
+            toast.dismiss(toastId);
+            if (res.success) {
+                toast.success(dict.deleted || "Product deleted successfully");
+                router.push(`/${lang}/admin/products`);
+            } else {
+                toast.error(res.error || "Failed to delete product");
+                setIsDeleting(false);
+            }
+        } catch (err) {
+            toast.dismiss(toastId);
+            console.error("DELETE_PRODUCT_ERROR", err);
+            toast.error("Failed to delete product");
+            setIsDeleting(false);
+        }
+    }
+
+    const isLoading = isPending || isUploading || isDeleting;
 
     return (
         <Form {...form}>
@@ -521,16 +558,49 @@ export function ProductForm({
                     </div>
                 </div>
 
-                <Button type="submit" disabled={isLoading} className="cursor-pointer">
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {isUploading ? (dict.imageUploading || "Uploading image...") : (dict.submitting || "Saving...")}
-                        </>
-                    ) : (
-                        dict.submit || "Save"
+                <div className="flex items-center gap-4">
+                    <Button type="submit" disabled={isLoading} className="cursor-pointer">
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {isUploading ? (dict.imageUploading || "Uploading image...") : isDeleting ? (dict.deleting || "Deleting...") : (dict.submitting || "Saving...")}
+                            </>
+                        ) : (
+                            dict.submit || "Save"
+                        )}
+                    </Button>
+
+                    {initialData?.id && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button type="button" variant="destructive" disabled={isLoading} className="cursor-pointer">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {dict.delete || "Delete"}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>{dict.delete_confirm_title || "Are you absolutely sure?"}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        {dict.delete_confirm_desc || "This action cannot be undone. This will permanently delete this product and its associated images."}
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel disabled={isDeleting}>
+                                        {dict.cancel || "Cancel"}
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleDelete}
+                                        disabled={isDeleting}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+                                    >
+                                        {isDeleting ? (dict.deleting || "Deleting...") : (dict.confirm_delete || "Delete Product")}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     )}
-                </Button>
+                </div>
             </form>
         </Form>
     );

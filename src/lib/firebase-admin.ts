@@ -52,6 +52,9 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
+import { getStorage } from 'firebase-admin/storage';
+
 const rawDbId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
 export const adminDb = rawDbId && rawDbId !== "(default)" ? getFirestore(app, rawDbId) : getFirestore(app);
 export const adminAuth = getAuth(app);
+export const adminStorage = getStorage(app);

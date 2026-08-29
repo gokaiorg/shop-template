@@ -1,4 +1,4 @@
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from './firebase';
 
 /**
@@ -30,4 +30,36 @@ export async function uploadProductImage(file: File, customPath?: string): Promi
     const downloadURL = await getDownloadURL(snapshot.ref);
 
     return downloadURL;
+}
+
+/**
+ * Deletes a product image file from Firebase Storage given its full download URL or relative storage path.
+ *
+ * @param imageUri - The full download URL or storage path of the image to delete
+ */
+export async function deleteProductImage(imageUri?: string | null): Promise<void> {
+    if (!imageUri) return;
+
+    try {
+        let storagePath = imageUri;
+        if (imageUri.includes('/o/')) {
+            const encodedPath = imageUri.split('/o/')[1]?.split('?')[0];
+            if (encodedPath) {
+                storagePath = decodeURIComponent(encodedPath);
+            }
+        } else if (imageUri.startsWith('http://') || imageUri.startsWith('https://')) {
+            // Ignore external URLs (e.g. Unsplash placeholders)
+            if (!imageUri.includes('firebasestorage.googleapis.com') && !imageUri.includes('storage.googleapis.com')) {
+                return;
+            }
+        }
+
+        const fileRef = ref(storage, storagePath);
+        await deleteObject(fileRef);
+    } catch (error: any) {
+        if (error?.code === 'storage/object-not-found') {
+            return;
+        }
+        console.warn('[FIREBASE_STORAGE_DELETE_WARNING]', error);
+    }
 }
