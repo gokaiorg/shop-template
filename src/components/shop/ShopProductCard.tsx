@@ -33,6 +33,8 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
         || (product.images && product.images.length > 0 ? product.images[0] : null)
         || brandConfig.assets.placeholderImage;
 
+    const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
+
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-background">
             {/* Image Container */}
@@ -60,14 +62,16 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     <p className="text-lg font-bold">
                         ${product.price.toFixed(2)}
                     </p>
-                    <Button
-                        size="sm"
-                        className="rounded-full shadow-xs cursor-pointer"
-                        onClick={handleAddToCart}
-                        aria-label={`${dict.add_to_cart || "Add to cart"} ${title}`}
-                    >
-                        {dict.add_to_cart || "Add to cart"}
-                    </Button>
+                    {isCartEnabled && (
+                        <Button
+                            size="sm"
+                            className="rounded-full shadow-xs cursor-pointer"
+                            onClick={handleAddToCart}
+                            aria-label={`${dict.add_to_cart || "Add to cart"} ${title}`}
+                        >
+                            {dict.add_to_cart || "Add to cart"}
+                        </Button>
+                    )}
                 </div>
             </div>
 

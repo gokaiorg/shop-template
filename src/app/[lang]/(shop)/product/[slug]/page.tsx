@@ -63,6 +63,8 @@ export default async function ProductPage({ params }: PageProps) {
         || (product.images && product.images.length > 0 ? product.images[0] : null)
         || brandConfig.assets.placeholderImage;
 
+    const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
+
     return (
         <main className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
@@ -98,16 +100,18 @@ export default async function ProductPage({ params }: PageProps) {
                         </p>
                     </div>
 
-                    <div className="pt-6 border-t">
-                        <AddToCartButton 
-                            product={product} 
-                            lang={lang} 
-                            label={shopDict.add_to_cart || "Add to cart"} 
-                            title={title} 
-                            size="lg"
-                            className="w-full md:w-auto px-12"
-                        />
-                    </div>
+                    {isCartEnabled && (
+                        <div className="pt-6 border-t">
+                            <AddToCartButton 
+                                product={product} 
+                                lang={lang} 
+                                label={shopDict.add_to_cart || "Add to cart"} 
+                                title={title} 
+                                size="lg"
+                                className="w-full md:w-auto px-12"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </main>
