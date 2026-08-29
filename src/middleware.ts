@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import NextAuth from 'next-auth';
 import { authConfig } from '@/auth.config';
-import { i18n } from '@/app/i18n-config';
+import { getSupportedLocales, getDefaultLocale, isMultiLocale } from '@/app/i18n-config';
 
 const { auth } = NextAuth(authConfig);
 
@@ -30,16 +30,37 @@ export default auth((req) => {
         }
     }
 
-    // Handle i18n Routing
-    const pathnameIsMissingLocale = i18n.locales.every(
-        (locale) => !nextUrl.pathname.startsWith(`/${locale}/`) && nextUrl.pathname !== `/${locale}`
-    );
+    const locales = getSupportedLocales();
+    const defaultLocale = getDefaultLocale();
+    const isMulti = isMultiLocale();
+    const pathname = nextUrl.pathname;
 
-    if (pathnameIsMissingLocale) {
-        const locale = i18n.defaultLocale;
-        return NextResponse.redirect(
-            new URL(`/${locale}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`, req.url)
+    if (!isMulti || locales.length <= 1) {
+        // Single-locale mode: strip locale prefix if present and internally rewrite
+        const matchedLocalePrefix = locales.find(
+            (loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`)
         );
+
+        if (matchedLocalePrefix) {
+            const strippedPathname = pathname.slice(matchedLocalePrefix.length + 1) || '/';
+            const cleanUrl = new URL(strippedPathname + nextUrl.search, req.url);
+            return NextResponse.redirect(cleanUrl);
+        }
+
+        // Internally rewrite clean path to /[defaultLocale]/...
+        const rewriteUrl = new URL(`/${defaultLocale}${pathname === '/' ? '' : pathname}${nextUrl.search}`, req.url);
+        return NextResponse.rewrite(rewriteUrl);
+    } else {
+        // Multi-locale mode: ensure valid locale prefix
+        const pathnameIsMissingLocale = locales.every(
+            (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
+        );
+
+        if (pathnameIsMissingLocale) {
+            return NextResponse.redirect(
+                new URL(`/${defaultLocale}${pathname === '/' ? '' : pathname}${nextUrl.search}`, req.url)
+            );
+        }
     }
 
     return NextResponse.next();

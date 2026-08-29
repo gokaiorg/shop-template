@@ -6,6 +6,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product } from "@/types/database";
 import { Pencil } from "lucide-react";
 import { protectAdminRoute } from "@/lib/auth-utils";
+import { getLocalizedField } from "@/lib/i18n";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -38,14 +39,10 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                 createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
                 updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
             };
-            const category = categoryMap.get(prod.categoryId);
-            if (!category) {
-                console.warn(`Product with id ${prod.id} has an invalid categoryId ${prod.categoryId}`);
-                return null;
-            }
-            return { ...prod, category };
-        })
-        .filter(Boolean);
+            const catIds = prod.categoryIds || (prod.categoryId ? [prod.categoryId] : []);
+            const categories = catIds.map((id: string) => categoryMap.get(id)).filter(Boolean);
+            return { ...prod, categoryIds: catIds, categories };
+        });
 
     return (
         <div className="space-y-6">
@@ -64,7 +61,7 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                     <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                         <tr>
                             <th className="px-6 py-3">Name</th>
-                            <th className="px-6 py-3">Category</th>
+                            <th className="px-6 py-3">Categories</th>
                             <th className="px-6 py-3">Status</th>
                             <th className="px-6 py-3">Price</th>
                             <th className="px-6 py-3">Stock</th>
@@ -82,18 +79,34 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                             products.map((product) => (
                                 <tr key={product.id} className="border-b last:border-0 hover:bg-muted/20">
                                     <td className="px-6 py-4 font-medium">
-                                        {lang === 'fr' ? product.nameFr : product.nameEn}
+                                        {getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "Unnamed"}
                                     </td>
                                     <td className="px-6 py-4 text-muted-foreground">
-                                        {lang === 'fr' ? product.category.nameFr : product.category.nameEn}
+                                        <div className="flex flex-wrap gap-1">
+                                            {product.categories.length > 0 ? (
+                                                product.categories.map((cat: any) => (
+                                                    <span key={cat.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-muted text-foreground border">
+                                                        {getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn) || "Unnamed"}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">None</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${(product.statusEn === 'published' || product.statusFr === 'publié')
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                            }`}>
-                                            {lang === 'fr' ? product.statusFr : product.statusEn}
-                                        </span>
+                                        {(() => {
+                                            const status = getLocalizedField(product.status, lang) || (lang === 'fr' ? product.statusFr : product.statusEn) || "draft";
+                                            const isPublished = status === 'published' || status === 'publié';
+                                            return (
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${isPublished
+                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                    }`}>
+                                                    {status}
+                                                </span>
+                                            );
+                                        })()}
                                     </td>
                                     <td className="px-6 py-4">${product.price.toFixed(2)}</td>
                                     <td className="px-6 py-4">{product.stock}</td>

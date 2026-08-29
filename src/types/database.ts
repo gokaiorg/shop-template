@@ -25,34 +25,49 @@ export interface Product {
   id: string;
   price: number;
   stock: number;
+  imageUrl?: string | null;
   images: string[];
-  categoryId: string;
+  categoryIds: string[];
+  categoryId?: string;
+  categories?: Category[];
+  category?: Category | null;
   createdAt: Date | string;
   updatedAt: Date | string;
-  descriptionEn: string;
-  descriptionFr: string;
+  name: Record<string, string>;
+  slug: Record<string, string>;
+  description: Record<string, string>;
+  intro?: Record<string, string> | null;
+  status: Record<string, string>;
+  // Legacy optional fields for compatibility
+  nameEn?: string;
+  nameFr?: string;
+  slugEn?: string;
+  slugFr?: string;
+  descriptionEn?: string;
+  descriptionFr?: string;
   introEn?: string | null;
   introFr?: string | null;
-  nameEn: string;
-  nameFr: string;
-  slugEn: string;
-  slugFr: string;
-  statusEn: string;
-  statusFr: string;
+  statusEn?: string;
+  statusFr?: string;
 }
 
 export interface Category {
   id: string;
   createdAt: Date | string;
-  descriptionEn: string;
-  descriptionFr: string;
+  updatedAt: Date | string;
+  name: Record<string, string>;
+  slug: Record<string, string>;
+  description: Record<string, string>;
+  intro?: Record<string, string> | null;
+  // Legacy optional fields for compatibility
+  nameEn?: string;
+  nameFr?: string;
+  slugEn?: string;
+  slugFr?: string;
+  descriptionEn?: string;
+  descriptionFr?: string;
   introEn?: string | null;
   introFr?: string | null;
-  nameEn: string;
-  nameFr: string;
-  slugEn: string;
-  slugFr: string;
-  updatedAt: Date | string;
 }
 
 export interface Order {

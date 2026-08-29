@@ -15,7 +15,12 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ product, lang, label, title, className, size = "default" }: AddToCartButtonProps) {
+    const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
     const addItem = useCart(state => state.addItem);
+
+    if (!isCartEnabled) {
+        return null;
+    }
 
     const handleAddToCart = () => {
         addItem(product);

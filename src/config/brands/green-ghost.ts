@@ -3,109 +3,181 @@ import { BrandConfig, BrandSeedData } from '../types';
 export const greenGhostSeed: BrandSeedData = {
     categories: [
         {
-            nameFr: "Fleurs CBD Premium",
-            nameEn: "Premium CBD Flowers",
-            slugFr: "fleurs-cbd-premium",
-            slugEn: "premium-cbd-flowers",
-            introFr: "Sélection indoor suisse & italienne.",
-            introEn: "Swiss & Italian indoor selection.",
-            descriptionFr: "Fleurs cultivées en intérieur sans pesticides avec profil terpénique exceptionnel.",
-            descriptionEn: "Pesticide-free indoor grown flowers with exceptional terpene profiles."
+            name: {
+                en: "Premium CBD Flowers",
+                fr: "Fleurs CBD Premium"
+            },
+            slug: {
+                en: "premium-cbd-flowers",
+                fr: "fleurs-cbd-premium"
+            },
+            intro: {
+                en: "Swiss & Italian indoor selection.",
+                fr: "Sélection indoor suisse & italienne."
+            },
+            description: {
+                en: "Pesticide-free indoor grown flowers with exceptional terpene profiles.",
+                fr: "Fleurs cultivées en intérieur sans pesticides avec profil terpénique exceptionnel."
+            }
         },
         {
-            nameFr: "Huiles & Extraits Bio",
-            nameEn: "Organic Oils & Extracts",
-            slugFr: "huiles-extraits-bio",
-            slugEn: "organic-oils-extracts",
-            introFr: "Extraction spectre complet (Full Spectrum).",
-            introEn: "Full spectrum botanical extraction.",
-            descriptionFr: "Huiles sublinguales bio pressées à froid avec support MCT coco.",
-            descriptionEn: "Cold-pressed organic sublingual oils with coconut MCT carrier."
+            name: {
+                en: "Organic Oils & Extracts",
+                fr: "Huiles & Extraits Bio"
+            },
+            slug: {
+                en: "organic-oils-extracts",
+                fr: "huiles-extraits-bio"
+            },
+            intro: {
+                en: "Full spectrum botanical extraction.",
+                fr: "Extraction spectre complet (Full Spectrum)."
+            },
+            description: {
+                en: "Cold-pressed organic sublingual oils with coconut MCT carrier.",
+                fr: "Huiles sublinguales bio pressées à froid avec support MCT coco."
+            }
         },
         {
-            nameFr: "Infusions & Bien-être",
-            nameEn: "Herbal Teas & Wellness",
-            slugFr: "infusions-bien-etre",
-            slugEn: "herbal-teas-wellness",
-            introFr: "Mélanges de plantes et chanvre biologique.",
-            introEn: "Organic botanical blends and hemp.",
-            descriptionFr: "Tisanes relaxantes et digestives composées de plantes médicinales françaises.",
-            descriptionEn: "Relaxing and digestive herbal teas crafted with French medicinal plants."
+            name: {
+                en: "Herbal Teas & Wellness",
+                fr: "Infusions & Bien-être"
+            },
+            slug: {
+                en: "herbal-teas-wellness",
+                fr: "infusions-bien-etre"
+            },
+            intro: {
+                en: "Organic botanical blends and hemp.",
+                fr: "Mélanges de plantes et chanvre biologique."
+            },
+            description: {
+                en: "Relaxing and digestive herbal teas crafted with French medicinal plants.",
+                fr: "Tisanes relaxantes et digestives composées de plantes médicinales françaises."
+            }
         },
         {
-            nameFr: "Accessoires & Vapo",
-            nameEn: "Vaporizers & Accessories",
-            slugFr: "accessoires-vapo",
-            slugEn: "vaporizers-accessories",
-            introFr: "Matériel haute précision.",
-            introEn: "High-precision equipment.",
-            descriptionFr: "Vaporisateurs portables, grinders en céramique et accessoires durables.",
-            descriptionEn: "Portable vaporizers, ceramic grinders, and sustainable smoking accessories."
+            name: {
+                en: "Vaporizers & Accessories",
+                fr: "Accessoires & Vapo"
+            },
+            slug: {
+                en: "vaporizers-accessories",
+                fr: "accessoires-vapo"
+            },
+            intro: {
+                en: "High-precision equipment.",
+                fr: "Matériel haute précision."
+            },
+            description: {
+                en: "Portable vaporizers, ceramic grinders, and sustainable smoking accessories.",
+                fr: "Vaporisateurs portables, grinders en céramique et accessoires durables."
+            }
         },
     ],
     products: [
         {
-            nameFr: "Ghost OG Indoor 10g",
-            nameEn: "Ghost OG Indoor 10g",
-            slugFr: "ghost-og-indoor",
-            slugEn: "ghost-og-indoor",
-            introFr: "Arômes intenses de pin et d'agrumes.",
-            introEn: "Intense aromas of pine and fresh citrus.",
-            descriptionFr: "Notre variété signature Green Ghost. Fleurs denses et résineuses séchées lentement pendant 4 semaines.",
-            descriptionEn: "Our signature Green Ghost strain. Dense, frosty buds cured slowly for 4 weeks.",
+            name: {
+                en: "Ghost OG Indoor 10g",
+                fr: "Ghost OG Indoor 10g"
+            },
+            slug: {
+                en: "ghost-og-indoor",
+                fr: "ghost-og-indoor"
+            },
+            intro: {
+                en: "Intense aromas of pine and fresh citrus.",
+                fr: "Arômes intenses de pin et d'agrumes."
+            },
+            description: {
+                en: "Our signature Green Ghost strain. Dense, frosty buds cured slowly for 4 weeks.",
+                fr: "Notre variété signature Green Ghost. Fleurs denses et résineuses séchées lentement pendant 4 semaines."
+            },
             price: 79,
             stock: 45,
-            categoryIndex: 0,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [0],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1568644396922-5c3bfae12521?q=80&w=2670&auto=format&fit=crop"]
         },
         {
-            nameFr: "Moonrock Spectre Ultime 5g",
-            nameEn: "Moonrock Ultimate Spectrum 5g",
-            slugFr: "moonrock-spectre-ultime",
-            slugEn: "moonrock-ultimate-spectrum",
-            introFr: "Puissance terpénique maximale.",
-            introEn: "Maximum terpene potency.",
-            descriptionFr: "Têtes compactes trempées dans un distillat pur puis roulées dans du kief de premier choix.",
-            descriptionEn: "Dense buds dipped in pure broad-spectrum distillate and rolled in premium dry-sift kief.",
+            name: {
+                en: "Moonrock Ultimate Spectrum 5g",
+                fr: "Moonrock Spectre Ultime 5g"
+            },
+            slug: {
+                en: "moonrock-ultimate-spectrum",
+                fr: "moonrock-spectre-ultime"
+            },
+            intro: {
+                en: "Maximum terpene potency.",
+                fr: "Puissance terpénique maximale."
+            },
+            description: {
+                en: "Dense buds dipped in pure broad-spectrum distillate and rolled in premium dry-sift kief.",
+                fr: "Têtes compactes trempées dans un distillat pur puis roulées dans du kief de premier choix."
+            },
             price: 55,
             stock: 30,
-            categoryIndex: 0,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [0, 3],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1603909223429-69bb7101f420?q=80&w=2670&auto=format&fit=crop"]
         },
         {
-            nameFr: "Huile Full Spectrum 20% Bio",
-            nameEn: "Full Spectrum 20% Organic Oil",
-            slugFr: "huile-full-spectrum-20",
-            slugEn: "oil-full-spectrum-20",
-            introFr: "Concentration optimale pour la relaxation et le sommeil.",
-            introEn: "Optimal concentration for relaxation and sleep support.",
-            descriptionFr: "Flacon compte-gouttes de 10ml avec 2000mg de cannabinoïdes actifs naturels.",
-            descriptionEn: "10ml dropper bottle with 2000mg of natural active cannabinoids.",
+            name: {
+                en: "Full Spectrum 20% Organic Oil",
+                fr: "Huile Full Spectrum 20% Bio"
+            },
+            slug: {
+                en: "oil-full-spectrum-20",
+                fr: "huile-full-spectrum-20"
+            },
+            intro: {
+                en: "Optimal concentration for relaxation and sleep support.",
+                fr: "Concentration optimale pour la relaxation et le sommeil."
+            },
+            description: {
+                en: "10ml dropper bottle with 2000mg of natural active cannabinoids.",
+                fr: "Flacon compte-gouttes de 10ml avec 2000mg de cannabinoïdes actifs naturels."
+            },
             price: 69,
             stock: 60,
-            categoryIndex: 1,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [1],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1608248597359-0a6963e69124?q=80&w=2670&auto=format&fit=crop"]
         },
         {
-            nameFr: "Tisane Nuit Sereine 100g",
-            nameEn: "Serene Night Herbal Tea 100g",
-            slugFr: "tisane-nuit-sereine",
-            slugEn: "serene-night-herbal-tea",
-            introFr: "Mélange camomille, verveine et chanvre bio.",
-            introEn: "Chamomile, verbena, and organic hemp blend.",
-            descriptionFr: "Infusion apaisante idéale pour préparer une nuit calme et réparatrice.",
-            descriptionEn: "Soothing infusion ideal for preparing a calm and restorative night.",
+            name: {
+                en: "Serene Night Herbal Tea 100g",
+                fr: "Tisane Nuit Sereine 100g"
+            },
+            slug: {
+                en: "serene-night-herbal-tea",
+                fr: "tisane-nuit-sereine"
+            },
+            intro: {
+                en: "Chamomile, verbena, and organic hemp blend.",
+                fr: "Mélange camomille, verveine et chanvre bio."
+            },
+            description: {
+                en: "Soothing infusion ideal for preparing a calm and restorative night.",
+                fr: "Infusion apaisante idéale pour préparer une nuit calme et réparatrice."
+            },
             price: 18,
             stock: 80,
-            categoryIndex: 2,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [2],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=2670&auto=format&fit=crop"]
         }
     ]

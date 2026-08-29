@@ -3,141 +3,233 @@ import { BrandSeedData } from '../types';
 export const shopTemplateSeed: BrandSeedData = {
     categories: [
         {
-            nameFr: "Forfaits Web",
-            nameEn: "Web Packages",
-            slugFr: "forfaits-web",
-            slugEn: "web-packages",
-            introFr: "Création de sites internet.",
-            introEn: "Website creation.",
-            descriptionFr: "Des forfaits complets pour votre présence en ligne.",
-            descriptionEn: "Complete packages for your online presence."
+            name: {
+                en: "Web Packages",
+                fr: "Forfaits Web"
+            },
+            slug: {
+                en: "web-packages",
+                fr: "forfaits-web"
+            },
+            intro: {
+                en: "Website creation.",
+                fr: "Création de sites internet."
+            },
+            description: {
+                en: "Complete packages for your online presence.",
+                fr: "Des forfaits complets pour votre présence en ligne."
+            }
         },
         {
-            nameFr: "Maintenance",
-            nameEn: "Maintenance",
-            slugFr: "maintenance",
-            slugEn: "maintenance-en",
-            introFr: "Gardez votre site à jour.",
-            introEn: "Keep your site up to date.",
-            descriptionFr: "Services de maintenance mensuelle ou annuelle.",
-            descriptionEn: "Monthly or yearly maintenance services."
+            name: {
+                en: "Maintenance",
+                fr: "Maintenance"
+            },
+            slug: {
+                en: "maintenance",
+                fr: "maintenance-fr"
+            },
+            intro: {
+                en: "Keep your site up to date.",
+                fr: "Gardez votre site à jour."
+            },
+            description: {
+                en: "Monthly or yearly maintenance services.",
+                fr: "Services de maintenance mensuelle ou annuelle."
+            }
         },
         {
-            nameFr: "Produits Digitaux",
-            nameEn: "Digital Products",
-            slugFr: "produits-digitaux",
-            slugEn: "digital-products",
-            introFr: "Outils et templates.",
-            introEn: "Tools and templates.",
-            descriptionFr: "Templates et ressources prêtes à l'emploi.",
-            descriptionEn: "Ready-to-use templates and assets."
+            name: {
+                en: "Digital Products",
+                fr: "Produits Digitaux"
+            },
+            slug: {
+                en: "digital-products",
+                fr: "produits-digitaux"
+            },
+            intro: {
+                en: "Tools and templates.",
+                fr: "Outils et templates."
+            },
+            description: {
+                en: "Ready-to-use templates and assets.",
+                fr: "Templates et ressources prêtes à l'emploi."
+            }
         },
         {
-            nameFr: "Accessoires",
-            nameEn: "Accessories",
-            slugFr: "accessoires",
-            slugEn: "accessories",
-            introFr: "Tout pour vos besoins.",
-            introEn: "Everything for your needs.",
-            descriptionFr: "Accessoires et fournitures essentiels.",
-            descriptionEn: "Essential gear and accessories."
+            name: {
+                en: "Accessories",
+                fr: "Accessoires"
+            },
+            slug: {
+                en: "accessories",
+                fr: "accessoires"
+            },
+            intro: {
+                en: "Everything for your needs.",
+                fr: "Tout pour vos besoins."
+            },
+            description: {
+                en: "Essential gear and accessories.",
+                fr: "Accessoires et fournitures essentiels."
+            }
         },
     ],
     products: [
         {
-            nameFr: "Site Vitrine Pro",
-            nameEn: "Pro Showcase Website",
-            slugFr: "site-vitrine-pro",
-            slugEn: "pro-showcase-website",
-            introFr: "Idéal pour les PME et indépendants.",
-            introEn: "Ideal for SMBs and freelancers.",
-            descriptionFr: "Site vitrine moderne, optimisé pour le référencement et mobile-first.",
-            descriptionEn: "Modern showcase website, SEO optimized and mobile-first.",
+            name: {
+                en: "Pro Showcase Website",
+                fr: "Site Vitrine Pro"
+            },
+            slug: {
+                en: "pro-showcase-website",
+                fr: "site-vitrine-pro"
+            },
+            intro: {
+                en: "Ideal for SMBs and freelancers.",
+                fr: "Idéal pour les PME et indépendants."
+            },
+            description: {
+                en: "Modern showcase website, SEO optimized and mobile-first.",
+                fr: "Site vitrine moderne, optimisé pour le référencement et mobile-first."
+            },
             price: 1490,
             stock: 20,
-            categoryIndex: 0,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [0],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop"]
         },
         {
-            nameFr: "Boutique E-commerce",
-            nameEn: "E-Commerce Store",
-            slugFr: "boutique-ecommerce",
-            slugEn: "ecommerce-store",
-            introFr: "Vendez en ligne dès aujourd'hui.",
-            introEn: "Start selling online today.",
-            descriptionFr: "Plateforme e-commerce performante avec gestion de stock et paiements sécurisés.",
-            descriptionEn: "High-performance e-commerce platform with inventory management and secure payments.",
+            name: {
+                en: "E-Commerce Store",
+                fr: "Boutique E-commerce"
+            },
+            slug: {
+                en: "ecommerce-store",
+                fr: "boutique-ecommerce"
+            },
+            intro: {
+                en: "Start selling online today.",
+                fr: "Vendez en ligne dès aujourd'hui."
+            },
+            description: {
+                en: "High-performance e-commerce platform with inventory management and secure payments.",
+                fr: "Plateforme e-commerce performante avec gestion de stock et paiements sécurisés."
+            },
             price: 2890,
             stock: 15,
-            categoryIndex: 0,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [0, 1],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1556742049-0a67e5572293?q=80&w=2670&auto=format&fit=crop"]
         },
         {
-            nameFr: "Pack Sérénité Mensuel",
-            nameEn: "Monthly Serenity Plan",
-            slugFr: "pack-serenite-mensuel",
-            slugEn: "monthly-serenity-plan",
-            introFr: "Votre tranquillité d'esprit.",
-            introEn: "Peace of mind.",
-            descriptionFr: "Mises à jour techniques, sauvegardes quotidiennes et support prioritaire.",
-            descriptionEn: "Technical updates, daily backups and priority support.",
+            name: {
+                en: "Monthly Serenity Plan",
+                fr: "Pack Sérénité Mensuel"
+            },
+            slug: {
+                en: "monthly-serenity-plan",
+                fr: "pack-serenite-mensuel"
+            },
+            intro: {
+                en: "Peace of mind.",
+                fr: "Votre tranquillité d'esprit."
+            },
+            description: {
+                en: "Technical updates, daily backups and priority support.",
+                fr: "Mises à jour techniques, sauvegardes quotidiennes et support prioritaire."
+            },
             price: 99,
             stock: 100,
-            categoryIndex: 1,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [1],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2670&auto=format&fit=crop"]
         },
         {
-            nameFr: "Audit de Performance & Sécurité",
-            nameEn: "Performance & Security Audit",
-            slugFr: "audit-performance-securite",
-            slugEn: "performance-security-audit",
-            introFr: "Optimisez votre plateforme.",
-            introEn: "Optimize your platform.",
-            descriptionFr: "Analyse approfondie des performances web vitals, accessibilité et sécurité.",
-            descriptionEn: "In-depth analysis of Core Web Vitals, accessibility, and security vulnerabilities.",
+            name: {
+                en: "Performance & Security Audit",
+                fr: "Audit de Performance & Sécurité"
+            },
+            slug: {
+                en: "performance-security-audit",
+                fr: "audit-performance-securite"
+            },
+            intro: {
+                en: "Optimize your platform.",
+                fr: "Optimisez votre plateforme."
+            },
+            description: {
+                en: "In-depth analysis of Core Web Vitals, accessibility, and security vulnerabilities.",
+                fr: "Analyse approfondie des performances web vitals, accessibilité et sécurité."
+            },
             price: 490,
             stock: 10,
-            categoryIndex: 1,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [1, 2],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2670&auto=format&fit=crop"]
         },
         {
-            nameFr: "UI Kit Design System",
-            nameEn: "UI Kit Design System",
-            slugFr: "ui-kit-design-system",
-            slugEn: "ui-kit-design-system",
-            introFr: "Composants réutilisables.",
-            introEn: "Reusable components.",
-            descriptionFr: "Ensemble de 80+ composants React/Tailwind conçus avec précision.",
-            descriptionEn: "Set of 80+ handcrafted React/Tailwind UI components.",
+            name: {
+                en: "UI Kit Design System",
+                fr: "UI Kit Design System"
+            },
+            slug: {
+                en: "ui-kit-design-system",
+                fr: "ui-kit-design-system"
+            },
+            intro: {
+                en: "Reusable components.",
+                fr: "Composants réutilisables."
+            },
+            description: {
+                en: "Set of 80+ handcrafted React/Tailwind UI components.",
+                fr: "Ensemble de 80+ composants React/Tailwind conçus avec précision."
+            },
             price: 79,
             stock: 500,
-            categoryIndex: 2,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [2],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=2555&auto=format&fit=crop"]
         },
         {
-            nameFr: "Pack Icônes Minimalistes",
-            nameEn: "Minimalist Icons Pack",
-            slugFr: "pack-icones-minimalistes",
-            slugEn: "minimalist-icons-pack",
-            introFr: "Icônes vectorielles.",
-            introEn: "Vector icons.",
-            descriptionFr: "Collection de 500 icônes vectorielles SVG épurées et modernes.",
-            descriptionEn: "Collection of 500 clean and modern vector SVG icons.",
+            name: {
+                en: "Minimalist Icons Pack",
+                fr: "Pack Icônes Minimalistes"
+            },
+            slug: {
+                en: "minimalist-icons-pack",
+                fr: "pack-icones-minimalistes"
+            },
+            intro: {
+                en: "Vector icons.",
+                fr: "Icônes vectorielles."
+            },
+            description: {
+                en: "Collection of 500 clean and modern vector SVG icons.",
+                fr: "Collection de 500 icônes vectorielles SVG épurées et modernes."
+            },
             price: 29,
             stock: 500,
-            categoryIndex: 2,
-            statusFr: "publié",
-            statusEn: "published",
+            categoryIndices: [2, 3],
+            status: {
+                en: "published",
+                fr: "publié"
+            },
             images: ["https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"]
         }
     ]

@@ -15,6 +15,7 @@ import { brandConfig } from "@/config/brand.config";
 function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
     const { logo } = brandConfig.assets;
     const brandName = brandConfig.identity.name;
+    const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -38,7 +39,7 @@ function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
                         <LangToggle lang={lang} dict={dict.header} />
                     </div>
                     <AccountToggle lang={lang} dict={dict} />
-                    <CartSheet dict={dict.header} />
+                    {isCartEnabled && <CartSheet dict={dict.header} />}
                 </div>
             </div>
         </header>

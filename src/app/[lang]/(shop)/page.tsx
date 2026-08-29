@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { brandConfig } from "@/config/brand.config";
+import { getLocalizedField } from "@/lib/i18n";
 
 export default async function Home({
   params,
@@ -34,22 +35,29 @@ export default async function Home({
     };
   }) as Category[];
 
+  const categoryMap = new Map(categories.map(c => [c.id, c]));
+
   const allProducts = productsSnap.docs.map(doc => {
     const data = doc.data();
+    const catIds = data.categoryIds || (data.categoryId ? [data.categoryId] : []);
+    const assignedCats = catIds.map((id: string) => categoryMap.get(id)).filter(Boolean) as Category[];
     return {
       ...data,
       id: doc.id,
+      categoryIds: catIds,
+      categories: assignedCats,
+      category: assignedCats[0] || (data.categoryId ? categoryMap.get(data.categoryId) : null) || null,
       createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null),
       updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
     };
   }) as Product[];
 
   const isFr = lang === "fr";
-  const homeDict = dict.home;
-  const shopDict = dict.shop;
+  const homeDict = dict.home || {};
+  const shopDict = dict.shop || {};
 
-  const heroTitle = (isFr ? brandConfig.identity.tagline?.fr : brandConfig.identity.tagline?.en) || homeDict.hero_title;
-  const heroSubtitle = (isFr ? brandConfig.identity.description?.fr : brandConfig.identity.description?.en) || homeDict.hero_subtitle;
+  const heroTitle = getLocalizedField(brandConfig.identity.tagline as any, lang) || homeDict.hero_title;
+  const heroSubtitle = getLocalizedField(brandConfig.identity.description as any, lang) || homeDict.hero_subtitle;
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black w-full">
@@ -63,7 +71,7 @@ export default async function Home({
         </p>
         <Link href={`/${lang}/shop`}>
           <Button size="lg" className="rounded-full px-8">
-            {homeDict.explore_all}
+            {homeDict.explore_all || "Explore All"}
           </Button>
         </Link>
       </section>
@@ -71,7 +79,7 @@ export default async function Home({
       {/* Unified Shop Section */}
       <section className="w-full max-w-7xl mx-auto py-16 px-6 md:px-16 mb-16">
         <div className="flex justify-between items-end mb-8">
-          <h2 className="text-3xl font-bold tracking-tight">{homeDict.shop_by_category}</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{homeDict.shop_by_category || "Shop by Category"}</h2>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
@@ -82,7 +90,7 @@ export default async function Home({
               </TabsTrigger>
               {categories.map((category) => (
                 <TabsTrigger key={category.id} value={category.id} className="min-w-[100px]">
-                  {isFr ? category.nameFr : category.nameEn}
+                  {getLocalizedField(category.name, lang) || (isFr ? category.nameFr : category.nameEn)}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -92,7 +100,7 @@ export default async function Home({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {allProducts.length === 0 ? (
                 <div className="col-span-full text-center py-12 text-muted-foreground">
-                  {shopDict.empty_state}
+                  {shopDict.empty_state || "No products available"}
                 </div>
               ) : (
                 allProducts.map((product) => (
@@ -103,13 +111,13 @@ export default async function Home({
           </TabsContent>
 
           {categories.map((category) => {
-            const categoryProducts = allProducts.filter(p => p.categoryId === category.id);
+            const categoryProducts = allProducts.filter(p => p.categoryIds?.includes(category.id) || p.categoryId === category.id);
             return (
               <TabsContent key={category.id} value={category.id} className="mt-0 outline-none focus-visible:ring-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {categoryProducts.length === 0 ? (
                     <div className="col-span-full text-center py-12 text-muted-foreground">
-                      {shopDict.empty_state}
+                      {shopDict.empty_state || "No products in this category"}
                     </div>
                   ) : (
                     categoryProducts.map((product) => (

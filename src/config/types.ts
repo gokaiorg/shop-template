@@ -121,30 +121,22 @@ export interface BrandContact {
 }
 
 export interface SeedCategory {
-    nameFr: string;
-    nameEn: string;
-    slugFr: string;
-    slugEn: string;
-    introFr: string;
-    introEn: string;
-    descriptionFr: string;
-    descriptionEn: string;
+    name: Record<string, string>;
+    slug: Record<string, string>;
+    intro?: Record<string, string>;
+    description: Record<string, string>;
 }
 
 export interface SeedProduct {
-    nameFr: string;
-    nameEn: string;
-    slugFr: string;
-    slugEn: string;
-    introFr: string;
-    introEn: string;
-    descriptionFr: string;
-    descriptionEn: string;
+    name: Record<string, string>;
+    slug: Record<string, string>;
+    intro?: Record<string, string>;
+    description: Record<string, string>;
     price: number;
     stock: number;
-    categoryIndex: number; // 0-based index matching categories array
-    statusFr: string;
-    statusEn: string;
+    categoryIndex?: number;
+    categoryIndices?: number[];
+    status: Record<string, string>;
     images?: string[];
 }
 
