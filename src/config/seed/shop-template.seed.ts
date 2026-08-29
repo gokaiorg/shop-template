@@ -95,7 +95,7 @@ export const shopTemplateSeed: BrandSeedData = {
             },
             price: 1490,
             stock: 20,
-            categoryIndex: 0,
+            categoryIndices: [0],
             status: {
                 en: "published",
                 fr: "publié"
@@ -121,7 +121,7 @@ export const shopTemplateSeed: BrandSeedData = {
             },
             price: 2890,
             stock: 15,
-            categoryIndex: 0,
+            categoryIndices: [0, 1],
             status: {
                 en: "published",
                 fr: "publié"
@@ -147,7 +147,7 @@ export const shopTemplateSeed: BrandSeedData = {
             },
             price: 99,
             stock: 100,
-            categoryIndex: 1,
+            categoryIndices: [1],
             status: {
                 en: "published",
                 fr: "publié"
@@ -173,7 +173,7 @@ export const shopTemplateSeed: BrandSeedData = {
             },
             price: 490,
             stock: 10,
-            categoryIndex: 1,
+            categoryIndices: [1, 2],
             status: {
                 en: "published",
                 fr: "publié"
@@ -199,7 +199,7 @@ export const shopTemplateSeed: BrandSeedData = {
             },
             price: 79,
             stock: 500,
-            categoryIndex: 2,
+            categoryIndices: [2],
             status: {
                 en: "published",
                 fr: "publié"
@@ -225,7 +225,7 @@ export const shopTemplateSeed: BrandSeedData = {
             },
             price: 29,
             stock: 500,
-            categoryIndex: 2,
+            categoryIndices: [2, 3],
             status: {
                 en: "published",
                 fr: "publié"

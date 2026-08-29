@@ -114,9 +114,9 @@ export default async function ShopPage(
         )?.id;
 
         if (catId) {
-            productsQuery = productsQuery.where('categoryId', '==', catId);
+            productsQuery = productsQuery.where('categoryIds', 'array-contains', catId);
         } else {
-            productsQuery = productsQuery.where('categoryId', '==', 'NOT_FOUND');
+            productsQuery = productsQuery.where('categoryIds', 'array-contains', 'NOT_FOUND');
         }
 
         productsQuery = productsQuery.orderBy('createdAt', 'desc');
@@ -128,10 +128,16 @@ export default async function ShopPage(
 
     const categoryMap = new Map(categories.map(c => [c.id, c]));
 
-    const products = productsList.map(product => ({
-        ...product,
-        category: categoryMap.get(product.categoryId) || null
-    }));
+    const products = productsList.map(product => {
+        const catIds = product.categoryIds || (product.categoryId ? [product.categoryId] : []);
+        const assignedCategories = catIds.map(id => categoryMap.get(id)).filter(Boolean) as Category[];
+        return {
+            ...product,
+            categoryIds: catIds,
+            categories: assignedCategories,
+            category: assignedCategories[0] || (product.categoryId ? categoryMap.get(product.categoryId) : null) || null
+        };
+    });
 
     return (
         <main className="container mx-auto px-4 md:px-8 py-8">

@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
     Form,
     FormControl,
@@ -83,6 +85,10 @@ export function ProductForm({
         defaultStatus[loc] = initialData?.status?.[loc] || (loc === 'en' ? initialData?.statusEn : loc === 'fr' ? initialData?.statusFr : 'draft') || 'draft';
     });
 
+    const initialCategoryIds: string[] = initialData?.categoryIds && initialData.categoryIds.length > 0
+        ? initialData.categoryIds
+        : (initialData?.categoryId ? [initialData.categoryId] : []);
+
     const form = useForm<z.infer<typeof productSchema>>({
         resolver: zodResolver(productSchema),
         defaultValues: {
@@ -93,7 +99,8 @@ export function ProductForm({
             status: defaultStatus,
             price: initialData?.price || 0,
             stock: initialData?.stock || 0,
-            categoryId: initialData?.categoryId || "",
+            categoryIds: initialCategoryIds,
+            categoryId: initialCategoryIds[0] || "",
             imageUrl: initialImage || null,
         },
     });
@@ -246,28 +253,51 @@ export function ProductForm({
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                    {/* General info & Category */}
-                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 p-4 border rounded-md bg-muted/20">
+                    {/* General info & Categories */}
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-md bg-muted/20">
                         <FormField
                             control={form.control}
-                            name="categoryId"
+                            name="categoryIds"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.categoryId || "Category"}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select Category" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {categories.map((c) => (
-                                                <SelectItem key={c.id} value={c.id}>
-                                                    {getLocalizedField(c.name, lang, defaultLocale)}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                <FormItem className="col-span-1 md:col-span-2">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <FormLabel className="text-sm font-medium">
+                                            {dict.categories || dict.categoryId || "Categories"}
+                                        </FormLabel>
+                                        <span className="text-xs text-muted-foreground">
+                                            {field.value?.length || 0} selected
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-3 border rounded-lg bg-background">
+                                        {categories.map((c) => {
+                                            const isChecked = (field.value || []).includes(c.id);
+                                            return (
+                                                <label
+                                                    key={c.id}
+                                                    className={`flex items-center gap-3 p-2.5 rounded-md border cursor-pointer transition-colors ${
+                                                        isChecked 
+                                                            ? "bg-primary/10 border-primary shadow-xs" 
+                                                            : "bg-card hover:bg-muted/50 border-input"
+                                                    }`}
+                                                >
+                                                    <Checkbox
+                                                        checked={isChecked}
+                                                        onCheckedChange={(checked) => {
+                                                            const current = field.value || [];
+                                                            if (checked) {
+                                                                field.onChange([...current, c.id]);
+                                                            } else {
+                                                                field.onChange(current.filter((id: string) => id !== c.id));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <span className="text-sm font-medium leading-none select-none">
+                                                        {getLocalizedField(c.name, lang, defaultLocale)}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}

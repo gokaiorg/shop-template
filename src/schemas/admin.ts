@@ -15,7 +15,8 @@ export const productSchema = z.object({
     status: z.record(z.string(), z.string()).optional(),
     price: z.number().min(0),
     stock: z.number().min(0).int(),
-    categoryId: z.string().min(1, "Category is required"),
+    categoryIds: z.array(z.string()).min(1, "At least one category is required"),
+    categoryId: z.string().optional(),
     imageUrl: z.string().optional().nullable(),
     images: z.array(z.string()).optional(),
 });

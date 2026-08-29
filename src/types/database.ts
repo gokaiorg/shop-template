@@ -27,7 +27,10 @@ export interface Product {
   stock: number;
   imageUrl?: string | null;
   images: string[];
-  categoryId: string;
+  categoryIds: string[];
+  categoryId?: string;
+  categories?: Category[];
+  category?: Category | null;
   createdAt: Date | string;
   updatedAt: Date | string;
   name: Record<string, string>;

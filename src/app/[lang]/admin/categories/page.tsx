@@ -30,7 +30,7 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
 
         // This count query would ideally be denormalized or batched for production
         // But for now we are using aggregate to get counts effectively
-        const aggregateQuery = adminDb.collection("products").where("categoryId", "==", cat.id).count();
+        const aggregateQuery = adminDb.collection("products").where("categoryIds", "array-contains", cat.id).count();
         const aggregateSnapshot = await aggregateQuery.get();
 
         return { ...cat, _count: { products: aggregateSnapshot.data().count } };

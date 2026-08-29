@@ -35,11 +35,18 @@ export default async function Home({
     };
   }) as Category[];
 
+  const categoryMap = new Map(categories.map(c => [c.id, c]));
+
   const allProducts = productsSnap.docs.map(doc => {
     const data = doc.data();
+    const catIds = data.categoryIds || (data.categoryId ? [data.categoryId] : []);
+    const assignedCats = catIds.map((id: string) => categoryMap.get(id)).filter(Boolean) as Category[];
     return {
       ...data,
       id: doc.id,
+      categoryIds: catIds,
+      categories: assignedCats,
+      category: assignedCats[0] || (data.categoryId ? categoryMap.get(data.categoryId) : null) || null,
       createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null),
       updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
     };
@@ -104,7 +111,7 @@ export default async function Home({
           </TabsContent>
 
           {categories.map((category) => {
-            const categoryProducts = allProducts.filter(p => p.categoryId === category.id);
+            const categoryProducts = allProducts.filter(p => p.categoryIds?.includes(category.id) || p.categoryId === category.id);
             return (
               <TabsContent key={category.id} value={category.id} className="mt-0 outline-none focus-visible:ring-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

@@ -1,11 +1,13 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { adminDb } from "@/lib/firebase-admin";
-import { Product } from "@/types/database";
+import { Category, Product } from "@/types/database";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
+import { Badge } from "@/components/ui/badge";
 import { brandConfig } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
 
@@ -99,6 +101,16 @@ export default async function ProductPage({ params }: PageProps) {
 
     const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
 
+    // Load assigned categories
+    const catIds = product.categoryIds || (product.categoryId ? [product.categoryId] : []);
+    let assignedCategories: Category[] = [];
+    if (catIds.length > 0) {
+        const catDocs = await Promise.all(
+            catIds.map(id => adminDb.collection("categories").doc(id).get())
+        );
+        assignedCategories = catDocs.filter(d => d.exists).map(d => ({ id: d.id, ...d.data() } as Category));
+    }
+
     return (
         <main className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
@@ -117,6 +129,21 @@ export default async function ProductPage({ params }: PageProps) {
                 {/* Right column: Content */}
                 <div className="flex flex-col space-y-6">
                     <div>
+                        {assignedCategories.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                {assignedCategories.map((cat) => {
+                                    const catName = getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn);
+                                    const catSlug = getLocalizedField(cat.slug, lang) || (lang === 'fr' ? cat.slugFr : cat.slugEn);
+                                    return (
+                                        <Link key={cat.id} href={`/${lang}/shop?category=${catSlug}`}>
+                                            <Badge variant="secondary" className="hover:bg-primary/20 transition-colors text-xs font-normal">
+                                                {catName}
+                                            </Badge>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        )}
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">{title}</h1>
                         <p className="mt-4 text-3xl font-semibold text-foreground">
                             ${product.price.toFixed(2)}

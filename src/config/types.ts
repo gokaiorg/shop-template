@@ -134,7 +134,8 @@ export interface SeedProduct {
     description: Record<string, string>;
     price: number;
     stock: number;
-    categoryIndex: number; // 0-based index matching categories array
+    categoryIndex?: number;
+    categoryIndices?: number[];
     status: Record<string, string>;
     images?: string[];
 }

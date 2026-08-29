@@ -95,7 +95,7 @@ export const greenGhostSeed: BrandSeedData = {
             },
             price: 79,
             stock: 45,
-            categoryIndex: 0,
+            categoryIndices: [0],
             status: {
                 en: "published",
                 fr: "publié"
@@ -121,7 +121,7 @@ export const greenGhostSeed: BrandSeedData = {
             },
             price: 55,
             stock: 30,
-            categoryIndex: 0,
+            categoryIndices: [0, 3],
             status: {
                 en: "published",
                 fr: "publié"
@@ -147,7 +147,7 @@ export const greenGhostSeed: BrandSeedData = {
             },
             price: 69,
             stock: 60,
-            categoryIndex: 1,
+            categoryIndices: [1],
             status: {
                 en: "published",
                 fr: "publié"
@@ -173,7 +173,7 @@ export const greenGhostSeed: BrandSeedData = {
             },
             price: 18,
             stock: 80,
-            categoryIndex: 2,
+            categoryIndices: [2],
             status: {
                 en: "published",
                 fr: "publié"

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Product } from "@/types/database";
 import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
@@ -50,6 +51,16 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
 
             {/* Content Container */}
             <div className="flex flex-1 flex-col p-4">
+                {product.categories && product.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                        {product.categories.map((cat) => (
+                            <Badge key={cat.id} variant="secondary" className="text-[11px] font-normal px-2 py-0.5">
+                                {getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn)}
+                            </Badge>
+                        ))}
+                    </div>
+                )}
+
                 <Link href={`/${lang}/product/${slug}`} className="hover:underline">
                     <h3 className="text-lg font-semibold">{title}</h3>
                 </Link>

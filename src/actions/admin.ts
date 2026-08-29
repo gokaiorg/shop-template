@@ -180,11 +180,15 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
         const statusEn = statusMap.en || statusMap[defaultLocale] || "draft";
         const statusFr = statusMap.fr || statusMap[defaultLocale] || (statusEn === "draft" ? "brouillon" : "publié");
 
+        const categoryIds = result.data.categoryIds || (result.data.categoryId ? [result.data.categoryId] : []);
+        const primaryCategoryId = categoryIds[0] || "";
+
         const productData = {
             id: ref.id,
             price: result.data.price,
             stock: result.data.stock,
-            categoryId: result.data.categoryId,
+            categoryIds,
+            categoryId: primaryCategoryId,
             name: nameMap,
             slug: slugMap,
             intro: introMap,
@@ -252,10 +256,14 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
         const statusEn = statusMap.en || statusMap[defaultLocale] || "draft";
         const statusFr = statusMap.fr || statusMap[defaultLocale] || (statusEn === "draft" ? "brouillon" : "publié");
 
+        const categoryIds = result.data.categoryIds || (result.data.categoryId ? [result.data.categoryId] : []);
+        const primaryCategoryId = categoryIds[0] || "";
+
         const productData = {
             price: result.data.price,
             stock: result.data.stock,
-            categoryId: result.data.categoryId,
+            categoryIds,
+            categoryId: primaryCategoryId,
             name: nameMap,
             slug: slugMap,
             intro: introMap,
@@ -340,9 +348,13 @@ export async function seedDemoData() {
 
         const productBatch = adminDb.batch();
         productsData.forEach(prod => {
-            const category = categories[prod.categoryIndex] || categories[0];
+            const indices = prod.categoryIndices || (typeof prod.categoryIndex === 'number' ? [prod.categoryIndex] : [0]);
+            const assignedCats = indices.map(idx => categories[idx] || categories[0]);
+            const categoryIds = assignedCats.map(c => c.id);
+            const primaryCategory = assignedCats[0] || categories[0];
+
             const ref = adminDb.collection("products").doc();
-            const { categoryIndex: _ignored, ...rest } = prod;
+            const { categoryIndex: _ignored1, categoryIndices: _ignored2, ...rest } = prod;
 
             const nameEn = prod.name.en || prod.name[defaultLocale] || "";
             const nameFr = prod.name.fr || prod.name[defaultLocale] || "";
@@ -368,7 +380,8 @@ export async function seedDemoData() {
                 descriptionFr,
                 statusEn,
                 statusFr,
-                categoryId: category.id,
+                categoryIds,
+                categoryId: primaryCategory.id,
                 imageUrl: prod.images && prod.images.length > 0 ? prod.images[0] : null,
                 images: prod.images || [],
                 createdAt: new Date(),

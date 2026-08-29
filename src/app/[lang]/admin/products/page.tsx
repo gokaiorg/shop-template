@@ -39,14 +39,10 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                 createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
                 updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
             };
-            const category = categoryMap.get(prod.categoryId);
-            if (!category) {
-                console.warn(`Product with id ${prod.id} has an invalid categoryId ${prod.categoryId}`);
-                return null;
-            }
-            return { ...prod, category };
-        })
-        .filter(Boolean);
+            const catIds = prod.categoryIds || (prod.categoryId ? [prod.categoryId] : []);
+            const categories = catIds.map((id: string) => categoryMap.get(id)).filter(Boolean);
+            return { ...prod, categoryIds: catIds, categories };
+        });
 
     return (
         <div className="space-y-6">
@@ -65,7 +61,7 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                     <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                         <tr>
                             <th className="px-6 py-3">Name</th>
-                            <th className="px-6 py-3">Category</th>
+                            <th className="px-6 py-3">Categories</th>
                             <th className="px-6 py-3">Status</th>
                             <th className="px-6 py-3">Price</th>
                             <th className="px-6 py-3">Stock</th>
@@ -86,7 +82,17 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                                         {getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "Unnamed"}
                                     </td>
                                     <td className="px-6 py-4 text-muted-foreground">
-                                        {getLocalizedField(product.category.name, lang) || (lang === 'fr' ? product.category.nameFr : product.category.nameEn) || "Unknown"}
+                                        <div className="flex flex-wrap gap-1">
+                                            {product.categories.length > 0 ? (
+                                                product.categories.map((cat: any) => (
+                                                    <span key={cat.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-muted text-foreground border">
+                                                        {getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn) || "Unnamed"}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">None</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         {(() => {

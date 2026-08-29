@@ -95,7 +95,7 @@ export const artFateSeed: BrandSeedData = {
             },
             price: 340,
             stock: 8,
-            categoryIndex: 0,
+            categoryIndices: [0, 3],
             status: {
                 en: "published",
                 fr: "publié"
@@ -121,7 +121,7 @@ export const artFateSeed: BrandSeedData = {
             },
             price: 490,
             stock: 5,
-            categoryIndex: 0,
+            categoryIndices: [0],
             status: {
                 en: "published",
                 fr: "publié"
@@ -147,7 +147,7 @@ export const artFateSeed: BrandSeedData = {
             },
             price: 1850,
             stock: 2,
-            categoryIndex: 1,
+            categoryIndices: [1, 3],
             status: {
                 en: "published",
                 fr: "publié"
@@ -173,7 +173,7 @@ export const artFateSeed: BrandSeedData = {
             },
             price: 680,
             stock: 4,
-            categoryIndex: 1,
+            categoryIndices: [1],
             status: {
                 en: "published",
                 fr: "publié"
@@ -199,7 +199,7 @@ export const artFateSeed: BrandSeedData = {
             },
             price: 4200,
             stock: 1,
-            categoryIndex: 2,
+            categoryIndices: [2],
             status: {
                 en: "published",
                 fr: "publié"
@@ -225,7 +225,7 @@ export const artFateSeed: BrandSeedData = {
             },
             price: 180,
             stock: 25,
-            categoryIndex: 3,
+            categoryIndices: [3],
             status: {
                 en: "published",
                 fr: "publié"
