@@ -4,6 +4,7 @@ import Link from "next/link";
 import React from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { brandConfig } from "@/config/brand.config";
 
 interface PrimaryNavProps {
     lang: string;
@@ -14,40 +15,33 @@ interface PrimaryNavProps {
 
 export function PrimaryNav({ lang, dict, className, onNavClick }: PrimaryNavProps) {
     const pathname = usePathname();
-    const isShopActive = pathname?.includes(`/${lang}/shop`);
-    const isAboutActive = pathname?.includes(`/${lang}/about`);
+    const navItems = brandConfig.navigation.headerNav;
 
     return (
         <nav className={cn("gap-6", className)}>
-            <Link
-                href={`/${lang}/shop`}
-                onClick={onNavClick}
-                aria-current={isShopActive ? "page" : undefined}
-                className={cn(
-                    "flex items-center text-sm font-medium transition-colors hover:text-foreground",
-                    isShopActive ? "text-foreground" : "text-muted-foreground"
-                )}
-            >
-                {dict.shop}
-            </Link>
-            <Link
-                href={`/${lang}/about`}
-                onClick={onNavClick}
-                aria-current={isAboutActive ? "page" : undefined}
-                className={cn(
-                    "flex items-center text-sm font-medium transition-colors hover:text-foreground",
-                    isAboutActive ? "text-foreground" : "text-muted-foreground"
-                )}
-            >
-                {dict.about}
-            </Link>
-            <Link
-                href={`/${lang}/contact`}
-                onClick={onNavClick}
-                className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-                {dict.contact}
-            </Link>
+            {navItems.map((item) => {
+                const label = dict?.[item.key] || item.key;
+                const href = item.href.startsWith('http') ? item.href : `/${lang}${item.href}`;
+                const isExternal = item.external || item.href.startsWith('http');
+                const isActive = !isExternal && pathname === href;
+
+                return (
+                    <Link
+                        key={item.key + item.href}
+                        href={href}
+                        onClick={onNavClick}
+                        target={isExternal ? "_blank" : undefined}
+                        rel={isExternal ? "noopener noreferrer" : undefined}
+                        aria-current={isActive ? "page" : undefined}
+                        className={cn(
+                            "flex items-center text-sm font-medium transition-colors hover:text-foreground",
+                            isActive ? "text-foreground font-semibold" : "text-muted-foreground"
+                        )}
+                    >
+                        {label}
+                    </Link>
+                );
+            })}
         </nav>
     );
 }

@@ -5,6 +5,8 @@ import { Category, Product } from "@/types/database";
 import { ShopCategoryFilter } from "@/components/shop/ShopCategoryFilter";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { Metadata } from "next";
+import { brandConfig } from "@/config/brand.config";
+import { formatTitle } from "@/config/site";
 
 export async function generateMetadata(
     props: {
@@ -17,6 +19,7 @@ export async function generateMetadata(
     const { lang } = params;
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
+    const brandName = brandConfig.identity.name;
 
     if (currentCategorySlug) {
         const slugField = lang === 'fr' ? 'slugFr' : 'slugEn';
@@ -28,16 +31,17 @@ export async function generateMetadata(
             const description = lang === 'fr' ? category.descriptionFr : category.descriptionEn;
             
             return {
-                title: title ? `${title} | Shop` : `Shop | Gokai`,
+                title: title ? formatTitle(title) : formatTitle("Shop"),
                 description: description || `Explore our ${title} products.`
             };
         }
     }
 
     const dict = await getDictionary(lang as Locale);
+    const shopTitle = dict.header?.shop || "Shop";
     return {
-        title: dict.header?.shop ? `${dict.header.shop} | Gokai` : "Shop | Gokai",
-        description: "Browse our complete collection of premium products."
+        title: formatTitle(shopTitle),
+        description: `Browse our complete collection of ${brandName} products.`
     };
 }
 
