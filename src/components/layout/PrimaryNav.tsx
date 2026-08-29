@@ -9,30 +9,31 @@ interface PrimaryNavProps {
     onNavClick?: () => void;
 }
 
+import { brandConfig } from "@/config/brand.config";
+
 export function PrimaryNav({ lang, dict, className, onNavClick }: PrimaryNavProps) {
+    const navItems = brandConfig.navigation.headerNav;
+
     return (
         <nav className={cn("gap-6", className)}>
-            <Link
-                href={`/${lang}/shop`}
-                onClick={onNavClick}
-                className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-                {dict.shop}
-            </Link>
-            <Link
-                href={`/${lang}/about`}
-                onClick={onNavClick}
-                className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-                {dict.about}
-            </Link>
-            <Link
-                href={`/${lang}/contact`}
-                onClick={onNavClick}
-                className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-                {dict.contact}
-            </Link>
+            {navItems.map((item) => {
+                const label = dict?.[item.key] || item.key;
+                const href = item.href.startsWith('http') ? item.href : `/${lang}${item.href}`;
+                const isExternal = item.external || item.href.startsWith('http');
+
+                return (
+                    <Link
+                        key={item.key + item.href}
+                        href={href}
+                        onClick={onNavClick}
+                        target={isExternal ? "_blank" : undefined}
+                        rel={isExternal ? "noopener noreferrer" : undefined}
+                        className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                        {label}
+                    </Link>
+                );
+            })}
         </nav>
     );
 }

@@ -7,6 +7,8 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 
+import { brandConfig } from "@/config/brand.config";
+
 interface PageProps {
     params: Promise<{ lang: string; slug: string }>;
 }
@@ -60,7 +62,7 @@ export default async function ProductPage({ params }: PageProps) {
     
     const imageUrl = product.images && product.images.length > 0
         ? product.images[0]
-        : "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=2670&auto=format&fit=crop";
+        : brandConfig.assets.placeholderImage;
 
     return (
         <main className="container mx-auto px-4 py-8">

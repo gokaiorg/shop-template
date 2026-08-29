@@ -7,6 +7,8 @@ import { Product } from "@/types/database";
 import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
 
+import { brandConfig } from "@/config/brand.config";
+
 interface ShopProductCardProps {
     product: Product;
     lang: string;
@@ -26,10 +28,10 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
         });
     };
 
-    // We get the first image or a placeholder
+    // We get the first image or the brand's placeholder
     const imageUrl = product.images && product.images.length > 0
         ? product.images[0]
-        : "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=2670&auto=format&fit=crop";
+        : brandConfig.assets.placeholderImage;
 
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-background">

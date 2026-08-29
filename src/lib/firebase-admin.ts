@@ -25,5 +25,7 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
-export const adminDb = getFirestore(app, "shop-template-database");
+const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "shop-template-database";
+
+export const adminDb = getFirestore(app, databaseId);
 export const adminAuth = getAuth(app);

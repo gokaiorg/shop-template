@@ -13,5 +13,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "shop-template-database";
+
 export const auth = getAuth(app);
-export const db = getFirestore(app, "shop-template-database");
+export const db = getFirestore(app, databaseId);

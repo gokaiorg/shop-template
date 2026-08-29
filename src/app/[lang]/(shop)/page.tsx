@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 
+import { brandConfig } from "@/config/brand.config";
+
 export default async function Home({
   params,
 }: {
@@ -47,15 +49,18 @@ export default async function Home({
   const homeDict = dict.home;
   const shopDict = dict.shop;
 
+  const heroTitle = (isFr ? brandConfig.identity.tagline?.fr : brandConfig.identity.tagline?.en) || homeDict.hero_title;
+  const heroSubtitle = (isFr ? brandConfig.identity.description?.fr : brandConfig.identity.description?.en) || homeDict.hero_subtitle;
+
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black w-full">
       {/* Hero Section */}
       <section className="flex w-full flex-col items-center justify-center py-24 px-6 md:px-16 bg-white dark:bg-black text-center">
         <h1 className="max-w-2xl text-4xl md:text-5xl font-bold tracking-tight text-black dark:text-zinc-50 mb-6">
-          {homeDict.hero_title}
+          {heroTitle}
         </h1>
         <p className="max-w-2xl text-lg md:text-xl text-zinc-600 dark:text-zinc-400 mb-10">
-          {homeDict.hero_subtitle}
+          {heroSubtitle}
         </p>
         <Link href={`/${lang}/shop`}>
           <Button size="lg" className="rounded-full px-8">
