@@ -1,10 +1,27 @@
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import fs from 'fs';
+import path from 'path';
 
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+let projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+let clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+// Check local service account file as fallback for development
+if (!clientEmail || !privateKey) {
+  const localSaPath = path.join(process.cwd(), 'shop-gcp-firebase-adminsdk-fbsvc-5aba76333b.json');
+  if (fs.existsSync(localSaPath)) {
+    try {
+      const sa = JSON.parse(fs.readFileSync(localSaPath, 'utf8'));
+      projectId = projectId || sa.project_id;
+      clientEmail = sa.client_email;
+      privateKey = sa.private_key;
+    } catch {
+      // ignore parsing errors
+    }
+  }
+}
 
 let app: App;
 
