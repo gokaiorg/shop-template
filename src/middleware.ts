@@ -30,16 +30,34 @@ export default auth((req) => {
         }
     }
 
-    // Handle i18n Routing
-    const pathnameIsMissingLocale = i18n.locales.every(
-        (locale) => !nextUrl.pathname.startsWith(`/${locale}/`) && nextUrl.pathname !== `/${locale}`
-    );
+    // Handle i18n Routing & Feature Flag
+    const isI18nEnabled = process.env.NEXT_PUBLIC_ENABLE_I18N !== "false";
 
-    if (pathnameIsMissingLocale) {
-        const locale = i18n.defaultLocale;
-        return NextResponse.redirect(
-            new URL(`/${locale}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`, req.url)
+    if (!isI18nEnabled) {
+        // When i18n is disabled, disable language detection and force systematically 'en'
+        const currentLocale = i18n.locales.find(
+            (locale) => nextUrl.pathname.startsWith(`/${locale}/`) || nextUrl.pathname === `/${locale}`
         );
+
+        if (!currentLocale) {
+            return NextResponse.redirect(
+                new URL(`/en${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`, req.url)
+            );
+        } else if (currentLocale !== 'en') {
+            const newPathname = nextUrl.pathname.replace(new RegExp(`^/${currentLocale}`), '/en');
+            return NextResponse.redirect(new URL(newPathname, req.url));
+        }
+    } else {
+        const pathnameIsMissingLocale = i18n.locales.every(
+            (locale) => !nextUrl.pathname.startsWith(`/${locale}/`) && nextUrl.pathname !== `/${locale}`
+        );
+
+        if (pathnameIsMissingLocale) {
+            const locale = i18n.defaultLocale;
+            return NextResponse.redirect(
+                new URL(`/${locale}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`, req.url)
+            );
+        }
     }
 
     return NextResponse.next();

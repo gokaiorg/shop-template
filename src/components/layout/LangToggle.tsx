@@ -13,8 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, string> }) {
+    const isI18nEnabled = process.env.NEXT_PUBLIC_ENABLE_I18N !== "false";
     const pathname = usePathname();
     const router = useRouter();
+
+    if (!isI18nEnabled) {
+        return null;
+    }
 
     const switchLanguage = (targetLang: string) => {
         if (lang === targetLang) return;
