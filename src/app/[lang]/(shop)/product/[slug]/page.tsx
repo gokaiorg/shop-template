@@ -59,9 +59,9 @@ export default async function ProductPage({ params }: PageProps) {
     const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
     const intro = lang === 'fr' ? product.introFr : product.introEn;
     
-    const imageUrl = product.images && product.images.length > 0
-        ? product.images[0]
-        : brandConfig.assets.placeholderImage;
+    const imageUrl = product.imageUrl
+        || (product.images && product.images.length > 0 ? product.images[0] : null)
+        || brandConfig.assets.placeholderImage;
 
     return (
         <main className="container mx-auto px-4 py-8">

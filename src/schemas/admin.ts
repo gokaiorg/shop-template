@@ -25,6 +25,8 @@ export const productSchema = z.object({
     price: z.number().min(0),
     stock: z.number().min(0).int(),
     categoryId: z.string().min(1, "Category is required"),
+    imageUrl: z.string().optional().nullable(),
+    images: z.array(z.string()).optional(),
 });
 
 export const pageSchema = z.object({

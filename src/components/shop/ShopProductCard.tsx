@@ -28,10 +28,10 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
         });
     };
 
-    // We get the first image or the brand's placeholder
-    const imageUrl = product.images && product.images.length > 0
-        ? product.images[0]
-        : brandConfig.assets.placeholderImage;
+    // Prioritize product.imageUrl, then product.images[0], then brand's placeholder
+    const imageUrl = product.imageUrl
+        || (product.images && product.images.length > 0 ? product.images[0] : null)
+        || brandConfig.assets.placeholderImage;
 
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-background">

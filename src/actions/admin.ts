@@ -94,15 +94,22 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
 
     try {
         const ref = adminDb.collection("products").doc();
+        const images = result.data.images && result.data.images.length > 0 
+            ? result.data.images 
+            : (result.data.imageUrl ? [result.data.imageUrl] : []);
+
         const productData = {
             id: ref.id,
             ...result.data,
+            imageUrl: result.data.imageUrl || (images.length > 0 ? images[0] : null),
+            images,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
         await ref.set(productData);
 
         revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/[lang]/shop', 'layout');
         return { success: true, product: productData };
     } catch (error) {
         console.error("CREATE_PRODUCT_ERROR:", error);
@@ -124,13 +131,21 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
 
     try {
         const ref = adminDb.collection("products").doc(id);
+        const images = result.data.images && result.data.images.length > 0 
+            ? result.data.images 
+            : (result.data.imageUrl ? [result.data.imageUrl] : []);
+
         const productData = {
             ...result.data,
+            imageUrl: result.data.imageUrl || (images.length > 0 ? images[0] : null),
+            images,
             updatedAt: new Date(),
         };
         await ref.update(productData);
 
         revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/[lang]/shop', 'layout');
+        revalidatePath('/[lang]/product/[slug]', 'page');
         return { success: true, product: { id, ...productData } };
     } catch (error) {
         console.error("UPDATE_PRODUCT_ERROR:", error);
