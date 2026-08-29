@@ -26,6 +26,7 @@ import { Category } from "@/types/database";
 
 export function CategoryForm({ dict, lang, initialData }: { dict: Record<string, string>; lang: string; initialData?: Category }) {
     const router = useRouter();
+    const isI18nEnabled = process.env.NEXT_PUBLIC_ENABLE_I18N !== "false";
     const [isPending, startTransition] = useTransition();
 
     const form = useForm<z.infer<typeof categorySchema>>({
@@ -44,9 +45,17 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
 
     function onSubmit(values: z.infer<typeof categorySchema>) {
         startTransition(async () => {
+            const payload = {
+                ...values,
+                nameFr: values.nameFr || values.nameEn,
+                slugFr: values.slugFr || values.slugEn,
+                introFr: values.introFr || values.introEn || "",
+                descriptionFr: values.descriptionFr || values.descriptionEn,
+            };
+
             const res = initialData
-                ? await updateCategory(initialData.id, values)
-                : await createCategory(values);
+                ? await updateCategory(initialData.id, payload)
+                : await createCategory(payload);
 
             if (res.success) {
                 toast.success(dict.success);
@@ -60,125 +69,183 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <Accordion type="single" defaultValue="en" collapsible className="w-full">
-                    {/* English Fields */}
-                    <AccordionItem value="en">
-                        <AccordionTrigger className="text-lg font-semibold hover:no-underline">English</AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-4 px-2">
-                            <FormField
-                                control={form.control}
-                                name="nameEn"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{dict.nameEn}</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Name..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="slugEn"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{dict.slugEn}</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="name-slug..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="introEn"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{dict.introEn}</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Short introduction..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="descriptionEn"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{dict.descriptionEn}</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Detailed description..." className="min-h-32" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </AccordionContent>
-                    </AccordionItem>
+                {isI18nEnabled ? (
+                    <Accordion type="single" defaultValue="en" collapsible className="w-full">
+                        {/* English Fields */}
+                        <AccordionItem value="en">
+                            <AccordionTrigger className="text-lg font-semibold hover:no-underline">English</AccordionTrigger>
+                            <AccordionContent className="space-y-4 pt-4 px-2">
+                                <FormField
+                                    control={form.control}
+                                    name="nameEn"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.nameEn}</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Name..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="slugEn"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.slugEn}</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="name-slug..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="introEn"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.introEn}</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Short introduction..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="descriptionEn"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.descriptionEn}</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="Detailed description..." className="min-h-32" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
 
-                    {/* French Fields */}
-                    <AccordionItem value="fr">
-                        <AccordionTrigger className="text-lg font-semibold hover:no-underline">Français</AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-4 px-2">
-                            <FormField
-                                control={form.control}
-                                name="nameFr"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{dict.nameFr}</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Nom..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="slugFr"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{dict.slugFr}</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="nom-slug..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="introFr"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{dict.introFr}</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Introduction courte..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="descriptionFr"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{dict.descriptionFr}</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Description détaillée..." className="min-h-32" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
+                        {/* French Fields */}
+                        <AccordionItem value="fr">
+                            <AccordionTrigger className="text-lg font-semibold hover:no-underline">Français</AccordionTrigger>
+                            <AccordionContent className="space-y-4 pt-4 px-2">
+                                <FormField
+                                    control={form.control}
+                                    name="nameFr"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.nameFr}</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Nom..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="slugFr"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.slugFr}</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="nom-slug..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="introFr"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.introFr}</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Introduction courte..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="descriptionFr"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.descriptionFr}</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="Description détaillée..." className="min-h-32" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                ) : (
+                    <div className="space-y-4 border rounded-lg p-6 bg-card">
+                        <h3 className="text-base font-semibold text-foreground border-b pb-3">Category Information (EN)</h3>
+                        <FormField
+                            control={form.control}
+                            name="nameEn"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{dict.nameEn}</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Name..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="slugEn"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{dict.slugEn}</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="name-slug..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="introEn"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{dict.introEn}</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Short introduction..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="descriptionEn"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{dict.descriptionEn}</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="Detailed description..." className="min-h-32" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                )}
 
                 <Button type="submit" disabled={isPending}>
                     {isPending ? dict.submitting : dict.submit}

@@ -22,9 +22,16 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
     }
 
     try {
+        const nameFr = result.data.nameFr || result.data.nameEn;
+        const slugFr = result.data.slugFr || result.data.slugEn;
+        const introFr = result.data.introFr || result.data.introEn || "";
+        const descriptionFr = result.data.descriptionFr || result.data.descriptionEn;
+
         // Basic unique slug check
-        const existingFr = await adminDb.collection("categories").where("slugFr", "==", result.data.slugFr).get();
-        if (!existingFr.empty) return { success: false, error: "A category with this French slug already exists." };
+        if (result.data.slugFr) {
+            const existingFr = await adminDb.collection("categories").where("slugFr", "==", slugFr).get();
+            if (!existingFr.empty) return { success: false, error: "A category with this French slug already exists." };
+        }
         
         const existingEn = await adminDb.collection("categories").where("slugEn", "==", result.data.slugEn).get();
         if (!existingEn.empty) return { success: false, error: "A category with this English slug already exists." };
@@ -33,6 +40,10 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
         const categoryData = {
             id: ref.id,
             ...result.data,
+            nameFr,
+            slugFr,
+            introFr,
+            descriptionFr,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
@@ -59,8 +70,15 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
     }
 
     try {
-        const existingFr = await adminDb.collection("categories").where("slugFr", "==", result.data.slugFr).get();
-        if (!existingFr.empty && existingFr.docs[0].id !== id) return { success: false, error: "A category with this French slug already exists." };
+        const nameFr = result.data.nameFr || result.data.nameEn;
+        const slugFr = result.data.slugFr || result.data.slugEn;
+        const introFr = result.data.introFr || result.data.introEn || "";
+        const descriptionFr = result.data.descriptionFr || result.data.descriptionEn;
+
+        if (result.data.slugFr) {
+            const existingFr = await adminDb.collection("categories").where("slugFr", "==", slugFr).get();
+            if (!existingFr.empty && existingFr.docs[0].id !== id) return { success: false, error: "A category with this French slug already exists." };
+        }
         
         const existingEn = await adminDb.collection("categories").where("slugEn", "==", result.data.slugEn).get();
         if (!existingEn.empty && existingEn.docs[0].id !== id) return { success: false, error: "A category with this English slug already exists." };
@@ -68,6 +86,10 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
         const ref = adminDb.collection("categories").doc(id);
         const categoryData = {
             ...result.data,
+            nameFr,
+            slugFr,
+            introFr,
+            descriptionFr,
             updatedAt: new Date(),
         };
         await ref.update(categoryData);
@@ -98,9 +120,20 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
             ? result.data.images 
             : (result.data.imageUrl ? [result.data.imageUrl] : []);
 
+        const nameFr = result.data.nameFr || result.data.nameEn;
+        const slugFr = result.data.slugFr || result.data.slugEn;
+        const introFr = result.data.introFr || result.data.introEn || "";
+        const descriptionFr = result.data.descriptionFr || result.data.descriptionEn;
+        const statusFr = result.data.statusFr || (result.data.statusEn === "draft" ? "brouillon" : "publié");
+
         const productData = {
             id: ref.id,
             ...result.data,
+            nameFr,
+            slugFr,
+            introFr,
+            descriptionFr,
+            statusFr,
             imageUrl: result.data.imageUrl || (images.length > 0 ? images[0] : null),
             images,
             createdAt: new Date(),
@@ -135,8 +168,19 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
             ? result.data.images 
             : (result.data.imageUrl ? [result.data.imageUrl] : []);
 
+        const nameFr = result.data.nameFr || result.data.nameEn;
+        const slugFr = result.data.slugFr || result.data.slugEn;
+        const introFr = result.data.introFr || result.data.introEn || "";
+        const descriptionFr = result.data.descriptionFr || result.data.descriptionEn;
+        const statusFr = result.data.statusFr || (result.data.statusEn === "draft" ? "brouillon" : "publié");
+
         const productData = {
             ...result.data,
+            nameFr,
+            slugFr,
+            introFr,
+            descriptionFr,
+            statusFr,
             imageUrl: result.data.imageUrl || (images.length > 0 ? images[0] : null),
             images,
             updatedAt: new Date(),
@@ -219,9 +263,18 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
     }
 
     try {
+        const title_fr = result.data.title_fr || result.data.title_en;
+        const meta_title_fr = result.data.meta_title_fr || result.data.meta_title_en;
+        const meta_description_fr = result.data.meta_description_fr || result.data.meta_description_en;
+        const content_fr = result.data.content_fr || result.data.content_en;
+
         const ref = adminDb.collection("pages").doc(id);
         const pageData = {
             ...result.data,
+            title_fr,
+            meta_title_fr,
+            meta_description_fr,
+            content_fr,
             updatedAt: new Date(),
         };
         await ref.update(pageData);
