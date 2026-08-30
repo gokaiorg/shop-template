@@ -5,20 +5,18 @@ import { getStorage } from 'firebase-admin/storage';
 import fs from 'fs';
 import path from 'path';
 
-const targetProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-let projectId = targetProjectId;
+let projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 let clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
-// Check local service account file as fallback for development
+// Local service account fallback for local development
 if (!clientEmail || !privateKey) {
   try {
     const cwd = process.cwd();
     const files = fs.readdirSync(cwd);
     const saFiles = files.filter(f => f.includes('firebase-adminsdk') && f.endsWith('.json'));
 
-    // Prefer service account file matching active projectId
-    let targetSaFile = saFiles.find(f => targetProjectId && f.startsWith(targetProjectId));
+    let targetSaFile = saFiles.find(f => projectId && f.startsWith(projectId));
     if (!targetSaFile && saFiles.length > 0) {
       targetSaFile = saFiles[0];
     }
@@ -26,9 +24,9 @@ if (!clientEmail || !privateKey) {
     if (targetSaFile) {
       const saPath = path.join(cwd, targetSaFile);
       const sa = JSON.parse(fs.readFileSync(saPath, 'utf8'));
-      projectId = targetProjectId || sa.project_id;
+      projectId = projectId || sa.project_id;
       clientEmail = sa.client_email;
-      privateKey = sa.private_key ? sa.private_key.replace(/\\n/g, '\n') : sa.private_key;
+      privateKey = sa.private_key?.replace(/\\n/g, '\n');
     }
   } catch {
     // ignore
@@ -40,17 +38,17 @@ let app: App;
 if (getApps().length === 0) {
   if (clientEmail && privateKey) {
     app = initializeApp({
-      projectId: targetProjectId || projectId,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || projectId,
       credential: cert({
-        projectId: targetProjectId || projectId,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || projectId,
         clientEmail,
         privateKey,
       }),
     });
-  } else if (targetProjectId) {
-    console.warn("Firebase Admin service account credentials missing, initializing with target projectId:", targetProjectId);
+  } else if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+    console.warn("Firebase Admin service account credentials missing, initializing with target projectId:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
     app = initializeApp({
-      projectId: targetProjectId,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     });
   } else {
     console.warn("Firebase Admin environment variables are missing.");
