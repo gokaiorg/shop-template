@@ -5,12 +5,12 @@ import { getStorage } from 'firebase-admin/storage';
 import fs from 'fs';
 import path from 'path';
 
-let projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+let projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 let clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
 // Local service account fallback for local development
-if (!clientEmail || !privateKey) {
+if (!clientEmail || !privateKey || !projectId) {
   try {
     const cwd = process.cwd();
     const files = fs.readdirSync(cwd);
@@ -24,9 +24,11 @@ if (!clientEmail || !privateKey) {
     if (targetSaFile) {
       const saPath = path.join(cwd, targetSaFile);
       const sa = JSON.parse(fs.readFileSync(saPath, 'utf8'));
-      projectId = projectId || sa.project_id;
-      clientEmail = sa.client_email;
-      privateKey = sa.private_key?.replace(/\\n/g, '\n');
+      projectId = projectId || sa.project_id || sa.projectId;
+      clientEmail = clientEmail || sa.client_email || sa.clientEmail;
+      if (!privateKey && (sa.private_key || sa.privateKey)) {
+        privateKey = (sa.private_key || sa.privateKey)?.replace(/\\n/g, '\n');
+      }
     }
   } catch {
     // ignore
@@ -36,22 +38,29 @@ if (!clientEmail || !privateKey) {
 let app: App;
 
 if (getApps().length === 0) {
-  if (clientEmail && privateKey) {
+  const hasCompleteCredentials = Boolean(
+    projectId &&
+    clientEmail &&
+    privateKey &&
+    projectId.trim() !== '' &&
+    clientEmail.trim() !== '' &&
+    privateKey.trim() !== ''
+  );
+
+  if (hasCompleteCredentials) {
     app = initializeApp({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || projectId,
+      projectId,
       credential: cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || projectId,
-        clientEmail,
-        privateKey,
+        projectId: projectId!,
+        clientEmail: clientEmail!,
+        privateKey: privateKey!,
       }),
     });
-  } else if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
-    console.warn("Firebase Admin service account credentials missing, initializing with target projectId:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+  } else if (projectId && projectId.trim() !== '') {
     app = initializeApp({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      projectId,
     });
   } else {
-    console.warn("Firebase Admin environment variables are missing.");
     app = initializeApp();
   }
 } else {
@@ -59,6 +68,9 @@ if (getApps().length === 0) {
 }
 
 const rawDbId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
-export const adminDb = rawDbId && rawDbId !== "(default)" ? getFirestore(app, rawDbId) : getFirestore(app);
+export const adminDb = !rawDbId || rawDbId === "(default)" || rawDbId.trim() === ""
+  ? getFirestore(app)
+  : getFirestore(app, rawDbId);
+
 export const adminAuth = getAuth(app);
 export const adminStorage = getStorage(app);
