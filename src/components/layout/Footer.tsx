@@ -1,13 +1,16 @@
 import React from 'react';
 import Link from 'next/link';
 import { brandConfig } from '@/config/brand.config';
+import { Page } from '@/types/database';
+import { getLocalizedField } from '@/lib/i18n';
 
 interface FooterProps {
     lang: string;
     dict: any;
+    pages?: Page[];
 }
 
-export function Footer({ lang, dict }: FooterProps) {
+export function Footer({ lang, dict, pages = [] }: FooterProps) {
     if (!dict) return null;
     
     const isFr = lang === 'fr';
@@ -15,6 +18,8 @@ export function Footer({ lang, dict }: FooterProps) {
     const headerDict = dict.header || {};
     const { identity, navigation } = brandConfig;
     const description = isFr ? identity.description.fr : identity.description.en;
+
+    const footerPages = pages.filter((p) => p.showInFooter);
 
     return (
         <footer className="border-t bg-zinc-50 dark:bg-black py-12 mt-auto">
@@ -42,36 +47,43 @@ export function Footer({ lang, dict }: FooterProps) {
                 </div>
                 
                 <div>
-                    <h4 className="font-bold mb-4">{headerDict.shop || "Shop"}</h4>
+                    <h4 className="font-bold mb-4">{headerDict.shop || (isFr ? "Boutique" : "Shop")}</h4>
                     <ul className="space-y-2 text-sm text-muted-foreground">
-                        {navigation.footerSections.shop.map((item) => {
-                            const label = headerDict[item.key] || item.key;
-                            const href = item.href.startsWith('http') ? item.href : `/${lang}${item.href}`;
-                            return (
-                                <li key={item.key + item.href}>
-                                    <Link href={href} className="hover:text-foreground transition-colors">
-                                        {label}
-                                    </Link>
-                                </li>
-                            );
-                        })}
+                        <li>
+                            <Link href={`/${lang}/shop`} className="hover:text-foreground transition-colors">
+                                {isFr ? "Tous les produits" : "All Products"}
+                            </Link>
+                        </li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 className="font-bold mb-4">{legalDict.title || "Legal"}</h4>
+                    <h4 className="font-bold mb-4">{legalDict.title || (isFr ? "Informations & Légal" : "Information & Legal")}</h4>
                     <ul className="space-y-2 text-sm text-muted-foreground">
-                        {navigation.footerSections.legal.map((item) => {
-                            const label = legalDict[item.key] || item.key;
-                            const href = item.href.startsWith('http') ? item.href : `/${lang}${item.href}`;
-                            return (
-                                <li key={item.key + item.href}>
-                                    <Link href={href} className="hover:text-foreground transition-colors">
-                                        {label}
-                                    </Link>
-                                </li>
-                            );
-                        })}
+                        {footerPages.length > 0 ? (
+                            footerPages.map((page) => {
+                                const label = getLocalizedField(page.title, lang) || (isFr ? page.title_fr : page.title_en) || page.slug;
+                                return (
+                                    <li key={page.id || page.slug}>
+                                        <Link href={`/${lang}/pages/${page.slug}`} className="hover:text-foreground transition-colors">
+                                            {label}
+                                        </Link>
+                                    </li>
+                                );
+                            })
+                        ) : (
+                            navigation.footerSections.legal.map((item) => {
+                                const label = legalDict[item.key] || item.key;
+                                const href = item.href.startsWith('http') ? item.href : `/${lang}${item.href}`;
+                                return (
+                                    <li key={item.key + item.href}>
+                                        <Link href={href} className="hover:text-foreground transition-colors">
+                                            {label}
+                                        </Link>
+                                    </li>
+                                );
+                            })
+                        )}
                     </ul>
                 </div>
             </div>

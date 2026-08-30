@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function DynamicPage({ params }: PageProps) {
+export default async function PublicSlugPage({ params }: PageProps) {
   const { lang, slug } = await params;
   const page = await getPageBySlug(slug);
 
@@ -49,7 +49,7 @@ export default async function DynamicPage({ params }: PageProps) {
         <article className="prose prose-zinc dark:prose-invert max-w-none">
           {parse(content || "<p></p>")}
         </article>
-        
+
         {isContactPage && (
           <div className="mt-12">
             <ContactForm />

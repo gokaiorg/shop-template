@@ -120,16 +120,26 @@ export interface VerificationToken {
 }
 
 export interface Page {
-  id: string; // The slug (e.g., 'about')
-  title_en: string;
-  title_fr: string;
-  content_en: string;
-  content_fr: string;
-  meta_title_en: string;
-  meta_title_fr: string;
-  meta_description_en: string;
-  meta_description_fr: string;
+  id: string; // The doc ID or slug
+  slug: string;
+  title: Record<string, string>;
+  content: Record<string, string>;
+  status: "draft" | "published";
+  showInHeader: boolean;
+  showInFooter: boolean;
+  metaTitle?: Record<string, string>;
+  metaDescription?: Record<string, string>;
+  createdAt?: Date | string;
   updatedAt?: Date | string;
+  // Legacy optional fields for compatibility
+  title_en?: string;
+  title_fr?: string;
+  content_en?: string;
+  content_fr?: string;
+  meta_title_en?: string;
+  meta_title_fr?: string;
+  meta_description_en?: string;
+  meta_description_fr?: string;
 }
 
 export interface StoreSettings {

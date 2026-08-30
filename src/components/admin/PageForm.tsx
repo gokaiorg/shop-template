@@ -4,11 +4,12 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { toast } from "sonner";
-import { Trash2, Loader2 } from "lucide-react";
-import { updatePage, deletePage } from "@/actions/admin";
-import { pageSchema } from "@/schemas/admin";
+import { Trash2, Loader2, Save, ArrowLeft, Globe, Eye, LayoutTemplate } from "lucide-react";
+import Link from "next/link";
+
+import { createPage, updatePage, deletePage } from "@/actions/admin";
+import { pageSchema, PageFormData } from "@/schemas/admin";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,7 +21,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
 import { Button } from "@/components/ui/button";
 import {
     Form,
@@ -29,52 +29,78 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
+    FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Page } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
+import { getLocaleDisplayName } from "@/lib/i18n";
 
-export function PageForm({ dict, lang, initialData }: { dict: any; lang: string; initialData: Page }) {
+interface PageFormProps {
+    dict: any;
+    lang: string;
+    initialData?: Page | null;
+}
+
+export function PageForm({ dict, lang, initialData }: PageFormProps) {
     const router = useRouter();
-    const { isMultiLocale } = useBrand();
-    const isI18nEnabled = isMultiLocale;
+    const { supportedLocales, defaultLocale, isMultiLocale } = useBrand();
     const [isPending, startTransition] = useTransition();
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const form = useForm<z.infer<typeof pageSchema>>({
+    const isEditMode = Boolean(initialData?.id);
+
+    const defaultTitles: Record<string, string> = {};
+    const defaultContents: Record<string, string> = {};
+
+    supportedLocales.forEach((loc) => {
+        defaultTitles[loc] = initialData?.title?.[loc] || (loc === 'fr' ? initialData?.title_fr : initialData?.title_en) || initialData?.title?.en || "";
+        defaultContents[loc] = initialData?.content?.[loc] || (loc === 'fr' ? initialData?.content_fr : initialData?.content_en) || initialData?.content?.en || "";
+    });
+
+    const form = useForm<PageFormData>({
         resolver: zodResolver(pageSchema),
         defaultValues: {
-            title_en: initialData.title_en || "",
-            title_fr: initialData.title_fr || "",
-            meta_title_en: initialData.meta_title_en || "",
-            meta_title_fr: initialData.meta_title_fr || "",
-            meta_description_en: initialData.meta_description_en || "",
-            meta_description_fr: initialData.meta_description_fr || "",
-            content_en: initialData.content_en || "",
-            content_fr: initialData.content_fr || "",
+            slug: initialData?.slug || initialData?.id || "",
+            title: defaultTitles,
+            content: defaultContents,
+            status: initialData?.status || "published",
+            showInHeader: initialData?.showInHeader ?? false,
+            showInFooter: initialData?.showInFooter ?? false,
         },
     });
 
-    function onSubmit(values: z.infer<typeof pageSchema>) {
+    function onSubmit(values: PageFormData) {
         startTransition(async () => {
-            const payload = {
-                ...values,
-                title_fr: values.title_fr || values.title_en,
-                meta_title_fr: values.meta_title_fr || values.meta_title_en,
-                meta_description_fr: values.meta_description_fr || values.meta_description_en,
-                content_fr: values.content_fr || values.content_en,
-            };
-
-            const res = await updatePage(initialData.id, payload);
-
-            if (res.success) {
-                toast.success(dict.forms.success);
-                router.push(`/${lang}/admin/pages`);
+            if (isEditMode && initialData?.id) {
+                const res = await updatePage(initialData.id, values);
+                if (res.success) {
+                    toast.success(dict?.forms?.success || "Page saved successfully!");
+                    router.push(`/${lang}/admin/pages`);
+                    router.refresh();
+                } else {
+                    toast.error(res.error || "Failed to update page");
+                }
             } else {
-                toast.error(res.error || "Failed to save page");
+                const res = await createPage(values);
+                if (res.success) {
+                    toast.success(dict?.forms?.success || "Page created successfully!");
+                    router.push(`/${lang}/admin/pages`);
+                    router.refresh();
+                } else {
+                    toast.error(res.error || "Failed to create page");
+                }
             }
         });
     }
@@ -89,6 +115,7 @@ export function PageForm({ dict, lang, initialData }: { dict: any; lang: string;
             if (res.success) {
                 toast.success(dict?.forms?.deleted || "Page deleted successfully");
                 router.push(`/${lang}/admin/pages`);
+                router.refresh();
             } else {
                 toast.error(res.error || "Failed to delete page");
                 setIsDeleting(false);
@@ -105,227 +132,289 @@ export function PageForm({ dict, lang, initialData }: { dict: any; lang: string;
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                {isI18nEnabled ? (
-                    <Accordion type="single" defaultValue="en" collapsible className="w-full">
-                        {/* English Fields */}
-                        <AccordionItem value="en">
-                            <AccordionTrigger className="text-lg font-semibold hover:no-underline">English</AccordionTrigger>
-                            <AccordionContent className="space-y-4 pt-4 px-2">
-                                <FormField
-                                    control={form.control}
-                                    name="title_en"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.forms.titleEn}</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Title..." {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="meta_title_en"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.forms.metaTitleEn}</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="SEO Title..." {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="meta_description_en"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.forms.metaDescriptionEn}</FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="SEO Description..." {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="content_en"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.forms.contentEn}</FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="HTML Content..." className="min-h-[400px] font-mono" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </AccordionContent>
-                        </AccordionItem>
-
-                        {/* French Fields */}
-                        <AccordionItem value="fr">
-                            <AccordionTrigger className="text-lg font-semibold hover:no-underline">Français</AccordionTrigger>
-                            <AccordionContent className="space-y-4 pt-4 px-2">
-                                <FormField
-                                    control={form.control}
-                                    name="title_fr"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.forms.titleFr}</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Titre..." {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="meta_title_fr"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.forms.metaTitleFr}</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Titre SEO..." {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="meta_description_fr"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.forms.metaDescriptionFr}</FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="Description SEO..." {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="content_fr"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.forms.contentFr}</FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="Contenu HTML..." className="min-h-[400px] font-mono" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-                ) : (
-                    <div className="space-y-4 border rounded-lg p-6 bg-card">
-                        <h3 className="text-base font-semibold text-foreground border-b pb-3">Page Information (EN)</h3>
-                        <FormField
-                            control={form.control}
-                            name="title_en"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.forms.titleEn}</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Title..." {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="meta_title_en"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.forms.metaTitleEn}</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="SEO Title..." {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="meta_description_en"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.forms.metaDescriptionEn}</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="SEO Description..." {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="content_en"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.forms.contentEn}</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="HTML Content..." className="min-h-[400px] font-mono" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                )}
-
-                <div className="flex items-center gap-4">
-                    <Button type="submit" disabled={isLoading} className="cursor-pointer">
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {isDeleting ? (dict?.forms?.deleting || "Deleting...") : dict.forms.submitting}
-                            </>
-                        ) : (
-                            dict.forms.submit
-                        )}
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-5xl">
+                <div className="flex items-center justify-between">
+                    <Button asChild variant="ghost" size="sm">
+                        <Link href={`/${lang}/admin/pages`} className="flex items-center gap-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            {lang === 'fr' ? 'Retour aux pages' : 'Back to pages'}
+                        </Link>
                     </Button>
+                </div>
 
-                    {initialData?.id && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button type="button" variant="destructive" disabled={isLoading} className="cursor-pointer">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    {dict?.forms?.delete || "Delete"}
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>{dict?.forms?.delete_confirm_title || "Are you absolutely sure?"}</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        {dict?.forms?.delete_confirm_desc || "This action cannot be undone. This will permanently delete this page."}
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel disabled={isDeleting}>
-                                        {dict?.forms?.cancel || "Cancel"}
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={handleDelete}
-                                        disabled={isDeleting}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
-                                    >
-                                        {isDeleting ? (dict?.forms?.deleting || "Deleting...") : (dict?.forms?.confirm_delete || "Delete Page")}
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
+                <div className="grid gap-8 md:grid-cols-3">
+                    {/* Left Column: Multilingual Content */}
+                    <div className="md:col-span-2 space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <Globe className="h-5 w-5 text-primary" />
+                                    {lang === 'fr' ? 'Contenu de la page' : 'Page Content'}
+                                </CardTitle>
+                                <CardDescription>
+                                    {lang === 'fr' 
+                                        ? 'Renseignez le titre et le corps de texte pour chaque langue.' 
+                                        : 'Provide the page title and body content for each supported language.'}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isMultiLocale ? (
+                                    <Tabs defaultValue={defaultLocale} className="w-full">
+                                        <TabsList className="mb-4">
+                                            {supportedLocales.map((loc) => (
+                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                                    {getLocaleDisplayName(loc)} ({loc})
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+                                        {supportedLocales.map((loc) => (
+                                            <TabsContent key={loc} value={loc} className="space-y-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`title.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict?.forms?.title || 'Title'} ({getLocaleDisplayName(loc)})</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder={`Page title in ${getLocaleDisplayName(loc)}...`} {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`content.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict?.forms?.content || 'Content'} ({getLocaleDisplayName(loc)})</FormLabel>
+                                                            <FormControl>
+                                                                <Textarea
+                                                                    rows={12}
+                                                                    placeholder={`HTML or text content in ${getLocaleDisplayName(loc)}...`}
+                                                                    className="font-mono text-sm"
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormDescription>
+                                                                HTML tags (e.g. &lt;p&gt;, &lt;h2&gt;, &lt;ul&gt;, &lt;strong&gt;) are supported.
+                                                            </FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </TabsContent>
+                                        ))}
+                                    </Tabs>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name={`title.${defaultLocale}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict?.forms?.title || 'Page Title'}</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="e.g. About Us, Terms of Service..." {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`content.${defaultLocale}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict?.forms?.content || 'Page Content'}</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            rows={14}
+                                                            placeholder="HTML or text content..."
+                                                            className="font-mono text-sm"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        HTML tags (e.g. &lt;p&gt;, &lt;h2&gt;, &lt;ul&gt;) are supported.
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Right Column: Settings & Navigation Placement */}
+                    <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <LayoutTemplate className="h-4 w-4 text-primary" />
+                                    {lang === 'fr' ? 'Paramètres URL & Statut' : 'URL & Publication'}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="slug"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Slug (URL)</FormLabel>
+                                            <FormControl>
+                                                <Input 
+                                                    placeholder="e.g. about, privacy-policy" 
+                                                    {...field} 
+                                                    disabled={isEditMode || isLoading}
+                                                    className="font-mono text-xs" 
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                Public path: <code className="text-xs">/pages/{field.value || 'slug'}</code>
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{lang === 'fr' ? 'Statut de publication' : 'Publication Status'}</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select status" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="published">Published (Visible)</SelectItem>
+                                                    <SelectItem value="draft">Draft (Hidden)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <Eye className="h-4 w-4 text-primary" />
+                                    {lang === 'fr' ? 'Visibilité Navigation' : 'Navigation Placement'}
+                                </CardTitle>
+                                <CardDescription>
+                                    {lang === 'fr' 
+                                        ? 'Choisissez où faire apparaître le lien automatiquement.' 
+                                        : 'Select where this page should appear automatically.'}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="showInHeader"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                    disabled={isLoading}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel className="text-sm font-medium cursor-pointer">
+                                                    Header Navigation
+                                                </FormLabel>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Show link in main top navigation bar.
+                                                </p>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="showInFooter"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                    disabled={isLoading}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel className="text-sm font-medium cursor-pointer">
+                                                    Footer Navigation
+                                                </FormLabel>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Show link in the website footer links.
+                                                </p>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        {/* Actions */}
+                        <div className="flex flex-col gap-3">
+                            <Button type="submit" size="lg" disabled={isLoading} className="w-full gap-2">
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        {isDeleting ? "Deleting..." : "Saving..."}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4" />
+                                        {isEditMode ? (dict?.forms?.submit || "Save Page") : "Create Page"}
+                                    </>
+                                )}
+                            </Button>
+
+                            {isEditMode && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button type="button" variant="destructive" disabled={isLoading} className="w-full gap-2">
+                                            <Trash2 className="h-4 w-4" />
+                                            {dict?.forms?.delete || "Delete Page"}
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>{dict?.forms?.delete_confirm_title || "Are you absolutely sure?"}</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                {dict?.forms?.delete_confirm_desc || "This action cannot be undone. This will permanently delete this page from your store."}
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel disabled={isDeleting}>
+                                                {dict?.forms?.cancel || "Cancel"}
+                                            </AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={handleDelete}
+                                                disabled={isDeleting}
+                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            >
+                                                {isDeleting ? "Deleting..." : "Delete Page"}
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </form>
         </Form>

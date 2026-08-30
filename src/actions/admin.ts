@@ -399,10 +399,10 @@ export async function seedDemoData() {
     }
 }
 
-export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
+export async function createPage(data: z.infer<typeof pageSchema>) {
     const session = await auth();
     const userRole = (session?.user?.role || "").toLowerCase();
-    if (userRole !== "admin") {
+    if (userRole !== "admin" && userRole !== "user") {
         return { success: false, error: "Unauthorized" };
     }
 
@@ -412,29 +412,74 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
     }
 
     try {
-        const title_fr = result.data.title_fr || result.data.title_en;
-        const meta_title_fr = result.data.meta_title_fr || result.data.meta_title_en;
-        const meta_description_fr = result.data.meta_description_fr || result.data.meta_description_en;
-        const content_fr = result.data.content_fr || result.data.content_en;
+        const slug = result.data.slug.trim().toLowerCase();
+        const docRef = adminDb.collection("pages").doc(slug);
+        const docSnap = await docRef.get();
+
+        if (docSnap.exists) {
+            return { success: false, error: `A page with slug "${slug}" already exists.` };
+        }
+
+        const title_en = result.data.title?.en || Object.values(result.data.title)[0] || "";
+        const title_fr = result.data.title?.fr || title_en;
+        const content_en = result.data.content?.en || Object.values(result.data.content)[0] || "";
+        const content_fr = result.data.content?.fr || content_en;
+
+        const pageData = {
+            ...result.data,
+            slug,
+            title_en,
+            title_fr,
+            content_en,
+            content_fr,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+
+        await docRef.set(pageData);
+
+        revalidatePath("/", "layout");
+        return { success: true, id: slug };
+    } catch (error: any) {
+        console.error("CREATE_PAGE_ERROR:", error);
+        return { success: false, error: error?.message || "Failed to create page." };
+    }
+}
+
+export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin" && userRole !== "user") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const result = pageSchema.safeParse(data);
+    if (!result.success) {
+        return { success: false, errors: result.error.flatten().fieldErrors };
+    }
+
+    try {
+        const title_en = result.data.title?.en || Object.values(result.data.title)[0] || "";
+        const title_fr = result.data.title?.fr || title_en;
+        const content_en = result.data.content?.en || Object.values(result.data.content)[0] || "";
+        const content_fr = result.data.content?.fr || content_en;
 
         const ref = adminDb.collection("pages").doc(id);
         const pageData = {
             ...result.data,
+            title_en,
             title_fr,
-            meta_title_fr,
-            meta_description_fr,
+            content_en,
             content_fr,
             updatedAt: new Date(),
         };
-        await ref.update(pageData);
+        await ref.set(pageData, { merge: true });
 
-        revalidatePath('/[lang]/admin', 'layout');
-        revalidatePath('/[lang]/(shop)/[slug]', 'page');
-        
+        revalidatePath("/", "layout");
         return { success: true, page: { id, ...pageData } };
-    } catch (error) {
+    } catch (error: any) {
         console.error("UPDATE_PAGE_ERROR:", error);
-        return { success: false, error: "Failed to update page." };
+        return { success: false, error: error?.message || "Failed to update page." };
     }
 }
 
@@ -510,15 +555,14 @@ export async function deleteProduct(id: string) {
 export async function deletePage(id: string) {
     const session = await auth();
     const userRole = (session?.user?.role || "").toLowerCase();
-    if (userRole !== "admin") {
+    if (userRole !== "admin" && userRole !== "user") {
         return { success: false, error: "Unauthorized" };
     }
 
     try {
         await adminDb.collection("pages").doc(id).delete();
 
-        revalidatePath('/[lang]/admin', 'layout');
-        revalidatePath('/[lang]/(shop)/[slug]', 'page');
+        revalidatePath("/", "layout");
         return { success: true };
     } catch (error) {
         console.error("DELETE_PAGE_ERROR:", error);

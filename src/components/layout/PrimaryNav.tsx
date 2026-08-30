@@ -4,35 +4,49 @@ import Link from "next/link";
 import React from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useBrand } from "@/components/providers/BrandProvider";
+import { Page } from "@/types/database";
+import { getLocalizedField } from "@/lib/i18n";
 
 interface PrimaryNavProps {
     lang: string;
     dict: Record<string, string>;
+    pages?: Page[];
     className?: string;
     onNavClick?: () => void;
 }
 
-export function PrimaryNav({ lang, dict, className, onNavClick }: PrimaryNavProps) {
+export function PrimaryNav({ lang, dict, pages = [], className, onNavClick }: PrimaryNavProps) {
     const pathname = usePathname();
-    const { brand } = useBrand();
-    const navItems = brand.navigation.headerNav;
+
+    const shopHref = `/${lang}/shop`;
+    const isShopActive = pathname === shopHref || pathname.startsWith(`/${lang}/product/`);
 
     return (
         <nav className={cn("gap-6", className)}>
-            {navItems.map((item) => {
-                const label = dict?.[item.key] || item.key;
-                const href = item.href.startsWith('http') ? item.href : `/${lang}${item.href}`;
-                const isExternal = item.external || item.href.startsWith('http');
-                const isActive = !isExternal && pathname === href;
+            {/* Hardcoded Shop / Catalogue Link */}
+            <Link
+                href={shopHref}
+                onClick={onNavClick}
+                aria-current={isShopActive ? "page" : undefined}
+                className={cn(
+                    "flex items-center text-sm font-medium transition-colors hover:text-foreground",
+                    isShopActive ? "text-foreground font-semibold" : "text-muted-foreground"
+                )}
+            >
+                {dict?.shop || (lang === 'fr' ? 'Boutique' : 'Shop')}
+            </Link>
+
+            {/* Dynamic Pages with showInHeader === true */}
+            {pages.map((page) => {
+                const href = `/${lang}/pages/${page.slug}`;
+                const isActive = pathname === href || pathname === `/${lang}/${page.slug}`;
+                const label = getLocalizedField(page.title, lang) || (lang === 'fr' ? page.title_fr : page.title_en) || page.slug;
 
                 return (
                     <Link
-                        key={item.key + item.href}
+                        key={page.id || page.slug}
                         href={href}
                         onClick={onNavClick}
-                        target={isExternal ? "_blank" : undefined}
-                        rel={isExternal ? "noopener noreferrer" : undefined}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
                             "flex items-center text-sm font-medium transition-colors hover:text-foreground",
