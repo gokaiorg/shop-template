@@ -51,37 +51,35 @@ export default async function AdminDashboardPage({
             </div>
 
             {/* KPI Cards */}
-            {isAdmin && (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalProducts}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Categories</CardTitle>
-                            <FolderTree className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalCategories}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
-                            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{pendingOrdersCount}</div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{totalProducts}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Categories</CardTitle>
+                        <FolderTree className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{totalCategories}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{pendingOrdersCount}</div>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Main Content Area */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -129,30 +127,36 @@ export default async function AdminDashboardPage({
 
                 {/* Quick Actions & Profile */}
                 <div className="col-span-2 lg:col-span-2 space-y-4">
-                    {isAdmin && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Quick Actions</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <Link href={`/${lang}/admin/categories`} className="flex items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                    <FolderTree className="h-5 w-5 mr-3 text-primary" />
-                                    <div className="flex-1">
-                                        <p className="font-medium leading-none mb-1">{dict.admin.categories}</p>
-                                    </div>
-                                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                </Link>
-                                
-                                <Link href={`/${lang}/admin/products`} className="flex items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                    <Package className="h-5 w-5 mr-3 text-primary" />
-                                    <div className="flex-1">
-                                        <p className="font-medium leading-none mb-1">{dict.admin.products}</p>
-                                    </div>
-                                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                </Link>
-                            </CardContent>
-                        </Card>
-                    )}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Quick Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <Link href={`/${lang}/admin/products`} className="flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                                <Package className="h-5 w-5 mr-3 text-primary" />
+                                <div className="flex-1">
+                                    <p className="font-medium leading-none">{dict.admin.products}</p>
+                                </div>
+                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            </Link>
+                            
+                            <Link href={`/${lang}/admin/categories`} className="flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                                <FolderTree className="h-5 w-5 mr-3 text-primary" />
+                                <div className="flex-1">
+                                    <p className="font-medium leading-none">{dict.admin.categories}</p>
+                                </div>
+                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            </Link>
+
+                            <Link href={`/${lang}/admin/settings`} className="flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                                <ArrowRight className="h-5 w-5 mr-3 text-primary" />
+                                <div className="flex-1">
+                                    <p className="font-medium leading-none">{dict.admin.settings || "Settings"}</p>
+                                </div>
+                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            </Link>
+                        </CardContent>
+                    </Card>
 
                     {session?.user && (
                         <ProfileForm 
