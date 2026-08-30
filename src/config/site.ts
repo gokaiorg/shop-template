@@ -4,13 +4,14 @@ import type { Metadata } from 'next';
 /**
  * Formats page title according to brand template.
  */
-export function formatTitle(title?: string): string {
-    if (!title) return brandConfig.seo.defaultTitle;
-    return brandConfig.seo.titleTemplate.replace('%s', title);
+export function formatTitle(title?: string, brandName?: string): string {
+    const activeBrandName = brandName || brandConfig.identity.name;
+    if (!title) return `${activeBrandName} - Store`;
+    return `%s | ${activeBrandName}`.replace('%s', title);
 }
 
 /**
- * Builds base Next.js Metadata object from brand configuration and locale.
+ * Builds base Next.js Metadata object from brand configuration, dynamic store settings, and locale.
  */
 export function constructSiteMetadata({
     title,
@@ -18,45 +19,51 @@ export function constructSiteMetadata({
     image,
     lang = 'en',
     noIndex = false,
+    brandName,
+    faviconUrl,
 }: {
     title?: string;
     description?: string;
     image?: string;
     lang?: 'en' | 'fr' | string;
     noIndex?: boolean;
+    brandName?: string;
+    faviconUrl?: string;
 } = {}): Metadata {
     const isFr = lang === 'fr';
-    const siteTitle = title ? formatTitle(title) : brandConfig.seo.defaultTitle;
+    const activeBrandName = brandName || brandConfig.identity.name;
+    const siteTitle = title ? formatTitle(title, activeBrandName) : `${activeBrandName} - Store`;
     const siteDescription =
         description ||
         (isFr ? brandConfig.seo.defaultDescription.fr : brandConfig.seo.defaultDescription.en);
     const ogImage = image || brandConfig.assets.ogImage || brandConfig.assets.logo.src;
     const siteUrl = brandConfig.identity.url;
+    const activeFavicon = faviconUrl || brandConfig.assets.favicon || '/favicon.ico';
 
     return {
         title: {
             default: siteTitle,
-            template: brandConfig.seo.titleTemplate,
+            template: `%s | ${activeBrandName}`,
         },
         description: siteDescription,
         metadataBase: new URL(siteUrl),
         keywords: brandConfig.seo.keywords,
         authors: [
             {
-                name: brandConfig.identity.creator?.name || brandConfig.identity.name,
+                name: brandConfig.identity.creator?.name || activeBrandName,
                 url: brandConfig.identity.creator?.url || siteUrl,
             },
         ],
-        creator: brandConfig.identity.creator?.name || brandConfig.identity.name,
+        creator: brandConfig.identity.creator?.name || activeBrandName,
         icons: {
-            icon: brandConfig.assets.favicon || '/favicon.ico',
-            apple: brandConfig.assets.icon || '/icon.png',
+            icon: activeFavicon,
+            apple: activeFavicon || '/icon.png',
         },
         openGraph: {
             title: siteTitle,
             description: siteDescription,
             url: siteUrl,
-            siteName: brandConfig.identity.name,
+            siteName: activeBrandName,
             locale: isFr ? 'fr_FR' : 'en_US',
             type: 'website',
             images: [
@@ -64,7 +71,7 @@ export function constructSiteMetadata({
                     url: ogImage,
                     width: 1200,
                     height: 630,
-                    alt: brandConfig.identity.name,
+                    alt: activeBrandName,
                 },
             ],
         },

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { adminDb } from '@/lib/firebase-admin';
 import { StoreSettings } from '@/types/database';
 import { getActiveBrand } from '@/config/brand.config';
@@ -7,9 +8,10 @@ export const STORE_FRONT_DOC_ID = 'store_front';
 
 /**
  * Retrieves the store_front settings document from Firestore.
+ * Wrapped with React cache for per-request memoization during SSR.
  * If not present in Firestore, returns fallback values derived from active brand configuration.
  */
-export async function getStoreSettings(): Promise<StoreSettings> {
+export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
     const brand = getActiveBrand();
     const fallbackSettings: StoreSettings = {
         id: STORE_FRONT_DOC_ID,
@@ -45,7 +47,7 @@ export async function getStoreSettings(): Promise<StoreSettings> {
     }
 
     return fallbackSettings;
-}
+});
 
 /**
  * Persists store_front settings into Firestore.

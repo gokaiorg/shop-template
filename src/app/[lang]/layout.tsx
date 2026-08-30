@@ -25,7 +25,12 @@ export async function generateMetadata({
   params: Promise<{ lang: string }>;
 }): Promise<Metadata> {
   const { lang } = await params;
-  return constructSiteMetadata({ lang });
+  const storeSettings = await getStoreSettings();
+  return constructSiteMetadata({
+    lang,
+    brandName: storeSettings.brandName,
+    faviconUrl: storeSettings.faviconUrl,
+  });
 }
 
 export default async function RootLayout({
@@ -83,6 +88,7 @@ export default async function RootLayout({
   return (
     <html lang={lang} suppressHydrationWarning>
       <head>
+        {brand.assets.favicon && <link rel="icon" href={brand.assets.favicon} />}
         <style dangerouslySetInnerHTML={{ __html: brandStyles }} />
       </head>
       <body
