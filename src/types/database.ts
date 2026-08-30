@@ -131,3 +131,13 @@ export interface Page {
   meta_description_fr: string;
   updatedAt?: Date | string;
 }
+
+export interface StoreSettings {
+  id?: string;
+  brandName: string;
+  logoUrl: string;
+  faviconUrl: string;
+  heroTitle: Record<string, string>;
+  heroDescription: Record<string, string>;
+  updatedAt?: Date | string;
+}

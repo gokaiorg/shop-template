@@ -4,12 +4,13 @@ import { Locale } from "@/app/i18n-config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { adminDb } from "@/lib/firebase-admin";
-import { getActiveBrand, getActiveBrandKey, getIsCartEnabled } from "@/config/brand.config";
+import { getActiveBrandKey, getIsCartEnabled } from "@/config/brand.config";
 import { getSupportedLocales, getDefaultLocale, isMultiLocale } from "@/app/i18n-config";
+import { getStoreSettings } from "@/lib/services/settings";
+import { StoreSettingsForm } from "@/components/admin/StoreSettingsForm";
 import { SeedDemoDataButton } from "@/components/admin/SeedDemoDataButton";
 import { ProfileForm } from "@/components/admin/ProfileForm";
-import Image from "next/image";
-import { Settings, Shield, Globe, ShoppingCart, Database, Palette } from "lucide-react";
+import { Settings, Shield, Globe, ShoppingCart, Database } from "lucide-react";
 
 export default async function AdminSettingsPage({
     params,
@@ -17,9 +18,10 @@ export default async function AdminSettingsPage({
     params: Promise<{ lang: string }>;
 }) {
     const { lang } = await params;
-    const [session, dict] = await Promise.all([
+    const [session, dict, storeSettings] = await Promise.all([
         auth(),
         getDictionary(lang as Locale),
+        getStoreSettings(),
     ]);
 
     if (!session?.user?.id) {
@@ -29,7 +31,6 @@ export default async function AdminSettingsPage({
     const userDoc = await adminDb.collection("users").doc(session.user.id).get();
     const userData = userDoc.data();
 
-    const brand = getActiveBrand();
     const brandKey = getActiveBrandKey();
     const isCartEnabled = getIsCartEnabled();
     const supportedLocales = getSupportedLocales();
@@ -39,80 +40,40 @@ export default async function AdminSettingsPage({
     const adminDict = dict.admin || {};
 
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col gap-2">
+        <div className="space-y-10 max-w-5xl">
+            <div className="flex flex-col gap-2 border-b pb-6">
                 <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
                     <Settings className="h-8 w-8 text-primary" />
                     {adminDict.settings || "Settings"}
                 </h1>
                 <p className="text-muted-foreground">
-                    Manage store brand configuration, feature flags, database settings, and your admin profile.
+                    Customize your storefront content, brand assets, feature flags, and manage database utilities.
                 </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-                {/* Active Brand & Theme */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Palette className="h-5 w-5 text-primary" />
-                            Brand Identity & Theme
-                        </CardTitle>
-                        <CardDescription>
-                            Configuration loaded dynamically from the brand environment.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between border-b pb-3">
-                            <span className="text-sm font-medium text-muted-foreground">Brand Identifier</span>
-                            <Badge variant="outline" className="font-mono text-xs">{brandKey}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between border-b pb-3">
-                            <span className="text-sm font-medium text-muted-foreground">Brand Name</span>
-                            <span className="text-sm font-semibold">{brand.identity.name}</span>
-                        </div>
-                        <div className="flex items-center justify-between border-b pb-3">
-                            <span className="text-sm font-medium text-muted-foreground">Store URL</span>
-                            <span className="text-sm text-muted-foreground">{brand.identity.url}</span>
-                        </div>
-                        <div className="flex items-center justify-between border-b pb-3">
-                            <span className="text-sm font-medium text-muted-foreground">Logo Preview</span>
-                            <div className="flex items-center gap-2">
-                                <Image
-                                    src={brand.assets.logo.src}
-                                    alt={brand.assets.logo.alt || brand.identity.name}
-                                    width={28}
-                                    height={28}
-                                    className="object-contain"
-                                />
-                                <span className="text-xs text-muted-foreground font-mono">{brand.assets.logo.src}</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted-foreground">Primary Accent Color</span>
-                            <div className="flex items-center gap-2">
-                                <span
-                                    className="h-4 w-4 rounded-full border"
-                                    style={{ backgroundColor: `hsl(${brand.theme.colors?.light?.primary || '240 5.9% 10%'})` }}
-                                />
-                                <span className="text-xs font-mono">{brand.theme.colors?.light?.primary || 'Default'}</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* 1. Dynamic Storefront Settings Form (Firestore store_front document) */}
+            <div className="space-y-6">
+                <StoreSettingsForm initialData={storeSettings} lang={lang} dict={adminDict} />
+            </div>
 
+            {/* 2. System Configuration & Runtime Info */}
+            <div className="grid gap-6 md:grid-cols-2 pt-6 border-t">
                 {/* Feature Flags & Localization */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <Globe className="h-5 w-5 text-primary" />
-                            Feature Flags & Localization
+                            Feature Flags & Routing
                         </CardTitle>
                         <CardDescription>
-                            Dynamic feature toggle and internationalization settings.
+                            Active runtime configurations applied to this deployment.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between border-b pb-3">
+                            <span className="text-sm font-medium text-muted-foreground">Brand Key</span>
+                            <Badge variant="outline" className="font-mono text-xs">{brandKey}</Badge>
+                        </div>
                         <div className="flex items-center justify-between border-b pb-3">
                             <div className="flex items-center gap-2">
                                 <ShoppingCart className="h-4 w-4 text-muted-foreground" />
@@ -147,15 +108,15 @@ export default async function AdminSettingsPage({
                     </CardContent>
                 </Card>
 
-                {/* Database & Catalog Tools */}
+                {/* Database & Demo Tools */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <Database className="h-5 w-5 text-primary" />
-                            Database & Demo Data
+                            Database & Seed Tools
                         </CardTitle>
                         <CardDescription>
-                            Manage Firestore catalog seed data and environment connection.
+                            Firestore connection and catalog utilities.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -184,7 +145,7 @@ export default async function AdminSettingsPage({
                 </Card>
 
                 {/* Admin Profile */}
-                <Card>
+                <Card className="md:col-span-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <Shield className="h-5 w-5 text-primary" />

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { brandConfig } from "@/config/brand.config";
+import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
 
 export default async function Home({
@@ -16,13 +17,14 @@ export default async function Home({
 }) {
   const { lang } = await params;
   
-  // Fetch dictionary, categories, and products in parallel
-  const [dict, categoriesSnap, productsSnap] = await Promise.all([
+  // Fetch dictionary, categories, products, and store settings in parallel
+  const [dict, categoriesSnap, productsSnap, storeSettings] = await Promise.all([
     getDictionary(lang as Locale),
     adminDb.collection("categories").get(),
     adminDb.collection("products")
       .orderBy("createdAt", "desc")
-      .get()
+      .get(),
+    getStoreSettings()
   ]);
 
   const categories = categoriesSnap.docs.map(doc => {
@@ -56,8 +58,12 @@ export default async function Home({
   const homeDict = dict.home || {};
   const shopDict = dict.shop || {};
 
-  const heroTitle = getLocalizedField(brandConfig.identity.tagline as any, lang) || homeDict.hero_title;
-  const heroSubtitle = getLocalizedField(brandConfig.identity.description as any, lang) || homeDict.hero_subtitle;
+  const heroTitle = getLocalizedField(storeSettings.heroTitle, lang)
+    || getLocalizedField(brandConfig.identity.tagline as any, lang)
+    || homeDict.hero_title;
+  const heroSubtitle = getLocalizedField(storeSettings.heroDescription, lang)
+    || getLocalizedField(brandConfig.identity.description as any, lang)
+    || homeDict.hero_subtitle;
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black w-full">

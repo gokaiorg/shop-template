@@ -4,7 +4,9 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { BrandProvider } from "@/components/providers/BrandProvider";
 import { getActiveBrand, getActiveBrandKey, getIsCartEnabled } from "@/config/brand.config";
 import { getSupportedLocales, getDefaultLocale } from "@/app/i18n-config";
+import { getStoreSettings } from "@/lib/services/settings";
 import { constructSiteMetadata } from "@/config/site";
+import { BrandConfig } from "@/config/types";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,11 +36,30 @@ export default async function RootLayout({
   params: Promise<{ lang: string }>;
 }>) {
   const { lang } = await params;
-  const brand = getActiveBrand();
+  const rawBrand = getActiveBrand();
   const brandKey = getActiveBrandKey();
   const isCartEnabled = getIsCartEnabled();
   const supportedLocales = getSupportedLocales();
   const defaultLocale = getDefaultLocale();
+  const storeSettings = await getStoreSettings();
+
+  const brand: BrandConfig = {
+    ...rawBrand,
+    identity: {
+      ...rawBrand.identity,
+      name: storeSettings.brandName || rawBrand.identity.name,
+      tagline: storeSettings.heroTitle ? (storeSettings.heroTitle as any) : rawBrand.identity.tagline,
+      description: storeSettings.heroDescription ? (storeSettings.heroDescription as any) : rawBrand.identity.description,
+    },
+    assets: {
+      ...rawBrand.assets,
+      logo: {
+        ...rawBrand.assets.logo,
+        src: storeSettings.logoUrl || rawBrand.assets.logo.src,
+      },
+      favicon: storeSettings.faviconUrl || rawBrand.assets.favicon,
+    },
+  };
 
   const { theme } = brand;
   const colors = theme.colors;

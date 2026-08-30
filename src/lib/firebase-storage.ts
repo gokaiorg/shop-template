@@ -33,6 +33,34 @@ export async function uploadProductImage(file: File, customPath?: string): Promi
 }
 
 /**
+ * Uploads a brand asset file (logo, favicon, banner) to Firebase Storage and returns its public download URL.
+ *
+ * @param file - The File object to upload
+ * @param assetType - Type of asset ('logo' | 'favicon' | 'brand')
+ * @returns Promise<string> Public download URL
+ */
+export async function uploadBrandAsset(file: File, assetType: 'logo' | 'favicon' | 'brand' = 'brand'): Promise<string> {
+    if (!file) {
+        throw new Error('No file provided for upload.');
+    }
+
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const storagePath = `branding/${assetType}-${timestamp}-${randomSuffix}-${cleanFileName}`;
+
+    const storageRef = ref(storage, storagePath);
+    const metadata = {
+        contentType: file.type || (assetType === 'favicon' ? 'image/x-icon' : 'image/png'),
+    };
+
+    const snapshot = await uploadBytes(storageRef, file, metadata);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    return downloadURL;
+}
+
+/**
  * Deletes a product image file from Firebase Storage given its full download URL or relative storage path.
  *
  * @param imageUri - The full download URL or storage path of the image to delete
