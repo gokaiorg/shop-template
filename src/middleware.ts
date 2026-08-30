@@ -36,29 +36,39 @@ export default auth((req) => {
     const pathname = nextUrl.pathname;
 
     if (!isMulti || locales.length <= 1) {
-        // Single-locale mode: strip locale prefix if present and internally rewrite
-        const matchedLocalePrefix = locales.find(
-            (loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`)
-        );
-
-        if (matchedLocalePrefix) {
-            const strippedPathname = pathname.slice(matchedLocalePrefix.length + 1) || '/';
-            const cleanUrl = new URL(strippedPathname + nextUrl.search, req.url);
-            return NextResponse.redirect(cleanUrl);
+        // Single-locale mode:
+        // If the path already has the default locale prefix (e.g. /en or /en/shop),
+        // let it pass through directly without redirecting to prevent circular redirect loops.
+        if (pathname === `/${defaultLocale}` || pathname.startsWith(`/${defaultLocale}/`)) {
+            return NextResponse.next();
         }
 
-        // Internally rewrite clean path to /[defaultLocale]/...
-        const rewriteUrl = new URL(`/${defaultLocale}${pathname === '/' ? '' : pathname}${nextUrl.search}`, req.url);
+        // Check if path starts with a non-default locale prefix
+        const otherLocale = locales.find(
+            (loc) => loc !== defaultLocale && (pathname === `/${loc}` || pathname.startsWith(`/${loc}/`))
+        );
+        const targetPath = otherLocale
+            ? pathname.slice(otherLocale.length + 1) || '/'
+            : pathname;
+
+        // Internally rewrite clean path to /[defaultLocale]/... without redirecting the browser
+        const rewriteUrl = new URL(
+            `/${defaultLocale}${targetPath === '/' ? '' : targetPath}${nextUrl.search}`,
+            req.url
+        );
         return NextResponse.rewrite(rewriteUrl);
     } else {
-        // Multi-locale mode: ensure valid locale prefix
+        // Multi-locale mode: ensure a valid locale prefix is present in the URL
         const pathnameIsMissingLocale = locales.every(
             (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
         );
 
         if (pathnameIsMissingLocale) {
             return NextResponse.redirect(
-                new URL(`/${defaultLocale}${pathname === '/' ? '' : pathname}${nextUrl.search}`, req.url)
+                new URL(
+                    `/${defaultLocale}${pathname === '/' ? '' : pathname}${nextUrl.search}`,
+                    req.url
+                )
             );
         }
     }
@@ -68,5 +78,5 @@ export default auth((req) => {
 
 export const config = {
     // Matcher ignoring `/_next/`, api, and standard public files & metadata routes
-    matcher: ['/((?!api|_next/static|_next/image|favicon.ico|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2)$).*)'],
 };
