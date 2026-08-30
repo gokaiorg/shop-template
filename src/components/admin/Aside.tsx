@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -12,8 +14,10 @@ import {
     Settings,
     ExternalLink
 } from "lucide-react";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 export function Aside({ lang, dict, session }: { lang: string, dict: any, session: any }) {
+    const { isCartEnabled } = useBrand();
     const adminDict = dict?.admin || {};
     const ordersTitle = adminDict.orders?.title || adminDict.orders || "Orders";
 
@@ -46,10 +50,12 @@ export function Aside({ lang, dict, session }: { lang: string, dict: any, sessio
                         <FileText className="h-4 w-4" />
                         {adminDict.pages || "Pages"}
                     </Link>
-                    <Link href={`/${lang}/admin/orders`} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
-                        <ShoppingCart className="h-4 w-4" />
-                        {ordersTitle}
-                    </Link>
+                    {isCartEnabled && (
+                        <Link href={`/${lang}/admin/orders`} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
+                            <ShoppingCart className="h-4 w-4" />
+                            {ordersTitle}
+                        </Link>
+                    )}
                     <Link href={`/${lang}/admin/settings`} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
                         <Settings className="h-4 w-4" />
                         {adminDict.settings || "Settings"}

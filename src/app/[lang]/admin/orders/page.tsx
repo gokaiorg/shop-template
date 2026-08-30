@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { getIsCartEnabled } from "@/config/brand.config";
 
 interface AdminOrdersPageProps {
     params: Promise<{
@@ -16,6 +17,11 @@ interface AdminOrdersPageProps {
 
 export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) {
     const { lang } = await params;
+
+    // Guard route: if cart is disabled, redirect to admin dashboard
+    if (!getIsCartEnabled()) {
+        redirect(`/${lang}/admin/dashboard`);
+    }
 
     const session = await auth();
     if (!session) redirect(`/${lang}/login`);

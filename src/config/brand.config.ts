@@ -36,10 +36,21 @@ export function getActiveBrand(): BrandConfig {
 
 /**
  * Resolves whether the cart feature flag is enabled dynamically at server runtime.
+ * Handles boolean string representations ("false", "0", "off", "no", "true", "1", "on", "yes").
  */
 export function getIsCartEnabled(): boolean {
-    const flag = process.env.ENABLE_CART || process.env.NEXT_PUBLIC_ENABLE_CART;
-    return flag !== "false";
+    const rawFlag = process.env.ENABLE_CART ?? process.env.NEXT_PUBLIC_ENABLE_CART;
+    if (rawFlag !== undefined && rawFlag !== "") {
+        const normalized = String(rawFlag).trim().toLowerCase();
+        if (normalized === "false" || normalized === "0" || normalized === "off" || normalized === "no") {
+            return false;
+        }
+        if (normalized === "true" || normalized === "1" || normalized === "on" || normalized === "yes") {
+            return true;
+        }
+    }
+    const brand = getActiveBrand();
+    return brand.features?.cart ?? true;
 }
 
 export const brandConfig: BrandConfig = new Proxy({} as BrandConfig, {

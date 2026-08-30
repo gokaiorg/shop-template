@@ -1,9 +1,14 @@
 "use server";
 
 import { adminDb } from "@/lib/firebase-admin";
+import { getIsCartEnabled } from "@/config/brand.config";
 
 export async function checkoutOrder(items: { id: string, quantity: number, name?: Record<string, string>, nameFr?: string, nameEn?: string, price?: number }[]) {
     try {
+        if (!getIsCartEnabled()) {
+            throw new Error("E-commerce cart functionality is disabled on this instance.");
+        }
+
         if (!Array.isArray(items) || items.length === 0) {
             throw new Error("No items in cart");
         }
@@ -62,8 +67,8 @@ export async function checkoutOrder(items: { id: string, quantity: number, name?
         });
 
         return { success: true, orderId };
-    } catch (error) {
+    } catch (error: any) {
         console.error("[CHECKOUT_ACTION_ERROR]", error);
-        return { success: false, error: "Failed to initiate checkout" };
+        return { success: false, error: error?.message || "Failed to initiate checkout" };
     }
 }

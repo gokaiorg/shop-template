@@ -2,6 +2,8 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
+import { redirect } from "next/navigation";
+import { getIsCartEnabled } from "@/config/brand.config";
 
 export default async function CheckoutSuccessPage({
     params,
@@ -11,6 +13,11 @@ export default async function CheckoutSuccessPage({
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const { lang } = await params;
+    
+    if (!getIsCartEnabled()) {
+        redirect(`/${lang}`);
+    }
+
     const { session_id } = await searchParams;
     const dict = await getDictionary(lang as Locale);
 

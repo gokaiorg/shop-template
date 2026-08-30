@@ -17,9 +17,11 @@ import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LangToggle } from "@/components/layout/LangToggle";
 import { useState } from "react";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 export function MobileAside({ lang, dict, session }: { lang: string, dict: any, session: any }) {
     const [open, setOpen] = useState(false);
+    const { isCartEnabled } = useBrand();
     const adminDict = dict?.admin || {};
     const ordersTitle = adminDict.orders?.title || adminDict.orders || "Orders";
 
@@ -63,10 +65,12 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                             <FileText className="h-4 w-4" />
                             {adminDict.pages || "Pages"}
                         </Link>
-                        <Link href={`/${lang}/admin/orders`} onClick={() => setOpen(false)} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
-                            <ShoppingCart className="h-4 w-4" />
-                            {ordersTitle}
-                        </Link>
+                        {isCartEnabled && (
+                            <Link href={`/${lang}/admin/orders`} onClick={() => setOpen(false)} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
+                                <ShoppingCart className="h-4 w-4" />
+                                {ordersTitle}
+                            </Link>
+                        )}
                         <Link href={`/${lang}/admin/settings`} onClick={() => setOpen(false)} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
                             <Settings className="h-4 w-4" />
                             {adminDict.settings || "Settings"}

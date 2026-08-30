@@ -152,5 +152,10 @@ export interface BrandConfig {
     navigation: BrandNavigation;
     seo: BrandSEO;
     contact: BrandContact;
+    features?: {
+        cart?: boolean;
+        search?: boolean;
+        reviews?: boolean;
+    };
     seedData?: BrandSeedData;
 }
