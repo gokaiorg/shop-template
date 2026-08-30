@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/types/database";
 import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 interface AddToCartButtonProps {
     product: Product;
@@ -15,7 +16,7 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ product, lang, label, title, className, size = "default" }: AddToCartButtonProps) {
-    const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
+    const { isCartEnabled } = useBrand();
     const addItem = useCart(state => state.addItem);
 
     if (!isCartEnabled) {

@@ -9,13 +9,12 @@ import { AccountToggle } from "./AccountToggle";
 import { PrimaryNav } from "./PrimaryNav";
 import { CartSheet } from "../cart/CartSheet";
 import { MobileNav } from "./MobileNav";
-
-import { brandConfig } from "@/config/brand.config";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 function HeaderContent({ lang, dict }: { lang: string, dict: any }) {
-    const { logo } = brandConfig.assets;
-    const brandName = brandConfig.identity.name;
-    const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
+    const { brand, isCartEnabled } = useBrand();
+    const { logo } = brand.assets;
+    const brandName = brand.identity.name;
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

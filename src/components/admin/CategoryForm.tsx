@@ -37,12 +37,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 import { Category } from "@/types/database";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 export function CategoryForm({ dict, lang, initialData }: { dict: Record<string, string>; lang: string; initialData?: Category }) {
     const router = useRouter();
-    const locales = getSupportedLocales();
-    const defaultLocale = getDefaultLocale();
-    const isMulti = isMultiLocale();
+    const { supportedLocales: locales, defaultLocale, isMultiLocale: isMulti } = useBrand();
     const [isPending, startTransition] = useTransition();
     const [isDeleting, setIsDeleting] = useState(false);
 

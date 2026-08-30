@@ -12,15 +12,34 @@ export const BRANDS: Record<string, BrandConfig> = {
 };
 
 /**
+ * Resolves active brand identifier dynamically from server runtime environment.
+ */
+export function getActiveBrandKey(): string {
+    return (
+        process.env.BRAND ||
+        process.env.NEXT_PUBLIC_BRAND ||
+        'shop-template'
+    )
+        .toLowerCase()
+        .trim();
+}
+
+/**
  * Get active brand configuration.
- * Resolves brand based on `NEXT_PUBLIC_BRAND` or `BRAND` environment variable,
+ * Resolves brand based on runtime `BRAND` or `NEXT_PUBLIC_BRAND` environment variable,
  * or falls back to the default brand (`shop-template`).
  */
 export function getActiveBrand(): BrandConfig {
-    const brandKey = (process.env.NEXT_PUBLIC_BRAND || process.env.BRAND || 'shop-template')
-        .toLowerCase()
-        .trim();
+    const brandKey = getActiveBrandKey();
     return BRANDS[brandKey] || shopTemplateBrand;
+}
+
+/**
+ * Resolves whether the cart feature flag is enabled dynamically at server runtime.
+ */
+export function getIsCartEnabled(): boolean {
+    const flag = process.env.ENABLE_CART || process.env.NEXT_PUBLIC_ENABLE_CART;
+    return flag !== "false";
 }
 
 export const brandConfig: BrandConfig = new Proxy({} as BrandConfig, {

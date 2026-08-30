@@ -35,11 +35,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 import { Page } from "@/types/database";
-import { isMultiLocale } from "@/app/i18n-config";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 export function PageForm({ dict, lang, initialData }: { dict: any; lang: string; initialData: Page }) {
     const router = useRouter();
-    const isI18nEnabled = isMultiLocale();
+    const { isMultiLocale } = useBrand();
+    const isI18nEnabled = isMultiLocale;
     const [isPending, startTransition] = useTransition();
     const [isDeleting, setIsDeleting] = useState(false);
 

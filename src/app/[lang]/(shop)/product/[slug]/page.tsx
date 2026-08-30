@@ -99,7 +99,7 @@ export default async function ProductPage({ params }: PageProps) {
         || (product.images && product.images.length > 0 ? product.images[0] : null)
         || brandConfig.assets.placeholderImage;
 
-    const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
+    const isCartEnabled = (process.env.ENABLE_CART || process.env.NEXT_PUBLIC_ENABLE_CART) !== "false";
 
     // Load assigned categories
     const catIds = product.categoryIds || (product.categoryId ? [product.categoryId] : []);

@@ -4,7 +4,7 @@ import Link from "next/link";
 import React from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { brandConfig } from "@/config/brand.config";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 interface PrimaryNavProps {
     lang: string;
@@ -15,7 +15,8 @@ interface PrimaryNavProps {
 
 export function PrimaryNav({ lang, dict, className, onNavClick }: PrimaryNavProps) {
     const pathname = usePathname();
-    const navItems = brandConfig.navigation.headerNav;
+    const { brand } = useBrand();
+    const navItems = brand.navigation.headerNav;
 
     return (
         <nav className={cn("gap-6", className)}>

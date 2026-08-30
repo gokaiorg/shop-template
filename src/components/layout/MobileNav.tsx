@@ -9,13 +9,13 @@ import { LangToggle } from "./LangToggle";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-
-import { brandConfig } from "@/config/brand.config";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 export function MobileNav({ lang, dict }: { lang: string, dict: Record<string, string> }) {
     const [open, setOpen] = useState(false);
-    const { logo } = brandConfig.assets;
-    const brandName = brandConfig.identity.name;
+    const { brand } = useBrand();
+    const { logo } = brand.assets;
+    const brandName = brand.identity.name;
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>

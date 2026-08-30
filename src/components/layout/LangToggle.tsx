@@ -11,16 +11,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { getSupportedLocales, isMultiLocale } from "@/app/i18n-config"
+import { useBrand } from "@/components/providers/BrandProvider"
 import { getLocaleDisplayName } from "@/lib/i18n"
 
 export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, string> }) {
-    const isMulti = isMultiLocale();
-    const locales = getSupportedLocales();
+    const { isMultiLocale, supportedLocales } = useBrand();
     const pathname = usePathname();
     const router = useRouter();
 
-    if (!isMulti || locales.length <= 1) {
+    if (!isMultiLocale || supportedLocales.length <= 1) {
         return null;
     }
 
@@ -28,7 +27,7 @@ export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, 
         if (lang === targetLang) return;
         const segments = pathname.split('/');
         // Replace locale prefix
-        if (locales.includes(segments[1])) {
+        if (supportedLocales.includes(segments[1])) {
             segments[1] = targetLang;
         } else {
             segments.splice(1, 0, targetLang);
@@ -45,7 +44,7 @@ export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, 
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                {locales.map((loc) => (
+                {supportedLocales.map((loc) => (
                     <DropdownMenuItem
                         key={loc}
                         onClick={() => switchLanguage(loc)}

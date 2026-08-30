@@ -43,6 +43,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 import { Category, Product } from "@/types/database";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 export function ProductForm({
     categories,
@@ -56,9 +57,7 @@ export function ProductForm({
     initialData?: Product;
 }) {
     const router = useRouter();
-    const locales = getSupportedLocales();
-    const defaultLocale = getDefaultLocale();
-    const isMulti = isMultiLocale();
+    const { supportedLocales: locales, defaultLocale, isMultiLocale: isMulti } = useBrand();
 
     const [isPending, startTransition] = useTransition();
     const [isUploading, setIsUploading] = useState(false);

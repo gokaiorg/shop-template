@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { brandConfig } from "@/config/brand.config";
+import { BrandProvider } from "@/components/providers/BrandProvider";
+import { getActiveBrand, getActiveBrandKey, getIsCartEnabled } from "@/config/brand.config";
+import { getSupportedLocales, getDefaultLocale } from "@/app/i18n-config";
 import { constructSiteMetadata } from "@/config/site";
 import "./globals.css";
 
@@ -32,7 +34,13 @@ export default async function RootLayout({
   params: Promise<{ lang: string }>;
 }>) {
   const { lang } = await params;
-  const { theme } = brandConfig;
+  const brand = getActiveBrand();
+  const brandKey = getActiveBrandKey();
+  const isCartEnabled = getIsCartEnabled();
+  const supportedLocales = getSupportedLocales();
+  const defaultLocale = getDefaultLocale();
+
+  const { theme } = brand;
   const colors = theme.colors;
 
   const brandStyles = `
@@ -65,7 +73,15 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <BrandProvider
+            brand={brand}
+            brandKey={brandKey}
+            isCartEnabled={isCartEnabled}
+            supportedLocales={supportedLocales}
+            defaultLocale={defaultLocale}
+          >
+            {children}
+          </BrandProvider>
         </ThemeProvider>
       </body>
     </html>

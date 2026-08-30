@@ -8,7 +8,7 @@ import { Product } from "@/types/database";
 import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
 import { getLocalizedField } from "@/lib/i18n";
-import { brandConfig } from "@/config/brand.config";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 interface ShopProductCardProps {
     product: Product;
@@ -17,6 +17,7 @@ interface ShopProductCardProps {
 }
 
 export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
+    const { brand, isCartEnabled } = useBrand();
     const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "";
     const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
     const slug = getLocalizedField(product.slug, lang) || (lang === 'fr' ? product.slugFr : product.slugEn) || "";
@@ -32,9 +33,7 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
     // Prioritize product.imageUrl, then product.images[0], then brand's placeholder
     const imageUrl = product.imageUrl
         || (product.images && product.images.length > 0 ? product.images[0] : null)
-        || brandConfig.assets.placeholderImage;
-
-    const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART !== "false";
+        || brand.assets.placeholderImage;
 
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-background">
