@@ -75,6 +75,7 @@ export interface Order {
   userId?: string | null;
   status: string; // Pending, Completed, Cancelled
   totalAmount: number;
+  currency?: string;
   customerEmail?: string | null;
   customerName?: string | null;
   stripeSessionId?: string | null;
@@ -149,5 +150,7 @@ export interface StoreSettings {
   faviconUrl: string;
   heroTitle: Record<string, string>;
   heroDescription: Record<string, string>;
+  defaultTheme?: 'light' | 'dark' | 'system';
+  defaultCurrency?: string;
   updatedAt?: Date | string;
 }

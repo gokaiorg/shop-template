@@ -3,16 +3,33 @@ import Link from "next/link";
 import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product } from "@/types/database";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { Badge } from "@/components/ui/badge";
 import { brandConfig } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
+import { ProductGallery } from "@/components/shop/ProductGallery";
+import { getStoreSettings } from "@/lib/services/settings";
+import { formatPrice } from "@/lib/currency";
 
 interface PageProps {
     params: Promise<{ lang: string; slug: string }>;
+}
+
+function normalizeProduct(docId: string, data: any): Product {
+    const rawImages = (data?.images && Array.isArray(data.images) && data.images.length > 0)
+        ? data.images
+        : (data?.imageUrl ? [data.imageUrl] : []);
+
+    return {
+        ...data,
+        id: docId,
+        images: rawImages,
+        imageUrl: data?.imageUrl || rawImages[0] || null,
+        createdAt: data?.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data?.createdAt || null),
+        updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data?.updatedAt || null),
+    } as Product;
 }
 
 async function findProductBySlug(lang: string, slug: string): Promise<Product | null> {
@@ -20,13 +37,7 @@ async function findProductBySlug(lang: string, slug: string): Promise<Product | 
     let snapshot = await adminDb.collection("products").where(`slug.${lang}`, "==", slug).limit(1).get();
     if (!snapshot.empty) {
         const doc = snapshot.docs[0];
-        const data = doc.data();
-        return {
-            ...data,
-            id: doc.id,
-            createdAt: data?.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data?.createdAt || null),
-            updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data?.updatedAt || null),
-        } as Product;
+        return normalizeProduct(doc.id, doc.data());
     }
 
     // 2. Query legacy flat slug fields
@@ -34,13 +45,7 @@ async function findProductBySlug(lang: string, slug: string): Promise<Product | 
     snapshot = await adminDb.collection("products").where(legacyField, "==", slug).limit(1).get();
     if (!snapshot.empty) {
         const doc = snapshot.docs[0];
-        const data = doc.data();
-        return {
-            ...data,
-            id: doc.id,
-            createdAt: data?.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data?.createdAt || null),
-            updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data?.updatedAt || null),
-        } as Product;
+        return normalizeProduct(doc.id, doc.data());
     }
 
     // 3. Fallback: Scan collection
@@ -49,12 +54,7 @@ async function findProductBySlug(lang: string, slug: string): Promise<Product | 
         const data = doc.data() as Product;
         const localizedSlug = getLocalizedField(data.slug, lang) || (lang === 'fr' ? data.slugFr : data.slugEn);
         if (localizedSlug === slug || data.slugEn === slug || data.slugFr === slug) {
-            return {
-                ...data,
-                id: doc.id,
-                createdAt: (data?.createdAt as any)?.toDate ? (data.createdAt as any).toDate().toISOString() : (data?.createdAt || null),
-                updatedAt: (data?.updatedAt as any)?.toDate ? (data.updatedAt as any).toDate().toISOString() : (data?.updatedAt || null),
-            } as Product;
+            return normalizeProduct(doc.id, data);
         }
     }
 
@@ -88,16 +88,22 @@ export default async function ProductPage({ params }: PageProps) {
         notFound();
     }
 
-    const dict = await getDictionary(lang as Locale);
+    const [dict, storeSettings] = await Promise.all([
+        getDictionary(lang as Locale),
+        getStoreSettings(),
+    ]);
     const shopDict = dict.shop;
+    const currency = storeSettings.defaultCurrency || "THB";
 
     const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "Product";
     const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
     const intro = getLocalizedField(product.intro, lang) || (lang === 'fr' ? product.introFr : product.introEn) || "";
     
-    const imageUrl = product.imageUrl
-        || (product.images && product.images.length > 0 ? product.images[0] : null)
-        || brandConfig.assets.placeholderImage;
+    // Normalisation multi-images avec fallback placeholder de la marque
+    const productImages = (product.images && product.images.length > 0)
+        ? product.images
+        : (product.imageUrl ? [product.imageUrl] : []);
+    const images = productImages.length > 0 ? productImages : [brandConfig.assets.placeholderImage];
 
     const isCartEnabled = (process.env.ENABLE_CART || process.env.NEXT_PUBLIC_ENABLE_CART) !== "false";
 
@@ -114,16 +120,9 @@ export default async function ProductPage({ params }: PageProps) {
     return (
         <main className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-                {/* Left column: Image */}
-                <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
-                    <Image
-                        src={imageUrl}
-                        alt={title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className="object-cover"
-                        priority
-                    />
+                {/* Left column: Gallery */}
+                <div className="w-full">
+                    <ProductGallery images={images} title={title} />
                 </div>
 
                 {/* Right column: Content */}
@@ -146,7 +145,7 @@ export default async function ProductPage({ params }: PageProps) {
                         )}
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">{title}</h1>
                         <p className="mt-4 text-3xl font-semibold text-foreground">
-                            ${product.price.toFixed(2)}
+                            {formatPrice(product.price, currency, lang)}
                         </p>
                     </div>
 

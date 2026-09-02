@@ -7,12 +7,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Upload, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { Upload, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
 
 import { createProduct, updateProduct, deleteProduct } from "@/actions/admin";
 import { productSchema } from "@/schemas/admin";
 import { uploadProductImage, deleteProductImage } from "@/lib/firebase-storage";
-import { getSupportedLocales, getDefaultLocale, isMultiLocale } from "@/app/i18n-config";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 import {
     AlertDialog,
@@ -65,9 +64,10 @@ export function ProductForm({
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const initialImage = initialData?.imageUrl || (initialData?.images && initialData.images.length > 0 ? initialData.images[0] : null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(initialImage);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const initialImages = (initialData?.images && Array.isArray(initialData.images) && initialData.images.length > 0)
+        ? initialData.images
+        : (initialData?.imageUrl ? [initialData.imageUrl] : []);
+    const [images, setImages] = useState<string[]>(initialImages);
 
     // Prepare default values dynamically for every supported locale
     const defaultName: Record<string, string> = {};
@@ -100,32 +100,68 @@ export function ProductForm({
             stock: initialData?.stock || 0,
             categoryIds: initialCategoryIds,
             categoryId: initialCategoryIds[0] || "",
-            imageUrl: initialImage || null,
+            imageUrl: initialImages[0] || null,
+            images: initialImages,
         },
     });
 
-    const handleFileSelect = (file: File) => {
-        if (!file.type.startsWith("image/")) {
-            toast.error("Please select a valid image file.");
+    const handleFilesSelect = async (files: FileList | File[]) => {
+        const validFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
+        if (validFiles.length === 0) {
+            toast.error("Please select valid image files (PNG, JPG, WebP).");
             return;
         }
-        setSelectedFile(file);
-        const objectUrl = URL.createObjectURL(file);
-        setPreviewUrl(objectUrl);
-        form.setValue("imageUrl", objectUrl);
+
+        setIsUploading(true);
+        const toastId = toast.loading(
+            validFiles.length === 1 
+                ? (dict.imageUploading || "Uploading image...") 
+                : `Uploading ${validFiles.length} images...`
+        );
+
+        try {
+            const uploadedUrls: string[] = [];
+            for (const file of validFiles) {
+                const url = await uploadProductImage(file);
+                uploadedUrls.push(url);
+            }
+
+            setImages(prev => {
+                const updated = [...prev, ...uploadedUrls];
+                form.setValue("images", updated);
+                form.setValue("imageUrl", updated[0] || null);
+                return updated;
+            });
+
+            toast.dismiss(toastId);
+            toast.success(
+                validFiles.length === 1 
+                    ? "Image uploaded successfully!" 
+                    : `${uploadedUrls.length} images uploaded successfully!`
+            );
+        } catch (uploadError) {
+            toast.dismiss(toastId);
+            console.error("Image upload failed:", uploadError);
+            toast.error(dict.imageUploadError || "Failed to upload image.");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
     };
 
     const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            handleFileSelect(e.target.files[0]);
+        if (e.target.files && e.target.files.length > 0) {
+            handleFilesSelect(e.target.files);
         }
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragOver(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            handleFileSelect(e.dataTransfer.files[0]);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFilesSelect(e.dataTransfer.files);
         }
     };
 
@@ -139,13 +175,25 @@ export function ProductForm({
         setIsDragOver(false);
     };
 
-    const handleRemoveImage = () => {
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        form.setValue("imageUrl", null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+    const handleRemoveImage = (indexToRemove: number) => {
+        setImages(prev => {
+            const updated = prev.filter((_, idx) => idx !== indexToRemove);
+            form.setValue("images", updated);
+            form.setValue("imageUrl", updated[0] || null);
+            return updated;
+        });
+    };
+
+    const handleSetPrimary = (indexToPrimary: number) => {
+        if (indexToPrimary === 0) return;
+        setImages(prev => {
+            const target = prev[indexToPrimary];
+            const remaining = prev.filter((_, idx) => idx !== indexToPrimary);
+            const updated = [target, ...remaining];
+            form.setValue("images", updated);
+            form.setValue("imageUrl", updated[0] || null);
+            return updated;
+        });
     };
 
     async function onSubmit(values: z.infer<typeof productSchema>) {
@@ -171,25 +219,6 @@ export function ProductForm({
                 if (!completeStatus[loc]) completeStatus[loc] = completeStatus[defaultLocale] || "draft";
             });
 
-            let finalImageUrl = previewUrl;
-
-            // If a new local file was selected, upload it to Firebase Storage first
-            if (selectedFile) {
-                setIsUploading(true);
-                const toastId = toast.loading(dict.imageUploading || "Uploading image...");
-                try {
-                    finalImageUrl = await uploadProductImage(selectedFile);
-                    toast.dismiss(toastId);
-                } catch (uploadError) {
-                    toast.dismiss(toastId);
-                    console.error("Image upload failed:", uploadError);
-                    toast.error(dict.imageUploadError || "Failed to upload image.");
-                    setIsUploading(false);
-                    return;
-                }
-                setIsUploading(false);
-            }
-
             const payload = {
                 ...values,
                 name: completeName,
@@ -197,8 +226,8 @@ export function ProductForm({
                 intro: completeIntro,
                 description: completeDesc,
                 status: completeStatus,
-                imageUrl: finalImageUrl,
-                images: finalImageUrl ? [finalImageUrl] : [],
+                imageUrl: images[0] || null,
+                images: images,
             };
 
             startTransition(async () => {
@@ -225,8 +254,8 @@ export function ProductForm({
         setIsDeleting(true);
         const toastId = toast.loading(dict.deleting || "Deleting product...");
         try {
-            if (initialData.imageUrl) {
-                await deleteProductImage(initialData.imageUrl);
+            for (const imgUrl of images) {
+                await deleteProductImage(imgUrl);
             }
             const res = await deleteProduct(initialData.id);
             toast.dismiss(toastId);
@@ -338,59 +367,128 @@ export function ProductForm({
                         />
                     </div>
 
-                    {/* Product Image Upload Section */}
-                    <div className="col-span-1 md:col-span-2 p-6 border rounded-lg bg-card space-y-4 shadow-xs">
-                        <div className="flex items-center justify-between">
+                    {/* Product Image Upload & Gallery Section */}
+                    <div className="col-span-1 md:col-span-2 p-6 border rounded-xl bg-card space-y-4 shadow-xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4">
                             <div>
-                                <h3 className="text-base font-semibold text-foreground">
-                                    {dict.imageUrl || "Product Image"}
-                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-base font-semibold text-foreground">
+                                        {dict.imageUrl || "Product Images"}
+                                    </h3>
+                                    <Badge variant="secondary" className="text-xs">
+                                        {images.length} {images.length === 1 ? "image" : "images"}
+                                    </Badge>
+                                </div>
                                 <p className="text-xs text-muted-foreground mt-0.5">
-                                    {dict.dragDropImage || "Upload a high-quality product photo (PNG, JPG, WebP)"}
+                                    {dict.dragDropImage || "Upload product photos (PNG, JPG, WebP). The first image is the cover."}
                                 </p>
                             </div>
-                            {previewUrl && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleRemoveImage}
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
-                                >
-                                    <X className="h-4 w-4 mr-1" />
-                                    {dict.removeImage || "Remove"}
-                                </Button>
-                            )}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={isUploading}
+                                onClick={() => fileInputRef.current?.click()}
+                                className="cursor-pointer shrink-0"
+                            >
+                                {isUploading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                                        <span>Uploading...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload className="h-4 w-4 mr-1.5" />
+                                        <span>{images.length > 0 ? "Add Images" : "Upload Images"}</span>
+                                    </>
+                                )}
+                            </Button>
                         </div>
 
-                        {previewUrl ? (
-                            <div className="relative group rounded-lg overflow-hidden border border-border bg-muted/40 aspect-video max-h-72 w-full flex items-center justify-center">
-                                <Image
-                                    src={previewUrl}
-                                    alt="Product Preview"
-                                    fill
-                                    className="object-contain"
-                                    unoptimized={previewUrl.startsWith("blob:")}
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        size="sm"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        <Upload className="h-4 w-4 mr-1.5" />
-                                        {dict.uploadImage || "Change Image"}
-                                    </Button>
+                        {/* Grille des images existantes */}
+                        {images.length > 0 ? (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                    {images.map((imgUrl, idx) => {
+                                        const isCover = idx === 0;
+                                        return (
+                                            <div
+                                                key={`${imgUrl}-${idx}`}
+                                                className={`relative group aspect-square rounded-xl overflow-hidden border-2 bg-muted/30 transition-all ${
+                                                    isCover ? "border-primary shadow-xs ring-2 ring-primary/20" : "border-border/80 hover:border-border"
+                                                }`}
+                                            >
+                                                <Image
+                                                    src={imgUrl}
+                                                    alt={`Product image ${idx + 1}`}
+                                                    fill
+                                                    sizes="(max-width: 768px) 50vw, 25vw"
+                                                    className="object-cover"
+                                                />
+
+                                                {/* Badge Couverture sur la 1ère image */}
+                                                {isCover ? (
+                                                    <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground font-semibold shadow-xs z-10">
+                                                        Cover
+                                                    </Badge>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSetPrimary(idx)}
+                                                        className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-xs border shadow-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
+                                                        title="Set as cover image"
+                                                    >
+                                                        Set cover
+                                                    </button>
+                                                )}
+
+                                                {/* Bouton de suppression corbeille */}
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="icon"
+                                                    onClick={() => handleRemoveImage(idx)}
+                                                    className="absolute top-2 right-2 h-7 w-7 rounded-lg opacity-90 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer z-10"
+                                                    aria-label="Remove image"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+
+                                                {/* Numéro d'ordre */}
+                                                <span className="absolute bottom-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
+                                                    #{idx + 1}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Zone de drop secondaire compacte */}
+                                <div
+                                    onDrop={handleDrop}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className={`flex items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                                        isDragOver
+                                            ? "border-primary bg-primary/5"
+                                            : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Upload className="h-4 w-4 text-primary" />
+                                        <span>Drop additional images here or click to browse</span>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
+                            /* Zone de drop principale (vide) */
                             <div
                                 onDrop={handleDrop}
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200 ${
+                                className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                                     isDragOver
                                         ? "border-primary bg-primary/5"
                                         : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30"
@@ -400,10 +498,10 @@ export function ProductForm({
                                     <ImageIcon className="h-6 w-6" />
                                 </div>
                                 <p className="text-sm font-medium text-foreground text-center">
-                                    {dict.uploadImage || "Click or drag an image here"}
+                                    {dict.uploadImage || "Click or drag images here"}
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    PNG, JPG, WEBP up to 5MB
+                                    PNG, JPG, WEBP up to 5MB each • Multiple files allowed
                                 </p>
                             </div>
                         )}
@@ -412,6 +510,7 @@ export function ProductForm({
                             ref={fileInputRef}
                             type="file"
                             accept="image/*"
+                            multiple
                             onChange={handleFileInputChange}
                             className="hidden"
                         />

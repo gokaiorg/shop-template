@@ -26,6 +26,8 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             en: brand.identity.description?.en || '',
             fr: brand.identity.description?.fr || '',
         },
+        defaultTheme: 'system',
+        defaultCurrency: 'THB',
     };
 
     try {
@@ -39,6 +41,8 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 faviconUrl: data?.faviconUrl ?? fallbackSettings.faviconUrl,
                 heroTitle: (data?.heroTitle && typeof data.heroTitle === 'object') ? data.heroTitle : fallbackSettings.heroTitle,
                 heroDescription: (data?.heroDescription && typeof data.heroDescription === 'object') ? data.heroDescription : fallbackSettings.heroDescription,
+                defaultTheme: data?.defaultTheme ?? fallbackSettings.defaultTheme,
+                defaultCurrency: data?.defaultCurrency ?? fallbackSettings.defaultCurrency,
                 updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data?.updatedAt,
             };
         }

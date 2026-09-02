@@ -106,7 +106,8 @@
         "featured_products": "Produits en vedette",
         "hero_title": "Un modèle. Des possibilités infinies.",
         "hero_subtitle": "Le boilerplate full-stack ultime. Que vous lanciez une marque de commerce électronique premium ou une agence numérique robuste, commencez avec une architecture sécurisée, entièrement localisée et magnifiquement conçue.",
-        "explore_all": "Tout explorer"
+        "explore_all": "Tout explorer",
+        "view_all": "Voir tout"
     },
     "legal": {
         "title": "Légal",

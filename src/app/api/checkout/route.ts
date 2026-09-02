@@ -1,33 +1,34 @@
-"use server";
-
+import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getIsCartEnabled } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getStripe } from "@/lib/stripe";
 import { toStripeUnitAmount } from "@/lib/currency";
 import { getLocalizedField } from "@/lib/i18n";
-import { headers } from "next/headers";
 
-export async function checkoutOrder(
-    items: { id: string; quantity: number; name?: Record<string, string>; nameFr?: string; nameEn?: string; price?: number }[],
-    lang: string = "en"
-) {
+export async function POST(req: Request) {
     try {
         if (!getIsCartEnabled()) {
-            throw new Error("E-commerce cart functionality is disabled on this instance.");
+            return NextResponse.json(
+                { error: "E-commerce cart functionality is disabled on this instance." },
+                { status: 403 }
+            );
         }
 
+        const body = await req.json();
+        const { items, lang = "en" } = body;
+
         if (!Array.isArray(items) || items.length === 0) {
-            throw new Error("No items in cart");
+            return NextResponse.json({ error: "No items in cart" }, { status: 400 });
         }
 
         for (const item of items) {
             if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
-                throw new Error("Invalid quantity provided");
+                return NextResponse.json({ error: "Invalid quantity provided" }, { status: 400 });
             }
         }
 
-        const productRefs = items.map((item) => adminDb.collection("products").doc(item.id));
+        const productRefs = items.map((item: any) => adminDb.collection("products").doc(item.id));
         const productDocs = await adminDb.getAll(...productRefs);
 
         const productDocMap = new Map();
@@ -35,7 +36,7 @@ export async function checkoutOrder(
             productDocMap.set(doc.id, doc);
         });
 
-        const verifiedItems = items.map((item) => {
+        const verifiedItems = items.map((item: any) => {
             const productDoc = productDocMap.get(item.id);
             if (!productDoc || !productDoc.exists) {
                 throw new Error(`Product not found: ${item.id}`);
@@ -52,10 +53,11 @@ export async function checkoutOrder(
         });
 
         const totalAmount = verifiedItems.reduce(
-            (acc, item) => acc + item.price * item.quantity,
+            (acc: number, item: any) => acc + item.price * item.quantity,
             0
         );
 
+        // Fetch dynamic currency from Firestore settings
         const storeSettings = await getStoreSettings();
         const currency = (storeSettings.defaultCurrency || "THB").toLowerCase();
 
@@ -68,14 +70,14 @@ export async function checkoutOrder(
             totalAmount: totalAmount,
             currency: currency.toUpperCase(),
             userId: null,
-            items: verifiedItems.map((item) => ({
-                id: adminDb.collection("orders").doc().id, // Random ID
+            items: verifiedItems.map((item: any) => ({
+                id: adminDb.collection("orders").doc().id,
                 productId: item.id,
                 quantity: item.quantity,
                 price: item.price,
             })),
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
         });
 
         // Initialize Stripe Checkout session if Stripe is configured
@@ -83,12 +85,10 @@ export async function checkoutOrder(
         let checkoutUrl: string | undefined = undefined;
 
         if (stripe) {
-            const headerList = await headers();
-            const host = headerList.get("host") || "localhost:3000";
-            const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-            const origin = `${protocol}://${host}`;
+            const urlObj = new URL(req.url);
+            const origin = urlObj.origin;
 
-            const line_items = verifiedItems.map((item) => {
+            const line_items = verifiedItems.map((item: any) => {
                 const itemTitle = getLocalizedField(item.name, lang) || item.nameEn || item.nameFr || "Product";
                 const unitAmount = toStripeUnitAmount(item.price, currency);
 
@@ -126,9 +126,12 @@ export async function checkoutOrder(
             }
         }
 
-        return { success: true, orderId, url: checkoutUrl };
+        return NextResponse.json({ success: true, orderId, url: checkoutUrl });
     } catch (error: any) {
-        console.error("[CHECKOUT_ACTION_ERROR]", error);
-        return { success: false, error: error?.message || "Failed to initiate checkout" };
+        console.error("[API_CHECKOUT_ERROR]", error);
+        return NextResponse.json(
+            { error: error?.message || "Failed to process checkout" },
+            { status: 500 }
+        );
     }
 }

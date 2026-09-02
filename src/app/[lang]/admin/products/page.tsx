@@ -7,17 +7,21 @@ import { Category, Product } from "@/types/database";
 import { Pencil } from "lucide-react";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { getLocalizedField } from "@/lib/i18n";
+import { getStoreSettings } from "@/lib/services/settings";
+import { formatPrice } from "@/lib/currency";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
     await protectAdminRoute(lang);
 
-    // Fetch dictionary, categories, and products in parallel to reduce TTFB
-    const [dict, categoriesSnapshot, productsSnapshot] = await Promise.all([
+    // Fetch dictionary, settings, categories, and products in parallel to reduce TTFB
+    const [dict, storeSettings, categoriesSnapshot, productsSnapshot] = await Promise.all([
         getDictionary(lang as Locale),
+        getStoreSettings(),
         adminDb.collection("categories").get(),
         adminDb.collection("products").orderBy("createdAt", "desc").get()
     ]);
+    const currency = storeSettings.defaultCurrency || "THB";
 
     const categoriesList = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
@@ -108,7 +112,7 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                                             );
                                         })()}
                                     </td>
-                                    <td className="px-6 py-4">${product.price.toFixed(2)}</td>
+                                    <td className="px-6 py-4 font-medium">{formatPrice(product.price, currency, lang)}</td>
                                     <td className="px-6 py-4">{product.stock}</td>
                                     <td className="px-6 py-4 text-right">
                                         <Button variant="ghost" size="icon" asChild>

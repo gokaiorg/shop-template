@@ -11,9 +11,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useBrand } from "@/components/providers/BrandProvider"
 
 export function ThemeToggle({ dict }: { dict: Record<string, string> }) {
-    const { setTheme } = useTheme()
+    const { setTheme, forcedTheme } = useTheme();
+    const { defaultTheme } = useBrand();
+
+    // If a theme is enforced ('light' or 'dark'), do not render the toggle button
+    if (forcedTheme || defaultTheme === "light" || defaultTheme === "dark") {
+        return null;
+    }
 
     return (
         <DropdownMenu>

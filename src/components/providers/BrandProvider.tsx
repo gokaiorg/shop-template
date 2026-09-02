@@ -11,6 +11,8 @@ export interface BrandContextType {
     supportedLocales: string[];
     defaultLocale: string;
     isMultiLocale: boolean;
+    currency: string;
+    defaultTheme: 'light' | 'dark' | 'system';
 }
 
 const BrandContext = createContext<BrandContextType>({
@@ -20,6 +22,8 @@ const BrandContext = createContext<BrandContextType>({
     supportedLocales: ['en', 'fr'],
     defaultLocale: 'en',
     isMultiLocale: true,
+    currency: 'THB',
+    defaultTheme: 'system',
 });
 
 export function BrandProvider({
@@ -29,6 +33,8 @@ export function BrandProvider({
     isCartEnabled,
     supportedLocales,
     defaultLocale,
+    currency = 'THB',
+    defaultTheme = 'system',
 }: {
     children: React.ReactNode;
     brand: BrandConfig;
@@ -36,6 +42,8 @@ export function BrandProvider({
     isCartEnabled: boolean;
     supportedLocales: string[];
     defaultLocale: string;
+    currency?: string;
+    defaultTheme?: 'light' | 'dark' | 'system';
 }) {
     const isMulti = supportedLocales.length > 1;
     return (
@@ -47,6 +55,8 @@ export function BrandProvider({
                 supportedLocales,
                 defaultLocale,
                 isMultiLocale: isMulti,
+                currency,
+                defaultTheme,
             }}
         >
             {children}

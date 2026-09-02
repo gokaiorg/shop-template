@@ -47,6 +47,9 @@ export default async function RootLayout({
   const supportedLocales = getSupportedLocales();
   const defaultLocale = getDefaultLocale();
   const storeSettings = await getStoreSettings();
+  const defaultTheme = storeSettings.defaultTheme || 'system';
+  const forcedTheme = (defaultTheme === 'light' || defaultTheme === 'dark') ? defaultTheme : undefined;
+  const defaultCurrency = storeSettings.defaultCurrency || 'THB';
 
   const brand: BrandConfig = {
     ...rawBrand,
@@ -96,8 +99,9 @@ export default async function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme={defaultTheme}
+          forcedTheme={forcedTheme}
+          enableSystem={defaultTheme === 'system'}
           disableTransitionOnChange
         >
           <BrandProvider
@@ -106,6 +110,8 @@ export default async function RootLayout({
             isCartEnabled={isCartEnabled}
             supportedLocales={supportedLocales}
             defaultLocale={defaultLocale}
+            currency={defaultCurrency}
+            defaultTheme={defaultTheme}
           >
             {children}
           </BrandProvider>

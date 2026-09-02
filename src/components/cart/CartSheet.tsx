@@ -17,6 +17,8 @@ import { checkoutOrder } from "@/actions/checkout";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { getLocalizedField } from "@/lib/i18n";
+import { useBrand } from "@/components/providers/BrandProvider";
+import { formatPrice } from "@/lib/currency";
 
 export function CartSheet({ dict }: { dict?: any }) {
     // Optimization: Use individual selectors to prevent unnecessary re-renders when other parts of the cart state change
@@ -30,6 +32,7 @@ export function CartSheet({ dict }: { dict?: any }) {
     const params = useParams();
     const router = useRouter();
     const lang = (params?.lang as string) || "en";
+    const { currency } = useBrand();
     const [isLoading, setIsLoading] = useState(false);
 
     // useMounted hook to prevent hydration mismatch since we are using localStorage
@@ -38,10 +41,14 @@ export function CartSheet({ dict }: { dict?: any }) {
     const handleCheckout = async () => {
         try {
             setIsLoading(true);
-            const result = await checkoutOrder(items);
+            const result = await checkoutOrder(items, lang);
             if (result.success) {
                 clearCart();
-                router.push(`/${lang}/checkout/success?session_id=${result.orderId}`);
+                if (result.url) {
+                    window.location.href = result.url;
+                } else {
+                    router.push(`/${lang}/checkout/success?session_id=${result.orderId}`);
+                }
             } else {
                 console.error("Checkout failed:", result.error);
             }
@@ -124,7 +131,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                     <h3 className="line-clamp-1 font-medium">
                                                         {itemName}
                                                     </h3>
-                                                    <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
+                                                    <p className="text-sm text-muted-foreground">{formatPrice(item.price, currency, lang)}</p>
                                                 </div>
                                                 <Button
                                                     variant="ghost"
@@ -176,7 +183,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                     <div className="mt-auto flex flex-col gap-4 border-t pt-6">
                         <div className="flex items-center justify-between text-base font-medium">
                             <span>Total</span>
-                            <span>${totalPrice.toFixed(2)}</span>
+                            <span>{formatPrice(totalPrice, currency, lang)}</span>
                         </div>
                         <p className="text-xs text-muted-foreground">
                             Shipping and taxes calculated at checkout.

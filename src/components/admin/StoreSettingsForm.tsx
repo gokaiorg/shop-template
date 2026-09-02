@@ -13,12 +13,21 @@ import {
     Save, 
     Globe, 
     Image as ImageIcon,
-    Sparkles
+    Sparkles,
+    Palette,
+    Coins,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Form,
     FormControl,
@@ -71,6 +80,8 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
             faviconUrl: initialData.faviconUrl || "",
             heroTitle: defaultHeroTitle,
             heroDescription: defaultHeroDesc,
+            defaultTheme: initialData.defaultTheme || "system",
+            defaultCurrency: initialData.defaultCurrency || "THB",
         },
     });
 
@@ -405,6 +416,87 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
                                 />
                             </div>
                         )}
+                    </CardContent>
+                </Card>
+
+                {/* Theme & Currency Controls */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                            <Palette className="h-5 w-5 text-primary" />
+                            Theme & Regional Currency
+                        </CardTitle>
+                        <CardDescription>
+                            Configure storefront visual theme enforcement and default transaction currency.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Default Theme */}
+                        <FormField
+                            control={form.control}
+                            name="defaultTheme"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2">
+                                        <Palette className="h-4 w-4 text-muted-foreground" />
+                                        Default Theme
+                                    </FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="w-full cursor-pointer">
+                                                <SelectValue placeholder="Select a default theme" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="system">System Preference (Allows User Toggle)</SelectItem>
+                                            <SelectItem value="light">Light Mode (Enforced Across Site)</SelectItem>
+                                            <SelectItem value="dark">Dark Mode (Enforced Across Site)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription className="text-xs">
+                                        {field.value === "system"
+                                            ? "Visitors can freely switch between light and dark modes via header toggle."
+                                            : `Site is locked to ${field.value} mode. The theme toggle is hidden.`}
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Default Currency */}
+                        <FormField
+                            control={form.control}
+                            name="defaultCurrency"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2">
+                                        <Coins className="h-4 w-4 text-muted-foreground" />
+                                        Default Currency
+                                    </FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="w-full cursor-pointer">
+                                                <SelectValue placeholder="Select store currency" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="THB">THB - Thai Baht (฿)</SelectItem>
+                                            <SelectItem value="EUR">EUR - Euro (€)</SelectItem>
+                                            <SelectItem value="USD">USD - US Dollar ($)</SelectItem>
+                                            <SelectItem value="GBP">GBP - British Pound (£)</SelectItem>
+                                            <SelectItem value="JPY">JPY - Japanese Yen (¥)</SelectItem>
+                                            <SelectItem value="CAD">CAD - Canadian Dollar ($)</SelectItem>
+                                            <SelectItem value="AUD">AUD - Australian Dollar ($)</SelectItem>
+                                            <SelectItem value="CHF">CHF - Swiss Franc (CHF)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription className="text-xs">
+                                        Used for product price formatting and injected into Stripe payment sessions.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     </CardContent>
                 </Card>
 

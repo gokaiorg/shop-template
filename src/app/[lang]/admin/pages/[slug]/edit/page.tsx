@@ -11,10 +11,8 @@ export default async function AdminPageEdit({ params }: { params: Promise<{ lang
     await protectAdminRoute(lang);
 
     // Fetch dictionary and page data in parallel
-    let [dict, pageDoc] = await Promise.all([
-        getDictionary(lang as Locale),
-        adminDb.collection("pages").doc(slug).get()
-    ]);
+    const dict = await getDictionary(lang as Locale);
+    let pageDoc = await adminDb.collection("pages").doc(slug).get();
 
     if (!pageDoc.exists) {
         // Try searching by slug field

@@ -9,6 +9,7 @@ import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
 import { getLocalizedField } from "@/lib/i18n";
 import { useBrand } from "@/components/providers/BrandProvider";
+import { formatPrice } from "@/lib/currency";
 
 interface ShopProductCardProps {
     product: Product;
@@ -17,7 +18,7 @@ interface ShopProductCardProps {
 }
 
 export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
-    const { brand, isCartEnabled } = useBrand();
+    const { brand, isCartEnabled, currency } = useBrand();
     const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "";
     const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
     const slug = getLocalizedField(product.slug, lang) || (lang === 'fr' ? product.slugFr : product.slugEn) || "";
@@ -70,7 +71,7 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                 {/* Bottom Row */}
                 <div className="mt-auto flex items-center justify-between pt-4">
                     <p className="text-lg font-bold">
-                        ${product.price.toFixed(2)}
+                        {formatPrice(product.price, currency, lang)}
                     </p>
                     {isCartEnabled && (
                         <Button

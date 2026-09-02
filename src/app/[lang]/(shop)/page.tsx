@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
+import { ArrowRight } from "lucide-react";
 import { brandConfig } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
@@ -109,15 +110,28 @@ export default async function Home({
                   {shopDict.empty_state || "No products available"}
                 </div>
               ) : (
-                allProducts.map((product) => (
+                allProducts.slice(0, 4).map((product) => (
                   <ShopProductCard key={product.id} product={product} lang={lang} dict={shopDict} />
                 ))
               )}
             </div>
+            {allProducts.length > 0 && (
+              <div className="mt-12 flex justify-center">
+                <Link href={`/${lang}/shop`}>
+                  <Button variant="outline" size="lg" className="rounded-full px-8 shadow-xs hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer group">
+                    <span>{homeDict.view_all || (isFr ? "Voir tout" : "View All")}</span>
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+              </div>
+            )}
           </TabsContent>
 
           {categories.map((category) => {
             const categoryProducts = allProducts.filter(p => p.categoryIds?.includes(category.id) || p.categoryId === category.id);
+            const catSlug = getLocalizedField(category.slug, lang) || (isFr ? category.slugFr : category.slugEn);
+            const categoryHref = catSlug ? `/${lang}/shop?category=${catSlug}` : `/${lang}/shop`;
+
             return (
               <TabsContent key={category.id} value={category.id} className="mt-0 outline-none focus-visible:ring-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -126,11 +140,21 @@ export default async function Home({
                       {shopDict.empty_state || "No products in this category"}
                     </div>
                   ) : (
-                    categoryProducts.map((product) => (
+                    categoryProducts.slice(0, 4).map((product) => (
                       <ShopProductCard key={product.id} product={product} lang={lang} dict={shopDict} />
                     ))
                   )}
                 </div>
+                {categoryProducts.length > 0 && (
+                  <div className="mt-12 flex justify-center">
+                    <Link href={categoryHref}>
+                      <Button variant="outline" size="lg" className="rounded-full px-8 shadow-xs hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer group">
+                        <span>{homeDict.view_all || (isFr ? "Voir tout" : "View All")}</span>
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </TabsContent>
             );
           })}

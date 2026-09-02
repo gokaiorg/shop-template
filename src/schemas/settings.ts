@@ -8,6 +8,8 @@ export const storeSettingsSchema = z.object({
         message: 'Hero title is required in at least one language',
     }),
     heroDescription: z.record(z.string(), z.string()),
+    defaultTheme: z.enum(['light', 'dark', 'system']),
+    defaultCurrency: z.string().min(1, 'Currency is required'),
 });
 
 export type StoreSettingsFormData = z.infer<typeof storeSettingsSchema>;
