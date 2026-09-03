@@ -1,5 +1,12 @@
 {
-  "firestore": {
-    "indexes": "firestore.indexes.json"
-  }
+  "firestore": [
+    {
+      "database": "shop-template-database",
+      "indexes": "firestore.indexes.json"
+    },
+    {
+      "database": "(default)",
+      "indexes": "firestore.indexes.json"
+    }
+  ]
 }

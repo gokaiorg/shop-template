@@ -14,7 +14,10 @@
     "build:gl": "env-cmd -f .env.gl next build",
     "build:gg": "env-cmd -f .env.gg next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "firebase:login": "npx firebase-tools login",
+    "db:index:st": "npx firebase-tools deploy --only firestore:shop-template-database --project shop-gcp",
+    "db:index:af": "npx firebase-tools deploy --only \"firestore:(default)\" --project art-fate-database"
   },
   "dependencies": {
     "@auth/firebase-adapter": "^2.11.1",
