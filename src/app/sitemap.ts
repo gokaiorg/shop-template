@@ -3,6 +3,8 @@ import { brandConfig } from '@/config/brand.config';
 import { i18n } from '@/app/i18n-config';
 import { getStoreSettings } from '@/lib/services/settings';
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const storeSettings = await getStoreSettings();
     const catalogRoute = `/${storeSettings.catalogSlug || 'shop'}`;
