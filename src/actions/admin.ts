@@ -66,12 +66,14 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
             introFr,
             descriptionEn,
             descriptionFr,
+            imageUrl: result.data.imageUrl || null,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
         await ref.set(categoryData);
 
         revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/', 'layout');
         return { success: true, category: categoryData };
     } catch (error) {
         console.error("CREATE_CATEGORY_ERROR:", error);
@@ -132,11 +134,13 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
             introFr,
             descriptionEn,
             descriptionFr,
+            imageUrl: result.data.imageUrl || null,
             updatedAt: new Date(),
         };
         await ref.update(categoryData);
 
         revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/', 'layout');
         return { success: true, category: { id, ...categoryData } };
     } catch (error) {
         console.error("UPDATE_CATEGORY_ERROR:", error);
@@ -212,7 +216,7 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
         await ref.set(productData);
 
         revalidatePath('/[lang]/admin', 'layout');
-        revalidatePath('/[lang]/shop', 'layout');
+        revalidatePath('/[lang]/[catalogSlug]', 'layout');
         return { success: true, product: productData };
     } catch (error) {
         console.error("CREATE_PRODUCT_ERROR:", error);
@@ -286,7 +290,7 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
         await ref.update(productData);
 
         revalidatePath('/[lang]/admin', 'layout');
-        revalidatePath('/[lang]/shop', 'layout');
+        revalidatePath('/[lang]/[catalogSlug]', 'layout');
         revalidatePath('/[lang]/product/[slug]', 'page');
         return { success: true, product: { id, ...productData } };
     } catch (error) {
@@ -391,7 +395,7 @@ export async function seedDemoData() {
         await productBatch.commit();
 
         revalidatePath('/[lang]/admin', 'layout');
-        revalidatePath('/[lang]/shop', 'layout');
+        revalidatePath('/[lang]/[catalogSlug]', 'layout');
         return { success: true };
     } catch (error) {
         console.error("SEED_DEMO_DATA_ERROR:", error);
@@ -494,7 +498,7 @@ export async function deleteCategory(id: string) {
         await adminDb.collection("categories").doc(id).delete();
 
         revalidatePath('/[lang]/admin', 'layout');
-        revalidatePath('/[lang]/shop', 'layout');
+        revalidatePath('/[lang]/[catalogSlug]', 'layout');
         return { success: true };
     } catch (error) {
         console.error("DELETE_CATEGORY_ERROR:", error);
@@ -543,7 +547,7 @@ export async function deleteProduct(id: string) {
         await productRef.delete();
 
         revalidatePath('/[lang]/admin', 'layout');
-        revalidatePath('/[lang]/shop', 'layout');
+        revalidatePath('/[lang]/[catalogSlug]', 'layout');
         revalidatePath('/[lang]/product/[slug]', 'page');
         return { success: true };
     } catch (error) {

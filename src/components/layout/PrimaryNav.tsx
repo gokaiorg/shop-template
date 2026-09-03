@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Page } from "@/types/database";
 import { getLocalizedField } from "@/lib/i18n";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 interface PrimaryNavProps {
     lang: string;
@@ -17,23 +18,26 @@ interface PrimaryNavProps {
 
 export function PrimaryNav({ lang, dict, pages = [], className, onNavClick }: PrimaryNavProps) {
     const pathname = usePathname();
+    const { catalogTitle, catalogSlug } = useBrand();
 
-    const shopHref = `/${lang}/shop`;
-    const isShopActive = pathname === shopHref || pathname.startsWith(`/${lang}/product/`);
+    const activeSlug = catalogSlug || "shop";
+    const catalogHref = `/${lang}/${activeSlug}`;
+    const isCatalogActive = pathname === catalogHref || pathname.startsWith(`/${lang}/${activeSlug}/`) || pathname.startsWith(`/${lang}/product/`);
+    const catalogLabel = getLocalizedField(catalogTitle, lang) || dict?.shop || (lang === "fr" ? "Boutique" : "Shop");
 
     return (
         <nav className={cn("gap-6", className)}>
-            {/* Hardcoded Shop / Catalogue Link */}
+            {/* Dynamic Catalog Link */}
             <Link
-                href={shopHref}
+                href={catalogHref}
                 onClick={onNavClick}
-                aria-current={isShopActive ? "page" : undefined}
+                aria-current={isCatalogActive ? "page" : undefined}
                 className={cn(
                     "flex items-center text-sm font-medium transition-colors hover:text-foreground",
-                    isShopActive ? "text-foreground font-semibold" : "text-muted-foreground"
+                    isCatalogActive ? "text-foreground font-semibold" : "text-muted-foreground"
                 )}
             >
-                {dict?.shop || (lang === 'fr' ? 'Boutique' : 'Shop')}
+                {catalogLabel}
             </Link>
 
             {/* Dynamic Pages with showInHeader === true */}

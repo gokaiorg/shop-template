@@ -94,6 +94,7 @@ export default async function ProductPage({ params }: PageProps) {
     ]);
     const shopDict = dict.shop;
     const currency = storeSettings.defaultCurrency || "THB";
+    const catalogSlug = storeSettings.catalogSlug || "shop";
 
     const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "Product";
     const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
@@ -134,7 +135,7 @@ export default async function ProductPage({ params }: PageProps) {
                                     const catName = getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn);
                                     const catSlug = getLocalizedField(cat.slug, lang) || (lang === 'fr' ? cat.slugFr : cat.slugEn);
                                     return (
-                                        <Link key={cat.id} href={`/${lang}/shop?category=${catSlug}`}>
+                                        <Link key={cat.id} href={`/${lang}/${catalogSlug}?category=${catSlug}`}>
                                             <Badge variant="secondary" className="hover:bg-primary/20 transition-colors text-xs font-normal">
                                                 {catName}
                                             </Badge>

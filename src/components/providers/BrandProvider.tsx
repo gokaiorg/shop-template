@@ -13,6 +13,8 @@ export interface BrandContextType {
     isMultiLocale: boolean;
     currency: string;
     defaultTheme: 'light' | 'dark' | 'system';
+    catalogTitle?: Record<string, string>;
+    catalogSlug?: string;
 }
 
 const BrandContext = createContext<BrandContextType>({
@@ -24,6 +26,8 @@ const BrandContext = createContext<BrandContextType>({
     isMultiLocale: true,
     currency: 'THB',
     defaultTheme: 'system',
+    catalogTitle: { en: 'Shop', fr: 'Boutique' },
+    catalogSlug: 'shop',
 });
 
 export function BrandProvider({
@@ -35,6 +39,8 @@ export function BrandProvider({
     defaultLocale,
     currency = 'THB',
     defaultTheme = 'system',
+    catalogTitle = { en: 'Shop', fr: 'Boutique' },
+    catalogSlug = 'shop',
 }: {
     children: React.ReactNode;
     brand: BrandConfig;
@@ -44,6 +50,8 @@ export function BrandProvider({
     defaultLocale: string;
     currency?: string;
     defaultTheme?: 'light' | 'dark' | 'system';
+    catalogTitle?: Record<string, string>;
+    catalogSlug?: string;
 }) {
     const isMulti = supportedLocales.length > 1;
     return (
@@ -57,6 +65,8 @@ export function BrandProvider({
                 isMultiLocale: isMulti,
                 currency,
                 defaultTheme,
+                catalogTitle,
+                catalogSlug,
             }}
         >
             {children}

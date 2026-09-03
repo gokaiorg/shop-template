@@ -5,6 +5,7 @@ export const categorySchema = z.object({
     slug: z.record(z.string(), z.string()),
     intro: z.record(z.string(), z.string()).optional(),
     description: z.record(z.string(), z.string()),
+    imageUrl: z.string().optional().nullable(),
 });
 
 export const productSchema = z.object({

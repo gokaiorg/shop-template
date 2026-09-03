@@ -1,70 +1,31 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Category } from "@/types/database";
-import { getLocalizedField } from "@/lib/i18n";
+import { CategoryPillsNav } from "@/components/shop/CategoryPillsNav";
 
 interface ShopCategoryFilterProps {
     categories: Category[];
     currentCategorySlug: string | null;
     lang: string;
-    dict: Record<string, string>;
+    dict?: Record<string, string>;
+    catalogSlug?: string;
+    className?: string;
 }
 
-export function ShopCategoryFilter({ categories, currentCategorySlug, lang, dict }: ShopCategoryFilterProps) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-
-    const handleCategoryClick = (slug: string | null) => {
-        const params = new URLSearchParams(searchParams.toString());
-        if (slug) {
-            params.set("category", slug);
-        } else {
-            params.delete("category");
-        }
-        router.push(`/${lang}/shop?${params.toString()}`);
-    };
-
+export function ShopCategoryFilter({
+    categories,
+    currentCategorySlug,
+    lang,
+    catalogSlug = 'shop',
+    className,
+}: ShopCategoryFilterProps) {
     return (
-        <div className="mb-8 overflow-x-auto pb-4">
-            <div className="flex w-max items-center gap-2">
-                <Button
-                    variant={currentCategorySlug === null ? "default" : "outline"}
-                    className={cn(
-                        "rounded-full whitespace-nowrap",
-                        currentCategorySlug === null ? "shadow-sm disabled:opacity-100" : ""
-                    )}
-                    onClick={() => handleCategoryClick(null)}
-                    aria-current={currentCategorySlug === null ? "true" : undefined}
-                    disabled={currentCategorySlug === null}
-                >
-                    {dict.all_categories || "All Categories"}
-                </Button>
-
-                {categories.map((category) => {
-                    const categorySlug = getLocalizedField(category.slug, lang) || (lang === "fr" ? category.slugFr : category.slugEn) || "";
-                    const categoryName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
-                    const isActive = currentCategorySlug === categorySlug;
-
-                    return (
-                        <Button
-                            key={category.id}
-                            variant={isActive ? "default" : "outline"}
-                            className={cn(
-                                "rounded-full whitespace-nowrap",
-                                isActive ? "shadow-sm disabled:opacity-100" : ""
-                            )}
-                            onClick={() => handleCategoryClick(categorySlug)}
-                            aria-current={isActive ? "true" : undefined}
-                            disabled={isActive}
-                        >
-                            {categoryName}
-                        </Button>
-                    );
-                })}
-            </div>
-        </div>
+        <CategoryPillsNav
+            categories={categories}
+            activeId={currentCategorySlug}
+            lang={lang}
+            catalogSlug={catalogSlug}
+            className={className}
+        />
     );
 }

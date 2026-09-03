@@ -4,6 +4,7 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { auth } from "@/auth";
 import { getPublishedPages } from "@/lib/services/pages";
+import { getStoreSettings } from "@/lib/services/settings";
 
 export default async function ShopLayout({
     children,
@@ -13,10 +14,11 @@ export default async function ShopLayout({
     params: Promise<{ lang: string }>;
 }) {
     const { lang } = await params;
-    const [dict, session, publishedPages] = await Promise.all([
+    const [dict, session, publishedPages, storeSettings] = await Promise.all([
         getDictionary(lang as Locale),
         auth(),
         getPublishedPages(),
+        getStoreSettings(),
     ]);
 
     const headerPages = publishedPages.filter((p) => p.showInHeader);
@@ -29,7 +31,16 @@ export default async function ShopLayout({
                 <div className="flex-1">
                     {children}
                 </div>
-                <Footer lang={lang} dict={dict} pages={footerPages} />
+                <Footer
+                    lang={lang}
+                    dict={dict}
+                    pages={footerPages}
+                    catalogTitle={storeSettings.catalogTitle}
+                    catalogSlug={storeSettings.catalogSlug}
+                    brandName={storeSettings.brandName}
+                    footerDescription={storeSettings.footerDescription}
+                    socialLinks={storeSettings.socialLinks}
+                />
             </main>
         </div>
     );

@@ -39,7 +39,7 @@ export async function uploadProductImage(file: File, customPath?: string): Promi
  * @param assetType - Type of asset ('logo' | 'favicon' | 'brand')
  * @returns Promise<string> Public download URL
  */
-export async function uploadBrandAsset(file: File, assetType: 'logo' | 'favicon' | 'brand' = 'brand'): Promise<string> {
+export async function uploadBrandAsset(file: File, assetType: 'logo' | 'favicon' | 'brand' | 'hero' = 'brand'): Promise<string> {
     if (!file) {
         throw new Error('No file provided for upload.');
     }

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { getDictionary } from "@/lib/dictionaries";
-import { Locale } from "@/app/i18n-config";
 import { redirect } from "next/navigation";
 import { getIsCartEnabled } from "@/config/brand.config";
+
+import { getStoreSettings } from "@/lib/services/settings";
 
 export default async function CheckoutSuccessPage({
     params,
@@ -18,8 +18,11 @@ export default async function CheckoutSuccessPage({
         redirect(`/${lang}`);
     }
 
-    const { session_id } = await searchParams;
-    const dict = await getDictionary(lang as Locale);
+    const [{ session_id }, storeSettings] = await Promise.all([
+        searchParams,
+        getStoreSettings(),
+    ]);
+    const catalogSlug = storeSettings.catalogSlug || "shop";
 
     return (
         <main className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -45,7 +48,7 @@ export default async function CheckoutSuccessPage({
 
                 <div className="mt-8">
                     <Link
-                        href={`/${lang}/shop`}
+                        href={`/${lang}/${catalogSlug}`}
                         className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 transition-colors"
                     >
                         {lang === 'fr' ? "Retour à la boutique" : "Return to Shop"}

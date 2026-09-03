@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2, ImageIcon, Upload } from "lucide-react";
 import { createCategory, updateCategory, deleteCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
-import { getSupportedLocales, getDefaultLocale, isMultiLocale } from "@/app/i18n-config";
+import { uploadProductImage } from "@/lib/firebase-storage";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLocaleDisplayName } from "@/lib/i18n";
 import {
     AlertDialog,
@@ -44,6 +46,8 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
     const { supportedLocales: locales, defaultLocale, isMultiLocale: isMulti } = useBrand();
     const [isPending, startTransition] = useTransition();
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     const defaultName: Record<string, string> = {};
     const defaultSlug: Record<string, string> = {};
@@ -64,8 +68,28 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
             slug: defaultSlug,
             intro: defaultIntro,
             description: defaultDesc,
+            imageUrl: initialData?.imageUrl || "",
         },
     });
+
+    const imageUrlValue = form.watch("imageUrl");
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploadingImage(true);
+        try {
+            const downloadUrl = await uploadProductImage(file, `categories/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`);
+            form.setValue("imageUrl", downloadUrl, { shouldValidate: true, shouldDirty: true });
+            toast.success("Category image uploaded successfully!");
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error?.message || "Failed to upload image");
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
 
     function onSubmit(values: z.infer<typeof categorySchema>) {
         if (!values.name?.[defaultLocale] || !values.slug?.[defaultLocale] || !values.description?.[defaultLocale]) {
@@ -87,6 +111,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
 
         const payload = {
             ...values,
+            imageUrl: values.imageUrl || null,
             name: completeName,
             slug: completeSlug,
             intro: completeIntro,
@@ -258,8 +283,96 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                     </div>
                 )}
 
+                {/* Category Banner Image */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <ImageIcon className="h-5 w-5 text-primary" />
+                            Category Banner Image
+                        </CardTitle>
+                        <CardDescription>
+                            High-resolution image displayed as the banner on this category&apos;s page and as the card preview in the catalog index.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="border rounded-lg p-4 bg-muted/20 flex flex-col items-center justify-center min-h-[160px] gap-3 relative overflow-hidden">
+                            {imageUrlValue ? (
+                                <div className="w-full flex flex-col items-center gap-3">
+                                    <div className="relative w-full h-48 bg-background/80 rounded-lg border overflow-hidden">
+                                        <Image
+                                            src={imageUrlValue}
+                                            alt="Category Banner"
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => imageInputRef.current?.click()}
+                                            disabled={isUploadingImage || isLoading}
+                                            className="cursor-pointer"
+                                        >
+                                            {isUploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
+                                            Change Image
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-destructive hover:bg-destructive/10 cursor-pointer"
+                                            onClick={() => form.setValue("imageUrl", "", { shouldDirty: true })}
+                                            disabled={isUploadingImage || isLoading}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                            Remove
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 text-center py-4">
+                                    <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                                    <p className="text-xs text-muted-foreground">Recommended: 1200×600px landscape image (JPEG, PNG, WebP)</p>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => imageInputRef.current?.click()}
+                                        disabled={isUploadingImage || isLoading}
+                                        className="cursor-pointer mt-1"
+                                    >
+                                        {isUploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
+                                        Upload Category Image
+                                    </Button>
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                ref={imageInputRef}
+                                onChange={handleImageUpload}
+                                accept="image/png,image/jpeg,image/webp"
+                                className="hidden"
+                            />
+                        </div>
+                        <FormField
+                            control={form.control}
+                            name="imageUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <Input placeholder="Direct image URL or uploaded file path" {...field} value={field.value || ""} className="text-xs font-mono" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </CardContent>
+                </Card>
+
                 <div className="flex items-center gap-4">
-                    <Button type="submit" disabled={isLoading} className="cursor-pointer">
+                    <Button type="submit" disabled={isLoading || isUploadingImage} className="cursor-pointer">
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

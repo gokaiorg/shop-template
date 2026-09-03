@@ -3,14 +3,12 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { adminDb } from "@/lib/firebase-admin";
 import { getActiveBrandKey, getIsCartEnabled } from "@/config/brand.config";
 import { getSupportedLocales, getDefaultLocale, isMultiLocale } from "@/app/i18n-config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { StoreSettingsForm } from "@/components/admin/StoreSettingsForm";
 import { SeedDemoDataButton } from "@/components/admin/SeedDemoDataButton";
-import { ProfileForm } from "@/components/admin/ProfileForm";
-import { Settings, Shield, Globe, ShoppingCart, Database } from "lucide-react";
+import { Settings, Globe, ShoppingCart, Database } from "lucide-react";
 
 export default async function AdminSettingsPage({
     params,
@@ -28,9 +26,6 @@ export default async function AdminSettingsPage({
         return null;
     }
 
-    const userDoc = await adminDb.collection("users").doc(session.user.id).get();
-    const userData = userDoc.data();
-
     const brandKey = getActiveBrandKey();
     const isCartEnabled = getIsCartEnabled();
     const supportedLocales = getSupportedLocales();
@@ -44,10 +39,10 @@ export default async function AdminSettingsPage({
             <div className="flex flex-col gap-2 border-b pb-6">
                 <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
                     <Settings className="h-8 w-8 text-primary" />
-                    {adminDict.settings || "Settings"}
+                    Storefront Settings
                 </h1>
                 <p className="text-muted-foreground">
-                    Customize your storefront content, brand assets, feature flags, and manage database utilities.
+                    Customize your storefront brand identity, catalog routing, localization, footer copy, and social media channels.
                 </p>
             </div>
 
@@ -141,29 +136,6 @@ export default async function AdminSettingsPage({
                             </div>
                             <SeedDemoDataButton dict={adminDict} />
                         </div>
-                    </CardContent>
-                </Card>
-
-                {/* Admin Profile */}
-                <Card className="md:col-span-2">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Shield className="h-5 w-5 text-primary" />
-                            Admin Account Details
-                        </CardTitle>
-                        <CardDescription>
-                            Update your credentials and password.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ProfileForm
-                            user={{
-                                id: session.user.id,
-                                name: userData?.name || session.user.name,
-                                email: userData?.email || session.user.email,
-                            }}
-                            dict={adminDict}
-                        />
                     </CardContent>
                 </Card>
             </div>

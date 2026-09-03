@@ -112,6 +112,8 @@ export default async function RootLayout({
             defaultLocale={defaultLocale}
             currency={defaultCurrency}
             defaultTheme={defaultTheme}
+            catalogTitle={storeSettings.catalogTitle}
+            catalogSlug={storeSettings.catalogSlug}
           >
             {children}
           </BrandProvider>

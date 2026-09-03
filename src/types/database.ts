@@ -59,6 +59,7 @@ export interface Category {
   slug: Record<string, string>;
   description: Record<string, string>;
   intro?: Record<string, string> | null;
+  imageUrl?: string | null;
   // Legacy optional fields for compatibility
   nameEn?: string;
   nameFr?: string;
@@ -143,6 +144,11 @@ export interface Page {
   meta_description_fr?: string;
 }
 
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
 export interface StoreSettings {
   id?: string;
   brandName: string;
@@ -150,6 +156,12 @@ export interface StoreSettings {
   faviconUrl: string;
   heroTitle: Record<string, string>;
   heroDescription: Record<string, string>;
+  heroBackgroundImageUrl?: string;
+  catalogTitle?: Record<string, string>;
+  catalogSlug?: string;
+  catalogBannerUrl?: string;
+  footerDescription?: Record<string, string>;
+  socialLinks?: SocialLink[];
   defaultTheme?: 'light' | 'dark' | 'system';
   defaultCurrency?: string;
   updatedAt?: Date | string;
