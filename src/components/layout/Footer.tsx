@@ -71,10 +71,6 @@ export async function Footer({
         console.error("Error fetching categories for footer:", e);
     }
 
-    const allCatalogLabel = isFr
-        ? `Tous les ${displayCatalogTitle}`
-        : `All ${displayCatalogTitle}`;
-
     return (
         <footer className="border-t bg-zinc-50 dark:bg-black py-12 mt-auto">
             <div className="w-full max-w-7xl mx-auto px-6 md:px-16 grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
@@ -103,13 +99,12 @@ export async function Footer({
                 </div>
                 
                 <div>
-                    <h2 className="font-bold mb-4">{displayCatalogTitle}</h2>
+                    <h2 className="font-bold mb-4">
+                        <Link href={`/${lang}/${activeCatalogSlug}`} className="hover:underline">
+                            {displayCatalogTitle}
+                        </Link>
+                    </h2>
                     <ul className="space-y-2 text-sm text-muted-foreground">
-                        <li>
-                            <Link href={`/${lang}/${activeCatalogSlug}`} className="hover:text-foreground transition-colors">
-                                {allCatalogLabel}
-                            </Link>
-                        </li>
                         {categories.map((category) => {
                             const catSlug = getLocalizedField(category.slug, lang) || (isFr ? category.slugFr : category.slugEn) || category.id;
                             const catName = getLocalizedField(category.name, lang) || (isFr ? category.nameFr : category.nameEn);
