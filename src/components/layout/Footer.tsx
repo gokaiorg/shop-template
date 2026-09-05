@@ -15,6 +15,7 @@ interface FooterProps {
     brandName?: string;
     footerDescription?: Record<string, string>;
     socialLinks?: SocialLink[];
+    footerRightMenuTitle?: string;
 }
 
 export async function Footer({
@@ -26,11 +27,12 @@ export async function Footer({
     brandName,
     footerDescription,
     socialLinks,
+    footerRightMenuTitle,
 }: FooterProps) {
     if (!dict) return null;
     
     // Fetch settings if not fully passed as props
-    const settings = (!brandName || !footerDescription || !socialLinks)
+    const settings = (!brandName || !footerDescription || !socialLinks || !footerRightMenuTitle)
         ? await getStoreSettings()
         : null;
 
@@ -39,6 +41,7 @@ export async function Footer({
     const activeCatalogSlug = catalogSlug || settings?.catalogSlug || 'shop';
     const activeFooterDesc = footerDescription || settings?.footerDescription;
     const activeSocialLinks = socialLinks || settings?.socialLinks || brandConfig.navigation?.socials || [];
+    const activeFooterRightTitle = footerRightMenuTitle || settings?.footerRightMenuTitle;
 
     const isFr = lang === 'fr';
     const legalDict = dict.legal || {};
@@ -48,7 +51,9 @@ export async function Footer({
         || (isFr ? brandConfig.identity.description?.fr : brandConfig.identity.description?.en)
         || '';
 
-    const footerPages = pages.filter((p) => p.showInFooter);
+    const footerPages = pages
+        .filter((p) => p.showInFooter)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const displayCatalogTitle = getLocalizedField(activeCatalogTitle, lang) || headerDict.shop || (isFr ? "Boutique" : "Shop");
 
     let categories: Category[] = [];
@@ -125,7 +130,7 @@ export async function Footer({
                 </div>
 
                 <div>
-                    <h2 className="font-bold mb-4">{legalDict.title || (isFr ? "Informations & Légal" : "Information & Legal")}</h2>
+                    <h2 className="font-bold mb-4">{activeFooterRightTitle || legalDict.title || (isFr ? "Informations & Légal" : "Legal")}</h2>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {footerPages.length > 0 ? (
                             footerPages.map((page) => {

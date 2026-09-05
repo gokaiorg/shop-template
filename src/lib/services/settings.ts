@@ -41,6 +41,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             en: brand.identity.description?.en || '',
             fr: brand.identity.description?.fr || '',
         },
+        footerRightMenuTitle: 'Legal',
         socialLinks: (brand.navigation?.socials || []).map((s: { platform?: string; url?: string }) => ({
             platform: s.platform || '',
             url: s.url || '',
@@ -66,6 +67,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 catalogSlug: (typeof data?.catalogSlug === 'string' && data.catalogSlug.trim().length > 0) ? data.catalogSlug.trim().toLowerCase() : fallbackSettings.catalogSlug,
                 catalogBannerUrl: typeof data?.catalogBannerUrl === 'string' ? data.catalogBannerUrl : fallbackSettings.catalogBannerUrl,
                 footerDescription: (data?.footerDescription && typeof data.footerDescription === 'object') ? data.footerDescription : fallbackSettings.footerDescription,
+                footerRightMenuTitle: typeof data?.footerRightMenuTitle === 'string' && data.footerRightMenuTitle.trim() ? data.footerRightMenuTitle : fallbackSettings.footerRightMenuTitle,
                 socialLinks: Array.isArray(data?.socialLinks) ? data.socialLinks : fallbackSettings.socialLinks,
                 defaultTheme: data?.defaultTheme ?? fallbackSettings.defaultTheme,
                 defaultCurrency: data?.defaultCurrency ?? fallbackSettings.defaultCurrency,

@@ -21,8 +21,12 @@ export default async function ShopLayout({
         getStoreSettings(),
     ]);
 
-    const headerPages = publishedPages.filter((p) => p.showInHeader);
-    const footerPages = publishedPages.filter((p) => p.showInFooter);
+    const headerPages = publishedPages
+        .filter((p) => p.showInHeader)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const footerPages = publishedPages
+        .filter((p) => p.showInFooter)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     return (
         <div className="flex min-h-screen flex-col">
@@ -39,6 +43,7 @@ export default async function ShopLayout({
                     catalogSlug={storeSettings.catalogSlug}
                     brandName={storeSettings.brandName}
                     footerDescription={storeSettings.footerDescription}
+                    footerRightMenuTitle={storeSettings.footerRightMenuTitle}
                     socialLinks={storeSettings.socialLinks}
                 />
             </main>

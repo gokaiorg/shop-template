@@ -24,6 +24,7 @@ export const globalSettingsSchema = z.object({
     heroDescription: z.record(z.string(), z.string()),
     heroBackgroundImageUrl: z.string().optional(),
     footerDescription: z.record(z.string(), z.string()).optional(),
+    footerRightMenuTitle: z.string().optional().default('Legal'),
     socialLinks: z.array(socialLinkSchema).optional(),
     defaultTheme: z.enum(['light', 'dark', 'system']),
     defaultCurrency: z.string().min(1, 'Currency is required'),

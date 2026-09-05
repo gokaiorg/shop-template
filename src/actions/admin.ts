@@ -225,8 +225,9 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
         const primaryCategoryId = categoryIds[0] || "";
         const artist = result.data.artist?.trim() || result.data.vendor?.trim() || null;
 
-        const productData = {
+        const productData: any = {
             id: ref.id,
+            order: result.data.order !== undefined ? Math.round(Number(result.data.order)) : Date.now(),
             price: result.data.price,
             stock: result.data.stock,
             artist,
@@ -304,7 +305,7 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
         const primaryCategoryId = categoryIds[0] || "";
         const artist = result.data.artist?.trim() || result.data.vendor?.trim() || null;
 
-        const productData = {
+        const productData: any = {
             price: result.data.price,
             stock: result.data.stock,
             artist,
@@ -330,6 +331,11 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
             images,
             updatedAt: new Date(),
         };
+
+        if (result.data.order !== undefined) {
+            productData.order = Math.round(Number(result.data.order));
+        }
+
         await ref.update(productData);
 
         revalidatePath('/[lang]/admin', 'layout');
@@ -339,6 +345,42 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
     } catch (error) {
         console.error("UPDATE_PRODUCT_ERROR:", error);
         return { success: false, error: "Failed to update product." };
+    }
+}
+
+export async function reorderProducts(updates: { id: string; order: number }[]) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return { success: true };
+    }
+
+    try {
+        const batch = adminDb.batch();
+        for (const update of updates) {
+            if (update.id && typeof update.order === "number") {
+                const ref = adminDb.collection("products").doc(update.id);
+                batch.update(ref, { 
+                    order: Math.round(update.order),
+                    updatedAt: new Date() 
+                });
+            }
+        }
+        await batch.commit();
+
+        revalidatePath('/[lang]/admin/products', 'page');
+        revalidatePath('/[lang]', 'layout');
+        revalidatePath('/[lang]/[catalogSlug]', 'page');
+        revalidatePath('/', 'layout');
+
+        return { success: true };
+    } catch (error) {
+        console.error("REORDER_PRODUCTS_ERROR:", error);
+        return { success: false, error: "Failed to reorder products." };
     }
 }
 
@@ -476,6 +518,7 @@ export async function createPage(data: z.infer<typeof pageSchema>) {
         const pageData = {
             ...result.data,
             slug,
+            order: result.data.order !== undefined ? Math.round(Number(result.data.order)) : Date.now(),
             title_en,
             title_fr,
             content_en,
@@ -513,7 +556,7 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
         const content_fr = result.data.content?.fr || content_en;
 
         const ref = adminDb.collection("pages").doc(id);
-        const pageData = {
+        const pageData: any = {
             ...result.data,
             title_en,
             title_fr,
@@ -521,6 +564,9 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
             content_fr,
             updatedAt: new Date(),
         };
+        if (result.data.order !== undefined) {
+            pageData.order = Math.round(Number(result.data.order));
+        }
         await ref.set(pageData, { merge: true });
 
         revalidatePath("/", "layout");
@@ -528,6 +574,41 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
     } catch (error: any) {
         console.error("UPDATE_PAGE_ERROR:", error);
         return { success: false, error: error?.message || "Failed to update page." };
+    }
+}
+
+export async function reorderPages(updates: { id: string; order: number }[]) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin" && userRole !== "user") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return { success: true };
+    }
+
+    try {
+        const batch = adminDb.batch();
+        for (const update of updates) {
+            if (update.id && typeof update.order === "number") {
+                const ref = adminDb.collection("pages").doc(update.id);
+                batch.update(ref, { 
+                    order: Math.round(update.order),
+                    updatedAt: new Date() 
+                });
+            }
+        }
+        await batch.commit();
+
+        revalidatePath('/[lang]/admin/pages', 'page');
+        revalidatePath('/[lang]', 'layout');
+        revalidatePath('/', 'layout');
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("REORDER_PAGES_ERROR:", error);
+        return { success: false, error: error?.message || "Failed to reorder pages." };
     }
 }
 

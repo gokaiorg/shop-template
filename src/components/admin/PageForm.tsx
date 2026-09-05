@@ -70,7 +70,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
     });
 
     const form = useForm<PageFormData>({
-        resolver: zodResolver(pageSchema),
+        resolver: zodResolver(pageSchema) as any,
         defaultValues: {
             slug: initialData?.slug || initialData?.id || "",
             title: defaultTitles,
@@ -78,6 +78,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
             status: initialData?.status || "published",
             showInHeader: initialData?.showInHeader ?? false,
             showInFooter: initialData?.showInFooter ?? false,
+            order: initialData?.order !== undefined ? initialData.order : Date.now(),
         },
     });
 

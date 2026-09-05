@@ -185,23 +185,46 @@ export default async function CatalogPage(props: CatalogPageProps) {
         ) || null;
 
         if (selectedCategory) {
-            const productsQuery = adminDb.collection('products')
-                .where('categoryIds', 'array-contains', selectedCategory.id)
-                .orderBy('createdAt', 'desc');
-            const productsSnapshot = await productsQuery.get();
+            let productsSnapshot;
+            try {
+                productsSnapshot = await adminDb.collection('products')
+                    .where('categoryIds', 'array-contains', selectedCategory.id)
+                    .orderBy('order', 'asc')
+                    .get();
+                if (productsSnapshot.empty) {
+                    productsSnapshot = await adminDb.collection('products')
+                        .where('categoryIds', 'array-contains', selectedCategory.id)
+                        .orderBy('createdAt', 'desc')
+                        .get();
+                }
+            } catch {
+                productsSnapshot = await adminDb.collection('products')
+                    .where('categoryIds', 'array-contains', selectedCategory.id)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+            }
 
             const categoryMap = new Map(categories.map(c => [c.id, c]));
 
-            products = productsSnapshot.docs.map(doc => {
+            const rawProducts = productsSnapshot.docs.map(doc => {
                 const p = serializeFirestoreData(doc.id, doc.data()) as Product;
                 const catIds = p.categoryIds || (p.categoryId ? [p.categoryId] : []);
                 const assignedCategories = catIds.map(id => categoryMap.get(id)).filter(Boolean) as Category[];
                 return {
                     ...p,
+                    order: typeof p.order === 'number' ? p.order : 0,
                     categoryIds: catIds,
                     categories: assignedCategories,
                     category: assignedCategories[0] || (p.categoryId ? categoryMap.get(p.categoryId) : null) || null
                 };
+            });
+
+            products = rawProducts.sort((a, b) => {
+                const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+                if (orderDiff !== 0) return orderDiff;
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateB - dateA;
             });
         }
     }

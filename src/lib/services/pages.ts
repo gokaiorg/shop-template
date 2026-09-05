@@ -37,6 +37,7 @@ export function formatPageDoc(doc: FirebaseFirestore.DocumentSnapshot): Page {
         status,
         showInHeader: Boolean(data.showInHeader),
         showInFooter: Boolean(data.showInFooter),
+        order: typeof data.order === 'number' ? data.order : 0,
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
         title_en: data.title_en || title.en,
@@ -62,7 +63,9 @@ export const getPublishedPages = cache(async (): Promise<Page[]> => {
             .where("status", "==", "published")
             .get();
 
-        return snapshot.docs.map(formatPageDoc);
+        return snapshot.docs
+            .map(formatPageDoc)
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     } catch (error) {
         console.error('[GET_PUBLISHED_PAGES_ERROR]', error);
         return [];

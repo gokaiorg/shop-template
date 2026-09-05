@@ -23,6 +23,7 @@ export const productSchema = z.object({
     categoryId: z.string().optional(),
     imageUrl: z.string().optional().nullable(),
     images: z.array(z.string()).optional(),
+    order: z.coerce.number().int().optional(),
 });
 
 export const pageSchema = z.object({
@@ -38,6 +39,7 @@ export const pageSchema = z.object({
     status: z.enum(["draft", "published"]),
     showInHeader: z.boolean(),
     showInFooter: z.boolean(),
+    order: z.coerce.number().int().optional(),
     // Optional legacy fields for backward compatibility
     title_en: z.string().optional(),
     title_fr: z.string().optional(),

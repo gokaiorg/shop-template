@@ -23,6 +23,7 @@ export interface User {
 
 export interface Product {
   id: string;
+  order?: number;
   price: number;
   stock: number;
   artist?: string | null;
@@ -132,6 +133,7 @@ export interface Page {
   status: "draft" | "published";
   showInHeader: boolean;
   showInFooter: boolean;
+  order?: number;
   metaTitle?: Record<string, string>;
   metaDescription?: Record<string, string>;
   createdAt?: Date | string;
@@ -165,6 +167,7 @@ export interface StoreSettings {
   catalogSlug?: string;
   catalogBannerUrl?: string;
   footerDescription?: Record<string, string>;
+  footerRightMenuTitle?: string;
   socialLinks?: SocialLink[];
   defaultTheme?: 'light' | 'dark' | 'system';
   defaultCurrency?: string;

@@ -114,13 +114,14 @@ export default async function Home({
 
   const categoryMap = new Map(categories.map(c => [c.id, c]));
 
-  const allProducts = productsSnap.docs.map(doc => {
+  const rawProducts = productsSnap.docs.map(doc => {
     const data = doc.data();
     const catIds = data.categoryIds || (data.categoryId ? [data.categoryId] : []);
     const assignedCats = catIds.map((id: string) => categoryMap.get(id)).filter(Boolean) as Category[];
     return {
       ...data,
       id: doc.id,
+      order: typeof data.order === 'number' ? data.order : 0,
       categoryIds: catIds,
       categories: assignedCats,
       category: assignedCats[0] || (data.categoryId ? categoryMap.get(data.categoryId) : null) || null,
@@ -128,6 +129,14 @@ export default async function Home({
       updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
     };
   }) as Product[];
+
+  const allProducts = rawProducts.sort((a, b) => {
+    const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+    if (orderDiff !== 0) return orderDiff;
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateB - dateA;
+  });
 
   const isFr = lang === "fr";
   const homeDict = dict.home || {};

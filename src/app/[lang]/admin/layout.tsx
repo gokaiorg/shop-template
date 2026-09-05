@@ -5,6 +5,25 @@ import { Aside } from "@/components/admin/Aside";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { MobileAside } from "@/components/admin/MobileAside";
+import type { Metadata } from "next";
+import { getStoreSettings } from "@/lib/services/settings";
+import { getActiveBrand } from "@/config/brand.config";
+
+export async function generateMetadata(): Promise<Metadata> {
+    const storeSettings = await getStoreSettings();
+    const rawBrand = getActiveBrand();
+    const brandName = storeSettings.brandName || rawBrand.identity?.name || "Store";
+
+    return {
+        title: {
+            absolute: `Admin | ${brandName}`,
+        },
+        robots: {
+            index: false,
+            follow: false,
+        },
+    };
+}
 
 export default async function AdminLayout({
     children,

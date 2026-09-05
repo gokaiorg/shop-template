@@ -89,7 +89,7 @@ export function ProductForm({
         : (initialData?.categoryId ? [initialData.categoryId] : []);
 
     const form = useForm<z.infer<typeof productSchema>>({
-        resolver: zodResolver(productSchema),
+        resolver: zodResolver(productSchema) as any,
         defaultValues: {
             name: defaultName,
             slug: defaultSlug,
@@ -104,6 +104,7 @@ export function ProductForm({
             categoryId: initialCategoryIds[0] || "",
             imageUrl: initialImages[0] || null,
             images: initialImages,
+            order: initialData?.order !== undefined ? initialData.order : Date.now(),
         },
     });
 
@@ -222,8 +223,13 @@ export function ProductForm({
             });
 
             const trimmedArtist = values.artist?.trim() || values.vendor?.trim() || null;
+            const effectiveOrder = values.order !== undefined
+                ? Math.round(Number(values.order))
+                : (initialData?.order !== undefined ? initialData.order : Date.now());
+
             const payload = {
                 ...values,
+                order: effectiveOrder,
                 artist: trimmedArtist,
                 vendor: trimmedArtist,
                 name: completeName,
@@ -284,6 +290,9 @@ export function ProductForm({
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                {/* Hidden Order Field - Managed via Drag & Drop in products table */}
+                <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
                     {/* General info & Categories */}

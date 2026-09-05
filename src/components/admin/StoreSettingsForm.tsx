@@ -88,6 +88,7 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
             heroDescription: defaultHeroDesc,
             heroBackgroundImageUrl: initialData.heroBackgroundImageUrl || "",
             footerDescription: defaultFooterDesc,
+            footerRightMenuTitle: initialData.footerRightMenuTitle || "Legal",
             socialLinks: initialData.socialLinks || [],
             defaultTheme: initialData.defaultTheme || "system",
             defaultCurrency: initialData.defaultCurrency || "THB",
@@ -689,6 +690,30 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
                                     )}
                                 />
                             )}
+                        </div>
+
+                        {/* Footer Right Menu Title */}
+                        <div className="space-y-2 pt-4 border-t">
+                            <FormField
+                                control={form.control}
+                                name="footerRightMenuTitle"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-base font-semibold">
+                                            {lang === "fr" ? "Titre de la colonne de droite du pied de page" : "Footer Right Menu Title"}
+                                        </FormLabel>
+                                        <FormDescription>
+                                            {lang === "fr"
+                                                ? "Titre affiché au-dessus des liens de pages dans la colonne de droite du footer (ex: Legal, Pages, Informations)."
+                                                : "Title displayed above the custom page links in the right column of the footer (e.g. Legal, Pages, Information)."}
+                                        </FormDescription>
+                                        <FormControl>
+                                            <Input placeholder="Legal" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
                         {/* Social Links */}
