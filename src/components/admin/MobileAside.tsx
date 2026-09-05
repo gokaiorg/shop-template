@@ -11,6 +11,7 @@ import {
     Package, 
     FileText, 
     ShoppingCart,
+    Mail,
     Settings,
     ExternalLink
 } from "lucide-react";
@@ -35,6 +36,7 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
     const isProductsActive = pathname.startsWith(`/${lang}/admin/products`);
     const isPagesActive = pathname.startsWith(`/${lang}/admin/pages`);
     const isOrdersActive = pathname.startsWith(`/${lang}/admin/orders`);
+    const isMessagesActive = pathname.startsWith(`/${lang}/admin/messages`);
     const isSettingsActive = pathname.startsWith(`/${lang}/admin/settings`);
 
     return (
@@ -153,7 +155,22 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                             </Link>
                         )}
 
-                        {/* 6. Settings */}
+                        {/* Messages */}
+                        <Link
+                            href={`/${lang}/admin/messages`}
+                            onClick={() => setOpen(false)}
+                            className={cn(
+                                "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                                isMessagesActive
+                                    ? "bg-muted text-foreground font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                            )}
+                        >
+                            <Mail className="h-4 w-4" />
+                            {adminDict.messages || "Messages"}
+                        </Link>
+
+                        {/* Settings */}
                         <Link
                             href={`/${lang}/admin/settings`}
                             onClick={() => setOpen(false)}

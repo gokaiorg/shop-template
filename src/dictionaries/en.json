@@ -5,6 +5,7 @@
         "categories": "Categories",
         "pages": "Pages",
         "orders": "Orders",
+        "messages": "Messages",
         "settings": "Settings",
         "title": "Admin Panel",
         "view_site": "View Site",
@@ -72,6 +73,30 @@
                 "total": "Total",
                 "status": "Status"
             }
+        },
+        "messages_section": {
+            "title": "Messages",
+            "subtitle": "View and manage contact inquiries sent from the storefront.",
+            "empty": "No messages received yet.",
+            "columns": {
+                "name": "Name",
+                "email": "Email",
+                "subject": "Subject",
+                "date": "Date",
+                "status": "Status",
+                "actions": "Actions"
+            },
+            "status": {
+                "unread": "Unread",
+                "read": "Read",
+                "archived": "Archived"
+            },
+            "reply": "Reply",
+            "mark_read": "Mark as read",
+            "mark_unread": "Mark as unread",
+            "archive": "Archive",
+            "delete": "Delete",
+            "view": "View Message"
         }
     },
     "auth": {
@@ -121,5 +146,29 @@
         "cgv": "Terms & Conditions",
         "privacy_policy": "Privacy Policy",
         "returns": "Returns & Refunds"
+    },
+    "contact": {
+        "name_label": "Name",
+        "name_placeholder": "Your name",
+        "email_label": "Email",
+        "email_placeholder": "your@email.com",
+        "subject_label": "Subject",
+        "subject_placeholder": "What is this about?",
+        "message_label": "Message",
+        "message_placeholder": "Tell us more...",
+        "submit_button": "Send Message",
+        "submitting_button": "Sending...",
+        "success_toast": "Message sent successfully!",
+        "success_title": "Message sent successfully!",
+        "success_message": "Thank you for reaching out. We have received your message and will get back to you as soon as possible.",
+        "send_another": "Send another message",
+        "error_toast": "Failed to send message.",
+        "unexpected_error": "An unexpected error occurred.",
+        "validation": {
+            "name_min": "Name must be at least 2 characters",
+            "email_invalid": "Invalid email address",
+            "subject_min": "Subject must be at least 5 characters",
+            "message_min": "Message must be at least 10 characters"
+        }
     }
 }

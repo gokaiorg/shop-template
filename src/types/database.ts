@@ -149,6 +149,19 @@ export interface Page {
   meta_description_fr?: string;
 }
 
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'unread' | 'read' | 'archived';
+  createdAt: string;
+  brandKey: string;
+  brandName?: string;
+  updatedAt?: string;
+}
+
 export interface SocialLink {
   platform: string;
   url: string;

@@ -5,6 +5,7 @@
         "categories": "Catégories",
         "pages": "Pages",
         "orders": "Commandes",
+        "messages": "Messages",
         "settings": "Paramètres",
         "title": "Panneau d'administration",
         "view_site": "Voir le site",
@@ -72,6 +73,30 @@
                 "total": "Total",
                 "status": "Statut"
             }
+        },
+        "messages_section": {
+            "title": "Messages",
+            "subtitle": "Consultez et gérez les demandes de contact reçues depuis la boutique.",
+            "empty": "Aucun message reçu pour le moment.",
+            "columns": {
+                "name": "Nom",
+                "email": "Email",
+                "subject": "Sujet",
+                "date": "Date",
+                "status": "Statut",
+                "actions": "Actions"
+            },
+            "status": {
+                "unread": "Non lu",
+                "read": "Lu",
+                "archived": "Archivé"
+            },
+            "reply": "Répondre",
+            "mark_read": "Marquer comme lu",
+            "mark_unread": "Marquer comme non lu",
+            "archive": "Archiver",
+            "delete": "Supprimer",
+            "view": "Voir le message"
         }
     },
     "auth": {
@@ -121,5 +146,29 @@
         "cgv": "CGV",
         "privacy_policy": "Politique de Confidentialité",
         "returns": "Retours & Remboursements"
+    },
+    "contact": {
+        "name_label": "Nom",
+        "name_placeholder": "Votre nom",
+        "email_label": "Email",
+        "email_placeholder": "votre@email.com",
+        "subject_label": "Sujet",
+        "subject_placeholder": "De quoi s'agit-il ?",
+        "message_label": "Message",
+        "message_placeholder": "Dites-nous en plus...",
+        "submit_button": "Envoyer le message",
+        "submitting_button": "Envoi en cours...",
+        "success_toast": "Message envoyé avec succès !",
+        "success_title": "Message envoyé avec succès !",
+        "success_message": "Merci de nous avoir contactés. Nous avons bien reçu votre demande et nous vous répondrons dans les plus brefs délais.",
+        "send_another": "Envoyer un autre message",
+        "error_toast": "Échec de l'envoi du message. Veuillez réessayer.",
+        "unexpected_error": "Une erreur inattendue est survenue.",
+        "validation": {
+            "name_min": "Le nom doit comporter au moins 2 caractères",
+            "email_invalid": "Adresse email invalide",
+            "subject_min": "Le sujet doit comporter au moins 5 caractères",
+            "message_min": "Le message doit comporter au moins 10 caractères"
+        }
     }
 }

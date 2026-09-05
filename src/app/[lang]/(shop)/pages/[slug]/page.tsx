@@ -4,6 +4,8 @@ import { Metadata } from "next";
 import { getPageBySlug } from "@/lib/services/pages";
 import { getLocalizedField } from "@/lib/i18n";
 import { ContactForm } from "@/components/forms/ContactForm";
+import { getDictionary } from "@/lib/dictionaries";
+import { Locale } from "@/app/i18n-config";
 
 interface PageProps {
   params: Promise<{
@@ -38,7 +40,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PublicSlugPage({ params }: PageProps) {
   const { lang, slug } = await params;
-  const page = await getPageBySlug(slug);
+  const [page, dict] = await Promise.all([
+    getPageBySlug(slug),
+    getDictionary(lang as Locale)
+  ]);
 
   if (!page || page.status === "draft") {
     notFound();
@@ -59,7 +64,7 @@ export default async function PublicSlugPage({ params }: PageProps) {
 
         {isContactPage && (
           <div className="mt-12">
-            <ContactForm />
+            <ContactForm lang={lang} dict={dict.contact} />
           </div>
         )}
       </div>
