@@ -9,6 +9,8 @@ import { categorySchema, productSchema, pageSchema } from "@/schemas/admin";
 import { brandConfig } from "@/config/brand.config";
 import { shopTemplateSeed } from "@/config/seed/shop-template.seed";
 import { getDefaultLocale, getSupportedLocales } from "@/app/i18n-config";
+import { FieldValue } from "firebase-admin/firestore";
+import { SETTINGS_COLLECTION, STORE_FRONT_DOC_ID } from "@/lib/services/settings";
 
 export async function createCategory(data: z.infer<typeof categorySchema>) {
     const session = await auth();
@@ -254,7 +256,24 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
             createdAt: new Date(),
             updatedAt: new Date(),
         };
-        await ref.set(productData);
+
+        const batch = adminDb.batch();
+        batch.set(ref, productData);
+
+        if (artist) {
+            const settingsRef = adminDb.collection(SETTINGS_COLLECTION).doc(STORE_FRONT_DOC_ID);
+            const settingsDoc = await settingsRef.get();
+            const existingVendors: string[] = settingsDoc.exists ? (settingsDoc.data()?.vendors || []) : [];
+
+            if (!existingVendors.includes(artist)) {
+                batch.set(settingsRef, {
+                    vendors: FieldValue.arrayUnion(artist),
+                    updatedAt: new Date(),
+                }, { merge: true });
+            }
+        }
+
+        await batch.commit();
 
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/[lang]/[catalogSlug]', 'layout');
@@ -336,7 +355,23 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
             productData.order = Math.round(Number(result.data.order));
         }
 
-        await ref.update(productData);
+        const batch = adminDb.batch();
+        batch.update(ref, productData);
+
+        if (artist) {
+            const settingsRef = adminDb.collection(SETTINGS_COLLECTION).doc(STORE_FRONT_DOC_ID);
+            const settingsDoc = await settingsRef.get();
+            const existingVendors: string[] = settingsDoc.exists ? (settingsDoc.data()?.vendors || []) : [];
+
+            if (!existingVendors.includes(artist)) {
+                batch.set(settingsRef, {
+                    vendors: FieldValue.arrayUnion(artist),
+                    updatedAt: new Date(),
+                }, { merge: true });
+            }
+        }
+
+        await batch.commit();
 
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/[lang]/[catalogSlug]', 'layout');

@@ -48,6 +48,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
         })),
         defaultTheme: 'system',
         defaultCurrency: 'THB',
+        vendors: [],
     };
 
     try {
@@ -71,6 +72,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 socialLinks: Array.isArray(data?.socialLinks) ? data.socialLinks : fallbackSettings.socialLinks,
                 defaultTheme: data?.defaultTheme ?? fallbackSettings.defaultTheme,
                 defaultCurrency: data?.defaultCurrency ?? fallbackSettings.defaultCurrency,
+                vendors: Array.isArray(data?.vendors) ? data.vendors : fallbackSettings.vendors,
                 updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data?.updatedAt,
             };
         }

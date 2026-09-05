@@ -3,14 +3,16 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { adminDb } from "@/lib/firebase-admin";
 import { Category } from "@/types/database";
+import { getStoreSettings } from "@/lib/services/settings";
 
 export default async function NewProductPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
 
-    // Fetch dictionary and categories in parallel to reduce TTFB
-    const [dict, categoriesSnapshot] = await Promise.all([
+    // Fetch dictionary, categories and store settings in parallel to reduce TTFB
+    const [dict, categoriesSnapshot, storeSettings] = await Promise.all([
         getDictionary(lang as Locale),
-        adminDb.collection("categories").orderBy("order", "asc").get()
+        adminDb.collection("categories").orderBy("order", "asc").get(),
+        getStoreSettings(),
     ]);
     const categories = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
@@ -29,7 +31,12 @@ export default async function NewProductPage({ params }: { params: Promise<{ lan
                 <p className="text-muted-foreground">Fill in the form to create a new product.</p>
             </div>
             <div className="bg-background border rounded-lg p-6">
-                <ProductForm categories={categories} dict={dict.admin.forms} lang={lang} />
+                <ProductForm
+                    categories={categories}
+                    dict={dict.admin.forms}
+                    lang={lang}
+                    vendors={storeSettings.vendors || []}
+                />
             </div>
         </div>
     );

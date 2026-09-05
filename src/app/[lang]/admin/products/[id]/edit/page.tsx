@@ -4,14 +4,16 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Product, Category } from "@/types/database";
 import { notFound } from "next/navigation";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { getStoreSettings } from "@/lib/services/settings";
 
 export default async function EditProductPage({ params }: { params: Promise<{ lang: string, id: string }> }) {
     const { lang, id } = await params;
-    const dict = await getDictionary(lang as Locale);
 
-    const [productDoc, categoriesSnap] = await Promise.all([
+    const [dict, productDoc, categoriesSnap, storeSettings] = await Promise.all([
+        getDictionary(lang as Locale),
         adminDb.collection("products").doc(id).get(),
-        adminDb.collection("categories").orderBy("order", "asc").get()
+        adminDb.collection("categories").orderBy("order", "asc").get(),
+        getStoreSettings(),
     ]);
 
     if (!productDoc.exists) {
@@ -40,7 +42,13 @@ export default async function EditProductPage({ params }: { params: Promise<{ la
                 <h1 className="text-3xl font-bold tracking-tight">{dict.admin.products_edit || "Edit Product"}</h1>
             </div>
             <div className="bg-background border rounded-lg p-6">
-                <ProductForm categories={categories} dict={dict.admin.forms} lang={lang} initialData={product} />
+                <ProductForm
+                    categories={categories}
+                    dict={dict.admin.forms}
+                    lang={lang}
+                    initialData={product}
+                    vendors={storeSettings.vendors || []}
+                />
             </div>
         </div>
     );

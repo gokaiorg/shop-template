@@ -63,7 +63,11 @@ export async function updateGlobalSettings(data: GlobalSettingsFormData) {
     }
 
     try {
-        await saveStoreSettings(parsed.data);
+        const updatePayload = { ...parsed.data };
+        if (!('vendors' in data) || (data as any).vendors === undefined) {
+            delete (updatePayload as any).vendors;
+        }
+        await saveStoreSettings(updatePayload);
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error: any) {
@@ -87,7 +91,11 @@ export async function updateStoreSettings(data: GlobalSettingsFormData | StoreSe
     const parsedStore = storeSettingsSchema.safeParse(data);
     if (parsedStore.success) {
         try {
-            await saveStoreSettings(parsedStore.data);
+            const updatePayload = { ...parsedStore.data };
+            if (!('vendors' in data) || (data as any).vendors === undefined) {
+                delete (updatePayload as any).vendors;
+            }
+            await saveStoreSettings(updatePayload);
             revalidatePath("/", "layout");
             return { success: true };
         } catch (error: any) {
@@ -106,7 +114,11 @@ export async function updateStoreSettings(data: GlobalSettingsFormData | StoreSe
     }
 
     try {
-        await saveStoreSettings(parsedGlobal.data);
+        const updatePayload = { ...parsedGlobal.data };
+        if (!('vendors' in data) || (data as any).vendors === undefined) {
+            delete (updatePayload as any).vendors;
+        }
+        await saveStoreSettings(updatePayload);
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error: any) {

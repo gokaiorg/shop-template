@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import {
     Form,
     FormControl,
@@ -43,17 +44,20 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 
 import { Category, Product } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
+import { CreatableVendorCombobox } from "@/components/admin/CreatableVendorCombobox";
 
 export function ProductForm({
     categories,
     dict,
     lang,
-    initialData
+    initialData,
+    vendors = [],
 }: {
     categories: Category[];
     dict: Record<string, string>;
     lang: string;
     initialData?: Product;
+    vendors?: string[];
 }) {
     const router = useRouter();
     const { supportedLocales: locales, defaultLocale, isMultiLocale: isMulti } = useBrand();
@@ -293,126 +297,22 @@ export function ProductForm({
                 {/* Hidden Order Field - Managed via Drag & Drop in products table */}
                 <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-                    {/* General info & Categories */}
-                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-md bg-muted/20">
-                        <FormField
-                            control={form.control}
-                            name="categoryIds"
-                            render={({ field }) => (
-                                <FormItem className="col-span-1 md:col-span-2">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <FormLabel className="text-sm font-medium">
-                                            {dict.categories || dict.categoryId || "Categories"}
-                                        </FormLabel>
-                                        <span className="text-xs text-muted-foreground">
-                                            {field.value?.length || 0} selected
-                                        </span>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-3 border rounded-lg bg-background">
-                                        {categories.map((c) => {
-                                            const isChecked = (field.value || []).includes(c.id);
-                                            return (
-                                                <label
-                                                    key={c.id}
-                                                    className={`flex items-center gap-3 p-2.5 rounded-md border cursor-pointer transition-colors ${
-                                                        isChecked 
-                                                            ? "bg-primary/10 border-primary shadow-xs" 
-                                                            : "bg-card hover:bg-muted/50 border-input"
-                                                    }`}
-                                                >
-                                                    <Checkbox
-                                                        checked={isChecked}
-                                                        onCheckedChange={(checked) => {
-                                                            const current = field.value || [];
-                                                            if (checked) {
-                                                                field.onChange([...current, c.id]);
-                                                            } else {
-                                                                field.onChange(current.filter((id: string) => id !== c.id));
-                                                            }
-                                                        }}
-                                                    />
-                                                    <span className="text-sm font-medium leading-none select-none">
-                                                        {getLocalizedField(c.name, lang, defaultLocale)}
-                                                    </span>
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="price"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.price || "Price"}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            {...field}
-                                            onChange={(e) => field.onChange(Number(e.target.value))}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="stock"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.stock || "Stock"}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            {...field}
-                                            onChange={(e) => field.onChange(Number(e.target.value))}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="artist"
-                            render={({ field }) => (
-                                <FormItem className="col-span-1 md:col-span-2">
-                                    <FormLabel>{dict.artist || "Artist / Vendor"}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            placeholder="e.g. Amann Inkspiration"
-                                            {...field}
-                                            value={field.value || ""}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-
-                    {/* Product Image Upload & Gallery Section */}
-                    <div className="col-span-1 md:col-span-2 p-6 border rounded-xl bg-card space-y-4 shadow-xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4">
+                <div className="space-y-6">
+                    {/* Bloc 1 : Médias */}
+                    <Card className="border rounded-xl bg-card shadow-xs">
+                        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4">
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h3 className="text-base font-semibold text-foreground">
-                                        {dict.imageUrl || "Product Images"}
-                                    </h3>
+                                    <CardTitle className="text-base font-semibold text-foreground">
+                                        {dict.imageUrl || (lang?.startsWith("fr") ? "Médias du produit" : "Product Images")}
+                                    </CardTitle>
                                     <Badge variant="secondary" className="text-xs">
                                         {images.length} {images.length === 1 ? "image" : "images"}
                                     </Badge>
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                    {dict.dragDropImage || "Upload product photos (PNG, JPG, WebP). The first image is the cover."}
-                                </p>
+                                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                    {dict.dragDropImage || (lang?.startsWith("fr") ? "Téléversez vos photos (PNG, JPG, WebP). La première image servira de couverture." : "Upload product photos (PNG, JPG, WebP). The first image is the cover.")}
+                                </CardDescription>
                             </div>
                             <Button
                                 type="button"
@@ -425,304 +325,471 @@ export function ProductForm({
                                 {isUploading ? (
                                     <>
                                         <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                                        <span>Uploading...</span>
+                                        <span>{lang?.startsWith("fr") ? "Envoi en cours..." : "Uploading..."}</span>
                                     </>
                                 ) : (
                                     <>
                                         <Upload className="h-4 w-4 mr-1.5" />
-                                        <span>{images.length > 0 ? "Add Images" : "Upload Images"}</span>
+                                        <span>{images.length > 0 ? (lang?.startsWith("fr") ? "Ajouter des images" : "Add Images") : (lang?.startsWith("fr") ? "Téléverser des images" : "Upload Images")}</span>
                                     </>
                                 )}
                             </Button>
-                        </div>
-
-                        {/* Grille des images existantes */}
-                        {images.length > 0 ? (
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                    {images.map((imgUrl, idx) => {
-                                        const isCover = idx === 0;
-                                        return (
-                                            <div
-                                                key={`${imgUrl}-${idx}`}
-                                                className={`relative group aspect-square rounded-xl overflow-hidden border-2 bg-muted/30 transition-all ${
-                                                    isCover ? "border-primary shadow-xs ring-2 ring-primary/20" : "border-border/80 hover:border-border"
-                                                }`}
-                                            >
-                                                <Image
-                                                    src={imgUrl}
-                                                    alt={`Product image ${idx + 1}`}
-                                                    fill
-                                                    sizes="(max-width: 768px) 50vw, 25vw"
-                                                    className="object-cover"
-                                                />
-
-                                                {/* Badge Couverture sur la 1ère image */}
-                                                {isCover ? (
-                                                    <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground font-semibold shadow-xs z-10">
-                                                        Cover
-                                                    </Badge>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleSetPrimary(idx)}
-                                                        className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-xs border shadow-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
-                                                        title="Set as cover image"
-                                                    >
-                                                        Set cover
-                                                    </button>
-                                                )}
-
-                                                {/* Bouton de suppression corbeille */}
-                                                <Button
-                                                    type="button"
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    onClick={() => handleRemoveImage(idx)}
-                                                    className="absolute top-2 right-2 h-7 w-7 rounded-lg opacity-90 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer z-10"
-                                                    aria-label="Remove image"
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-
-                                                {/* Numéro d'ordre */}
-                                                <span className="absolute bottom-6 right-1.5 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
-                                                    #{idx + 1}
-                                                </span>
-
-                                                {/* Affichage de l'URL source */}
+                        </CardHeader>
+                        <CardContent className="pt-4 space-y-4">
+                            {/* Grille des images existantes */}
+                            {images.length > 0 ? (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                        {images.map((imgUrl, idx) => {
+                                            const isCover = idx === 0;
+                                            return (
                                                 <div
-                                                    className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-[9px] font-mono p-1 truncate text-center backdrop-blur-sm z-10"
-                                                    title={imgUrl}
+                                                    key={`${imgUrl}-${idx}`}
+                                                    className={`relative group aspect-square rounded-xl overflow-hidden border-2 bg-muted/30 transition-all ${
+                                                        isCover ? "border-primary shadow-xs ring-2 ring-primary/20" : "border-border/80 hover:border-border"
+                                                    }`}
                                                 >
-                                                    {imgUrl}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                                    <Image
+                                                        src={imgUrl}
+                                                        alt={`Product image ${idx + 1}`}
+                                                        fill
+                                                        sizes="(max-width: 768px) 50vw, 25vw"
+                                                        className="object-cover"
+                                                    />
 
-                                {/* Zone de drop secondaire compacte */}
+                                                    {/* Badge Couverture sur la 1ère image */}
+                                                    {isCover ? (
+                                                        <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground font-semibold shadow-xs z-10">
+                                                            {lang?.startsWith("fr") ? "Couverture" : "Cover"}
+                                                        </Badge>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSetPrimary(idx)}
+                                                            className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-xs border shadow-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
+                                                            title={lang?.startsWith("fr") ? "Définir comme couverture" : "Set as cover image"}
+                                                        >
+                                                            {lang?.startsWith("fr") ? "Couverture" : "Set cover"}
+                                                        </button>
+                                                    )}
+
+                                                    {/* Bouton de suppression corbeille */}
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        onClick={() => handleRemoveImage(idx)}
+                                                        className="absolute top-2 right-2 h-7 w-7 rounded-lg opacity-90 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer z-10"
+                                                        aria-label="Remove image"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+
+                                                    {/* Numéro d'ordre */}
+                                                    <span className="absolute bottom-6 right-1.5 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
+                                                        #{idx + 1}
+                                                    </span>
+
+                                                    {/* Affichage de l'URL source */}
+                                                    <div
+                                                        className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-[9px] font-mono p-1 truncate text-center backdrop-blur-sm z-10"
+                                                        title={imgUrl}
+                                                    >
+                                                        {imgUrl}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Zone de drop secondaire compacte */}
+                                    <div
+                                        onDrop={handleDrop}
+                                        onDragOver={handleDragOver}
+                                        onDragLeave={handleDragLeave}
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className={`flex items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                                            isDragOver
+                                                ? "border-primary bg-primary/5"
+                                                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                            <Upload className="h-4 w-4 text-primary" />
+                                            <span>{lang?.startsWith("fr") ? "Déposez d'autres images ici ou cliquez pour parcourir" : "Drop additional images here or click to browse"}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Zone de drop principale (vide) */
                                 <div
                                     onDrop={handleDrop}
                                     onDragOver={handleDragOver}
                                     onDragLeave={handleDragLeave}
                                     onClick={() => fileInputRef.current?.click()}
-                                    className={`flex items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                                    className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                                         isDragOver
                                             ? "border-primary bg-primary/5"
-                                            : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
+                                            : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30"
                                     }`}
                                 >
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <Upload className="h-4 w-4 text-primary" />
-                                        <span>Drop additional images here or click to browse</span>
+                                    <div className="p-3 bg-muted rounded-full mb-3 text-muted-foreground">
+                                        <ImageIcon className="h-6 w-6" />
                                     </div>
+                                    <p className="text-sm font-medium text-foreground text-center">
+                                        {dict.uploadImage || (lang?.startsWith("fr") ? "Cliquez ou glissez-déposez des images ici" : "Click or drag images here")}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        PNG, JPG, WEBP • Multiple files allowed
+                                    </p>
                                 </div>
-                            </div>
-                        ) : (
-                            /* Zone de drop principale (vide) */
-                            <div
-                                onDrop={handleDrop}
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                                    isDragOver
-                                        ? "border-primary bg-primary/5"
-                                        : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30"
-                                }`}
-                            >
-                                <div className="p-3 bg-muted rounded-full mb-3 text-muted-foreground">
-                                    <ImageIcon className="h-6 w-6" />
-                                </div>
-                                <p className="text-sm font-medium text-foreground text-center">
-                                    {dict.uploadImage || "Click or drag images here"}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    PNG, JPG, WEBP up to 5MB each • Multiple files allowed
-                                </p>
-                            </div>
-                        )}
+                            )}
 
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handleFileInputChange}
-                            className="hidden"
-                        />
-                    </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={handleFileInputChange}
+                                className="hidden"
+                            />
+                        </CardContent>
+                    </Card>
 
-                    {/* Language specific fields */}
-                    <div className="col-span-1 md:col-span-2">
-                        {isMulti ? (
-                            <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
-                                {locales.map((loc) => (
-                                    <AccordionItem key={loc} value={loc}>
-                                        <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                                            {getLocaleDisplayName(loc)}
-                                        </AccordionTrigger>
-                                        <AccordionContent className="space-y-4 pt-4 px-2">
-                                            <FormField
-                                                control={form.control}
-                                                name={`name.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()})</FormLabel>
-                                                        <FormControl>
-                                                            <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name={`slug.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()})</FormLabel>
-                                                        <FormControl>
-                                                            <Input placeholder={`slug-${loc}...`} {...field} value={field.value || ""} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name={`intro.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>{dict.intro || "Intro"} ({loc.toUpperCase()})</FormLabel>
-                                                        <FormControl>
-                                                            <Input placeholder={`Short introduction (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name={`description.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()})</FormLabel>
-                                                        <FormControl>
-                                                            <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name={`status.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>{dict.status || "Status"} ({loc.toUpperCase()})</FormLabel>
-                                                        <Select onValueChange={field.onChange} defaultValue={field.value || "draft"}>
+                    {/* Bloc 2 : Informations Principales */}
+                    <Card className="border rounded-xl bg-card shadow-xs">
+                        <CardHeader className="border-b pb-4">
+                            <CardTitle className="text-base font-semibold text-foreground">
+                                {lang?.startsWith("fr") ? "Informations Principales" : "Main Information"}
+                            </CardTitle>
+                            <CardDescription className="text-xs text-muted-foreground">
+                                {lang?.startsWith("fr") ? "Nom, identifiant URL (slug), introduction et description du produit." : "Product name, URL slug, intro summary, and full description."}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                            {isMulti ? (
+                                <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
+                                    {locales.map((loc) => (
+                                        <AccordionItem key={loc} value={loc}>
+                                            <AccordionTrigger className="text-base font-semibold hover:no-underline">
+                                                {getLocaleDisplayName(loc)}
+                                            </AccordionTrigger>
+                                            <AccordionContent className="space-y-4 pt-4 px-1">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`name.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()})</FormLabel>
                                                             <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue />
-                                                                </SelectTrigger>
+                                                                <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
                                                             </FormControl>
-                                                            <SelectContent>
-                                                                <SelectItem value="draft">Draft</SelectItem>
-                                                                <SelectItem value="published">Published</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                ))}
-                            </Accordion>
-                        ) : (
-                            <div className="space-y-4 border rounded-lg p-6 bg-card">
-                                <h3 className="text-base font-semibold text-foreground border-b pb-3">
-                                    Product Information ({getLocaleDisplayName(locales[0])})
-                                </h3>
-                                <FormField
-                                    control={form.control}
-                                    name={`name.${locales[0]}`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()})</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Name..." {...field} value={field.value || ""} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name={`slug.${locales[0]}`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()})</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="name-slug..." {...field} value={field.value || ""} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name={`intro.${locales[0]}`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.intro || "Intro"} ({locales[0].toUpperCase()})</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Short introduction..." {...field} value={field.value || ""} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name={`description.${locales[0]}`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()})</FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name={`status.${locales[0]}`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.status || "Status"} ({locales[0].toUpperCase()})</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value || "draft"}>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`slug.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()})</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder={`slug-${loc}...`} {...field} value={field.value || ""} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`intro.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict.intro || "Intro"} ({loc.toUpperCase()})</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder={`Short introduction (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`description.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()})</FormLabel>
+                                                            <FormControl>
+                                                                <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            ) : (
+                                <div className="space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name={`name.${locales[0]}`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()})</FormLabel>
                                                 <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
+                                                    <Input placeholder="Name..." {...field} value={field.value || ""} />
                                                 </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="draft">Draft</SelectItem>
-                                                    <SelectItem value="published">Published</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`slug.${locales[0]}`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()})</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="name-slug..." {...field} value={field.value || ""} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`intro.${locales[0]}`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{dict.intro || "Intro"} ({locales[0].toUpperCase()})</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Short introduction..." {...field} value={field.value || ""} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`description.${locales[0]}`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()})</FormLabel>
+                                                <FormControl>
+                                                    <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Bloc 3 : Prix et Inventaire */}
+                    <Card className="border rounded-xl bg-card shadow-xs">
+                        <CardHeader className="border-b pb-4">
+                            <CardTitle className="text-base font-semibold text-foreground">
+                                {lang?.startsWith("fr") ? "Prix et Inventaire" : "Pricing & Inventory"}
+                            </CardTitle>
+                            <CardDescription className="text-xs text-muted-foreground">
+                                {lang?.startsWith("fr") ? "Définissez le prix unitaire et la quantité disponible en stock." : "Set the unit price and available stock inventory."}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <FormField
+                                    control={form.control}
+                                    name="price"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.price || "Price"}</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="stock"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.stock || "Stock"}</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                                />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </div>
-                        )}
-                    </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Bloc 4 : Organisation */}
+                    <Card className="border rounded-xl bg-card shadow-xs">
+                        <CardHeader className="border-b pb-4">
+                            <CardTitle className="text-base font-semibold text-foreground">
+                                {lang?.startsWith("fr") ? "Organisation" : "Organization"}
+                            </CardTitle>
+                            <CardDescription className="text-xs text-muted-foreground">
+                                {lang?.startsWith("fr") ? "Associez les catégories de vente et sélectionnez ou créez un artiste / vendeur." : "Assign product categories and select or create an artist / vendor."}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4 space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="categoryIds"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <FormLabel className="text-sm font-medium">
+                                                {dict.categories || dict.categoryId || "Categories"}
+                                            </FormLabel>
+                                            <span className="text-xs text-muted-foreground">
+                                                {field.value?.length || 0} {lang?.startsWith("fr") ? "sélectionnée(s)" : "selected"}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-3 border rounded-lg bg-background">
+                                            {categories.map((c) => {
+                                                const isChecked = (field.value || []).includes(c.id);
+                                                return (
+                                                    <label
+                                                        key={c.id}
+                                                        className={`flex items-center gap-3 p-2.5 rounded-md border cursor-pointer transition-colors ${
+                                                            isChecked 
+                                                                ? "bg-primary/10 border-primary shadow-xs" 
+                                                                : "bg-card hover:bg-muted/50 border-input"
+                                                        }`}
+                                                    >
+                                                        <Checkbox
+                                                            checked={isChecked}
+                                                            onCheckedChange={(checked) => {
+                                                                const current = field.value || [];
+                                                                if (checked) {
+                                                                    field.onChange([...current, c.id]);
+                                                                } else {
+                                                                    field.onChange(current.filter((id: string) => id !== c.id));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <span className="text-sm font-medium leading-none select-none">
+                                                            {getLocalizedField(c.name, lang, defaultLocale)}
+                                                        </span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="artist"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>{dict.artist || "Artist / Vendor"}</FormLabel>
+                                        <FormControl>
+                                            <CreatableVendorCombobox
+                                                options={vendors}
+                                                value={field.value || ""}
+                                                onChange={(val) => {
+                                                    field.onChange(val);
+                                                    form.setValue("vendor", val);
+                                                }}
+                                                placeholder={dict.artistPlaceholder || "e.g. Amann Inkspiration"}
+                                                lang={lang}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    {/* Bloc 5 : Publication */}
+                    <Card className="border rounded-xl bg-card shadow-xs">
+                        <CardHeader className="border-b pb-4">
+                            <CardTitle className="text-base font-semibold text-foreground">
+                                {lang?.startsWith("fr") ? "Publication" : "Publication"}
+                            </CardTitle>
+                            <CardDescription className="text-xs text-muted-foreground">
+                                {lang?.startsWith("fr") ? "Définissez la visibilité et le statut du produit (Brouillon / Publié)." : "Set visibility and status (Draft / Published)."}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                            {isMulti ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                    {locales.map((loc) => (
+                                        <FormField
+                                            key={loc}
+                                            control={form.control}
+                                            name={`status.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict.status || "Status"} ({getLocaleDisplayName(loc)})</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || "draft"}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="draft">{lang?.startsWith("fr") ? "Brouillon" : "Draft"}</SelectItem>
+                                                            <SelectItem value="published">{lang?.startsWith("fr") ? "Publié" : "Published"}</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="max-w-xs">
+                                    <FormField
+                                        control={form.control}
+                                        name={`status.${locales[0]}`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{dict.status || "Status"} ({locales[0].toUpperCase()})</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value || "draft"}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="draft">{lang?.startsWith("fr") ? "Brouillon" : "Draft"}</SelectItem>
+                                                        <SelectItem value="published">{lang?.startsWith("fr") ? "Publié" : "Published"}</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <div className="flex items-center gap-4">

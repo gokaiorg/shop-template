@@ -76,7 +76,7 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                 </Button>
             </div>
 
-            <ProductTable products={products} currency={currency} lang={lang} />
+            <ProductTable products={products} categories={categoriesList} currency={currency} lang={lang} />
         </div>
     );
 }

@@ -28,6 +28,7 @@ export const globalSettingsSchema = z.object({
     socialLinks: z.array(socialLinkSchema).optional(),
     defaultTheme: z.enum(['light', 'dark', 'system']),
     defaultCurrency: z.string().min(1, 'Currency is required'),
+    vendors: z.array(z.string()).default([]),
 });
 
 export type GlobalSettingsFormData = z.infer<typeof globalSettingsSchema>;
