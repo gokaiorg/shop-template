@@ -67,7 +67,14 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
-const rawDbId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
+const brand = (process.env.BRAND || process.env.NEXT_PUBLIC_BRAND || "").toLowerCase().trim();
+const defaultDbForProject = 
+  projectId === "shop-gcp" || brand === "shop-template" ? "shop-template-database" :
+  projectId === "green-ghost-gcp" || brand === "green-ghost" ? "green-ghost-database" :
+  projectId === "gokai-labs-gcp" || brand === "gokai-labs" ? "gokai-labs-database" :
+  undefined;
+
+const rawDbId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || defaultDbForProject;
 export const adminDb = !rawDbId || rawDbId === "(default)" || rawDbId.trim() === ""
   ? getFirestore(app)
   : getFirestore(app, rawDbId);

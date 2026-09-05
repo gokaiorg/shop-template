@@ -16,10 +16,19 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const rawDbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
-const databaseId = rawDbId && rawDbId !== "(default)" ? rawDbId : undefined;
+
+const brand = (process.env.NEXT_PUBLIC_BRAND || "").toLowerCase().trim();
+const defaultDbForProject = 
+  projectId === "shop-gcp" || brand === "shop-template" ? "shop-template-database" :
+  projectId === "green-ghost-gcp" || brand === "green-ghost" ? "green-ghost-database" :
+  projectId === "gokai-labs-gcp" || brand === "gokai-labs" ? "gokai-labs-database" :
+  undefined;
+
+const dbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || defaultDbForProject;
 
 export const auth = getAuth(app);
-export const db = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
+export const db = (dbId && dbId !== "(default)" && dbId !== "") 
+  ? getFirestore(app, dbId) 
+  : getFirestore(app);
 export const storage = getStorage(app);
 export default app;
