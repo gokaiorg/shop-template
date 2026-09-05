@@ -8,6 +8,7 @@ import { getSupportedLocales, getDefaultLocale, isMultiLocale } from "@/app/i18n
 import { getStoreSettings } from "@/lib/services/settings";
 import { StoreSettingsForm } from "@/components/admin/StoreSettingsForm";
 import { SeedDemoDataButton } from "@/components/admin/SeedDemoDataButton";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Settings, Globe, ShoppingCart, Database } from "lucide-react";
 
 export default async function AdminSettingsPage({
@@ -36,15 +37,13 @@ export default async function AdminSettingsPage({
 
     return (
         <div className="space-y-10 max-w-5xl">
-            <div className="flex flex-col gap-2 border-b pb-6">
-                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                    <Settings className="h-8 w-8 text-primary" />
-                    Storefront Settings
-                </h1>
-                <p className="text-muted-foreground">
-                    Customize your storefront brand identity, visual assets, hero presentation, footer copy, and social media channels.
-                </p>
-            </div>
+            <AdminPageHeader
+                title={adminDict.settings || "Settings"}
+                description={lang === 'fr'
+                    ? "Personnalisez l'identité de marque de votre boutique, les éléments visuels, la section hero, le footer et les réseaux sociaux."
+                    : "Customize your storefront brand identity, visual assets, hero presentation, footer copy, and social media channels."}
+                icon={Settings}
+            />
 
             {/* 1. Dynamic Storefront Settings Form (Firestore store_front document) */}
             <div className="space-y-6">

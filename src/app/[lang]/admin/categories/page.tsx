@@ -6,6 +6,8 @@ import { adminDb } from "@/lib/firebase-admin";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { getLocalizedField } from "@/lib/i18n";
 import { CategoryTable } from "@/components/admin/CategoryTable";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Tags } from "lucide-react";
 
 export default async function AdminCategoriesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -46,15 +48,15 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">{dict.admin.categories}</h1>
-                    <p className="text-muted-foreground">{lang === 'fr' ? 'Gérer les catégories de votre boutique.' : 'Manage your store categories.'}</p>
-                </div>
+            <AdminPageHeader
+                title={dict.admin.categories}
+                description={lang === 'fr' ? 'Gérer les catégories de votre boutique.' : 'Manage your store categories.'}
+                icon={Tags}
+            >
                 <Button asChild>
                     <Link href={`/${lang}/admin/categories/new`}>{dict.admin.categories_create}</Link>
                 </Button>
-            </div>
+            </AdminPageHeader>
 
             <CategoryTable categories={categories} lang={lang} />
         </div>

@@ -6,6 +6,8 @@ import { adminDb } from "@/lib/firebase-admin";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { getStoreSettings } from "@/lib/services/settings";
 import { ProductTable } from "@/components/admin/ProductTable";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Package } from "lucide-react";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -14,11 +16,10 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
     // Safe fetch for products with graceful fallback while composite index is building on Google Cloud
     const fetchProducts = async () => {
         try {
-            const snap = await adminDb.collection("products").orderBy("order", "asc").orderBy("createdAt", "desc").get();
-            if (!snap.empty) return snap;
-            return await adminDb.collection("products").orderBy("createdAt", "desc").get();
-        } catch {
-            return await adminDb.collection("products").orderBy("createdAt", "desc").get();
+            return await adminDb.collection("products").orderBy("order", "asc").get();
+        } catch (e: any) {
+            console.warn("Index fallback for products table query:", e?.message);
+            return await adminDb.collection("products").get();
         }
     };
 
@@ -29,7 +30,7 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
         adminDb.collection("categories").get(),
         fetchProducts()
     ]);
-    const currency = storeSettings.defaultCurrency || "THB";
+    const currency = storeSettings?.defaultCurrency || "THB";
 
     const categoriesList = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
@@ -66,15 +67,15 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-                    <p className="text-muted-foreground">{lang === 'fr' ? 'Gérer les produits de votre boutique.' : 'Manage your store products.'}</p>
-                </div>
+            <AdminPageHeader
+                title="Products"
+                description={lang === 'fr' ? 'Gérer les produits de votre boutique.' : 'Manage your store products.'}
+                icon={Package}
+            >
                 <Button asChild>
                     <Link href={`/${lang}/admin/products/new`}>{dict.admin?.products_create || "Create Product"}</Link>
                 </Button>
-            </div>
+            </AdminPageHeader>
 
             <ProductTable products={products} categories={categoriesList} currency={currency} lang={lang} />
         </div>

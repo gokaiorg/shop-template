@@ -4,6 +4,8 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Category } from "@/types/database";
 import { notFound } from "next/navigation";
 import { CategoryForm } from "@/components/admin/CategoryForm";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Tags } from "lucide-react";
 
 export default async function EditCategoryPage({ params }: { params: Promise<{ lang: string, id: string }> }) {
     const { lang, id } = await params;
@@ -23,9 +25,10 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ l
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">{dict.admin.categories_edit || "Edit Category"}</h1>
-            </div>
+            <AdminPageHeader
+                title={dict.admin.categories_edit || "Edit Category"}
+                icon={Tags}
+            />
             <div className="bg-background border rounded-lg p-6">
                 <CategoryForm dict={dict.admin.forms} lang={lang} initialData={category} />
             </div>

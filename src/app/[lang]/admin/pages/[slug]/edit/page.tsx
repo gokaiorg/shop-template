@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { PageForm } from "@/components/admin/PageForm";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { formatPageDoc } from "@/lib/services/pages";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { FileText } from "lucide-react";
 
 export default async function AdminPageEdit({ params }: { params: Promise<{ lang: string; slug: string }> }) {
     const { lang, slug } = await params;
@@ -27,14 +29,11 @@ export default async function AdminPageEdit({ params }: { params: Promise<{ lang
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                    {dict.admin.pages_edit || (lang === 'fr' ? 'Modifier la page' : 'Edit Page')}
-                </h1>
-                <p className="text-muted-foreground">
-                    {lang === 'fr' ? `Modifier la page : ${slug}` : `Editing page: ${slug}`}
-                </p>
-            </div>
+            <AdminPageHeader
+                title={dict.admin.pages_edit || (lang === 'fr' ? 'Modifier la page' : 'Edit Page')}
+                description={lang === 'fr' ? `Modifier la page : ${slug}` : `Editing page: ${slug}`}
+                icon={FileText}
+            />
 
             <PageForm dict={dict.admin} lang={lang} initialData={pageData} />
         </div>

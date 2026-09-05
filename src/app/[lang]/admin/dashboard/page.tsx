@@ -4,12 +4,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import Link from "next/link";
-import { Package, FolderTree, ShoppingCart, ArrowRight, FileText, Settings, BookOpen } from "lucide-react";
+import { Package, FolderTree, ShoppingCart, ArrowRight, FileText, Settings, BookOpen, LayoutDashboard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { adminDb } from "@/lib/firebase-admin";
 import { getRecentOrders, getPendingOrdersCount } from "@/actions/orders";
 import { getIsCartEnabled } from "@/config/brand.config";
 import { ProfileForm } from "@/components/admin/ProfileForm";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default async function AdminDashboardPage({
     params,
@@ -41,10 +42,11 @@ export default async function AdminDashboardPage({
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">{dict.admin.dashboard}</h1>
-                <p className="text-muted-foreground">{dict.admin.welcome_text.replace("{name}", displayName)}</p>
-            </div>
+            <AdminPageHeader
+                title={dict.admin.dashboard}
+                description={dict.admin.welcome_text.replace("{name}", displayName)}
+                icon={LayoutDashboard}
+            />
 
             {/* KPI Cards */}
             <div className={`grid gap-4 grid-cols-1 ${isCartEnabled ? "md:grid-cols-3" : "md:grid-cols-2"}`}>

@@ -4,6 +4,8 @@ import { Locale } from "@/app/i18n-config";
 import { adminDb } from "@/lib/firebase-admin";
 import { Category } from "@/types/database";
 import { getStoreSettings } from "@/lib/services/settings";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Package } from "lucide-react";
 
 export default async function NewProductPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -26,10 +28,11 @@ export default async function NewProductPage({ params }: { params: Promise<{ lan
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">{dict.admin.products_create}</h1>
-                <p className="text-muted-foreground">Fill in the form to create a new product.</p>
-            </div>
+            <AdminPageHeader
+                title={dict.admin.products_create}
+                description={lang === 'fr' ? 'Remplissez le formulaire pour créer un nouveau produit.' : 'Fill in the form to create a new product.'}
+                icon={Package}
+            />
             <div className="bg-background border rounded-lg p-6">
                 <ProductForm
                     categories={categories}

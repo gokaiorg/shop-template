@@ -4,6 +4,7 @@ import { getStoreSettings } from "@/lib/services/settings";
 import { CatalogSettingsForm } from "@/components/admin/CatalogSettingsForm";
 import { BookOpen } from "lucide-react";
 import { protectAdminRoute } from "@/lib/auth-utils";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default async function AdminCatalogPage({
     params,
@@ -22,17 +23,13 @@ export default async function AdminCatalogPage({
 
     return (
         <div className="space-y-10 max-w-5xl">
-            <div className="flex flex-col gap-2 border-b pb-6">
-                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                    <BookOpen className="h-8 w-8 text-primary" />
-                    {isFr ? "Paramètres du Catalogue" : "Catalog Settings"}
-                </h1>
-                <p className="text-muted-foreground">
-                    {isFr
-                        ? "Configurez le routage public (slug d'URL), les titres localisés, la description d'archive et la bannière de votre catalogue."
-                        : "Configure public routing (URL slug), localized titles, archive descriptions, and banner artwork for your catalog."}
-                </p>
-            </div>
+            <AdminPageHeader
+                title={isFr ? "Paramètres du Catalogue" : "Catalog Settings"}
+                description={isFr
+                    ? "Configurez le routage public (slug d'URL), les titres localisés, la description d'archive et la bannière de votre catalogue."
+                    : "Configure public routing (URL slug), localized titles, archive descriptions, and banner artwork for your catalog."}
+                icon={BookOpen}
+            />
 
             {/* Catalog Settings Form */}
             <div className="space-y-6">

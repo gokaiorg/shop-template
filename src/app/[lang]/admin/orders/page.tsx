@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getIsCartEnabled } from "@/config/brand.config";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ShoppingCart } from "lucide-react";
 
 interface AdminOrdersPageProps {
     params: Promise<{
@@ -59,14 +61,11 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">{ordersDict.title}</h1>
-                    <p className="text-muted-foreground">
-                        {lang === 'fr' ? 'Gérer les commandes de votre boutique.' : 'Manage your store orders.'}
-                    </p>
-                </div>
-            </div>
+            <AdminPageHeader
+                title={ordersDict.title}
+                description={lang === 'fr' ? 'Gérer les commandes de votre boutique.' : 'Manage your store orders.'}
+                icon={ShoppingCart}
+            />
 
             <Card>
                 <CardHeader>

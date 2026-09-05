@@ -4,6 +4,8 @@ import { Locale } from "@/app/i18n-config";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { ContactMessage } from "@/types/database";
 import { MessagesTable } from "@/components/admin/MessagesTable";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Mail } from "lucide-react";
 
 export default async function AdminMessagesPage({
   params,
@@ -51,17 +53,14 @@ export default async function AdminMessagesPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {messagesDict.title || (lang === "fr" ? "Messages" : "Messages")}
-        </h1>
-        <p className="text-muted-foreground">
-          {messagesDict.subtitle ||
-            (lang === "fr"
-              ? "Consultez et gérez les demandes de contact reçues depuis la boutique."
-              : "View and manage contact inquiries sent from the storefront.")}
-        </p>
-      </div>
+      <AdminPageHeader
+        title={messagesDict.title || (lang === "fr" ? "Messages" : "Messages")}
+        description={messagesDict.subtitle ||
+          (lang === "fr"
+            ? "Consultez et gérez les demandes de contact reçues depuis la boutique."
+            : "View and manage contact inquiries sent from the storefront.")}
+        icon={Mail}
+      />
 
       <MessagesTable initialMessages={messages} lang={lang} dict={dict} />
     </div>

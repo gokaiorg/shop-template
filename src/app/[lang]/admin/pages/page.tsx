@@ -3,10 +3,11 @@ import { Locale } from "@/app/i18n-config";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { adminDb } from "@/lib/firebase-admin";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { formatPageDoc } from "@/lib/services/pages";
 import { PageTable } from "@/components/admin/PageTable";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default async function AdminPagesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -24,22 +25,20 @@ export default async function AdminPagesPage({ params }: { params: Promise<{ lan
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">{dict.admin.pages}</h1>
-                    <p className="text-muted-foreground">
-                        {lang === 'fr' 
-                            ? 'Gérer les pages statiques, légales et de contenu de votre boutique.' 
-                            : 'Manage custom content, legal, and storefront pages.'}
-                    </p>
-                </div>
+            <AdminPageHeader
+                title={dict.admin.pages}
+                description={lang === 'fr' 
+                    ? 'Gérer les pages statiques, légales et de contenu de votre boutique.' 
+                    : 'Manage custom content, legal, and storefront pages.'}
+                icon={FileText}
+            >
                 <Button asChild className="gap-2">
                     <Link href={`/${lang}/admin/pages/new`}>
                         <Plus className="w-4 h-4" />
                         {lang === 'fr' ? 'Créer une page' : 'Create Page'}
                     </Link>
                 </Button>
-            </div>
+            </AdminPageHeader>
 
             <PageTable pages={pages} lang={lang} />
         </div>
