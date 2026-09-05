@@ -15,6 +15,26 @@ export const BRANDS: Record<string, BrandConfig> = {
  * Resolves active brand identifier dynamically from server runtime environment.
  */
 export function getActiveBrandKey(): string {
+    const kService = (process.env.K_SERVICE || "").toLowerCase();
+    const fbProject = (process.env.FIREBASE_PROJECT_ID || "").toLowerCase();
+    
+    if (kService.includes("art-fate") || fbProject.includes("art-fate")) {
+        return "art-fate";
+    }
+    if (kService.includes("green-ghost") || fbProject.includes("green-ghost")) {
+        return "green-ghost";
+    }
+    if (kService.includes("gokai-labs") || fbProject.includes("gokai-labs")) {
+        return "gokai-labs";
+    }
+
+    if (typeof window !== "undefined") {
+        const host = window.location.hostname.toLowerCase();
+        if (host.includes("art-fate")) return "art-fate";
+        if (host.includes("green-ghost")) return "green-ghost";
+        if (host.includes("gokai-labs")) return "gokai-labs";
+    }
+
     return (
         process.env.BRAND ||
         process.env.NEXT_PUBLIC_BRAND ||

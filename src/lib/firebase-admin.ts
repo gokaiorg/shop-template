@@ -67,17 +67,18 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
-const brand = (process.env.BRAND || process.env.NEXT_PUBLIC_BRAND || "").toLowerCase().trim();
+const rawDbId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
+// Only fallback to specific named databases if the project is explicitly known to require them
 const defaultDbForProject = 
-  projectId === "shop-gcp" || brand === "shop-template" ? "shop-template-database" :
-  projectId === "green-ghost-gcp" || brand === "green-ghost" ? "green-ghost-database" :
-  projectId === "gokai-labs-gcp" || brand === "gokai-labs" ? "gokai-labs-database" :
+  projectId === "shop-gcp" ? "shop-template-database" :
+  projectId === "green-ghost-gcp" ? "green-ghost-database" :
+  projectId === "gokai-labs-gcp" ? "gokai-labs-database" :
   undefined;
 
-const rawDbId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || defaultDbForProject;
-export const adminDb = !rawDbId || rawDbId === "(default)" || rawDbId.trim() === ""
+const targetDbId = rawDbId || defaultDbForProject;
+export const adminDb = !targetDbId || targetDbId === "(default)" || targetDbId.trim() === ""
   ? getFirestore(app)
-  : getFirestore(app, rawDbId);
+  : getFirestore(app, targetDbId);
 
 export const adminAuth = getAuth(app);
 export const adminStorage = getStorage(app);
