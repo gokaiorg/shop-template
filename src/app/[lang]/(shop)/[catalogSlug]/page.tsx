@@ -152,16 +152,24 @@ export default async function CatalogPage(props: CatalogPageProps) {
 
     // Initiate independent fetch requests concurrently
     const dictPromise = getDictionary(lang as Locale);
-    const categoriesPromise = adminDb.collection('categories').get();
+    const categoriesPromise = adminDb.collection('categories').orderBy('order', 'asc').get();
 
     const [dict, categoriesSnapshot] = await Promise.all([
         dictPromise,
         categoriesPromise
     ]);
 
-    const categories = categoriesSnapshot.docs.map(doc => 
+    const rawCategories = categoriesSnapshot.docs.map(doc => 
         serializeFirestoreData(doc.id, doc.data()) as Category
     );
+
+    const categories = rawCategories.sort((a, b) => {
+        const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+        if (orderDiff !== 0) return orderDiff;
+        const nameA = getLocalizedField(a.name, lang) || (lang === 'fr' ? a.nameFr : a.nameEn) || '';
+        const nameB = getLocalizedField(b.name, lang) || (lang === 'fr' ? b.nameFr : b.nameEn) || '';
+        return nameA.localeCompare(nameB, lang);
+    });
 
     const catalogTitle = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === 'fr' ? 'Boutique' : 'Shop');
     const catalogBanner = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || '';

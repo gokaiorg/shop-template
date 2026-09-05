@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import Link from "next/link";
-import { Package, FolderTree, ShoppingCart, ArrowRight, FileText, Settings } from "lucide-react";
+import { Package, FolderTree, ShoppingCart, ArrowRight, FileText, Settings, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { adminDb } from "@/lib/firebase-admin";
 import { getRecentOrders, getPendingOrdersCount } from "@/actions/orders";
@@ -177,20 +177,29 @@ export default async function AdminDashboardPage({
                             <CardDescription>Direct shortcuts to manage your portfolio showcase items.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <Link href={`/${lang}/admin/products`} className="flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                                <Package className="h-5 w-5 mr-3 text-primary" />
+                            <Link href={`/${lang}/admin/catalog`} className="flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                                <BookOpen className="h-5 w-5 mr-3 text-primary" />
                                 <div className="flex-1">
-                                    <p className="font-medium leading-none mb-1">{dict.admin.products}</p>
-                                    <p className="text-xs text-muted-foreground">Manage artworks, exhibits and portfolio items</p>
+                                    <p className="font-medium leading-none mb-1">{dict.admin.catalog || "Catalog"}</p>
+                                    <p className="text-xs text-muted-foreground">Configure URL slug, titles, and archive banner</p>
                                 </div>
                                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
                             </Link>
-                            
+
                             <Link href={`/${lang}/admin/categories`} className="flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                                 <FolderTree className="h-5 w-5 mr-3 text-primary" />
                                 <div className="flex-1">
                                     <p className="font-medium leading-none mb-1">{dict.admin.categories}</p>
                                     <p className="text-xs text-muted-foreground">Organize pieces into medium & collections</p>
+                                </div>
+                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            </Link>
+
+                            <Link href={`/${lang}/admin/products`} className="flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                                <Package className="h-5 w-5 mr-3 text-primary" />
+                                <div className="flex-1">
+                                    <p className="font-medium leading-none mb-1">{dict.admin.products}</p>
+                                    <p className="text-xs text-muted-foreground">Manage artworks, exhibits and portfolio items</p>
                                 </div>
                                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
                             </Link>

@@ -10,7 +10,7 @@ export default async function NewProductPage({ params }: { params: Promise<{ lan
     // Fetch dictionary and categories in parallel to reduce TTFB
     const [dict, categoriesSnapshot] = await Promise.all([
         getDictionary(lang as Locale),
-        adminDb.collection("categories").orderBy("nameEn", "asc").get()
+        adminDb.collection("categories").orderBy("order", "asc").get()
     ]);
     const categories = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();

@@ -42,7 +42,7 @@ export default async function AdminSettingsPage({
                     Storefront Settings
                 </h1>
                 <p className="text-muted-foreground">
-                    Customize your storefront brand identity, catalog routing, localization, footer copy, and social media channels.
+                    Customize your storefront brand identity, visual assets, hero presentation, footer copy, and social media channels.
                 </p>
             </div>
 

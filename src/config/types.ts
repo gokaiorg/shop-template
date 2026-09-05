@@ -125,6 +125,7 @@ export interface SeedCategory {
     slug: Record<string, string>;
     intro?: Record<string, string>;
     description: Record<string, string>;
+    order?: number;
 }
 
 export interface SeedProduct {

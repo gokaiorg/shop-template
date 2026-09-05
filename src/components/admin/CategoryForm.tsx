@@ -62,13 +62,14 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
     });
 
     const form = useForm<z.infer<typeof categorySchema>>({
-        resolver: zodResolver(categorySchema),
+        resolver: zodResolver(categorySchema) as any,
         defaultValues: {
             name: defaultName,
             slug: defaultSlug,
             intro: defaultIntro,
             description: defaultDesc,
             imageUrl: initialData?.imageUrl || "",
+            order: initialData?.order !== undefined ? initialData.order : Date.now(),
         },
     });
 
@@ -109,8 +110,13 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
             if (!completeDesc[loc]) completeDesc[loc] = completeDesc[defaultLocale] || "";
         });
 
+        const effectiveOrder = values.order !== undefined
+            ? Math.round(Number(values.order))
+            : (initialData?.order !== undefined ? initialData.order : Date.now());
+
         const payload = {
             ...values,
+            order: effectiveOrder,
             imageUrl: values.imageUrl || null,
             name: completeName,
             slug: completeSlug,
@@ -282,6 +288,9 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                         />
                     </div>
                 )}
+
+                {/* Hidden Position / Order Field - Managed via Drag & Drop in categories table */}
+                <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
                 {/* Category Banner Image */}
                 <Card>

@@ -7,6 +7,7 @@ import { LangToggle } from "@/components/layout/LangToggle";
 import { Button } from "@/components/ui/button";
 import { 
     LayoutDashboard, 
+    BookOpen,
     Tags, 
     Package, 
     FileText, 
@@ -15,11 +16,22 @@ import {
     ExternalLink
 } from "lucide-react";
 import { useBrand } from "@/components/providers/BrandProvider";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export function Aside({ lang, dict, session }: { lang: string, dict: any, session: any }) {
+    const pathname = usePathname();
     const { isCartEnabled } = useBrand();
     const adminDict = dict?.admin || {};
     const ordersTitle = adminDict.orders?.title || adminDict.orders || "Orders";
+
+    const isDashboardActive = pathname === `/${lang}/admin/dashboard` || pathname === `/${lang}/admin`;
+    const isCatalogActive = pathname.startsWith(`/${lang}/admin/catalog`);
+    const isCategoriesActive = pathname.startsWith(`/${lang}/admin/categories`);
+    const isProductsActive = pathname.startsWith(`/${lang}/admin/products`);
+    const isPagesActive = pathname.startsWith(`/${lang}/admin/pages`);
+    const isOrdersActive = pathname.startsWith(`/${lang}/admin/orders`);
+    const isSettingsActive = pathname.startsWith(`/${lang}/admin/settings`);
 
     return (
         <aside className="hidden md:flex w-64 bg-background border-r flex-col justify-between">
@@ -34,29 +46,102 @@ export function Aside({ lang, dict, session }: { lang: string, dict: any, sessio
                     </Button>
                 </div>
                 <nav className="space-y-1">
-                    <Link href={`/${lang}/admin/dashboard`} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
+                    {/* 1. Dashboard */}
+                    <Link
+                        href={`/${lang}/admin/dashboard`}
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            isDashboardActive
+                                ? "bg-muted text-foreground font-semibold"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        )}
+                    >
                         <LayoutDashboard className="h-4 w-4" />
                         {adminDict.dashboard || "Dashboard"}
                     </Link>
-                    <Link href={`/${lang}/admin/products`} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
-                        <Package className="h-4 w-4" />
-                        {adminDict.products || "Products"}
+
+                    {/* 2. Catalogue */}
+                    <Link
+                        href={`/${lang}/admin/catalog`}
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            isCatalogActive
+                                ? "bg-muted text-foreground font-semibold"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        )}
+                    >
+                        <BookOpen className="h-4 w-4" />
+                        {adminDict.catalog || (lang === 'fr' ? "Catalogue" : "Catalog")}
                     </Link>
-                    <Link href={`/${lang}/admin/categories`} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
+
+                    {/* 3. Categories */}
+                    <Link
+                        href={`/${lang}/admin/categories`}
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            isCategoriesActive
+                                ? "bg-muted text-foreground font-semibold"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        )}
+                    >
                         <Tags className="h-4 w-4" />
                         {adminDict.categories || "Categories"}
                     </Link>
-                    <Link href={`/${lang}/admin/pages`} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
+
+                    {/* 4. Products */}
+                    <Link
+                        href={`/${lang}/admin/products`}
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            isProductsActive
+                                ? "bg-muted text-foreground font-semibold"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        )}
+                    >
+                        <Package className="h-4 w-4" />
+                        {adminDict.products || "Products"}
+                    </Link>
+
+                    {/* 5. Pages */}
+                    <Link
+                        href={`/${lang}/admin/pages`}
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            isPagesActive
+                                ? "bg-muted text-foreground font-semibold"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        )}
+                    >
                         <FileText className="h-4 w-4" />
                         {adminDict.pages || "Pages"}
                     </Link>
+
+                    {/* Orders (if Cart Enabled) */}
                     {isCartEnabled && (
-                        <Link href={`/${lang}/admin/orders`} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
+                        <Link
+                            href={`/${lang}/admin/orders`}
+                            className={cn(
+                                "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                                isOrdersActive
+                                    ? "bg-muted text-foreground font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                            )}
+                        >
                             <ShoppingCart className="h-4 w-4" />
                             {ordersTitle}
                         </Link>
                     )}
-                    <Link href={`/${lang}/admin/settings`} className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
+
+                    {/* 6. Settings */}
+                    <Link
+                        href={`/${lang}/admin/settings`}
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            isSettingsActive
+                                ? "bg-muted text-foreground font-semibold"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        )}
+                    >
                         <Settings className="h-4 w-4" />
                         {adminDict.settings || "Settings"}
                     </Link>

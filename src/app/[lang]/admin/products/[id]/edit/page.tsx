@@ -11,7 +11,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ la
 
     const [productDoc, categoriesSnap] = await Promise.all([
         adminDb.collection("products").doc(id).get(),
-        adminDb.collection("categories").get()
+        adminDb.collection("categories").orderBy("order", "asc").get()
     ]);
 
     if (!productDoc.exists) {

@@ -21,6 +21,8 @@
         "products_edit": "Modifier le produit",
         "categories_create": "Créer une catégorie",
         "categories_edit": "Modifier la catégorie",
+        "catalog": "Catalogue",
+        "catalog_settings": "Paramètres du Catalogue",
         "dashboard_seedButton": "Générer des données de démo",
         "dashboard_seedWarning": "Attention : Ceci supprimera tous les produits et catégories existants.",
         "dashboard_seedSuccess": "Données de démo générées avec succès !",
@@ -57,7 +59,9 @@
             "metaDescriptionEn": "Méta Description (EN)",
             "metaDescriptionFr": "Méta Description (FR)",
             "contentEn": "Contenu (EN)",
-            "contentFr": "Contenu (FR)"
+            "contentFr": "Contenu (FR)",
+            "order": "Position / Ordre",
+            "order_desc": "Définit la position numérique de cette catégorie dans les onglets, filtres du catalogue et grilles (les nombres les plus petits apparaissent en premier)."
         },
         "orders": {
             "title": "Gérer les commandes",

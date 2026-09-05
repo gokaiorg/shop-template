@@ -55,6 +55,7 @@ export interface Product {
 
 export interface Category {
   id: string;
+  order?: number;
   createdAt: Date | string;
   updatedAt: Date | string;
   name: Record<string, string>;

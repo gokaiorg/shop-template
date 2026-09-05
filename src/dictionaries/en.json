@@ -21,6 +21,8 @@
         "products_edit": "Edit Product",
         "categories_create": "Create Category",
         "categories_edit": "Edit Category",
+        "catalog": "Catalog",
+        "catalog_settings": "Catalog Settings",
         "dashboard_seedButton": "Generate Demo Data",
         "dashboard_seedWarning": "Warning: This will clear all existing products and categories.",
         "dashboard_seedSuccess": "Demo data generated successfully!",
@@ -57,7 +59,9 @@
             "metaDescriptionEn": "Meta Description (EN)",
             "metaDescriptionFr": "Meta Description (FR)",
             "contentEn": "Content (EN)",
-            "contentFr": "Content (FR)"
+            "contentFr": "Content (FR)",
+            "order": "Position / Order",
+            "order_desc": "Define the numeric position of this category in navigation tabs, catalog filters, and grid displays (lower numbers appear first)."
         },
         "orders": {
             "title": "Manage Orders",

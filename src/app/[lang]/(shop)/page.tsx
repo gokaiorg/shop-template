@@ -86,22 +86,31 @@ export default async function Home({
   // Fetch dictionary, categories, products, and store settings in parallel
   const [dict, categoriesSnap, productsSnap, storeSettings] = await Promise.all([
     getDictionary(lang as Locale),
-    adminDb.collection("categories").get(),
+    adminDb.collection("categories").orderBy("order", "asc").get(),
     adminDb.collection("products")
       .orderBy("createdAt", "desc")
       .get(),
     getStoreSettings()
   ]);
 
-  const categories = categoriesSnap.docs.map(doc => {
+  const rawCategories = categoriesSnap.docs.map(doc => {
     const data = doc.data();
     return {
       ...data,
       id: doc.id,
+      order: typeof data.order === 'number' ? data.order : 0,
       createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null),
       updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
     };
   }) as Category[];
+
+  const categories = rawCategories.sort((a, b) => {
+    const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+    if (orderDiff !== 0) return orderDiff;
+    const nameA = getLocalizedField(a.name, lang) || (lang === "fr" ? a.nameFr : a.nameEn) || "";
+    const nameB = getLocalizedField(b.name, lang) || (lang === "fr" ? b.nameFr : b.nameEn) || "";
+    return nameA.localeCompare(nameB, lang);
+  });
 
   const categoryMap = new Map(categories.map(c => [c.id, c]));
 

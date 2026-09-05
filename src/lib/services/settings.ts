@@ -82,7 +82,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
 /**
  * Persists store_front settings into Firestore.
  */
-export async function saveStoreSettings(settings: Omit<StoreSettings, 'id'>): Promise<void> {
+export async function saveStoreSettings(settings: Partial<Omit<StoreSettings, 'id'>>): Promise<void> {
     const docRef = adminDb.collection(SETTINGS_COLLECTION).doc(STORE_FRONT_DOC_ID);
     await docRef.set({
         ...settings,

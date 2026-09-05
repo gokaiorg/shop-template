@@ -53,8 +53,15 @@ export async function Footer({
 
     let categories: Category[] = [];
     try {
-        const catSnap = await adminDb.collection('categories').get();
+        const catSnap = await adminDb.collection('categories').orderBy('order', 'asc').get();
         categories = catSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Category));
+        categories.sort((a, b) => {
+            const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+            if (orderDiff !== 0) return orderDiff;
+            const nameA = getLocalizedField(a.name, lang) || (isFr ? a.nameFr : a.nameEn) || '';
+            const nameB = getLocalizedField(b.name, lang) || (isFr ? b.nameFr : b.nameEn) || '';
+            return nameA.localeCompare(nameB, lang);
+        });
     } catch (e) {
         console.error("Error fetching categories for footer:", e);
     }

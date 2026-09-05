@@ -58,6 +58,7 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
             slug: slugMap,
             intro: introMap,
             description: descMap,
+            order: Math.round(Number(result.data.order ?? 0)) || 0,
             nameEn,
             nameFr,
             slugEn,
@@ -126,6 +127,7 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
             slug: slugMap,
             intro: introMap,
             description: descMap,
+            order: Math.round(Number(result.data.order ?? 0)) || 0,
             nameEn,
             nameFr,
             slugEn,
@@ -145,6 +147,41 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
     } catch (error) {
         console.error("UPDATE_CATEGORY_ERROR:", error);
         return { success: false, error: "Failed to update category." };
+    }
+}
+
+export async function reorderCategories(updates: { id: string; order: number }[]) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return { success: true };
+    }
+
+    try {
+        const batch = adminDb.batch();
+        for (const update of updates) {
+            if (update.id && typeof update.order === "number") {
+                const ref = adminDb.collection("categories").doc(update.id);
+                batch.update(ref, { 
+                    order: Math.round(update.order),
+                    updatedAt: new Date() 
+                });
+            }
+        }
+        await batch.commit();
+
+        revalidatePath('/[lang]/admin/categories', 'page');
+        revalidatePath('/[lang]', 'layout');
+        revalidatePath('/', 'layout');
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("REORDER_CATEGORIES_ERROR:", error);
+        return { success: false, error: error?.message || "Failed to reorder categories." };
     }
 }
 
@@ -341,6 +378,7 @@ export async function seedDemoData() {
             const data = {
                 id: ref.id,
                 ...cat,
+                order: typeof cat.order === 'number' ? cat.order : (categories.length * 10),
                 nameEn,
                 nameFr,
                 slugEn,

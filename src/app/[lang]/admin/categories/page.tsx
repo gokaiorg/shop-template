@@ -3,10 +3,9 @@ import { Locale } from "@/app/i18n-config";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { adminDb } from "@/lib/firebase-admin";
-import { Category } from "@/types/database";
-import { Pencil } from "lucide-react";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { getLocalizedField } from "@/lib/i18n";
+import { CategoryTable } from "@/components/admin/CategoryTable";
 
 export default async function AdminCategoriesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -15,15 +14,16 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
     // Fetch dictionary and categories in parallel to reduce TTFB
     const [dict, categoriesSnapshot] = await Promise.all([
         getDictionary(lang as Locale),
-        adminDb.collection("categories").orderBy("createdAt", "desc").get()
+        adminDb.collection("categories").orderBy("order", "asc").get()
     ]);
 
     // Optimize N+1 query problem by batching product counts
-    const categories = await Promise.all(categoriesSnapshot.docs.map(async (doc) => {
+    const rawCategories = await Promise.all(categoriesSnapshot.docs.map(async (doc) => {
         const data = doc.data();
         const cat: any = { 
             id: doc.id, 
             ...data,
+            order: typeof data.order === 'number' ? data.order : 0,
             createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
             updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
         };
@@ -35,6 +35,14 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
 
         return { ...cat, _count: { products: aggregateSnapshot.data().count } };
     }));
+
+    const categories = rawCategories.sort((a, b) => {
+        const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+        if (orderDiff !== 0) return orderDiff;
+        const nameA = getLocalizedField(a.name, lang) || (lang === 'fr' ? a.nameFr : a.nameEn) || "";
+        const nameB = getLocalizedField(b.name, lang) || (lang === 'fr' ? b.nameFr : b.nameEn) || "";
+        return nameA.localeCompare(nameB, lang);
+    });
 
     return (
         <div className="space-y-6">
@@ -48,52 +56,7 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
                 </Button>
             </div>
 
-            <div className="bg-background border rounded-lg p-0 overflow-hidden">
-                <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
-                        <tr>
-                            <th className="px-6 py-3">Name</th>
-                            <th className="px-6 py-3">Slug</th>
-                            <th className="px-6 py-3">Products Count</th>
-                            <th className="px-6 py-3">Created At</th>
-                            <th className="px-6 py-3 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {categories.length === 0 ? (
-                            <tr>
-                                <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                                    {lang === 'fr' ? 'Aucune catégorie trouvée. Créez une nouvelle catégorie.' : 'No categories found. Create a new category.'}
-                                </td>
-                            </tr>
-                        ) : (
-                            categories.map((category) => (
-                                <tr key={category.id} className="border-b last:border-0 hover:bg-muted/20">
-                                    <td className="px-6 py-4 font-medium">
-                                        {getLocalizedField(category.name, lang) || (lang === 'fr' ? category.nameFr : category.nameEn) || "Unnamed"}
-                                    </td>
-                                    <td className="px-6 py-4 text-muted-foreground">
-                                        {getLocalizedField(category.slug, lang) || (lang === 'fr' ? category.slugFr : category.slugEn) || "unknown"}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {category._count.products}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {category.createdAt ? new Date(category.createdAt).toLocaleDateString(lang) : 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <Button variant="ghost" size="icon" asChild>
-                                            <Link href={`/${lang}/admin/categories/${category.id}/edit`}>
-                                                <Pencil className="w-4 h-4" />
-                                            </Link>
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            <CategoryTable categories={categories} lang={lang} />
         </div>
     );
 }
