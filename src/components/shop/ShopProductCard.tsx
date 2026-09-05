@@ -18,7 +18,8 @@ interface ShopProductCardProps {
 }
 
 export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
-    const { brand, isCartEnabled, currency } = useBrand();
+    const { brand, isCartEnabled, currency, catalogSlug } = useBrand();
+    const activeCatalogSlug = catalogSlug || "shop";
     const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "";
     const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
     const slug = getLocalizedField(product.slug, lang) || (lang === 'fr' ? product.slugFr : product.slugEn) || "";
@@ -62,11 +63,30 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
             <div className="flex flex-1 flex-col p-4">
                 {product.categories && product.categories.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
-                        {product.categories.map((cat) => (
-                            <Badge key={cat.id} variant="secondary" className="text-[11px] font-normal px-2 py-0.5">
-                                {getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn)}
-                            </Badge>
-                        ))}
+                        {product.categories.map((cat) => {
+                            const catName = getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn);
+                            const catSlug = getLocalizedField(cat.slug, lang) || (lang === 'fr' ? cat.slugFr : cat.slugEn);
+                            if (!catName) return null;
+
+                            return catSlug ? (
+                                <Link
+                                    key={cat.id}
+                                    href={`/${lang}/${activeCatalogSlug}?category=${catSlug}`}
+                                    className="relative z-10 cursor-pointer"
+                                >
+                                    <Badge
+                                        variant="secondary"
+                                        className="hover:bg-primary/20 transition-colors text-[11px] font-normal px-2 py-0.5 cursor-pointer"
+                                    >
+                                        {catName}
+                                    </Badge>
+                                </Link>
+                            ) : (
+                                <Badge key={cat.id} variant="secondary" className="text-[11px] font-normal px-2 py-0.5">
+                                    {catName}
+                                </Badge>
+                            );
+                        })}
                     </div>
                 )}
 

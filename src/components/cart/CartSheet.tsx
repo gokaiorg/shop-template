@@ -32,7 +32,7 @@ export function CartSheet({ dict }: { dict?: any }) {
     const params = useParams();
     const router = useRouter();
     const lang = (params?.lang as string) || "en";
-    const { currency } = useBrand();
+    const { brand, currency } = useBrand();
     const [isLoading, setIsLoading] = useState(false);
 
     // useMounted hook to prevent hydration mismatch since we are using localStorage
@@ -109,9 +109,10 @@ export function CartSheet({ dict }: { dict?: any }) {
                     ) : (
                         <div className="flex flex-1 flex-col gap-6">
                             {items.map((item) => {
-                                const imageUrl = item.images && item.images.length > 0
-                                    ? item.images[0]
-                                    : "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=2670&auto=format&fit=crop";
+                                const imageUrl = item.imageUrl
+                                    || (item.images && item.images.length > 0 ? item.images[0] : null)
+                                    || brand?.assets?.placeholderImage
+                                    || "/brand/default/placeholder.webp";
 
                                 const itemName = getLocalizedField(item.name, lang) || (lang === "fr" ? item.nameFr : item.nameEn) || "Product";
                                 return (

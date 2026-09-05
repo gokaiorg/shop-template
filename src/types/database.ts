@@ -160,6 +160,7 @@ export interface StoreSettings {
   heroDescription: Record<string, string>;
   heroBackgroundImageUrl?: string;
   catalogTitle?: Record<string, string>;
+  catalogDescription?: Record<string, string>;
   catalogSlug?: string;
   catalogBannerUrl?: string;
   footerDescription?: Record<string, string>;

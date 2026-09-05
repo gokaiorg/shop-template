@@ -206,16 +206,16 @@ export const greenGhostBrand: BrandConfig = {
     },
     assets: {
         logo: {
-            src: '/brand/default/logo.png',
+            src: '/brand/green-ghost/logo.webp',
             alt: 'Green Ghost Logo',
             width: 32,
             height: 32
         },
-        icon: '/brand/default/icon.png',
+        icon: '/brand/green-ghost/icon.webp',
         favicon: '/favicon.ico',
-        ogImage: '/brand/default/og-image.jpg',
-        placeholderImage: 'https://images.unsplash.com/photo-1568644396922-5c3bfae12521?q=80&w=2670&auto=format&fit=crop',
-        heroBanner: 'https://images.unsplash.com/photo-1603909223429-69bb7101f420?q=80&w=2670&auto=format&fit=crop'
+        ogImage: '/brand/green-ghost/og-image.jpg',
+        placeholderImage: '/brand/green-ghost/placeholder.webp',
+        heroBanner: '/brand/green-ghost/hero-banner.webp'
     },
     theme: {
         fontSans: 'var(--font-geist-sans)',

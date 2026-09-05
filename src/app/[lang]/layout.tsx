@@ -26,17 +26,25 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   const storeSettings = await getStoreSettings();
+  const rawBrand = getActiveBrand();
+  const brandName = storeSettings.brandName || rawBrand.identity.name || "Store";
+  const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || rawBrand.identity.url || "http://localhost:3000";
+  const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+
   const baseMetadata = constructSiteMetadata({
     lang,
-    brandName: storeSettings.brandName,
+    brandName,
     faviconUrl: storeSettings.faviconUrl,
   });
 
-  const brandName = storeSettings.brandName || (baseMetadata.creator as string) || "Store";
-
   return {
     ...baseMetadata,
-    authors: [{ name: brandName }],
+    metadataBase: new URL(baseUrl),
+    title: {
+      default: `${brandName} - Store`,
+      template: `%s | ${brandName}`,
+    },
+    authors: [{ name: brandName, url: baseUrl }],
     creator: brandName,
     generator: "Gokai Labs",
   };

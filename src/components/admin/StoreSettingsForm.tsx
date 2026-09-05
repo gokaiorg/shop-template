@@ -74,12 +74,14 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
     const defaultHeroTitle: Record<string, string> = {};
     const defaultHeroDesc: Record<string, string> = {};
     const defaultCatalogTitle: Record<string, string> = {};
+    const defaultCatalogDesc: Record<string, string> = {};
     const defaultFooterDesc: Record<string, string> = {};
 
     supportedLocales.forEach((loc) => {
         defaultHeroTitle[loc] = initialData.heroTitle?.[loc] || initialData.heroTitle?.en || "";
         defaultHeroDesc[loc] = initialData.heroDescription?.[loc] || initialData.heroDescription?.en || "";
         defaultCatalogTitle[loc] = initialData.catalogTitle?.[loc] || (loc === "fr" ? "Boutique" : "Shop");
+        defaultCatalogDesc[loc] = initialData.catalogDescription?.[loc] || initialData.catalogDescription?.en || "";
         defaultFooterDesc[loc] = initialData.footerDescription?.[loc] || initialData.footerDescription?.en || "";
     });
 
@@ -93,6 +95,7 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
             heroDescription: defaultHeroDesc,
             heroBackgroundImageUrl: initialData.heroBackgroundImageUrl || "",
             catalogTitle: defaultCatalogTitle,
+            catalogDescription: defaultCatalogDesc,
             catalogSlug: initialData.catalogSlug || "shop",
             catalogBannerUrl: initialData.catalogBannerUrl || "",
             footerDescription: defaultFooterDesc,
@@ -310,6 +313,66 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
                                                 </FormControl>
                                                 <FormDescription>
                                                     Used in navigation bars, footers, and page headings.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+                            </div>
+
+                            {/* Multilingual Catalog Description */}
+                            <div className="space-y-2 pt-2 border-t">
+                                <FormLabel className="text-sm font-medium">Catalog Description</FormLabel>
+                                {isMultiLocale ? (
+                                    <Tabs defaultValue={defaultLocale} className="w-full">
+                                        <TabsList className="mb-4">
+                                            {supportedLocales.map((loc) => (
+                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                                    {getLocaleDisplayName(loc)} ({loc})
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+                                        {supportedLocales.map((loc) => (
+                                            <TabsContent key={loc} value={loc} className="space-y-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`catalogDescription.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Description ({getLocaleDisplayName(loc)})</FormLabel>
+                                                            <FormControl>
+                                                                <Textarea
+                                                                    rows={3}
+                                                                    placeholder={loc === 'fr' ? 'e.g. Découvrez notre sélection exclusive...' : 'e.g. Discover our exclusive curated collection...'}
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormDescription>
+                                                                Displayed on the catalog banner and used for SEO metadata in {getLocaleDisplayName(loc)}.
+                                                            </FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </TabsContent>
+                                        ))}
+                                    </Tabs>
+                                ) : (
+                                    <FormField
+                                        control={form.control}
+                                        name={`catalogDescription.${defaultLocale}`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Textarea
+                                                        rows={3}
+                                                        placeholder="e.g. Discover our exclusive curated collection..."
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Displayed on the catalog banner and used for SEO metadata.
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>

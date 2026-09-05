@@ -31,6 +31,10 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             en: 'Shop',
             fr: 'Boutique',
         },
+        catalogDescription: {
+            en: '',
+            fr: '',
+        },
         catalogSlug: 'shop',
         catalogBannerUrl: brand.assets?.heroBanner || (brand.assets as any)?.banner || '',
         footerDescription: {
@@ -58,6 +62,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 heroDescription: (data?.heroDescription && typeof data.heroDescription === 'object') ? data.heroDescription : fallbackSettings.heroDescription,
                 heroBackgroundImageUrl: typeof data?.heroBackgroundImageUrl === 'string' ? data.heroBackgroundImageUrl : fallbackSettings.heroBackgroundImageUrl,
                 catalogTitle: (data?.catalogTitle && typeof data.catalogTitle === 'object') ? data.catalogTitle : fallbackSettings.catalogTitle,
+                catalogDescription: (data?.catalogDescription && typeof data.catalogDescription === 'object') ? data.catalogDescription : fallbackSettings.catalogDescription,
                 catalogSlug: (typeof data?.catalogSlug === 'string' && data.catalogSlug.trim().length > 0) ? data.catalogSlug.trim().toLowerCase() : fallbackSettings.catalogSlug,
                 catalogBannerUrl: typeof data?.catalogBannerUrl === 'string' ? data.catalogBannerUrl : fallbackSettings.catalogBannerUrl,
                 footerDescription: (data?.footerDescription && typeof data.footerDescription === 'object') ? data.footerDescription : fallbackSettings.footerDescription,

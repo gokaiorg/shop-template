@@ -24,16 +24,16 @@ export const gokaiLabsBrand: BrandConfig = {
     },
     assets: {
         logo: {
-            src: '/brand/default/logo.png',
+            src: '/brand/gokai-labs/logo.webp',
             alt: 'Gokai Labs Logo',
             width: 32,
             height: 32
         },
-        icon: '/brand/default/icon.png',
+        icon: '/brand/gokai-labs/icon.webp',
         favicon: '/favicon.ico',
-        ogImage: '/brand/default/og-image.jpg',
-        placeholderImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2670&auto=format&fit=crop',
-        heroBanner: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop'
+        ogImage: '/brand/gokai-labs/og-image.jpg',
+        placeholderImage: '/brand/gokai-labs/placeholder.webp',
+        heroBanner: '/brand/gokai-labs/hero-banner.webp'
     },
     theme: {
         fontSans: 'var(--font-geist-sans)',

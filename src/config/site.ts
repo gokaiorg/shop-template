@@ -37,7 +37,7 @@ export function constructSiteMetadata({
         description ||
         (isFr ? brandConfig.seo.defaultDescription.fr : brandConfig.seo.defaultDescription.en);
     const ogImage = image || brandConfig.assets.ogImage || brandConfig.assets.logo.src;
-    const siteUrl = brandConfig.identity.url;
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || 'http://localhost:3000';
     const activeFavicon = faviconUrl || brandConfig.assets.favicon || '/favicon.ico';
 
     return {

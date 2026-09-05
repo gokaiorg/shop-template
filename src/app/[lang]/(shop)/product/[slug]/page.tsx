@@ -101,10 +101,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
     const productName = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "Product";
 
-    // 1 & 2. Title : ${product.name} | ${settings.brandName}
-    const pageTitle = `${productName} | ${brandName}`;
-
-    // 2. Description : product.intro en priorité, sinon product.description nettoyé et tronqué à 160 caractères
+    // Description : product.intro en priorité, sinon product.description nettoyé et tronqué à 160 caractères
     const rawIntro = getLocalizedField(product.intro, lang) || (lang === 'fr' ? product.introFr : product.introEn);
     const rawDescription = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
     const chosenDescriptionText = (rawIntro && rawIntro.trim().length > 0) ? rawIntro : rawDescription;
@@ -148,9 +145,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const authorName = artistOrVendor || brandName;
 
     return {
-        title: {
-            absolute: pageTitle,
-        },
+        title: productName,
         description: cleanedDescription,
         keywords: keywords,
         authors: [{ name: authorName }],
@@ -159,7 +154,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             canonical: canonicalUrl,
         },
         openGraph: {
-            title: pageTitle,
+            title: productName,
             description: cleanedDescription,
             url: canonicalUrl,
             type: "website",
@@ -167,7 +162,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         },
         twitter: {
             card: "summary_large_image",
-            title: pageTitle,
+            title: productName,
             description: cleanedDescription,
             ...(firstImage ? { images: [firstImage] } : {}),
         },
@@ -220,7 +215,7 @@ export default async function ProductPage({ params }: PageProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
                 {/* Left column: Gallery */}
                 <div className="w-full">
-                    <ProductGallery images={images} title={title} />
+                    <ProductGallery images={images} title={title} isOutOfStock={isOutOfStock} />
                 </div>
 
                 {/* Right column: Content */}
@@ -242,16 +237,9 @@ export default async function ProductPage({ params }: PageProps) {
                             </div>
                         )}
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">{title}</h1>
-                        <div className="mt-4 flex items-center gap-3">
-                            <p className="text-3xl font-semibold text-foreground">
-                                {formatPrice(product.price, currency, lang)}
-                            </p>
-                            {isOutOfStock && (
-                                <Badge variant="destructive" className="uppercase font-bold tracking-wider text-xs px-2.5 py-1">
-                                    Sold Out
-                                </Badge>
-                            )}
-                        </div>
+                        <p className="mt-4 text-3xl font-semibold text-foreground">
+                            {formatPrice(product.price, currency, lang)}
+                        </p>
                     </div>
 
                     <h2 className="sr-only">Product Details</h2>

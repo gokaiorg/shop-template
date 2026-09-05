@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 interface ProductGalleryProps {
     images: string[];
     title?: string;
+    isOutOfStock?: boolean;
 }
 
-export function ProductGallery({ images = [], title = "Product" }: ProductGalleryProps) {
+export function ProductGallery({ images = [], title = "Product", isOutOfStock = false }: ProductGalleryProps) {
     // Normalisation : filtrer les URLs vides ou nulles
     const validImages = images.filter((img) => typeof img === "string" && img.trim().length > 0);
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -71,6 +72,11 @@ export function ProductGallery({ images = [], title = "Product" }: ProductGaller
             <div className="relative aspect-square w-full rounded-2xl border border-border bg-muted/40 flex flex-col items-center justify-center text-muted-foreground p-8">
                 <ImageOff className="h-16 w-16 mb-2 stroke-[1.5] opacity-50" />
                 <span className="text-sm font-medium">No image available</span>
+                {isOutOfStock && (
+                    <span className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 uppercase font-bold z-10">
+                        Sold Out
+                    </span>
+                )}
             </div>
         );
     }
@@ -95,12 +101,19 @@ export function ProductGallery({ images = [], title = "Product" }: ProductGaller
                                 alt={`${title} - Photo ${idx + 1}`}
                                 fill
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
-                                className="object-contain p-2 md:p-4"
+                                className={`object-contain p-2 md:p-4 ${isOutOfStock ? "opacity-75 grayscale-[50%]" : ""}`}
                                 priority={idx === 0}
                             />
                         </div>
                     ))}
                 </div>
+
+                {/* Sold Out Overlay Badge */}
+                {isOutOfStock && (
+                    <span className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 uppercase font-bold z-10">
+                        Sold Out
+                    </span>
+                )}
 
                 {/* Flèches de navigation (si plusieurs images) */}
                 {validImages.length > 1 && (

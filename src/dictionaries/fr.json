@@ -100,6 +100,7 @@
     "shop": {
         "all_categories": "Toutes les catégories",
         "add_to_cart": "Ajouter au panier",
+        "products_list": "Liste des produits",
         "empty_state": "Aucun produit trouvé."
     },
     "home": {

@@ -23,9 +23,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ?.replace(/<[^>]*>?/gm, "")
     .slice(0, 160) || "";
 
+  const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+  const canonicalUrl = `${baseUrl}/${lang}/pages/${slug}`;
+
   return {
     title,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
   };
 }
 

@@ -10,7 +10,6 @@ import { ShopCategoryFilter } from "@/components/shop/ShopCategoryFilter";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { Metadata } from "next";
 import { brandConfig } from "@/config/brand.config";
-import { formatTitle } from "@/config/site";
 import { getLocalizedField } from "@/lib/i18n";
 import { getStoreSettings } from "@/lib/services/settings";
 
@@ -31,8 +30,19 @@ export async function generateMetadata(props: CatalogPageProps): Promise<Metadat
         return {};
     }
 
-    const brandName = storeSettings.brandName || brandConfig.identity.name;
-    const defaultCatalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === 'fr' ? 'Boutique' : 'Shop');
+    const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
+    const rawCatalogDisplayTitle = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === 'fr' ? 'Boutique' : 'Shop');
+    const catalogDisplayTitle = rawCatalogDisplayTitle.replace(new RegExp(`\\s*[|\\-]\\s*${brandName}$`, 'i'), '').trim();
+    const rawCatalogDesc = getLocalizedField(storeSettings.catalogDescription, lang);
+    const catalogDescription = (rawCatalogDesc && rawCatalogDesc.trim().length > 0)
+        ? rawCatalogDesc.trim()
+        : (lang === 'fr' ? brandConfig.identity.description?.fr : brandConfig.identity.description?.en) || `Browse our complete collection of ${brandName} products.`;
+    
+    const catalogBannerUrl = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || '';
+
+    const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || '';
+    const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+    const canonicalUrl = `${baseUrl}/${lang}/${activeCatalogSlug}`;
 
     const categoryQuery = searchParams.category;
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
@@ -46,19 +56,57 @@ export async function generateMetadata(props: CatalogPageProps): Promise<Metadat
         
         if (categoryDoc) {
             const category = categoryDoc.data() as Category;
-            const title = getLocalizedField(category.intro, lang) || getLocalizedField(category.name, lang) || (lang === 'fr' ? category.introFr : category.introEn);
-            const description = getLocalizedField(category.description, lang) || (lang === 'fr' ? category.descriptionFr : category.descriptionEn);
-            
+            const catName = getLocalizedField(category.name, lang) || (lang === 'fr' ? category.nameFr : category.nameEn) || '';
+            const catIntro = getLocalizedField(category.intro, lang) || (lang === 'fr' ? category.introFr : category.introEn) || '';
+            const catDesc = getLocalizedField(category.description, lang) || (lang === 'fr' ? category.descriptionFr : category.descriptionEn) || '';
+            const rawCatTitle = catIntro || catName;
+            const categoryTitle = rawCatTitle.replace(new RegExp(`\\s*[|\\-]\\s*${brandName}$`, 'i'), '').trim();
+            const pageDescription = catDesc || `Explore our ${categoryTitle} products.`;
+            const categoryImage = category.imageUrl || catalogBannerUrl;
+            const categoryCanonical = `${canonicalUrl}?category=${currentCategorySlug}`;
+
             return {
-                title: title ? formatTitle(title) : formatTitle(defaultCatalogName),
-                description: description || `Explore our ${title} products.`
+                title: categoryTitle,
+                description: pageDescription,
+                alternates: {
+                    canonical: categoryCanonical,
+                },
+                openGraph: {
+                    title: categoryTitle,
+                    description: pageDescription,
+                    url: categoryCanonical,
+                    type: "website",
+                    ...(categoryImage ? { images: [categoryImage] } : {}),
+                },
+                twitter: {
+                    card: "summary_large_image",
+                    title: categoryTitle,
+                    description: pageDescription,
+                    ...(categoryImage ? { images: [categoryImage] } : {}),
+                },
             };
         }
     }
 
     return {
-        title: formatTitle(defaultCatalogName),
-        description: `Browse our complete collection of ${brandName} products.`
+        title: catalogDisplayTitle,
+        description: catalogDescription,
+        alternates: {
+            canonical: canonicalUrl,
+        },
+        openGraph: {
+            title: catalogDisplayTitle,
+            description: catalogDescription,
+            url: canonicalUrl,
+            type: "website",
+            ...(catalogBannerUrl ? { images: [catalogBannerUrl] } : {}),
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: catalogDisplayTitle,
+            description: catalogDescription,
+            ...(catalogBannerUrl ? { images: [catalogBannerUrl] } : {}),
+        },
     };
 }
 
@@ -159,9 +207,11 @@ export default async function CatalogPage(props: CatalogPageProps) {
         ? (selectedCategory ? (getLocalizedField(selectedCategory.name, lang) || (lang === 'fr' ? selectedCategory.nameFr : selectedCategory.nameEn)) : catalogTitle)
         : catalogTitle;
 
+    const catalogDescription = getLocalizedField(storeSettings.catalogDescription, lang) || '';
+
     const bannerSubtitle = currentCategorySlug
         ? (selectedCategory ? (getLocalizedField(selectedCategory.intro, lang) || (lang === 'fr' ? selectedCategory.introFr : selectedCategory.introEn)) : '')
-        : '';
+        : catalogDescription;
 
     return (
         <div className="w-full flex flex-col">
@@ -186,7 +236,7 @@ export default async function CatalogPage(props: CatalogPageProps) {
                         {bannerTitle}
                     </h1>
                     {bannerSubtitle && (
-                        <p className="mt-4 text-base sm:text-lg md:text-xl text-zinc-200 max-w-2xl drop-shadow">
+                        <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-md text-center">
                             {bannerSubtitle}
                         </p>
                     )}
@@ -281,15 +331,20 @@ export default async function CatalogPage(props: CatalogPageProps) {
                                 </p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {products.map((product) => (
-                                    <ShopProductCard
-                                        key={product.id}
-                                        product={product}
-                                        lang={lang}
-                                        dict={dict.shop || dict}
-                                    />
-                                ))}
+                            <div>
+                                <h2 className="sr-only">
+                                    {dict.shop?.products_list || (lang === 'fr' ? "Liste des produits" : "Products list")}
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {products.map((product) => (
+                                        <ShopProductCard
+                                            key={product.id}
+                                            product={product}
+                                            lang={lang}
+                                            dict={dict.shop || dict}
+                                        />
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>

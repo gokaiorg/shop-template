@@ -24,16 +24,16 @@ export const shopTemplateBrand: BrandConfig = {
     },
     assets: {
         logo: {
-            src: '/brand/default/logo.png',
+            src: '/brand/shop-template/logo.webp',
             alt: 'Shop Template Logo',
             width: 32,
             height: 32
         },
-        icon: '/brand/default/icon.png',
+        icon: '/brand/shop-template/icon.webp',
         favicon: '/favicon.ico',
-        ogImage: '/brand/default/og-image.jpg',
-        placeholderImage: 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=2670&auto=format&fit=crop',
-        heroBanner: 'https://images.unsplash.com/photo-1556742049-0a67e5572293?q=80&w=2670&auto=format&fit=crop'
+        ogImage: '/brand/shop-template/og-image.jpg',
+        placeholderImage: '/brand/shop-template/placeholder.webp',
+        heroBanner: '/brand/shop-template/hero-banner.webp'
     },
     theme: {
         fontSans: 'var(--font-geist-sans)',

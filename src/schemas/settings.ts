@@ -15,6 +15,7 @@ export const storeSettingsSchema = z.object({
     heroDescription: z.record(z.string(), z.string()),
     heroBackgroundImageUrl: z.string().optional(),
     catalogTitle: z.record(z.string(), z.string()).optional(),
+    catalogDescription: z.record(z.string(), z.string()).optional(),
     catalogSlug: z.string().min(1, 'Catalog slug is required').regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens (e.g. shop or galerie)'),
     catalogBannerUrl: z.string().optional(),
     footerDescription: z.record(z.string(), z.string()).optional(),

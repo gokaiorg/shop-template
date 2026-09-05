@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { adminDb } from "@/lib/firebase-admin";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
@@ -8,9 +9,72 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { CategoryPillsNav } from "@/components/shop/CategoryPillsNav";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { ArrowRight } from "lucide-react";
-import { brandConfig } from "@/config/brand.config";
+import { brandConfig, getActiveBrand } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
+
+function stripHtml(text: string): string {
+  return text.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const storeSettings = await getStoreSettings();
+  const rawBrand = getActiveBrand();
+  const isFr = lang === "fr";
+
+  const rawTitle = getLocalizedField(storeSettings.heroTitle, lang)
+    || getLocalizedField(rawBrand.identity.tagline as any, lang)
+    || (isFr ? rawBrand.seo.defaultDescription?.fr : rawBrand.seo.defaultDescription?.en)
+    || "Home";
+  const title = stripHtml(rawTitle);
+
+  const rawDescription = getLocalizedField(storeSettings.heroDescription, lang)
+    || getLocalizedField(storeSettings.footerDescription, lang)
+    || getLocalizedField(rawBrand.identity.description as any, lang)
+    || (isFr ? rawBrand.seo.defaultDescription?.fr : rawBrand.seo.defaultDescription?.en)
+    || "";
+  const description = stripHtml(rawDescription);
+
+  const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || rawBrand.identity.url || "http://localhost:3000";
+  const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+  const canonicalUrl = `${baseUrl}/${lang}`;
+
+  const heroImage = storeSettings.heroBackgroundImageUrl
+    || rawBrand.assets?.heroBanner
+    || rawBrand.assets?.placeholderImage
+    || "";
+  const absoluteImageUrl = heroImage
+    ? (heroImage.startsWith("http://") || heroImage.startsWith("https://")
+        ? heroImage
+        : `${baseUrl}${heroImage.startsWith("/") ? "" : "/"}${heroImage}`)
+    : undefined;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      type: "website",
+      ...(absoluteImageUrl ? { images: [{ url: absoluteImageUrl }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(absoluteImageUrl ? { images: [absoluteImageUrl] } : {}),
+    },
+  };
+}
 
 export default async function Home({
   params,

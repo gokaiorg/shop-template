@@ -14,7 +14,7 @@ export const artFateBrand: BrandConfig = {
             en: 'Discover rare sculptures, museum-grade limited prints, and contemporary canvases curated by Art Fate.',
             fr: 'Découvrez des sculptures rares, des tirages d\'art limités de qualité musée et des peintures contemporaines sélectionnées par le Studio Art Fate.'
         },
-        url: process.env.NEXT_PUBLIC_APP_URL || 'https://artfate.com',
+        url: process.env.NEXT_PUBLIC_APP_URL || 'https://art-fate.com',
         companyName: 'Art Fate',
         copyrightYear: new Date().getFullYear(),
         creator: {
@@ -24,16 +24,16 @@ export const artFateBrand: BrandConfig = {
     },
     assets: {
         logo: {
-            src: '/brand/art-fate/logo.svg',
+            src: '/brand/art-fate/logo.webp',
             alt: 'Art Fate Logo',
             width: 36,
             height: 36
         },
-        icon: '/brand/art-fate/icon.png',
+        icon: '/brand/art-fate/icon.webp',
         favicon: '/favicon.ico',
         ogImage: '/brand/art-fate/og-image.jpg',
-        placeholderImage: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2608&auto=format&fit=crop',
-        heroBanner: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop'
+        placeholderImage: '/brand/art-fate/placeholder.webp',
+        heroBanner: '/brand/art-fate/hero-banner.webp'
     },
     theme: {
         fontSans: 'var(--font-geist-sans)',
@@ -97,7 +97,7 @@ export const artFateBrand: BrandConfig = {
         }
     },
     contact: {
-        email: 'contact@artfate.com',
+        email: 'contact@art-fate.com',
         phone: '+33 1 42 68 00 00',
         address: {
             street: '14 Rue de la Paix',
