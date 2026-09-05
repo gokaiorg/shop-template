@@ -39,6 +39,7 @@
             "statusEn": "Statut (EN)",
             "price": "Prix",
             "stock": "Stock",
+            "artist": "Artiste / Vendeur",
             "categoryId": "Catégorie",
             "imageUrl": "Image du produit",
             "uploadImage": "Téléverser une image",

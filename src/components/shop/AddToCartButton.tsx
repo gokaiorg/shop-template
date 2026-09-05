@@ -23,6 +23,21 @@ export function AddToCartButton({ product, lang, label, title, className, size =
         return null;
     }
 
+    const isOutOfStock = (product.stock ?? 0) <= 0;
+
+    if (isOutOfStock) {
+        return (
+            <Button
+                size={size}
+                disabled
+                className={`rounded-full shadow-xs cursor-not-allowed opacity-50 ${className || ""}`}
+                aria-label={`Sold Out - ${title}`}
+            >
+                Sold Out
+            </Button>
+        );
+    }
+
     const handleAddToCart = () => {
         addItem(product);
         toast.success(label, {

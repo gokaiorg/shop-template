@@ -11,15 +11,15 @@ export const artFateBrand: BrandConfig = {
             fr: 'Art Contemporain & Éditions Rares'
         },
         description: {
-            en: 'Discover rare sculptures, museum-grade limited prints, and contemporary canvases curated by Art Fate Studio.',
+            en: 'Discover rare sculptures, museum-grade limited prints, and contemporary canvases curated by Art Fate.',
             fr: 'Découvrez des sculptures rares, des tirages d\'art limités de qualité musée et des peintures contemporaines sélectionnées par le Studio Art Fate.'
         },
         url: process.env.NEXT_PUBLIC_APP_URL || 'https://artfate.com',
-        companyName: 'Art Fate Studio SAS',
+        companyName: 'Art Fate',
         copyrightYear: new Date().getFullYear(),
         creator: {
-            name: 'Art Fate Studio',
-            url: 'https://artfate.com'
+            name: 'Art Fate',
+            url: 'https://art-fate.com'
         }
     },
     assets: {

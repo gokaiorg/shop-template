@@ -13,13 +13,24 @@ export default auth((req) => {
     // Allow auth API routes to pass through
     if (isApiAuthRoute) return NextResponse.next();
 
+    const locales = getSupportedLocales();
+    const defaultLocale = getDefaultLocale();
+    const isMulti = isMultiLocale();
+    const pathname = nextUrl.pathname;
+
     // Check if trying to access an admin route
-    const isAdminRoute = nextUrl.pathname.includes('/admin');
+    const isAdminRoute = pathname.includes('/admin');
 
     // If it's an admin route, check role
     if (isAdminRoute) {
         if (!isLoggedIn) {
-            return NextResponse.redirect(new URL('/api/auth/signin', nextUrl));
+            const matchedLocale = locales.find(
+                (loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`)
+            ) || defaultLocale;
+            const loginPath = isMulti ? `/${matchedLocale}/login` : `/login`;
+            const loginUrl = new URL(loginPath, nextUrl);
+            loginUrl.searchParams.set('callbackUrl', pathname + nextUrl.search);
+            return NextResponse.redirect(loginUrl);
         }
         
         const role = (req.auth?.user?.role || "").toLowerCase();
@@ -29,11 +40,6 @@ export default auth((req) => {
             return NextResponse.redirect(new URL('/', nextUrl));
         }
     }
-
-    const locales = getSupportedLocales();
-    const defaultLocale = getDefaultLocale();
-    const isMulti = isMultiLocale();
-    const pathname = nextUrl.pathname;
 
     if (!isMulti || locales.length <= 1) {
         // Single-locale mode:

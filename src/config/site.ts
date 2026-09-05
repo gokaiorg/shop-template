@@ -50,11 +50,12 @@ export function constructSiteMetadata({
         keywords: brandConfig.seo.keywords,
         authors: [
             {
-                name: brandConfig.identity.creator?.name || activeBrandName,
-                url: brandConfig.identity.creator?.url || siteUrl,
+                name: activeBrandName,
+                url: siteUrl,
             },
         ],
-        creator: brandConfig.identity.creator?.name || activeBrandName,
+        creator: activeBrandName,
+        generator: "Gokai Labs",
         icons: {
             icon: activeFavicon,
             apple: activeFavicon || '/icon.png',

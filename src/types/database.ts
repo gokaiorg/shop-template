@@ -25,6 +25,8 @@ export interface Product {
   id: string;
   price: number;
   stock: number;
+  artist?: string | null;
+  vendor?: string | null;
   imageUrl?: string | null;
   images: string[];
   categoryIds: string[];

@@ -186,11 +186,14 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
 
         const categoryIds = result.data.categoryIds || (result.data.categoryId ? [result.data.categoryId] : []);
         const primaryCategoryId = categoryIds[0] || "";
+        const artist = result.data.artist?.trim() || result.data.vendor?.trim() || null;
 
         const productData = {
             id: ref.id,
             price: result.data.price,
             stock: result.data.stock,
+            artist,
+            vendor: artist,
             categoryIds,
             categoryId: primaryCategoryId,
             name: nameMap,
@@ -262,10 +265,13 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
 
         const categoryIds = result.data.categoryIds || (result.data.categoryId ? [result.data.categoryId] : []);
         const primaryCategoryId = categoryIds[0] || "";
+        const artist = result.data.artist?.trim() || result.data.vendor?.trim() || null;
 
         const productData = {
             price: result.data.price,
             stock: result.data.stock,
+            artist,
+            vendor: artist,
             categoryIds,
             categoryId: primaryCategoryId,
             name: nameMap,

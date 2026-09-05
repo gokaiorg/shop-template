@@ -98,6 +98,8 @@ export function ProductForm({
             status: defaultStatus,
             price: initialData?.price || 0,
             stock: initialData?.stock || 0,
+            artist: initialData?.artist || initialData?.vendor || "",
+            vendor: initialData?.vendor || initialData?.artist || "",
             categoryIds: initialCategoryIds,
             categoryId: initialCategoryIds[0] || "",
             imageUrl: initialImages[0] || null,
@@ -219,8 +221,11 @@ export function ProductForm({
                 if (!completeStatus[loc]) completeStatus[loc] = completeStatus[defaultLocale] || "draft";
             });
 
+            const trimmedArtist = values.artist?.trim() || values.vendor?.trim() || null;
             const payload = {
                 ...values,
+                artist: trimmedArtist,
+                vendor: trimmedArtist,
                 name: completeName,
                 slug: completeSlug,
                 intro: completeIntro,
@@ -365,6 +370,23 @@ export function ProductForm({
                                 </FormItem>
                             )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="artist"
+                            render={({ field }) => (
+                                <FormItem className="col-span-1 md:col-span-2">
+                                    <FormLabel>{dict.artist || "Artist / Vendor"}</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="e.g. Amann Inkspiration"
+                                            {...field}
+                                            value={field.value || ""}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     </div>
 
                     {/* Product Image Upload & Gallery Section */}
@@ -455,9 +477,17 @@ export function ProductForm({
                                                 </Button>
 
                                                 {/* Numéro d'ordre */}
-                                                <span className="absolute bottom-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
+                                                <span className="absolute bottom-6 right-1.5 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
                                                     #{idx + 1}
                                                 </span>
+
+                                                {/* Affichage de l'URL source */}
+                                                <div
+                                                    className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-[9px] font-mono p-1 truncate text-center backdrop-blur-sm z-10"
+                                                    title={imgUrl}
+                                                >
+                                                    {imgUrl}
+                                                </div>
                                             </div>
                                         );
                                     })}

@@ -67,7 +67,7 @@ export async function Footer({
         <footer className="border-t bg-zinc-50 dark:bg-black py-12 mt-auto">
             <div className="w-full max-w-7xl mx-auto px-6 md:px-16 grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
                 <div className="col-span-1 md:col-span-2">
-                    <h3 className="font-bold text-lg mb-4">{activeBrandName}</h3>
+                    <h2 className="font-bold text-lg mb-4">{activeBrandName}</h2>
                     {description && (
                         <p className="text-muted-foreground text-sm max-w-sm leading-relaxed whitespace-pre-line">
                             {description}
@@ -91,7 +91,7 @@ export async function Footer({
                 </div>
                 
                 <div>
-                    <h4 className="font-bold mb-4">{displayCatalogTitle}</h4>
+                    <h2 className="font-bold mb-4">{displayCatalogTitle}</h2>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         <li>
                             <Link href={`/${lang}/${activeCatalogSlug}`} className="hover:text-foreground transition-colors">
@@ -118,7 +118,7 @@ export async function Footer({
                 </div>
 
                 <div>
-                    <h4 className="font-bold mb-4">{legalDict.title || (isFr ? "Informations & Légal" : "Information & Legal")}</h4>
+                    <h2 className="font-bold mb-4">{legalDict.title || (isFr ? "Informations & Légal" : "Information & Legal")}</h2>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {footerPages.length > 0 ? (
                             footerPages.map((page) => {

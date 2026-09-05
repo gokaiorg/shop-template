@@ -26,11 +26,20 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   const storeSettings = await getStoreSettings();
-  return constructSiteMetadata({
+  const baseMetadata = constructSiteMetadata({
     lang,
     brandName: storeSettings.brandName,
     faviconUrl: storeSettings.faviconUrl,
   });
+
+  const brandName = storeSettings.brandName || (baseMetadata.creator as string) || "Store";
+
+  return {
+    ...baseMetadata,
+    authors: [{ name: brandName }],
+    creator: brandName,
+    generator: "Gokai Labs",
+  };
 }
 
 export default async function RootLayout({

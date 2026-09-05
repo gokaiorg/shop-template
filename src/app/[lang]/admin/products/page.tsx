@@ -2,6 +2,7 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product } from "@/types/database";
 import { Pencil } from "lucide-react";
@@ -113,7 +114,15 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                                         })()}
                                     </td>
                                     <td className="px-6 py-4 font-medium">{formatPrice(product.price, currency, lang)}</td>
-                                    <td className="px-6 py-4">{product.stock}</td>
+                                    <td className="px-6 py-4">
+                                        {(product.stock ?? 0) > 0 ? (
+                                            product.stock
+                                        ) : (
+                                            <Badge variant="destructive" className="text-xs">
+                                                Out of stock
+                                            </Badge>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <Button variant="ghost" size="icon" asChild>
                                             <Link href={`/${lang}/admin/products/${product.id}/edit`}>

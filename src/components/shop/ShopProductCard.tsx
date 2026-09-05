@@ -36,6 +36,8 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
         || (product.images && product.images.length > 0 ? product.images[0] : null)
         || brand.assets.placeholderImage;
 
+    const isOutOfStock = (product.stock ?? 0) <= 0;
+
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-background">
             {/* Image Container */}
@@ -45,8 +47,15 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     alt={title}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
+                        isOutOfStock ? "opacity-75 grayscale-[50%]" : ""
+                    }`}
                 />
+                {isOutOfStock && (
+                    <span className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 uppercase font-bold tracking-wider z-10 shadow-sm rounded-xs">
+                        Sold Out
+                    </span>
+                )}
             </Link>
 
             {/* Content Container */}
@@ -76,11 +85,12 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     {isCartEnabled && (
                         <Button
                             size="sm"
-                            className="rounded-full shadow-xs cursor-pointer"
+                            disabled={isOutOfStock}
+                            className={`rounded-full shadow-xs ${isOutOfStock ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                             onClick={handleAddToCart}
-                            aria-label={`${dict.add_to_cart || "Add to cart"} ${title}`}
+                            aria-label={`${isOutOfStock ? "Sold Out" : (dict.add_to_cart || "Add to cart")} ${title}`}
                         >
-                            {dict.add_to_cart || "Add to cart"}
+                            {isOutOfStock ? (dict.sold_out || "Sold Out") : (dict.add_to_cart || "Add to cart")}
                         </Button>
                     )}
                 </div>
