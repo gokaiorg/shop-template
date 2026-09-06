@@ -44,17 +44,18 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Category } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
 
-function slugify(text: string): string {
+function generateSlug(text: string): string {
     return text
         .toString()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .trim()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "")
-        .replace(/-+/g, "-");
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "");
 }
+
+const slugify = generateSlug;
 
 export function CategoryForm({ dict, lang, initialData }: { dict: Record<string, string>; lang: string; initialData?: Category }) {
     const router = useRouter();
@@ -89,26 +90,42 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
     });
 
     const isNew = !initialData?.id;
-    const watchedName = form.watch("name");
-    const slugTouchedRef = useRef<Record<string, boolean>>(
-        initialData?.id
-            ? locales.reduce((acc, loc) => ({ ...acc, [loc]: true }), {})
-            : {}
-    );
+    const slugTouchedRef = useRef<Record<string, boolean>>({});
 
+    // Live auto-slug generation on name typing (both in creation and edit)
     useEffect(() => {
-        if (!watchedName) return;
-
-        locales.forEach((loc) => {
-            if (!slugTouchedRef.current[loc]) {
-                const currentName = watchedName[loc] || "";
-                if (currentName.trim()) {
-                    const generated = slugify(currentName);
-                    form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
+        // 1. In creation mode, generate initial slug if name has value
+        if (isNew) {
+            locales.forEach((loc) => {
+                const currentSlug = form.getValues(`slug.${loc}`);
+                if (!slugTouchedRef.current[loc] || !currentSlug) {
+                    const currentName = form.getValues(`name.${loc}`) || "";
+                    if (currentName.trim()) {
+                        const generated = generateSlug(currentName);
+                        form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
+                    }
                 }
-            }
+            });
+        }
+
+        // 2. React Hook Form subscription: live keystroke listener on name
+        const subscription = form.watch((value, { name }) => {
+            if (!name || !name.startsWith("name")) return;
+
+            locales.forEach((loc) => {
+                const currentSlug = form.getValues(`slug.${loc}`);
+                if (!slugTouchedRef.current[loc] || !currentSlug) {
+                    const currentName = form.getValues(`name.${loc}`) || "";
+                    if (currentName.trim()) {
+                        const generated = generateSlug(currentName);
+                        form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
+                    }
+                }
+            });
         });
-    }, [watchedName, locales, form]);
+
+        return () => subscription.unsubscribe();
+    }, [isNew, locales, form]);
 
     const handleSlugChange = (loc: string, rawValue: string, onChange: (val: string) => void) => {
         if (!rawValue.trim()) {
@@ -118,9 +135,8 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
         }
         const cleanSlug = rawValue
             .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9-]/g, "")
-            .replace(/-+/g, "-");
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)+/g, "");
         onChange(cleanSlug);
     };
 
@@ -160,9 +176,48 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
         }
     };
 
+    const onInvalid = (errors: any) => {
+        console.warn("Category form validation errors:", errors);
+        toast.error(
+            lang?.startsWith("fr")
+                ? "Veuillez compléter les champs obligatoires."
+                : "Please complete the required fields."
+        );
+    };
+
     function onSubmit(values: z.infer<typeof categorySchema>) {
-        if (!values.name?.[defaultLocale] || !values.slug?.[defaultLocale] || !values.description?.[defaultLocale]) {
-            toast.error(`Please complete the required fields for ${getLocaleDisplayName(defaultLocale)}.`);
+        let hasError = false;
+
+        if (!values.name?.[defaultLocale]?.trim()) {
+            form.setError(`name.${defaultLocale}` as any, {
+                type: "manual",
+                message: lang?.startsWith("fr") ? "Le nom de la catégorie est obligatoire." : "Category name is required.",
+            });
+            hasError = true;
+        }
+
+        if (!values.slug?.[defaultLocale]?.trim()) {
+            form.setError(`slug.${defaultLocale}` as any, {
+                type: "manual",
+                message: lang?.startsWith("fr") ? "Le slug est obligatoire." : "Slug is required.",
+            });
+            hasError = true;
+        }
+
+        if (!values.description?.[defaultLocale]?.trim()) {
+            form.setError(`description.${defaultLocale}` as any, {
+                type: "manual",
+                message: lang?.startsWith("fr") ? "La description est obligatoire." : "Description is required.",
+            });
+            hasError = true;
+        }
+
+        if (hasError) {
+            toast.error(
+                lang?.startsWith("fr")
+                    ? "Veuillez compléter les champs obligatoires."
+                    : "Please complete the required fields."
+            );
             return;
         }
 
@@ -233,7 +288,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 flex flex-col flex-1">
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8 flex flex-col flex-1">
                 {isMulti ? (
                     <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
                         {locales.map((loc) => (
@@ -247,7 +302,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                         name={`name.${loc}`}
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()})</FormLabel>
+                                                <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                 <FormControl>
                                                     <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
                                                 </FormControl>
@@ -273,7 +328,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                         name={`description.${loc}`}
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()})</FormLabel>
+                                                <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                 <FormControl>
                                                     <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
                                                 </FormControl>
@@ -295,7 +350,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                             name={`name.${locales[0]}`}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()})</FormLabel>
+                                    <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                     <FormControl>
                                         <Input placeholder="Name..." {...field} value={field.value || ""} />
                                     </FormControl>
@@ -321,7 +376,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                             name={`description.${locales[0]}`}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()})</FormLabel>
+                                    <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                     <FormControl>
                                         <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
                                     </FormControl>
@@ -459,7 +514,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                                <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()})</FormLabel>
+                                                                <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                                 <div className="flex items-center gap-2">
                                                                     <Badge variant="secondary" className="font-mono text-xs">
                                                                         /{lang}/{catalogSlug || "shop"}?category={currentSlugVal || "slug"}
@@ -516,7 +571,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                 render={({ field }) => (
                                     <FormItem>
                                         <div className="flex items-center justify-between gap-2 flex-wrap">
-                                            <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()})</FormLabel>
+                                            <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                             <div className="flex items-center gap-2">
                                                 <Badge variant="secondary" className="font-mono text-xs">
                                                     /{lang}/{catalogSlug || "shop"}?category={field.value || "slug"}
