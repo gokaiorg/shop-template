@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink } from "lucide-react";
+import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink, Globe, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { createCategory, updateCategory, deleteCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
 import { uploadProductImage } from "@/lib/firebase-storage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 import {
     AlertDialog,
@@ -30,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -41,6 +43,18 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 
 import { Category } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
+
+function slugify(text: string): string {
+    return text
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "")
+        .replace(/-+/g, "-");
+}
 
 export function CategoryForm({ dict, lang, initialData }: { dict: Record<string, string>; lang: string; initialData?: Category }) {
     const router = useRouter();
@@ -73,6 +87,59 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
             order: initialData?.order !== undefined ? initialData.order : Date.now(),
         },
     });
+
+    const isNew = !initialData?.id;
+    const watchedName = form.watch("name");
+    const slugTouchedRef = useRef<Record<string, boolean>>(
+        initialData?.id
+            ? locales.reduce((acc, loc) => ({ ...acc, [loc]: true }), {})
+            : {}
+    );
+
+    useEffect(() => {
+        if (!watchedName) return;
+
+        locales.forEach((loc) => {
+            if (!slugTouchedRef.current[loc]) {
+                const currentName = watchedName[loc] || "";
+                if (currentName.trim()) {
+                    const generated = slugify(currentName);
+                    form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
+                }
+            }
+        });
+    }, [watchedName, locales, form]);
+
+    const handleSlugChange = (loc: string, rawValue: string, onChange: (val: string) => void) => {
+        if (!rawValue.trim()) {
+            slugTouchedRef.current[loc] = false;
+        } else {
+            slugTouchedRef.current[loc] = true;
+        }
+        const cleanSlug = rawValue
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, "")
+            .replace(/-+/g, "-");
+        onChange(cleanSlug);
+    };
+
+    const handleSlugBlur = (loc: string, onBlur: () => void) => {
+        onBlur();
+        const currentVal = form.getValues(`slug.${loc}`) || "";
+        if (!currentVal.trim()) {
+            slugTouchedRef.current[loc] = false;
+            const currentName = form.getValues(`name.${loc}`) || "";
+            if (currentName.trim()) {
+                form.setValue(`slug.${loc}`, slugify(currentName), { shouldDirty: true, shouldValidate: true });
+            }
+        } else {
+            const trimmed = currentVal.replace(/^-+|-+$/g, "");
+            if (trimmed !== currentVal) {
+                form.setValue(`slug.${loc}`, trimmed, { shouldDirty: true, shouldValidate: true });
+            }
+        }
+    };
 
     const imageUrlValue = form.watch("imageUrl");
 
@@ -107,6 +174,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
         locales.forEach((loc) => {
             if (!completeName[loc]) completeName[loc] = completeName[defaultLocale] || "";
             if (!completeSlug[loc]) completeSlug[loc] = completeSlug[defaultLocale] || "";
+            if (completeSlug[loc]) completeSlug[loc] = slugify(completeSlug[loc]);
             if (!completeIntro[loc]) completeIntro[loc] = completeIntro[defaultLocale] || "";
             if (!completeDesc[loc]) completeDesc[loc] = completeDesc[defaultLocale] || "";
         });
@@ -189,19 +257,6 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                     />
                                     <FormField
                                         control={form.control}
-                                        name={`slug.${loc}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()})</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder={`slug-${loc}...`} {...field} value={field.value || ""} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
                                         name={`intro.${loc}`}
                                         render={({ field }) => (
                                             <FormItem>
@@ -243,19 +298,6 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                     <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()})</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Name..." {...field} value={field.value || ""} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name={`slug.${locales[0]}`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()})</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="name-slug..." {...field} value={field.value || ""} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -382,6 +424,144 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                 </FormItem>
                             )}
                         />
+                    </CardContent>
+                </Card>
+
+                {/* URL & Routing Card */}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Globe className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang?.startsWith("fr") ? "Routage & URL" : "URL & Routing"}
+                            </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang?.startsWith("fr")
+                                ? "Identifiant unique utilisé pour générer l'adresse web publique de la catégorie."
+                                : "Unique identifier used to generate the public web address for the category."}
+                        </p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {isMulti ? (
+                            <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
+                                {locales.map((loc) => {
+                                    const currentSlugVal = form.watch(`slug.${loc}`) || "";
+                                    return (
+                                        <AccordionItem key={loc} value={loc}>
+                                            <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                                                {getLocaleDisplayName(loc)}
+                                            </AccordionTrigger>
+                                            <AccordionContent className="space-y-4 pt-3 px-1">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`slug.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                                <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()})</FormLabel>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Badge variant="secondary" className="font-mono text-xs">
+                                                                        /{lang}/{catalogSlug || "shop"}?category={currentSlugVal || "slug"}
+                                                                    </Badge>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
+                                                                        title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
+                                                                        onClick={() => {
+                                                                            const currentName = form.getValues(`name.${loc}`) || "";
+                                                                            if (currentName.trim()) {
+                                                                                const regenerated = slugify(currentName);
+                                                                                slugTouchedRef.current[loc] = false;
+                                                                                form.setValue(`slug.${loc}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                                toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <RotateCcw className="h-3 w-3" />
+                                                                        <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                            <FormControl>
+                                                                <Input
+                                                                    placeholder={`slug-${loc}...`}
+                                                                    className="font-mono text-sm max-w-md"
+                                                                    {...field}
+                                                                    value={field.value || ""}
+                                                                    onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
+                                                                    onBlur={() => handleSlugBlur(loc, field.onBlur)}
+                                                                />
+                                                            </FormControl>
+                                                            <FormDescription>
+                                                                {lang?.startsWith("fr")
+                                                                    ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                                    : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                            </FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    );
+                                })}
+                            </Accordion>
+                        ) : (
+                            <FormField
+                                control={form.control}
+                                name={`slug.${locales[0]}`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                                            <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()})</FormLabel>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="secondary" className="font-mono text-xs">
+                                                    /{lang}/{catalogSlug || "shop"}?category={field.value || "slug"}
+                                                </Badge>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
+                                                    title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
+                                                    onClick={() => {
+                                                        const currentName = form.getValues(`name.${locales[0]}`) || "";
+                                                        if (currentName.trim()) {
+                                                            const regenerated = slugify(currentName);
+                                                            slugTouchedRef.current[locales[0]] = false;
+                                                            form.setValue(`slug.${locales[0]}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                            toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
+                                                        }
+                                                    }}
+                                                >
+                                                    <RotateCcw className="h-3 w-3" />
+                                                    <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <FormControl>
+                                            <Input
+                                                placeholder={`slug-${locales[0]}...`}
+                                                className="font-mono text-sm max-w-md"
+                                                {...field}
+                                                value={field.value || ""}
+                                                onChange={(e) => handleSlugChange(locales[0], e.target.value, field.onChange)}
+                                                onBlur={() => handleSlugBlur(locales[0], field.onBlur)}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>
+                                            {lang?.startsWith("fr")
+                                                ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
                     </CardContent>
                 </Card>
 

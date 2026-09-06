@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { LogIn, User } from "lucide-react"
+import { LogIn, User, LayoutDashboard, LogOut } from "lucide-react"
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 
@@ -20,8 +20,8 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
 
     if (status === "loading") {
         return (
-            <Button variant="ghost" size="icon" disabled>
-                <User className="h-[1.2rem] w-[1.2rem] opacity-50" />
+            <Button size="icon" disabled className="rounded-full bg-primary text-primary-foreground opacity-50">
+                <User className="h-[1.2rem] w-[1.2rem]" />
                 <span className="sr-only">{dict.account || "Account"}</span>
             </Button>
         )
@@ -31,20 +31,28 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button size="icon" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
                         <User className="h-[1.2rem] w-[1.2rem]" />
                         <span className="sr-only">{dict.account || "Account"}</span>
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                        <Link href={`/${lang}/admin/dashboard`}>
-                            {dict.header?.dashboard || "Dashboard"}
+                <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem 
+                        asChild
+                        className="cursor-pointer focus:bg-primary focus:text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                    >
+                        <Link href={`/${lang}/admin/dashboard`} className="flex items-center w-full">
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            <span>{dict.header?.dashboard || "Dashboard"}</span>
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
-                        Sign Out
+                    <DropdownMenuItem 
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        className="cursor-pointer text-destructive focus:bg-destructive focus:text-white hover:bg-destructive hover:text-white group"
+                    >
+                        <LogOut className="mr-2 h-4 w-4 text-destructive group-hover:text-white group-focus:text-white" />
+                        <span>Sign Out</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -53,10 +61,11 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
 
     return (
         <AuthSheet dict={dict.auth || {}}>
-            <Button variant="ghost" size="icon">
+            <Button size="icon" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
                 <User className="h-[1.2rem] w-[1.2rem]" />
                 <span className="sr-only">{dict.account || "Account"}</span>
             </Button>
         </AuthSheet>
     )
 }
+
