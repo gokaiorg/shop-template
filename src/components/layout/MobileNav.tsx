@@ -21,7 +21,11 @@ export function MobileNav({ lang, dict, pages = [] }: { lang: string, dict: Reco
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="md:hidden cursor-pointer bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground transition-colors"
+                >
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Toggle Menu</span>
                 </Button>

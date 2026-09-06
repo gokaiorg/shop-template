@@ -277,8 +277,8 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
       </div>
 
       {/* Messages Table Card */}
-      <div className="rounded-lg border bg-card shadow-xs overflow-hidden">
-        <Table>
+      <div className="rounded-lg border bg-card shadow-xs overflow-x-auto">
+        <Table className="min-w-[800px]">
           <TableHeader className="bg-muted/40">
             <TableRow>
               <TableHead className="w-[180px] font-semibold">{colDict.name || (lang === "fr" ? "Nom" : "Name")}</TableHead>
@@ -378,11 +378,11 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                     </TableCell>
 
                     {/* Status Badge */}
-                    <TableCell>{renderStatusBadge(msg.status)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{renderStatusBadge(msg.status)}</TableCell>
 
                     {/* Actions */}
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
+                    <TableCell className="text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                         {/* Reply Native Mailto Button */}
                         <Button
                           asChild

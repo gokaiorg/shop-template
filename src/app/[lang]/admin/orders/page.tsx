@@ -75,15 +75,15 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
                         {lang === 'fr' ? 'Liste complète des commandes passées.' : 'Full list of processed store orders.'}
                     </p>
                 </CardHeader>
-                <CardContent>
-                    <Table>
+                <CardContent className="overflow-x-auto">
+                    <Table className="min-w-[700px]">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>{ordersDict.columns.id}</TableHead>
-                                <TableHead>{ordersDict.columns.date}</TableHead>
-                                <TableHead>{ordersDict.columns.customer}</TableHead>
-                                <TableHead>{ordersDict.columns.total}</TableHead>
-                                <TableHead className="text-right">{ordersDict.columns.status}</TableHead>
+                                <TableHead className="whitespace-nowrap">{ordersDict.columns.id}</TableHead>
+                                <TableHead className="whitespace-nowrap">{ordersDict.columns.date}</TableHead>
+                                <TableHead className="whitespace-nowrap">{ordersDict.columns.customer}</TableHead>
+                                <TableHead className="whitespace-nowrap">{ordersDict.columns.total}</TableHead>
+                                <TableHead className="text-right whitespace-nowrap">{ordersDict.columns.status}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -96,21 +96,21 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
                             ) : (
                                 orders.map((order) => (
                                     <TableRow key={order.id}>
-                                        <TableCell className="font-medium">
+                                        <TableCell className="font-medium whitespace-nowrap">
                                             {order.id.substring(order.id.length - 8).toUpperCase()}
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground">
+                                        <TableCell className="text-muted-foreground whitespace-nowrap">
                                             {format(new Date(order.createdAt), "PPP p")}
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex flex-col">
-                                                <span>{order.customerName || "Guest"}</span>
-                                                <span className="text-xs text-muted-foreground">
+                                            <div className="flex flex-col min-w-[150px]">
+                                                <span className="font-medium">{order.customerName || "Guest"}</span>
+                                                <span className="text-xs text-muted-foreground truncate">
                                                     {order.customerEmail}
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="whitespace-nowrap">
                                             <div className="flex flex-col">
                                                 <span className="font-semibold">{formatCurrency(order.totalAmount)}</span>
                                                 <span className="text-xs text-muted-foreground">
@@ -118,9 +118,10 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className="text-right whitespace-nowrap">
                                             <Badge
                                                 variant={order.status === "COMPLETED" || order.status === "PAID" ? "default" : order.status === "PENDING" ? "secondary" : "destructive"}
+                                                className="whitespace-nowrap"
                                             >
                                                 {order.status}
                                             </Badge>

@@ -66,7 +66,7 @@ function SortableCategoryRow({ category, lang, catalogSlug = 'shop' }: SortableC
                 isDragging ? "bg-muted/40 shadow-sm" : "hover:bg-muted/20"
             }`}
         >
-            <td className="px-4 py-4 w-12 text-center">
+            <td className="px-4 py-4 w-12 text-center whitespace-nowrap">
                 <button
                     type="button"
                     {...attributes}
@@ -81,17 +81,17 @@ function SortableCategoryRow({ category, lang, catalogSlug = 'shop' }: SortableC
             <td className="px-6 py-4 font-medium">
                 {getLocalizedField(category.name, lang) || (lang === 'fr' ? category.nameFr : category.nameEn) || "Unnamed"}
             </td>
-            <td className="px-6 py-4 text-muted-foreground font-mono text-xs">
+            <td className="px-6 py-4 text-muted-foreground font-mono text-xs whitespace-nowrap">
                 {getLocalizedField(category.slug, lang) || (lang === 'fr' ? category.slugFr : category.slugEn) || "unknown"}
             </td>
-            <td className="px-6 py-4">
+            <td className="px-6 py-4 whitespace-nowrap">
                 {category._count?.products ?? 0}
             </td>
-            <td className="px-6 py-4 text-muted-foreground text-xs">
+            <td className="px-6 py-4 text-muted-foreground text-xs whitespace-nowrap">
                 {category.createdAt ? new Date(category.createdAt).toLocaleDateString(lang) : 'N/A'}
             </td>
-            <td className="px-6 py-4 text-right">
-                <div className="flex items-center justify-end gap-1">
+            <td className="px-6 py-4 text-right whitespace-nowrap">
+                <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -222,21 +222,21 @@ export function CategoryTable({ categories: initialCategories, lang, catalogSlug
     };
 
     return (
-        <div className="bg-background border rounded-lg p-0 overflow-hidden">
+        <div className="bg-background border rounded-lg p-0 overflow-x-auto">
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
             >
-                <table className="w-full text-sm text-left">
+                <table className="w-full text-sm text-left min-w-[700px]">
                     <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                         <tr>
-                            <th className="px-4 py-3 w-12 text-center" aria-label="Order Handle"></th>
-                            <th className="px-6 py-3">{lang === "fr" ? "Nom" : "Name"}</th>
-                            <th className="px-6 py-3">{lang === "fr" ? "Slug" : "Slug"}</th>
-                            <th className="px-6 py-3">{lang === "fr" ? "Nombre de produits" : "Products Count"}</th>
-                            <th className="px-6 py-3">{lang === "fr" ? "Date de création" : "Created At"}</th>
-                            <th className="px-6 py-3 text-right">Actions</th>
+                            <th className="px-4 py-3 w-12 text-center whitespace-nowrap" aria-label="Order Handle"></th>
+                            <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Nom" : "Name"}</th>
+                            <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Slug" : "Slug"}</th>
+                            <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Nombre de produits" : "Products Count"}</th>
+                            <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Date de création" : "Created At"}</th>
+                            <th className="px-6 py-3 text-right whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <SortableContext

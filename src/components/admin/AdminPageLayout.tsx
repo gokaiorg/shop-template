@@ -48,8 +48,8 @@ export function AdminPageLayout({
             </header>
 
             {/* Conteneur principal */}
-            <div className="flex-1 px-4 sm:px-8 flex flex-col">
-                <div className="flex flex-col max-w-5xl w-full gap-6 mx-auto flex-1">
+            <div className="flex-1 px-4 sm:px-8 flex flex-col min-w-0">
+                <div className="flex flex-col max-w-5xl w-full gap-6 mx-auto flex-1 min-w-0">
                     {children}
                 </div>
             </div>

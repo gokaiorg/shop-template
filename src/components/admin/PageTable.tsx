@@ -64,7 +64,7 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
                 isDragging ? "bg-muted/40 shadow-sm" : "hover:bg-muted/20"
             }`}
         >
-            <td className="px-4 py-4 w-12 text-center">
+            <td className="px-4 py-4 w-12 text-center whitespace-nowrap">
                 <button
                     type="button"
                     {...attributes}
@@ -79,16 +79,16 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
             <td className="px-6 py-4 font-medium">
                 {title}
             </td>
-            <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
+            <td className="px-6 py-4 font-mono text-xs text-muted-foreground whitespace-nowrap">
                 /pages/{page.slug}
             </td>
-            <td className="px-6 py-4">
+            <td className="px-6 py-4 whitespace-nowrap">
                 <Badge variant={page.status === 'published' ? 'default' : 'secondary'}>
                     {page.status === 'published' ? 'Published' : 'Draft'}
                 </Badge>
             </td>
-            <td className="px-6 py-4">
-                <div className="flex gap-1.5">
+            <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex gap-1.5 whitespace-nowrap">
                     {page.showInHeader && (
                         <Badge variant="outline" className="text-[10px]">
                             Header
@@ -104,11 +104,11 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
                     )}
                 </div>
             </td>
-            <td className="px-6 py-4 text-xs text-muted-foreground">
+            <td className="px-6 py-4 text-xs text-muted-foreground whitespace-nowrap">
                 {page.updatedAt ? new Date(page.updatedAt).toLocaleDateString(lang) : 'N/A'}
             </td>
-            <td className="px-6 py-4 text-right">
-                <div className="flex items-center justify-end gap-1">
+            <td className="px-6 py-4 text-right whitespace-nowrap">
+                <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -240,24 +240,24 @@ export function PageTable({ pages: initialPages, lang }: PageTableProps) {
     }
 
     return (
-        <div className="bg-background border rounded-lg p-0 overflow-hidden shadow-sm">
+        <div className="bg-background border rounded-lg p-0 overflow-x-auto shadow-sm">
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
             >
-                <table className="w-full text-sm text-left">
+                <table className="w-full text-sm text-left min-w-[750px]">
                     <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                         <tr>
-                            <th className="px-4 py-3 w-12 text-center">
+                            <th className="px-4 py-3 w-12 text-center whitespace-nowrap">
                                 <span className="sr-only">{lang === 'fr' ? 'Ordre' : 'Order'}</span>
                             </th>
-                            <th className="px-6 py-3">{lang === 'fr' ? 'Titre' : 'Title'}</th>
-                            <th className="px-6 py-3">Slug (URL)</th>
-                            <th className="px-6 py-3">{lang === 'fr' ? 'Statut' : 'Status'}</th>
-                            <th className="px-6 py-3">Navigation</th>
-                            <th className="px-6 py-3">{lang === 'fr' ? 'Dernière mise à jour' : 'Last Updated'}</th>
-                            <th className="px-6 py-3 text-right">Actions</th>
+                            <th className="px-6 py-3 whitespace-nowrap">{lang === 'fr' ? 'Titre' : 'Title'}</th>
+                            <th className="px-6 py-3 whitespace-nowrap">Slug (URL)</th>
+                            <th className="px-6 py-3 whitespace-nowrap">{lang === 'fr' ? 'Statut' : 'Status'}</th>
+                            <th className="px-6 py-3 whitespace-nowrap">Navigation</th>
+                            <th className="px-6 py-3 whitespace-nowrap">{lang === 'fr' ? 'Dernière mise à jour' : 'Last Updated'}</th>
+                            <th className="px-6 py-3 text-right whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <SortableContext

@@ -118,14 +118,14 @@ export default async function AdminDashboardPage({
                                 {lang === 'fr' ? "Dernières commandes enregistrées." : "Latest customer orders recorded."}
                             </p>
                         </CardHeader>
-                        <CardContent>
-                            <Table>
+                        <CardContent className="overflow-x-auto">
+                            <Table className="min-w-[550px]">
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>{lang === 'fr' ? "ID Commande" : "Order ID"}</TableHead>
-                                        <TableHead>{lang === 'fr' ? "Date" : "Date"}</TableHead>
-                                        <TableHead>{lang === 'fr' ? "Statut" : "Status"}</TableHead>
-                                        <TableHead className="text-right">{lang === 'fr' ? "Total" : "Total"}</TableHead>
+                                        <TableHead className="whitespace-nowrap">{lang === 'fr' ? "ID Commande" : "Order ID"}</TableHead>
+                                        <TableHead className="whitespace-nowrap">{lang === 'fr' ? "Date" : "Date"}</TableHead>
+                                        <TableHead className="whitespace-nowrap">{lang === 'fr' ? "Statut" : "Status"}</TableHead>
+                                        <TableHead className="text-right whitespace-nowrap">{lang === 'fr' ? "Total" : "Total"}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -138,14 +138,14 @@ export default async function AdminDashboardPage({
                                     ) : (
                                         recentOrders.map((order) => (
                                             <TableRow key={order.id}>
-                                                <TableCell className="font-medium">{order.id}</TableCell>
-                                                <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant={order.status === "COMPLETED" || order.status === "PAID" ? "default" : order.status === "PENDING" ? "secondary" : "destructive"}>
+                                                <TableCell className="font-medium whitespace-nowrap">{order.id}</TableCell>
+                                                <TableCell className="whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                                                <TableCell className="whitespace-nowrap">
+                                                    <Badge variant={order.status === "COMPLETED" || order.status === "PAID" ? "default" : order.status === "PENDING" ? "secondary" : "destructive"} className="whitespace-nowrap">
                                                         {order.status}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right whitespace-nowrap">${order.totalAmount.toFixed(2)}</TableCell>
                                             </TableRow>
                                         ))
                                     )}

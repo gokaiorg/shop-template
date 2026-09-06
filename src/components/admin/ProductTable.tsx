@@ -81,7 +81,7 @@ function SortableProductRow({ product, currency, lang }: SortableProductRowProps
                 isDragging ? "bg-muted/40 shadow-sm" : "hover:bg-muted/20"
             }`}
         >
-            <td className="px-4 py-4 w-12 text-center">
+            <td className="px-4 py-4 w-12 text-center whitespace-nowrap">
                 <button
                     type="button"
                     {...attributes}
@@ -100,7 +100,7 @@ function SortableProductRow({ product, currency, lang }: SortableProductRowProps
                 <div className="flex flex-wrap gap-1">
                     {product.categories && product.categories.length > 0 ? (
                         product.categories.map((cat: any) => (
-                            <span key={cat.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-muted text-foreground border">
+                            <span key={cat.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-muted text-foreground border whitespace-nowrap">
                                 {getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn) || "Unnamed"}
                             </span>
                         ))
@@ -109,8 +109,8 @@ function SortableProductRow({ product, currency, lang }: SortableProductRowProps
                     )}
                 </div>
             </td>
-            <td className="px-6 py-4">
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+            <td className="px-6 py-4 whitespace-nowrap">
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                     isPublished
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                         : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
@@ -118,18 +118,18 @@ function SortableProductRow({ product, currency, lang }: SortableProductRowProps
                     {status}
                 </span>
             </td>
-            <td className="px-6 py-4 font-medium">{formatPrice(product.price, currency, lang)}</td>
-            <td className="px-6 py-4">
+            <td className="px-6 py-4 font-medium whitespace-nowrap">{formatPrice(product.price, currency, lang)}</td>
+            <td className="px-6 py-4 whitespace-nowrap">
                 {(product.stock ?? 0) > 0 ? (
                     product.stock
                 ) : (
-                    <Badge variant="destructive" className="text-xs">
+                    <Badge variant="destructive" className="text-xs whitespace-nowrap">
                         Out of stock
                     </Badge>
                 )}
             </td>
-            <td className="px-6 py-4 text-right">
-                <div className="flex items-center justify-end gap-1">
+            <td className="px-6 py-4 text-right whitespace-nowrap">
+                <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -396,22 +396,22 @@ export function ProductTable({
             </div>
 
             {/* Products Table with Drag and Drop */}
-            <div className="bg-background border rounded-lg p-0 overflow-hidden shadow-xs">
+            <div className="bg-background border rounded-lg p-0 overflow-x-auto shadow-xs">
                 <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
                     onDragEnd={handleDragEnd}
                 >
-                    <table className="w-full text-sm text-left">
+                    <table className="w-full text-sm text-left min-w-[850px]">
                         <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                             <tr>
-                                <th className="px-4 py-3 w-12 text-center" aria-label="Order Handle"></th>
-                                <th className="px-6 py-3">{lang === "fr" ? "Nom" : "Name"}</th>
-                                <th className="px-6 py-3">{lang === "fr" ? "Catégories" : "Categories"}</th>
-                                <th className="px-6 py-3">{lang === "fr" ? "Statut" : "Status"}</th>
-                                <th className="px-6 py-3">{lang === "fr" ? "Prix" : "Price"}</th>
-                                <th className="px-6 py-3">{lang === "fr" ? "Stock" : "Stock"}</th>
-                                <th className="px-6 py-3 text-right">Actions</th>
+                                <th className="px-4 py-3 w-12 text-center whitespace-nowrap" aria-label="Order Handle"></th>
+                                <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Nom" : "Name"}</th>
+                                <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Catégories" : "Categories"}</th>
+                                <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Statut" : "Status"}</th>
+                                <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Prix" : "Price"}</th>
+                                <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Stock" : "Stock"}</th>
+                                <th className="px-6 py-3 text-right whitespace-nowrap">Actions</th>
                             </tr>
                         </thead>
                         <SortableContext
