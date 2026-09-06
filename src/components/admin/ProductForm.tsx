@@ -48,17 +48,18 @@ import { Category, Product } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { CreatableVendorCombobox } from "@/components/admin/CreatableVendorCombobox";
 
-function slugify(text: string): string {
+function generateSlug(text: string): string {
     return text
         .toString()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .trim()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "")
-        .replace(/-+/g, "-");
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "");
 }
+
+const slugify = generateSlug;
 
 export function ProductForm({
     categories,
@@ -127,26 +128,46 @@ export function ProductForm({
     });
 
     const isNew = !initialData?.id;
-    const watchedName = form.watch("name");
     const slugTouchedRef = useRef<Record<string, boolean>>(
         initialData?.id
             ? locales.reduce((acc, loc) => ({ ...acc, [loc]: true }), {})
             : {}
     );
 
+    // Auto-generate slug from name specifically on creation (or if slug was cleared)
     useEffect(() => {
-        if (!watchedName) return;
+        if (!isNew) return;
 
+        // 1. Check on initial render/mount
         locales.forEach((loc) => {
-            if (!slugTouchedRef.current[loc]) {
-                const currentName = watchedName[loc] || "";
+            const currentSlug = form.getValues(`slug.${loc}`);
+            if (!slugTouchedRef.current[loc] || !currentSlug) {
+                const currentName = form.getValues(`name.${loc}`) || "";
                 if (currentName.trim()) {
-                    const generated = slugify(currentName);
+                    const generated = generateSlug(currentName);
                     form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
                 }
             }
         });
-    }, [watchedName, locales, form]);
+
+        // 2. React Hook Form subscription: live keystroke listener
+        const subscription = form.watch((value, { name }) => {
+            if (!name || !name.startsWith("name")) return;
+
+            locales.forEach((loc) => {
+                const currentSlug = form.getValues(`slug.${loc}`);
+                if (!slugTouchedRef.current[loc] || !currentSlug) {
+                    const currentName = form.getValues(`name.${loc}`) || "";
+                    if (currentName.trim()) {
+                        const generated = generateSlug(currentName);
+                        form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
+                    }
+                }
+            });
+        });
+
+        return () => subscription.unsubscribe();
+    }, [isNew, locales, form]);
 
     const handleSlugChange = (loc: string, rawValue: string, onChange: (val: string) => void) => {
         if (!rawValue.trim()) {
@@ -156,9 +177,8 @@ export function ProductForm({
         }
         const cleanSlug = rawValue
             .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9-]/g, "")
-            .replace(/-+/g, "-");
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)+/g, "");
         onChange(cleanSlug);
     };
 
@@ -270,11 +290,74 @@ export function ProductForm({
         });
     };
 
+    const onInvalid = (errors: any) => {
+        console.warn("Product form validation errors:", errors);
+        toast.error(
+            lang?.startsWith("fr")
+                ? "Veuillez compléter les champs obligatoires."
+                : "Please complete the required fields."
+        );
+    };
+
     async function onSubmit(values: z.infer<typeof productSchema>) {
         try {
-            // Check default locale fields
-            if (!values.name?.[defaultLocale] || !values.slug?.[defaultLocale] || !values.description?.[defaultLocale]) {
-                toast.error(`Please complete the required fields for ${getLocaleDisplayName(defaultLocale)}.`);
+            // Check default locale required fields and set inline errors
+            let hasError = false;
+
+            if (!values.name?.[defaultLocale]?.trim()) {
+                form.setError(`name.${defaultLocale}` as any, {
+                    type: "manual",
+                    message: lang?.startsWith("fr") ? "Le nom du produit est obligatoire." : "Product name is required.",
+                });
+                hasError = true;
+            }
+
+            if (!values.slug?.[defaultLocale]?.trim()) {
+                form.setError(`slug.${defaultLocale}` as any, {
+                    type: "manual",
+                    message: lang?.startsWith("fr") ? "Le slug est obligatoire." : "Slug is required.",
+                });
+                hasError = true;
+            }
+
+            if (!values.description?.[defaultLocale]?.trim()) {
+                form.setError(`description.${defaultLocale}` as any, {
+                    type: "manual",
+                    message: lang?.startsWith("fr") ? "La description est obligatoire." : "Description is required.",
+                });
+                hasError = true;
+            }
+
+            if (!values.categoryIds || values.categoryIds.length === 0) {
+                form.setError("categoryIds" as any, {
+                    type: "manual",
+                    message: lang?.startsWith("fr") ? "Veuillez sélectionner au moins une catégorie." : "At least one category is required.",
+                });
+                hasError = true;
+            }
+
+            if (values.price === undefined || values.price === null || isNaN(values.price) || values.price < 0) {
+                form.setError("price", {
+                    type: "manual",
+                    message: lang?.startsWith("fr") ? "Le prix doit être un nombre positif ou nul." : "Price must be >= 0.",
+                });
+                hasError = true;
+            }
+
+            if (values.stock === undefined || values.stock === null || isNaN(values.stock) || values.stock < 0) {
+                form.setError("stock", {
+                    type: "manual",
+                    message: lang?.startsWith("fr") ? "Le stock doit être un entier positif ou nul." : "Stock must be >= 0.",
+                });
+                hasError = true;
+            }
+
+            if (hasError) {
+                toast.error(
+                    lang?.startsWith("fr")
+                        ? "Veuillez compléter les champs obligatoires."
+                        : `Please complete the required fields for ${getLocaleDisplayName(defaultLocale)}.`
+                );
                 return;
             }
 
@@ -328,7 +411,6 @@ export function ProductForm({
         } catch (err) {
             console.error("SUBMIT_PRODUCT_ERROR:", err);
             toast.error("An unexpected error occurred.");
-            setIsUploading(false);
         }
     }
 
@@ -361,7 +443,7 @@ export function ProductForm({
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 flex flex-col flex-1">
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8 flex flex-col flex-1">
                 {/* Hidden Order Field - Managed via Drag & Drop in products table */}
                 <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
@@ -552,7 +634,7 @@ export function ProductForm({
                                                     name={`name.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()})</FormLabel>
+                                                            <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                             <FormControl>
                                                                 <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
                                                             </FormControl>
@@ -578,7 +660,7 @@ export function ProductForm({
                                                     name={`description.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()})</FormLabel>
+                                                            <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                             <FormControl>
                                                                 <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
                                                             </FormControl>
@@ -597,7 +679,7 @@ export function ProductForm({
                                         name={`name.${locales[0]}`}
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()})</FormLabel>
+                                                <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="Name..." {...field} value={field.value || ""} />
                                                 </FormControl>
@@ -623,7 +705,7 @@ export function ProductForm({
                                         name={`description.${locales[0]}`}
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()})</FormLabel>
+                                                <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                 <FormControl>
                                                     <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
                                                 </FormControl>
@@ -656,7 +738,7 @@ export function ProductForm({
                                     name="price"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{dict.price || "Price"}</FormLabel>
+                                            <FormLabel>{dict.price || "Price"} <span className="text-destructive ml-1">*</span></FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -674,7 +756,7 @@ export function ProductForm({
                                     name="stock"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{dict.stock || "Stock"}</FormLabel>
+                                            <FormLabel>{dict.stock || "Stock"} <span className="text-destructive ml-1">*</span></FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -711,7 +793,7 @@ export function ProductForm({
                                     <FormItem>
                                         <div className="flex items-center justify-between mb-2">
                                             <FormLabel className="text-sm font-medium">
-                                                {dict.categories || dict.categoryId || "Categories"}
+                                                {dict.categories || dict.categoryId || "Categories"} <span className="text-destructive ml-1">*</span>
                                             </FormLabel>
                                             <span className="text-xs text-muted-foreground">
                                                 {field.value?.length || 0} {lang?.startsWith("fr") ? "sélectionnée(s)" : "selected"}
@@ -878,7 +960,7 @@ export function ProductForm({
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                                    <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()})</FormLabel>
+                                                                    <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                                     <div className="flex items-center gap-2">
                                                                         <Badge variant="secondary" className="font-mono text-xs">
                                                                             /{lang}/product/{currentSlugVal || "slug"}
@@ -935,7 +1017,7 @@ export function ProductForm({
                                     render={({ field }) => (
                                         <FormItem>
                                             <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()})</FormLabel>
+                                                <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant="secondary" className="font-mono text-xs">
                                                         /{lang}/product/{field.value || "slug"}

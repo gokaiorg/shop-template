@@ -31,9 +31,9 @@ export function AddToCartButton({ product, lang, label, title, className, size =
                 size={size}
                 disabled
                 className={`rounded-full shadow-xs cursor-not-allowed opacity-50 ${className || ""}`}
-                aria-label={`Sold Out - ${title}`}
+                aria-label={`Sold - ${title}`}
             >
-                Sold Out
+                Sold
             </Button>
         );
     }

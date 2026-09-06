@@ -48,13 +48,11 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     alt={title}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
-                        isOutOfStock ? "opacity-75 grayscale-[50%]" : ""
-                    }`}
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 {isOutOfStock && (
                     <span className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 uppercase font-bold tracking-wider z-10 shadow-sm rounded-xs">
-                        Sold Out
+                        Sold
                     </span>
                 )}
             </Link>

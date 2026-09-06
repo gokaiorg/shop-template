@@ -74,7 +74,7 @@ export function ProductGallery({ images = [], title = "Product", isOutOfStock = 
                 <span className="text-sm font-medium">No image available</span>
                 {isOutOfStock && (
                     <span className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 uppercase font-bold z-10">
-                        Sold Out
+                        Sold
                     </span>
                 )}
             </div>
@@ -101,7 +101,7 @@ export function ProductGallery({ images = [], title = "Product", isOutOfStock = 
                                 alt={`${title} - Photo ${idx + 1}`}
                                 fill
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
-                                className={`object-contain p-2 md:p-4 ${isOutOfStock ? "opacity-75 grayscale-[50%]" : ""}`}
+                                className="object-contain p-2 md:p-4"
                                 priority={idx === 0}
                             />
                         </div>
@@ -111,7 +111,7 @@ export function ProductGallery({ images = [], title = "Product", isOutOfStock = 
                 {/* Sold Out Overlay Badge */}
                 {isOutOfStock && (
                     <span className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 uppercase font-bold z-10">
-                        Sold Out
+                        Sold
                     </span>
                 )}
 
