@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { 
     LayoutDashboard, 
     BookOpen,
-    Tags, 
+    Folders, 
     Package, 
     FileText, 
     ShoppingCart,
@@ -90,7 +90,7 @@ export function Aside({ lang, dict, session }: { lang: string, dict: any, sessio
                                 : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                         )}
                     >
-                        <Tags className="h-4 w-4" />
+                        <Folders className="h-4 w-4" />
                         {adminDict.categories || "Categories"}
                     </Link>
 

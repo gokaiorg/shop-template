@@ -7,7 +7,7 @@ import {
     Menu, 
     LayoutDashboard, 
     BookOpen,
-    Tags, 
+    Folders, 
     Package, 
     FileText, 
     ShoppingCart,
@@ -109,7 +109,7 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                                     : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                             )}
                         >
-                            <Tags className="h-4 w-4" />
+                            <Folders className="h-4 w-4" />
                             {adminDict.categories || "Categories"}
                         </Link>
 
