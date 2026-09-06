@@ -346,7 +346,7 @@ export function ProductTable({
                                 <SelectValue placeholder={lang === "fr" ? "Toutes les catégories" : "All categories"} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">
+                                <SelectItem value="all" className="cursor-pointer focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground">
                                     {lang === "fr" ? "Toutes les catégories" : "All categories"} ({products.length})
                                 </SelectItem>
                                 {availableCategories.map((cat) => {
@@ -360,7 +360,11 @@ export function ProductTable({
                                         (lang === "fr" ? (cat as any).nameFr : (cat as any).nameEn) ||
                                         cat.id;
                                     return (
-                                        <SelectItem key={cat.id} value={cat.id}>
+                                        <SelectItem
+                                            key={cat.id}
+                                            value={cat.id}
+                                            className="cursor-pointer focus:bg-primary focus:text-primary-foreground data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground"
+                                        >
                                             {name} ({count})
                                         </SelectItem>
                                     );

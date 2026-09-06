@@ -257,13 +257,13 @@ export function CreatableVendorCombobox({
                                         onClick={() => handleSelect(opt)}
                                         className={cn(
                                             "w-full flex items-center justify-between px-3 py-2 rounded-sm text-left transition-colors cursor-pointer",
-                                            isHighlighted ? "bg-accent text-accent-foreground" : "hover:bg-muted/70 text-foreground",
+                                            isHighlighted ? "bg-primary text-primary-foreground" : "hover:bg-muted/70 text-foreground",
                                             isSelected && !isHighlighted && "bg-muted/50 font-medium text-foreground"
                                         )}
                                     >
                                         <span className="truncate">{opt}</span>
                                         {isSelected && (
-                                            <Check className="h-4 w-4 shrink-0 text-primary ml-2" />
+                                            <Check className={cn("h-4 w-4 shrink-0 ml-2", isHighlighted ? "text-primary-foreground" : "text-primary")} />
                                         )}
                                     </button>
                                 </li>
