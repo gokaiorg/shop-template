@@ -15,13 +15,20 @@ coverage
 
 # Environment variables & secrets
 .env*
-shop-gcp-firebase-adminsdk-fbsvc-*.json
+*-firebase-adminsdk-*.json
+
+# Assets & large local files
+art-fate-images
+.DS_Store
+tsconfig.tsbuildinfo
 
 # Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
+dev_server.log
 
 # Docker files
 Dockerfile
