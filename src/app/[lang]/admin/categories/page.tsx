@@ -5,17 +5,19 @@ import { Button } from "@/components/ui/button";
 import { adminDb } from "@/lib/firebase-admin";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { getLocalizedField } from "@/lib/i18n";
+import { getStoreSettings } from "@/lib/services/settings";
 import { CategoryTable } from "@/components/admin/CategoryTable";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { Tags } from "lucide-react";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
+import { Folders } from "lucide-react";
 
 export default async function AdminCategoriesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
     await protectAdminRoute(lang);
 
-    // Fetch dictionary and categories in parallel to reduce TTFB
-    const [dict, categoriesSnapshot] = await Promise.all([
+    // Fetch dictionary, settings, and categories in parallel to reduce TTFB
+    const [dict, storeSettings, categoriesSnapshot] = await Promise.all([
         getDictionary(lang as Locale),
+        getStoreSettings(),
         adminDb.collection("categories").orderBy("order", "asc").get()
     ]);
 
@@ -47,18 +49,17 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
     });
 
     return (
-        <div className="space-y-6">
-            <AdminPageHeader
-                title={dict.admin.categories}
-                description={lang === 'fr' ? 'Gérer les catégories de votre boutique.' : 'Manage your store categories.'}
-                icon={Tags}
-            >
+        <AdminPageLayout
+            title={dict.admin.categories}
+            description={lang === 'fr' ? 'Structure des collections et classement du catalogue.' : 'Collection taxonomy and catalog structure.'}
+            icon={Folders}
+            actions={
                 <Button asChild>
                     <Link href={`/${lang}/admin/categories/new`}>{dict.admin.categories_create}</Link>
                 </Button>
-            </AdminPageHeader>
-
-            <CategoryTable categories={categories} lang={lang} />
-        </div>
+            }
+        >
+            <CategoryTable categories={categories} lang={lang} catalogSlug={storeSettings?.catalogSlug || 'shop'} />
+        </AdminPageLayout>
     );
 }

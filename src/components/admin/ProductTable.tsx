@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Category, Product } from "@/types/database";
-import { Pencil, GripVertical, Filter } from "lucide-react";
+import { Pencil, GripVertical, Filter, ExternalLink } from "lucide-react";
 import { getLocalizedField } from "@/lib/i18n";
 import { formatPrice } from "@/lib/currency";
 import { toast } from "sonner";
@@ -70,6 +70,8 @@ function SortableProductRow({ product, currency, lang }: SortableProductRowProps
 
     const status = getLocalizedField(product.status, lang) || (lang === 'fr' ? product.statusFr : product.statusEn) || "draft";
     const isPublished = status === 'published' || status === 'publié';
+    const productSlug = getLocalizedField(product.slug, lang) || (lang === 'fr' ? product.slugFr : product.slugEn) || (typeof product.slug === 'string' ? product.slug : product.id);
+    const productUrl = `/${lang}/product/${productSlug}`;
 
     return (
         <tr
@@ -127,11 +129,30 @@ function SortableProductRow({ product, currency, lang }: SortableProductRowProps
                 )}
             </td>
             <td className="px-6 py-4 text-right">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href={`/${lang}/admin/products/${product.id}/edit`}>
-                        <Pencil className="w-4 h-4" />
-                    </Link>
-                </Button>
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
+                        title={lang === 'fr' ? 'Voir sur le site' : 'View on website'}
+                    >
+                        <Link href={productUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-4 h-4" />
+                        </Link>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
+                        title={lang === 'fr' ? 'Modifier le produit' : 'Edit product'}
+                    >
+                        <Link href={`/${lang}/admin/products/${product.id}/edit`}>
+                            <Pencil className="w-4 h-4" />
+                        </Link>
+                    </Button>
+                </div>
             </td>
         </tr>
     );

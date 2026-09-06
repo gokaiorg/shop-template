@@ -10,10 +10,10 @@
         "title": "Admin Panel",
         "view_site": "View Site",
         "welcome_title": "Welcome",
-        "welcome_text": "Welcome to the Admin Dashboard, {name}!",
+        "welcome_text": "Overview and quick management of your store.",
         "profile": {
             "title": "Personal Information",
-            "description": "Update your account details and password."
+            "description": "Update your account credentials."
         },
         "name": "Name",
         "email": "Email",
@@ -24,6 +24,7 @@
         "categories_edit": "Edit Category",
         "catalog": "Catalog",
         "catalog_settings": "Catalog Settings",
+        "view_catalog": "View my catalog",
         "dashboard_seedButton": "Generate Demo Data",
         "dashboard_seedWarning": "Warning: This will clear all existing products and categories.",
         "dashboard_seedSuccess": "Demo data generated successfully!",
@@ -65,7 +66,7 @@
             "order_desc": "Define the numeric position of this category in navigation tabs, catalog filters, and grid displays (lower numbers appear first)."
         },
         "orders": {
-            "title": "Manage Orders",
+            "title": "Orders",
             "columns": {
                 "id": "Order ID",
                 "date": "Date",
@@ -76,7 +77,7 @@
         },
         "messages_section": {
             "title": "Messages",
-            "subtitle": "View and manage contact inquiries sent from the storefront.",
+            "subtitle": "Contact inquiries received from your store.",
             "empty": "No messages received yet.",
             "columns": {
                 "name": "Name",

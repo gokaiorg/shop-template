@@ -2,10 +2,9 @@ import { ProductForm } from "@/components/admin/ProductForm";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { adminDb } from "@/lib/firebase-admin";
-import { Category } from "@/types/database";
 import { getStoreSettings } from "@/lib/services/settings";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { Package } from "lucide-react";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
+import { PlusCircle } from "lucide-react";
 
 export default async function NewProductPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -27,20 +26,18 @@ export default async function NewProductPage({ params }: { params: Promise<{ lan
     });
 
     return (
-        <div className="space-y-6">
-            <AdminPageHeader
-                title={dict.admin.products_create}
-                description={lang === 'fr' ? 'Remplissez le formulaire pour créer un nouveau produit.' : 'Fill in the form to create a new product.'}
-                icon={Package}
+        <AdminPageLayout
+            title={dict.admin.products_create}
+            description={lang === 'fr' ? 'Ajouter une nouvelle référence au catalogue.' : 'Add a new item to your store catalog.'}
+            icon={PlusCircle}
+            hasStickyFooter={true}
+        >
+            <ProductForm
+                categories={categories}
+                dict={dict.admin.forms}
+                lang={lang}
+                vendors={storeSettings.vendors || []}
             />
-            <div className="bg-background border rounded-lg p-6">
-                <ProductForm
-                    categories={categories}
-                    dict={dict.admin.forms}
-                    lang={lang}
-                    vendors={storeSettings.vendors || []}
-                />
-            </div>
-        </div>
+        </AdminPageLayout>
     );
 }

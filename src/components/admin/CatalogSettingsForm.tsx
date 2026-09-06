@@ -106,19 +106,24 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                {/* 1. Display Titles & Descriptions Card */}
-                <Card>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 flex flex-col flex-1">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Colonne Principale (Gauche) */}
+                    <div className="col-span-1 lg:col-span-2 space-y-8">
+                        {/* 1. Display Titles & Descriptions Card */}
+                        <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <BookOpen className="h-5 w-5 text-primary" />
-                            {lang === "fr" ? "Titres d'Affichage & Descriptions" : "Display Titles & Descriptions"}
-                        </CardTitle>
-                        <CardDescription>
+                        <div className="flex items-center gap-2 mb-1">
+                            <BookOpen className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang === "fr" ? "Titres & Descriptions" : "Titles & Descriptions"}
+                            </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
                             {lang === "fr"
-                                ? "Configurez les titres et descriptions multilingues utilisés dans la navigation, le pied de page et les métadonnées SEO."
-                                : "Configure multilingual titles and descriptions used across navigation menus, footer links, and SEO metadata."}
-                        </CardDescription>
+                                ? "Titres et descriptions pour la navigation et le SEO."
+                                : "Multilingual titles and descriptions for navigation and SEO."}
+                        </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {/* Multilingual Catalog Titles */}
@@ -246,20 +251,22 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                 {/* 2. Catalog Archive Banner Image Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center justify-between text-lg">
-                            <span className="flex items-center gap-2">
-                                <ImageIcon className="h-5 w-5 text-primary" />
-                                {lang === "fr" ? "Bannière d'Archive du Catalogue" : "Catalog Archive Banner Image"}
-                            </span>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 mb-1">
+                                <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                <h2 className="text-lg font-medium tracking-tight">
+                                    {lang === "fr" ? "Bannière d'archive" : "Archive Banner"}
+                                </h2>
+                            </div>
                             {catalogBannerUrlValue && (
                                 <Badge variant="outline" className="text-[10px]">Active</Badge>
                             )}
-                        </CardTitle>
-                        <CardDescription>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
                             {lang === "fr"
-                                ? "Image haute résolution affichée en haut de la page archive principale du catalogue lorsqu'aucune catégorie spécifique n'est sélectionnée."
-                                : "High-resolution banner displayed on the main catalog archive page when no specific category is selected."}
-                        </CardDescription>
+                                ? "Visuel d'en-tête affiché sur l'archive du catalogue."
+                                : "Header visual displayed on the main catalog archive page."}
+                        </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="border rounded-lg p-4 bg-background/50 flex flex-col items-center justify-center min-h-[180px] gap-3 relative overflow-hidden">
@@ -345,27 +352,32 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                         />
                     </CardContent>
                 </Card>
+                    </div>
 
-                {/* 3. Catalog Routing & URL Card */}
-                <Card>
+                    {/* Colonne Secondaire (Droite / Sidebar) */}
+                    <div className="col-span-1 space-y-8">
+                        {/* 3. Catalog Routing & URL Card */}
+                        <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <ShoppingBag className="h-5 w-5 text-primary" />
-                                {lang === "fr" ? "Routage du Catalogue & URL" : "Catalog Routing & URL"}
-                            </CardTitle>
-                            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2 mb-1">
+                                <ShoppingBag className="w-5 h-5 text-muted-foreground" />
+                                <h2 className="text-lg font-medium tracking-tight">
+                                    {lang === "fr" ? "Routage URL" : "URL Routing"}
+                                </h2>
+                            </div>
+                            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors">
                                 <Link href={`/${lang}/${currentSlug}`} target="_blank" rel="noopener noreferrer">
                                     <ExternalLink className="h-3.5 w-3.5" />
                                     {lang === "fr" ? "Voir le catalogue" : "View Catalog"}
                                 </Link>
                             </Button>
                         </div>
-                        <CardDescription>
+                        <p className="text-sm text-muted-foreground mb-4">
                             {lang === "fr" 
-                                ? "Définissez le segment d'URL public utilisé pour accéder à l'ensemble du catalogue de produits et des œuvres."
-                                : "Define the public URL path segment used to access the product catalog and artworks archive."}
-                        </CardDescription>
+                                ? "Segment d'URL public menant au catalogue."
+                                : "Public URL path segment leading to the product catalog."}
+                        </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <FormField
@@ -405,13 +417,30 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                         />
                     </CardContent>
                 </Card>
+                    </div>
+                </div>
 
                 {/* Submit Action Bar */}
-                <div className="flex items-center justify-end gap-4 pt-4 border-t sticky bottom-4 bg-background/95 backdrop-blur p-4 rounded-lg border shadow-sm">
+                <div className="sticky bottom-0 z-40 flex items-center justify-end gap-4 border-t border-border bg-background p-4 sm:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-auto -mx-4 sm:-mx-8">
+                    <Button
+                        variant="outline"
+                        asChild
+                        type="button"
+                        className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
+                    >
+                        <Link
+                            href={`/${lang}/${currentSlug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            {dict?.view_catalog || (lang === "fr" ? "Voir mon catalogue" : "View my catalog")}
+                        </Link>
+                    </Button>
                     <Button
                         type="submit"
                         disabled={isPending || isUploadingCatalogBanner}
-                        className="px-6 cursor-pointer"
+                        className="bg-primary text-primary-foreground hover:opacity-90 text-white px-6 cursor-pointer"
                     >
                         {isPending ? (
                             <>

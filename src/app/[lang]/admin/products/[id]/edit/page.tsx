@@ -5,8 +5,8 @@ import { Product, Category } from "@/types/database";
 import { notFound } from "next/navigation";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { getStoreSettings } from "@/lib/services/settings";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { Package } from "lucide-react";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
+import { Pencil } from "lucide-react";
 
 export default async function EditProductPage({ params }: { params: Promise<{ lang: string, id: string }> }) {
     const { lang, id } = await params;
@@ -39,20 +39,19 @@ export default async function EditProductPage({ params }: { params: Promise<{ la
     });
 
     return (
-        <div className="space-y-6">
-            <AdminPageHeader
-                title={dict.admin.products_edit || "Edit Product"}
-                icon={Package}
+        <AdminPageLayout
+            title={dict.admin.products_edit || "Edit Product"}
+            description={lang === 'fr' ? 'Modifier les détails et visuels du produit.' : 'Edit product details and assets.'}
+            icon={Pencil}
+            hasStickyFooter={true}
+        >
+            <ProductForm
+                categories={categories}
+                dict={dict.admin.forms}
+                lang={lang}
+                initialData={product}
+                vendors={storeSettings.vendors || []}
             />
-            <div className="bg-background border rounded-lg p-6">
-                <ProductForm
-                    categories={categories}
-                    dict={dict.admin.forms}
-                    lang={lang}
-                    initialData={product}
-                    vendors={storeSettings.vendors || []}
-                />
-            </div>
-        </div>
+        </AdminPageLayout>
     );
 }

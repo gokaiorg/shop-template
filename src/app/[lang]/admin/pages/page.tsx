@@ -7,13 +7,13 @@ import { Plus, FileText } from "lucide-react";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { formatPageDoc } from "@/lib/services/pages";
 import { PageTable } from "@/components/admin/PageTable";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 
 export default async function AdminPagesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
     await protectAdminRoute(lang);
 
-    // Fetch dictionary and pages in parallel (fetching all pages guarantees documents without 'order' field are never excluded)
+    // Fetch dictionary and pages in parallel
     const [dict, pagesSnapshot] = await Promise.all([
         getDictionary(lang as Locale),
         adminDb.collection("pages").get()
@@ -24,23 +24,22 @@ export default async function AdminPagesPage({ params }: { params: Promise<{ lan
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     return (
-        <div className="space-y-6">
-            <AdminPageHeader
-                title={dict.admin.pages}
-                description={lang === 'fr' 
-                    ? 'Gérer les pages statiques, légales et de contenu de votre boutique.' 
-                    : 'Manage custom content, legal, and storefront pages.'}
-                icon={FileText}
-            >
+        <AdminPageLayout
+            title={dict.admin.pages}
+            description={lang === 'fr' 
+                ? 'Pages de contenu, mentions légales et navigation.' 
+                : 'Content pages, legal notices, and navigation.'}
+            icon={FileText}
+            actions={
                 <Button asChild className="gap-2">
                     <Link href={`/${lang}/admin/pages/new`}>
                         <Plus className="w-4 h-4" />
                         {lang === 'fr' ? 'Créer une page' : 'Create Page'}
                     </Link>
                 </Button>
-            </AdminPageHeader>
-
+            }
+        >
             <PageTable pages={pages} lang={lang} />
-        </div>
+        </AdminPageLayout>
     );
 }

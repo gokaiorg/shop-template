@@ -48,14 +48,19 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] p-6 flex flex-col justify-between">
-                <div>
+                <div className="flex-1 overflow-y-auto pr-2">
                     <SheetHeader className="text-left mb-6">
                         <SheetTitle className="text-lg font-bold tracking-tight">
                             {adminDict.title || "Admin Panel"}
                         </SheetTitle>
                     </SheetHeader>
                     <div className="mb-6 px-1">
-                        <Button asChild variant="outline" className="w-full justify-start gap-2" onClick={() => setOpen(false)}>
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="w-full justify-start gap-2 border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
+                            onClick={() => setOpen(false)}
+                        >
                             <Link href={`/${lang}`} target="_blank" rel="noopener noreferrer">
                                 <ExternalLink className="h-4 w-4" />
                                 {adminDict.view_site || "View Site"}
@@ -70,8 +75,8 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                                 isDashboardActive
-                                    ? "bg-muted text-foreground font-semibold"
-                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                             )}
                         >
                             <LayoutDashboard className="h-4 w-4" />
@@ -85,8 +90,8 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                                 isCatalogActive
-                                    ? "bg-muted text-foreground font-semibold"
-                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                             )}
                         >
                             <BookOpen className="h-4 w-4" />
@@ -100,8 +105,8 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                                 isCategoriesActive
-                                    ? "bg-muted text-foreground font-semibold"
-                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                             )}
                         >
                             <Tags className="h-4 w-4" />
@@ -115,8 +120,8 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                                 isProductsActive
-                                    ? "bg-muted text-foreground font-semibold"
-                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                             )}
                         >
                             <Package className="h-4 w-4" />
@@ -130,8 +135,8 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                                 isPagesActive
-                                    ? "bg-muted text-foreground font-semibold"
-                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                             )}
                         >
                             <FileText className="h-4 w-4" />
@@ -146,8 +151,8 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                                 className={cn(
                                     "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                                     isOrdersActive
-                                        ? "bg-muted text-foreground font-semibold"
-                                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                        ? "bg-primary/10 text-primary font-semibold"
+                                        : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                                 )}
                             >
                                 <ShoppingCart className="h-4 w-4" />
@@ -162,8 +167,8 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                                 isMessagesActive
-                                    ? "bg-muted text-foreground font-semibold"
-                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                             )}
                         >
                             <Mail className="h-4 w-4" />
@@ -177,8 +182,8 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                                 isSettingsActive
-                                    ? "bg-muted text-foreground font-semibold"
-                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                             )}
                         >
                             <Settings className="h-4 w-4" />
@@ -186,14 +191,17 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                         </Link>
                     </nav>
                 </div>
-                <div>
-                    <div className="pb-4 ml-4 flex items-center justify-start gap-2">
+                <div className="mt-auto pt-4 border-t flex flex-col gap-4">
+                    {session?.user && (
+                        <div className="px-1 text-xs text-muted-foreground truncate font-medium">
+                            {session.user.name || session.user.email}
+                        </div>
+                    )}
+                    <div className="flex items-center gap-2">
                         <ThemeToggle dict={dict?.header} />
                         <LangToggle lang={lang} dict={dict?.header} />
                     </div>
-                    <div className="pt-4 border-t flex flex-col gap-4">
-                        <SignOutButton />
-                    </div>
+                    <SignOutButton />
                 </div>
             </SheetContent>
         </Sheet>

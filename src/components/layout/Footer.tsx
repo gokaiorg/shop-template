@@ -89,7 +89,7 @@ export async function Footer({
                                     href={social.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     {social.platform}
                                 </a>
@@ -100,12 +100,12 @@ export async function Footer({
                 
                 <div>
                     <h2 className="font-bold mb-4">
-                        <Link href={`/${lang}/${activeCatalogSlug}`} className="hover:underline">
+                        <Link href={`/${lang}/${activeCatalogSlug}`} className="hover:text-primary transition-colors">
                             {displayCatalogTitle}
                         </Link>
                     </h2>
                     <ul className="space-y-2 text-sm text-muted-foreground">
-                        {categories.map((category) => {
+                        {categories.slice(0, 6).map((category) => {
                             const catSlug = getLocalizedField(category.slug, lang) || (isFr ? category.slugFr : category.slugEn) || category.id;
                             const catName = getLocalizedField(category.name, lang) || (isFr ? category.nameFr : category.nameEn);
                             if (!catName) return null;
@@ -114,7 +114,7 @@ export async function Footer({
                                 <li key={category.id}>
                                     <Link
                                         href={`/${lang}/${activeCatalogSlug}?category=${catSlug}`}
-                                        className="hover:text-foreground transition-colors"
+                                        className="hover:text-primary transition-colors"
                                     >
                                         {catName}
                                     </Link>
@@ -132,7 +132,7 @@ export async function Footer({
                                 const label = getLocalizedField(page.title, lang) || (isFr ? page.title_fr : page.title_en) || page.slug;
                                 return (
                                     <li key={page.id || page.slug}>
-                                        <Link href={`/${lang}/pages/${page.slug}`} className="hover:text-foreground transition-colors">
+                                        <Link href={`/${lang}/pages/${page.slug}`} className="hover:text-primary transition-colors">
                                             {label}
                                         </Link>
                                     </li>
@@ -144,7 +144,7 @@ export async function Footer({
                                 const href = item.href.startsWith('http') ? item.href : `/${lang}${item.href}`;
                                 return (
                                     <li key={item.key + item.href}>
-                                        <Link href={href} className="hover:text-foreground transition-colors">
+                                        <Link href={href} className="hover:text-primary transition-colors">
                                             {label}
                                         </Link>
                                     </li>
@@ -165,7 +165,7 @@ export async function Footer({
                         href="https://gokai.org" 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="hover:underline hover:text-foreground transition-colors font-medium"
+                        className="hover:underline hover:text-primary transition-colors font-medium"
                     >
                         Gokai Labs
                     </a>

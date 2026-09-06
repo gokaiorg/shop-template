@@ -19,8 +19,8 @@ export function AdminPageHeader({
     return (
         <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${className}`}>
             <div>
-                <div className="flex items-center gap-2">
-                    {Icon && <Icon className="w-6 h-6 shrink-0" />}
+                <div className="flex items-center gap-3">
+                    {Icon && <Icon className="w-7 h-7 text-muted-foreground shrink-0" />}
                     <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
                 </div>
                 {description && (

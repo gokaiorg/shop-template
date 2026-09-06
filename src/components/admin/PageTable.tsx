@@ -109,12 +109,24 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
             </td>
             <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="icon" asChild title="View public page">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
+                        title={lang === 'fr' ? 'Voir sur le site' : 'View public page'}
+                    >
                         <Link href={`/${lang}/pages/${page.slug}`} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                            <ExternalLink className="w-4 h-4" />
                         </Link>
                     </Button>
-                    <Button variant="ghost" size="icon" asChild title="Edit page">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
+                        title={lang === 'fr' ? 'Modifier la page' : 'Edit page'}
+                    >
                         <Link href={`/${lang}/admin/pages/${page.id}/edit`}>
                             <Pencil className="w-4 h-4" />
                         </Link>
@@ -238,13 +250,13 @@ export function PageTable({ pages: initialPages, lang }: PageTableProps) {
                     <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                         <tr>
                             <th className="px-4 py-3 w-12 text-center">
-                                <span className="sr-only">Order</span>
+                                <span className="sr-only">{lang === 'fr' ? 'Ordre' : 'Order'}</span>
                             </th>
-                            <th className="px-6 py-3">Title</th>
+                            <th className="px-6 py-3">{lang === 'fr' ? 'Titre' : 'Title'}</th>
                             <th className="px-6 py-3">Slug (URL)</th>
-                            <th className="px-6 py-3">Status</th>
+                            <th className="px-6 py-3">{lang === 'fr' ? 'Statut' : 'Status'}</th>
                             <th className="px-6 py-3">Navigation</th>
-                            <th className="px-6 py-3">Last Updated</th>
+                            <th className="px-6 py-3">{lang === 'fr' ? 'Dernière mise à jour' : 'Last Updated'}</th>
                             <th className="px-6 py-3 text-right">Actions</th>
                         </tr>
                     </thead>

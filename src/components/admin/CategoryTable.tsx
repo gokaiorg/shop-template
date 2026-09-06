@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Category } from "@/types/database";
-import { Pencil, GripVertical } from "lucide-react";
+import { Pencil, GripVertical, ExternalLink } from "lucide-react";
 import { getLocalizedField } from "@/lib/i18n";
 import { toast } from "sonner";
 import { db } from "@/lib/firebase";
@@ -37,9 +37,10 @@ export interface CategoryWithCount extends Category {
 interface SortableCategoryRowProps {
     category: CategoryWithCount;
     lang: string;
+    catalogSlug?: string;
 }
 
-function SortableCategoryRow({ category, lang }: SortableCategoryRowProps) {
+function SortableCategoryRow({ category, lang, catalogSlug = 'shop' }: SortableCategoryRowProps) {
     const {
         attributes,
         listeners,
@@ -90,11 +91,30 @@ function SortableCategoryRow({ category, lang }: SortableCategoryRowProps) {
                 {category.createdAt ? new Date(category.createdAt).toLocaleDateString(lang) : 'N/A'}
             </td>
             <td className="px-6 py-4 text-right">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href={`/${lang}/admin/categories/${category.id}/edit`}>
-                        <Pencil className="w-4 h-4" />
-                    </Link>
-                </Button>
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
+                        title={lang === 'fr' ? 'Voir sur le site' : 'View on website'}
+                    >
+                        <Link href={`/${lang}/${catalogSlug}?category=${getLocalizedField(category.slug, lang) || (lang === 'fr' ? category.slugFr : category.slugEn) || category.id}`} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-4 h-4" />
+                        </Link>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
+                        title={lang === 'fr' ? 'Modifier la catégorie' : 'Edit category'}
+                    >
+                        <Link href={`/${lang}/admin/categories/${category.id}/edit`}>
+                            <Pencil className="w-4 h-4" />
+                        </Link>
+                    </Button>
+                </div>
             </td>
         </tr>
     );
@@ -103,9 +123,10 @@ function SortableCategoryRow({ category, lang }: SortableCategoryRowProps) {
 interface CategoryTableProps {
     categories: CategoryWithCount[];
     lang: string;
+    catalogSlug?: string;
 }
 
-export function CategoryTable({ categories: initialCategories, lang }: CategoryTableProps) {
+export function CategoryTable({ categories: initialCategories, lang, catalogSlug = 'shop' }: CategoryTableProps) {
     const router = useRouter();
     const [categories, setCategories] = useState<CategoryWithCount[]>(initialCategories);
 
@@ -211,10 +232,10 @@ export function CategoryTable({ categories: initialCategories, lang }: CategoryT
                     <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                         <tr>
                             <th className="px-4 py-3 w-12 text-center" aria-label="Order Handle"></th>
-                            <th className="px-6 py-3">Name</th>
-                            <th className="px-6 py-3">Slug</th>
-                            <th className="px-6 py-3">Products Count</th>
-                            <th className="px-6 py-3">Created At</th>
+                            <th className="px-6 py-3">{lang === "fr" ? "Nom" : "Name"}</th>
+                            <th className="px-6 py-3">{lang === "fr" ? "Slug" : "Slug"}</th>
+                            <th className="px-6 py-3">{lang === "fr" ? "Nombre de produits" : "Products Count"}</th>
+                            <th className="px-6 py-3">{lang === "fr" ? "Date de création" : "Created At"}</th>
                             <th className="px-6 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -237,6 +258,7 @@ export function CategoryTable({ categories: initialCategories, lang }: CategoryT
                                         key={category.id}
                                         category={category}
                                         lang={lang}
+                                        catalogSlug={catalogSlug}
                                     />
                                 ))
                             )}

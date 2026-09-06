@@ -13,6 +13,7 @@ export const STORE_FRONT_DOC_ID = 'store_front';
  */
 export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
     const brand = getActiveBrand();
+    const defaultPrimaryColor = brand.identity.id === 'art-fate' ? '#14B3F6' : '#0f172a';
     const fallbackSettings: StoreSettings = {
         id: STORE_FRONT_DOC_ID,
         brandName: brand.identity.name || '',
@@ -48,6 +49,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
         })),
         defaultTheme: 'system',
         defaultCurrency: 'THB',
+        primaryColor: defaultPrimaryColor,
         vendors: [],
     };
 
@@ -72,6 +74,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 socialLinks: Array.isArray(data?.socialLinks) ? data.socialLinks : fallbackSettings.socialLinks,
                 defaultTheme: data?.defaultTheme ?? fallbackSettings.defaultTheme,
                 defaultCurrency: data?.defaultCurrency ?? fallbackSettings.defaultCurrency,
+                primaryColor: (typeof data?.primaryColor === 'string' && data.primaryColor.trim().length > 0) ? data.primaryColor : fallbackSettings.primaryColor,
                 vendors: Array.isArray(data?.vendors) ? data.vendors : fallbackSettings.vendors,
                 updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data?.updatedAt,
             };

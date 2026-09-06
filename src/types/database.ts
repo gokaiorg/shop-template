@@ -184,6 +184,7 @@ export interface StoreSettings {
   socialLinks?: SocialLink[];
   defaultTheme?: 'light' | 'dark' | 'system';
   defaultCurrency?: string;
+  primaryColor?: string;
   vendors?: string[];
   updatedAt?: Date | string;
 }

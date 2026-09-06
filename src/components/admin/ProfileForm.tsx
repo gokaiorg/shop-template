@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserCircle } from "lucide-react";
 import { updateProfile } from "@/actions/auth";
 
 interface ProfileFormProps {
@@ -51,10 +51,15 @@ export function ProfileForm({ user, dict }: ProfileFormProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>{dict.profile?.title || "Personal Information"}</CardTitle>
-                <CardDescription>
-                    {dict.profile?.description || "Update your account details and password."}
-                </CardDescription>
+                <div className="flex items-center gap-2 mb-1">
+                    <UserCircle className="w-5 h-5 text-muted-foreground" />
+                    <h2 className="text-lg font-medium tracking-tight">
+                        {dict.profile?.title || "Personal Information"}
+                    </h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                    {dict.profile?.description || "Update your account credentials."}
+                </p>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -90,7 +95,7 @@ export function ProfileForm({ user, dict }: ProfileFormProps) {
                             Leave blank to keep your current password.
                         </p>
                     </div>
-                    <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+                    <Button type="submit" disabled={loading} className="w-full sm:w-auto bg-primary text-primary-foreground hover:opacity-90 text-white cursor-pointer">
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {dict.forms?.submit || "Save Changes"}
                     </Button>

@@ -6,7 +6,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { getStoreSettings } from "@/lib/services/settings";
 import { ProductTable } from "@/components/admin/ProductTable";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { Package } from "lucide-react";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
@@ -66,18 +66,17 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
         });
 
     return (
-        <div className="space-y-6">
-            <AdminPageHeader
-                title="Products"
-                description={lang === 'fr' ? 'Gérer les produits de votre boutique.' : 'Manage your store products.'}
-                icon={Package}
-            >
+        <AdminPageLayout
+            title={dict.admin?.products || "Products"}
+            description={lang === 'fr' ? 'Gestion du catalogue, des stocks et de la visibilité.' : 'Manage catalog, inventory, and visibility.'}
+            icon={Package}
+            actions={
                 <Button asChild>
                     <Link href={`/${lang}/admin/products/new`}>{dict.admin?.products_create || "Create Product"}</Link>
                 </Button>
-            </AdminPageHeader>
-
+            }
+        >
             <ProductTable products={products} categories={categoriesList} currency={currency} lang={lang} />
-        </div>
+        </AdminPageLayout>
     );
 }

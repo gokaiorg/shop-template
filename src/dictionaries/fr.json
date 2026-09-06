@@ -10,10 +10,10 @@
         "title": "Panneau d'administration",
         "view_site": "Voir le site",
         "welcome_title": "Bienvenue",
-        "welcome_text": "Bienvenue dans le tableau de bord d'administration, {name} !",
+        "welcome_text": "Vue d'ensemble et gestion rapide de votre boutique.",
         "profile": {
             "title": "Informations Personnelles",
-            "description": "Mettez à jour vos informations de compte et votre mot de passe."
+            "description": "Mettez à jour vos identifiants d'accès."
         },
         "name": "Nom",
         "email": "Email",
@@ -24,6 +24,7 @@
         "categories_edit": "Modifier la catégorie",
         "catalog": "Catalogue",
         "catalog_settings": "Paramètres du Catalogue",
+        "view_catalog": "Voir mon catalogue",
         "dashboard_seedButton": "Générer des données de démo",
         "dashboard_seedWarning": "Attention : Ceci supprimera tous les produits et catégories existants.",
         "dashboard_seedSuccess": "Données de démo générées avec succès !",
@@ -65,7 +66,7 @@
             "order_desc": "Définit la position numérique de cette catégorie dans les onglets, filtres du catalogue et grilles (les nombres les plus petits apparaissent en premier)."
         },
         "orders": {
-            "title": "Gérer les commandes",
+            "title": "Commandes",
             "columns": {
                 "id": "ID Commande",
                 "date": "Date",
@@ -76,7 +77,7 @@
         },
         "messages_section": {
             "title": "Messages",
-            "subtitle": "Consultez et gérez les demandes de contact reçues depuis la boutique.",
+            "subtitle": "Demandes de contact reçues depuis la boutique.",
             "empty": "Aucun message reçu pour le moment.",
             "columns": {
                 "name": "Nom",

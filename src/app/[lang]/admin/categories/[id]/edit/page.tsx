@@ -4,8 +4,8 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Category } from "@/types/database";
 import { notFound } from "next/navigation";
 import { CategoryForm } from "@/components/admin/CategoryForm";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { Tags } from "lucide-react";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
+import { Pencil } from "lucide-react";
 
 export default async function EditCategoryPage({ params }: { params: Promise<{ lang: string, id: string }> }) {
     const { lang, id } = await params;
@@ -24,14 +24,13 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ l
     } as Category;
 
     return (
-        <div className="space-y-6">
-            <AdminPageHeader
-                title={dict.admin.categories_edit || "Edit Category"}
-                icon={Tags}
-            />
-            <div className="bg-background border rounded-lg p-6">
-                <CategoryForm dict={dict.admin.forms} lang={lang} initialData={category} />
-            </div>
-        </div>
+        <AdminPageLayout
+            title={dict.admin.categories_edit || "Edit Category"}
+            description={lang === 'fr' ? 'Modifier le nom, le slug ou les paramètres de la catégorie.' : 'Edit category name, slug, and settings.'}
+            icon={Pencil}
+            hasStickyFooter={true}
+        >
+            <CategoryForm dict={dict.admin.forms} lang={lang} initialData={category} />
+        </AdminPageLayout>
     );
 }

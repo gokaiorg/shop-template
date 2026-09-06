@@ -18,10 +18,10 @@ export interface CategoryPillsNavProps {
 }
 
 export const INACTIVE_PILL_CLASS =
-    "rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 cursor-pointer dark:border-gray-800 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800 whitespace-nowrap";
+    "rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-primary cursor-pointer dark:border-gray-800 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-primary whitespace-nowrap";
 
 export const ACTIVE_PILL_CLASS =
-    "rounded-full border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors cursor-pointer dark:border-white dark:bg-white dark:text-black whitespace-nowrap";
+    "rounded-full border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors cursor-pointer hover:opacity-90 whitespace-nowrap shadow-xs";
 
 export function CategoryPillsNav({
     categories,
@@ -72,9 +72,9 @@ export function CategoryPillsNav({
                                 className={cn(
                                     "rounded-full border px-4 py-2 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap outline-none",
                                     // Inactive classes
-                                    "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800",
+                                    "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-primary dark:border-gray-800 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-primary",
                                     // Active classes via Radix data-[state=active]
-                                    "data-[state=active]:border-slate-900 data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-none dark:data-[state=active]:border-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-black"
+                                    "data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
                                 )}
                             >
                                 {categoryName}

@@ -28,6 +28,7 @@ export const globalSettingsSchema = z.object({
     socialLinks: z.array(socialLinkSchema).optional(),
     defaultTheme: z.enum(['light', 'dark', 'system']),
     defaultCurrency: z.string().min(1, 'Currency is required'),
+    primaryColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color code (e.g. #14B3F6)').optional().or(z.literal('')),
     vendors: z.array(z.string()).default([]),
 });
 

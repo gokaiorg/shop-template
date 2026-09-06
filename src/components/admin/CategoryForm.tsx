@@ -7,12 +7,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Trash2, Loader2, ImageIcon, Upload } from "lucide-react";
+import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { createCategory, updateCategory, deleteCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
 import { uploadProductImage } from "@/lib/firebase-storage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getLocaleDisplayName } from "@/lib/i18n";
+import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -43,7 +44,7 @@ import { useBrand } from "@/components/providers/BrandProvider";
 
 export function CategoryForm({ dict, lang, initialData }: { dict: Record<string, string>; lang: string; initialData?: Category }) {
     const router = useRouter();
-    const { supportedLocales: locales, defaultLocale, isMultiLocale: isMulti } = useBrand();
+    const { supportedLocales: locales, defaultLocale, isMultiLocale: isMulti, catalogSlug } = useBrand();
     const [isPending, startTransition] = useTransition();
     const [isDeleting, setIsDeleting] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -164,7 +165,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 flex flex-col flex-1">
                 {isMulti ? (
                     <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
                         {locales.map((loc) => (
@@ -295,13 +296,17 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                 {/* Category Banner Image */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <ImageIcon className="h-5 w-5 text-primary" />
-                            Category Banner Image
-                        </CardTitle>
-                        <CardDescription>
-                            High-resolution image displayed as the banner on this category&apos;s page and as the card preview in the catalog index.
-                        </CardDescription>
+                        <div className="flex items-center gap-2 mb-1">
+                            <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang?.startsWith("fr") ? "Bannière de catégorie" : "Category Banner"}
+                            </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang?.startsWith("fr") 
+                                ? "Image d'en-tête et visuel d'aperçu dans le catalogue."
+                                : "Header banner and preview card visual in the catalog."}
+                        </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="border rounded-lg p-4 bg-muted/20 flex flex-col items-center justify-center min-h-[160px] gap-3 relative overflow-hidden">
@@ -380,22 +385,12 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                     </CardContent>
                 </Card>
 
-                <div className="flex items-center gap-4">
-                    <Button type="submit" disabled={isLoading || isUploadingImage} className="cursor-pointer">
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {isDeleting ? (dict.deleting || "Deleting...") : (dict.submitting || "Saving...")}
-                            </>
-                        ) : (
-                            dict.submit || "Save"
-                        )}
-                    </Button>
-
+                {/* Submit Action Bar */}
+                <div className="sticky bottom-0 z-40 flex items-center justify-end gap-4 border-t border-border bg-background p-4 sm:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-auto -mx-4 sm:-mx-8">
                     {initialData?.id && (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button type="button" variant="destructive" disabled={isLoading} className="cursor-pointer">
+                                <Button type="button" variant="destructive" disabled={isLoading} className="cursor-pointer mr-auto">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     {dict.delete || "Delete"}
                                 </Button>
@@ -422,6 +417,42 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                             </AlertDialogContent>
                         </AlertDialog>
                     )}
+
+                    {initialData?.id && (
+                        <Button
+                            variant="outline"
+                            asChild
+                            type="button"
+                            className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
+                        >
+                            <Link
+                                href={`/${lang}/${catalogSlug || 'shop'}?category=${getLocalizedField(initialData.slug, lang) || (lang === 'fr' ? (initialData as any).slugFr : (initialData as any).slugEn) || (typeof initialData.slug === 'string' ? initialData.slug : initialData.id)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                {lang === 'fr' ? 'Voir sur le site' : 'View on website'}
+                            </Link>
+                        </Button>
+                    )}
+
+                    <Button
+                        type="submit"
+                        disabled={isLoading || isUploadingImage}
+                        className="bg-primary text-primary-foreground hover:opacity-90 text-white px-6 cursor-pointer"
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {isDeleting ? (dict.deleting || "Deleting...") : (dict.submitting || "Saving...")}
+                            </>
+                        ) : (
+                            <>
+                                <Save className="mr-2 h-4 w-4" />
+                                {dict.submit || "Save"}
+                            </>
+                        )}
+                    </Button>
                 </div>
             </form>
         </Form>

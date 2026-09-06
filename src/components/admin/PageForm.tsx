@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Trash2, Loader2, Save, ArrowLeft, Globe, Eye, LayoutTemplate } from "lucide-react";
+import { Trash2, Loader2, Save, ArrowLeft, Globe, Eye, LayoutTemplate, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 import { createPage, updatePage, deletePage } from "@/actions/admin";
@@ -133,7 +133,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-5xl">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full flex flex-col flex-1">
                 <div className="flex items-center justify-between">
                     <Button asChild variant="ghost" size="sm">
                         <Link href={`/${lang}/admin/pages`} className="flex items-center gap-2">
@@ -148,15 +148,17 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                     <div className="md:col-span-2 space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-lg">
-                                    <Globe className="h-5 w-5 text-primary" />
-                                    {lang === 'fr' ? 'Contenu de la page' : 'Page Content'}
-                                </CardTitle>
-                                <CardDescription>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Globe className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang === 'fr' ? 'Contenu de la page' : 'Page Content'}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
                                     {lang === 'fr' 
-                                        ? 'Renseignez le titre et le corps de texte pour chaque langue.' 
-                                        : 'Provide the page title and body content for each supported language.'}
-                                </CardDescription>
+                                        ? 'Titre et corps de texte par langue.' 
+                                        : 'Title and body copy per language.'}
+                                </p>
                             </CardHeader>
                             <CardContent>
                                 {isMultiLocale ? (
@@ -253,10 +255,15 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                     <div className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-base">
-                                    <LayoutTemplate className="h-4 w-4 text-primary" />
-                                    {lang === 'fr' ? 'Paramètres URL & Statut' : 'URL & Publication'}
-                                </CardTitle>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <LayoutTemplate className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang === 'fr' ? 'Paramètres URL & Statut' : 'URL & Publication'}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang === 'fr' ? 'Identifiant slug et visibilité du statut.' : 'Slug handle and publication status.'}
+                                </p>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
@@ -307,15 +314,17 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-base">
-                                    <Eye className="h-4 w-4 text-primary" />
-                                    {lang === 'fr' ? 'Visibilité Navigation' : 'Navigation Placement'}
-                                </CardTitle>
-                                <CardDescription>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Eye className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang === 'fr' ? 'Emplacement navigation' : 'Navigation Placement'}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
                                     {lang === 'fr' 
-                                        ? 'Choisissez où faire apparaître le lien automatiquement.' 
-                                        : 'Select where this page should appear automatically.'}
-                                </CardDescription>
+                                        ? 'Affichage dans le menu ou le pied de page.' 
+                                        : 'Display in header menu or footer links.'}
+                                </p>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
@@ -368,54 +377,77 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                             </CardContent>
                         </Card>
 
-                        {/* Actions */}
-                        <div className="flex flex-col gap-3">
-                            <Button type="submit" size="lg" disabled={isLoading} className="w-full gap-2">
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        {isDeleting ? "Deleting..." : "Saving..."}
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="h-4 w-4" />
-                                        {isEditMode ? (dict?.forms?.submit || "Save Page") : "Create Page"}
-                                    </>
-                                )}
-                            </Button>
-
-                            {isEditMode && (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button type="button" variant="destructive" disabled={isLoading} className="w-full gap-2">
-                                            <Trash2 className="h-4 w-4" />
-                                            {dict?.forms?.delete || "Delete Page"}
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>{dict?.forms?.delete_confirm_title || "Are you absolutely sure?"}</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                {dict?.forms?.delete_confirm_desc || "This action cannot be undone. This will permanently delete this page from your store."}
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel disabled={isDeleting}>
-                                                {dict?.forms?.cancel || "Cancel"}
-                                            </AlertDialogCancel>
-                                            <AlertDialogAction
-                                                onClick={handleDelete}
-                                                disabled={isDeleting}
-                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                            >
-                                                {isDeleting ? "Deleting..." : "Delete Page"}
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            )}
-                        </div>
                     </div>
+                </div>
+
+                {/* Submit Action Bar */}
+                <div className="sticky bottom-0 z-40 flex items-center justify-end gap-4 border-t border-border bg-background p-4 sm:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-auto -mx-4 sm:-mx-8">
+                    {isEditMode && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button type="button" variant="destructive" disabled={isLoading} className="cursor-pointer mr-auto">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {dict?.forms?.delete || "Delete Page"}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>{dict?.forms?.delete_confirm_title || "Are you absolutely sure?"}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        {dict?.forms?.delete_confirm_desc || "This action cannot be undone. This will permanently delete this page from your store."}
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel disabled={isDeleting}>
+                                        {dict?.forms?.cancel || "Cancel"}
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleDelete}
+                                        disabled={isDeleting}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+                                    >
+                                        {isDeleting ? "Deleting..." : "Delete Page"}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+
+                    {isEditMode && (
+                        <Button
+                            variant="outline"
+                            asChild
+                            type="button"
+                            className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
+                        >
+                            <Link
+                                href={`/${lang}/pages/${initialData?.slug || form.watch("slug")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                {lang === 'fr' ? 'Voir sur le site' : 'View on website'}
+                            </Link>
+                        </Button>
+                    )}
+
+                    <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="bg-primary text-primary-foreground hover:opacity-90 text-white px-6 cursor-pointer"
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {isDeleting ? "Deleting..." : "Saving..."}
+                            </>
+                        ) : (
+                            <>
+                                <Save className="mr-2 h-4 w-4" />
+                                {isEditMode ? (dict?.forms?.submit || "Save Page") : "Create Page"}
+                            </>
+                        )}
+                    </Button>
                 </div>
             </form>
         </Form>

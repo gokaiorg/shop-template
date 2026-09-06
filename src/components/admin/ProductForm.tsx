@@ -7,7 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Upload, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, Eye } from "lucide-react";
+import Link from "next/link";
 
 import { createProduct, updateProduct, deleteProduct } from "@/actions/admin";
 import { productSchema } from "@/schemas/admin";
@@ -293,7 +294,7 @@ export function ProductForm({
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 flex flex-col flex-1">
                 {/* Hidden Order Field - Managed via Drag & Drop in products table */}
                 <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
@@ -302,17 +303,18 @@ export function ProductForm({
                     <Card className="border rounded-xl bg-card shadow-xs">
                         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4">
                             <div>
-                                <div className="flex items-center gap-2">
-                                    <CardTitle className="text-base font-semibold text-foreground">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
                                         {dict.imageUrl || (lang?.startsWith("fr") ? "Médias du produit" : "Product Images")}
-                                    </CardTitle>
-                                    <Badge variant="secondary" className="text-xs">
+                                    </h2>
+                                    <Badge variant="secondary" className="text-xs ml-1">
                                         {images.length} {images.length === 1 ? "image" : "images"}
                                     </Badge>
                                 </div>
-                                <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                                    {dict.dragDropImage || (lang?.startsWith("fr") ? "Téléversez vos photos (PNG, JPG, WebP). La première image servira de couverture." : "Upload product photos (PNG, JPG, WebP). The first image is the cover.")}
-                                </CardDescription>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr") ? "Photos du produit. La première sert de couverture." : "Product photos. First image serves as cover."}
+                                </p>
                             </div>
                             <Button
                                 type="button"
@@ -459,12 +461,15 @@ export function ProductForm({
                     {/* Bloc 2 : Informations Principales */}
                     <Card className="border rounded-xl bg-card shadow-xs">
                         <CardHeader className="border-b pb-4">
-                            <CardTitle className="text-base font-semibold text-foreground">
-                                {lang?.startsWith("fr") ? "Informations Principales" : "Main Information"}
-                            </CardTitle>
-                            <CardDescription className="text-xs text-muted-foreground">
-                                {lang?.startsWith("fr") ? "Nom, identifiant URL (slug), introduction et description du produit." : "Product name, URL slug, intro summary, and full description."}
-                            </CardDescription>
+                            <div className="flex items-center gap-2 mb-1">
+                                <FileText className="w-5 h-5 text-muted-foreground" />
+                                <h2 className="text-lg font-medium tracking-tight">
+                                    {lang?.startsWith("fr") ? "Informations Générales" : "General Information"}
+                                </h2>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-4">
+                                {lang?.startsWith("fr") ? "Nom, identifiant URL et descriptions." : "Product name, URL slug, and descriptions."}
+                            </p>
                         </CardHeader>
                         <CardContent className="pt-4">
                             {isMulti ? (
@@ -593,12 +598,15 @@ export function ProductForm({
                     {/* Bloc 3 : Prix et Inventaire */}
                     <Card className="border rounded-xl bg-card shadow-xs">
                         <CardHeader className="border-b pb-4">
-                            <CardTitle className="text-base font-semibold text-foreground">
-                                {lang?.startsWith("fr") ? "Prix et Inventaire" : "Pricing & Inventory"}
-                            </CardTitle>
-                            <CardDescription className="text-xs text-muted-foreground">
-                                {lang?.startsWith("fr") ? "Définissez le prix unitaire et la quantité disponible en stock." : "Set the unit price and available stock inventory."}
-                            </CardDescription>
+                            <div className="flex items-center gap-2 mb-1">
+                                <DollarSign className="w-5 h-5 text-muted-foreground" />
+                                <h2 className="text-lg font-medium tracking-tight">
+                                    {lang?.startsWith("fr") ? "Prix & Inventaire" : "Pricing & Inventory"}
+                                </h2>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-4">
+                                {lang?.startsWith("fr") ? "Tarif unitaire et quantité disponible en stock." : "Unit pricing and available inventory stock."}
+                            </p>
                         </CardHeader>
                         <CardContent className="pt-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -644,12 +652,15 @@ export function ProductForm({
                     {/* Bloc 4 : Organisation */}
                     <Card className="border rounded-xl bg-card shadow-xs">
                         <CardHeader className="border-b pb-4">
-                            <CardTitle className="text-base font-semibold text-foreground">
-                                {lang?.startsWith("fr") ? "Organisation" : "Organization"}
-                            </CardTitle>
-                            <CardDescription className="text-xs text-muted-foreground">
-                                {lang?.startsWith("fr") ? "Associez les catégories de vente et sélectionnez ou créez un artiste / vendeur." : "Assign product categories and select or create an artist / vendor."}
-                            </CardDescription>
+                            <div className="flex items-center gap-2 mb-1">
+                                <FolderTree className="w-5 h-5 text-muted-foreground" />
+                                <h2 className="text-lg font-medium tracking-tight">
+                                    {lang?.startsWith("fr") ? "Organisation" : "Organization"}
+                                </h2>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-4">
+                                {lang?.startsWith("fr") ? "Catégories associées et artiste ou vendeur." : "Associated categories and artist or vendor."}
+                            </p>
                         </CardHeader>
                         <CardContent className="pt-4 space-y-6">
                             <FormField
@@ -728,12 +739,15 @@ export function ProductForm({
                     {/* Bloc 5 : Publication */}
                     <Card className="border rounded-xl bg-card shadow-xs">
                         <CardHeader className="border-b pb-4">
-                            <CardTitle className="text-base font-semibold text-foreground">
-                                {lang?.startsWith("fr") ? "Publication" : "Publication"}
-                            </CardTitle>
-                            <CardDescription className="text-xs text-muted-foreground">
-                                {lang?.startsWith("fr") ? "Définissez la visibilité et le statut du produit (Brouillon / Publié)." : "Set visibility and status (Draft / Published)."}
-                            </CardDescription>
+                            <div className="flex items-center gap-2 mb-1">
+                                <Eye className="w-5 h-5 text-muted-foreground" />
+                                <h2 className="text-lg font-medium tracking-tight">
+                                    {lang?.startsWith("fr") ? "Statut & Visibilité" : "Status & Visibility"}
+                                </h2>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-4">
+                                {lang?.startsWith("fr") ? "Visibilité en boutique (brouillon ou publié)." : "Storefront visibility (draft or published)."}
+                            </p>
                         </CardHeader>
                         <CardContent className="pt-4">
                             {isMulti ? (
@@ -792,22 +806,12 @@ export function ProductForm({
                     </Card>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <Button type="submit" disabled={isLoading} className="cursor-pointer">
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {isUploading ? (dict.imageUploading || "Uploading image...") : isDeleting ? (dict.deleting || "Deleting...") : (dict.submitting || "Saving...")}
-                            </>
-                        ) : (
-                            dict.submit || "Save"
-                        )}
-                    </Button>
-
+                {/* Submit Action Bar */}
+                <div className="sticky bottom-0 z-40 flex items-center justify-end gap-4 border-t border-border bg-background p-4 sm:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-auto -mx-4 sm:-mx-8">
                     {initialData?.id && (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button type="button" variant="destructive" disabled={isLoading} className="cursor-pointer">
+                                <Button type="button" variant="destructive" disabled={isLoading} className="cursor-pointer mr-auto">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     {dict.delete || "Delete"}
                                 </Button>
@@ -834,6 +838,42 @@ export function ProductForm({
                             </AlertDialogContent>
                         </AlertDialog>
                     )}
+
+                    {initialData?.id && (
+                        <Button
+                            variant="outline"
+                            asChild
+                            type="button"
+                            className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
+                        >
+                            <Link
+                                href={`/${lang}/product/${getLocalizedField(initialData.slug, lang) || (lang === 'fr' ? (initialData as any).slugFr : (initialData as any).slugEn) || (typeof initialData.slug === 'string' ? initialData.slug : initialData.id)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                {lang === 'fr' ? 'Voir sur le site' : 'View on website'}
+                            </Link>
+                        </Button>
+                    )}
+
+                    <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="bg-primary text-primary-foreground hover:opacity-90 text-white px-6 cursor-pointer"
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {isUploading ? (dict.imageUploading || "Uploading image...") : isDeleting ? (dict.deleting || "Deleting...") : (dict.submitting || "Saving...")}
+                            </>
+                        ) : (
+                            <>
+                                <Save className="mr-2 h-4 w-4" />
+                                {dict.submit || "Save"}
+                            </>
+                        )}
+                    </Button>
                 </div>
             </form>
         </Form>

@@ -89,16 +89,23 @@ export default async function RootLayout({
   const { theme } = brand;
   const colors = theme.colors;
 
+  const fallbackPrimaryColor = brandKey === "art-fate" ? "#14B3F6" : "#0f172a";
+  const primaryColor = storeSettings.primaryColor || fallbackPrimaryColor;
+
   const brandStyles = `
     :root {
       --radius: ${theme.radius || '0.625rem'};
-      ${colors?.light?.primary ? `--primary: ${colors.light.primary};` : ''}
+      --theme-primary: ${primaryColor};
+      --primary: var(--theme-primary);
+      --primary-foreground: #ffffff;
       ${colors?.light?.accent ? `--accent: ${colors.light.accent};` : ''}
       ${colors?.light?.background ? `--background: ${colors.light.background};` : ''}
       ${colors?.light?.foreground ? `--foreground: ${colors.light.foreground};` : ''}
     }
     .dark {
-      ${colors?.dark?.primary ? `--primary: ${colors.dark.primary};` : ''}
+      --theme-primary: ${primaryColor};
+      --primary: var(--theme-primary);
+      --primary-foreground: #ffffff;
       ${colors?.dark?.accent ? `--accent: ${colors.dark.accent};` : ''}
       ${colors?.dark?.background ? `--background: ${colors.dark.background};` : ''}
       ${colors?.dark?.foreground ? `--foreground: ${colors.dark.foreground};` : ''}

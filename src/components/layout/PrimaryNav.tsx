@@ -33,8 +33,8 @@ export function PrimaryNav({ lang, dict, pages = [], className, onNavClick }: Pr
                 onClick={onNavClick}
                 aria-current={isCatalogActive ? "page" : undefined}
                 className={cn(
-                    "flex items-center text-sm font-medium transition-colors hover:text-foreground",
-                    isCatalogActive ? "text-foreground font-semibold" : "text-muted-foreground"
+                    "flex items-center text-sm font-medium transition-colors hover:text-primary",
+                    isCatalogActive ? "text-primary font-semibold" : "text-muted-foreground"
                 )}
             >
                 {catalogLabel}
@@ -53,8 +53,8 @@ export function PrimaryNav({ lang, dict, pages = [], className, onNavClick }: Pr
                         onClick={onNavClick}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
-                            "flex items-center text-sm font-medium transition-colors hover:text-foreground",
-                            isActive ? "text-foreground font-semibold" : "text-muted-foreground"
+                            "flex items-center text-sm font-medium transition-colors hover:text-primary",
+                            isActive ? "text-primary font-semibold" : "text-muted-foreground"
                         )}
                     >
                         {label}

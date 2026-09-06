@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getIsCartEnabled } from "@/config/brand.config";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { ShoppingCart } from "lucide-react";
 
 interface AdminOrdersPageProps {
@@ -60,16 +60,20 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
     };
 
     return (
-        <div className="space-y-6">
-            <AdminPageHeader
-                title={ordersDict.title}
-                description={lang === 'fr' ? 'Gérer les commandes de votre boutique.' : 'Manage your store orders.'}
-                icon={ShoppingCart}
-            />
-
+        <AdminPageLayout
+            title={ordersDict.title}
+            description={lang === 'fr' ? 'Suivi et gestion des commandes clients.' : 'Tracking and fulfillment of customer orders.'}
+            icon={ShoppingCart}
+        >
             <Card>
                 <CardHeader>
-                    <CardTitle>{ordersDict.title}</CardTitle>
+                    <div className="flex items-center gap-2 mb-1">
+                        <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+                        <h2 className="text-lg font-medium tracking-tight">{ordersDict.title}</h2>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                        {lang === 'fr' ? 'Liste complète des commandes passées.' : 'Full list of processed store orders.'}
+                    </p>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -128,6 +132,6 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
                     </Table>
                 </CardContent>
             </Card>
-        </div>
+        </AdminPageLayout>
     );
 }

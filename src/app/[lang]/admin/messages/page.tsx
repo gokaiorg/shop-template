@@ -4,7 +4,7 @@ import { Locale } from "@/app/i18n-config";
 import { protectAdminRoute } from "@/lib/auth-utils";
 import { ContactMessage } from "@/types/database";
 import { MessagesTable } from "@/components/admin/MessagesTable";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { Mail } from "lucide-react";
 
 export default async function AdminMessagesPage({
@@ -52,17 +52,15 @@ export default async function AdminMessagesPage({
   const messagesDict = dict?.admin?.messages_section || {};
 
   return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title={messagesDict.title || (lang === "fr" ? "Messages" : "Messages")}
-        description={messagesDict.subtitle ||
-          (lang === "fr"
-            ? "Consultez et gérez les demandes de contact reçues depuis la boutique."
-            : "View and manage contact inquiries sent from the storefront.")}
-        icon={Mail}
-      />
-
+    <AdminPageLayout
+      title={messagesDict.title || "Messages"}
+      description={messagesDict.subtitle ||
+        (lang === "fr"
+          ? "Demandes de contact reçues depuis la boutique."
+          : "Contact inquiries received from your store.")}
+      icon={Mail}
+    >
       <MessagesTable initialMessages={messages} lang={lang} dict={dict} />
-    </div>
+    </AdminPageLayout>
   );
 }

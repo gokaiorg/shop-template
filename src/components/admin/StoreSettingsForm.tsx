@@ -4,6 +4,7 @@ import React, { useState, useTransition, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { 
@@ -18,6 +19,7 @@ import {
     Coins,
     Plus,
     Share2,
+    ExternalLink,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -53,11 +55,13 @@ interface StoreSettingsFormProps {
     initialData: StoreSettings;
     lang: string;
     dict?: Record<string, string>;
+    children?: React.ReactNode;
 }
 
-export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps) {
+export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSettingsFormProps) {
     const router = useRouter();
-    const { supportedLocales, defaultLocale, isMultiLocale } = useBrand();
+    const { brandKey, supportedLocales, defaultLocale, isMultiLocale } = useBrand();
+    const defaultBrandPrimary = brandKey === "art-fate" ? "#14B3F6" : "#0f172a";
     const [isPending, startTransition] = useTransition();
 
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -84,6 +88,7 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
             brandName: initialData.brandName || "",
             logoUrl: initialData.logoUrl || "",
             faviconUrl: initialData.faviconUrl || "",
+            primaryColor: initialData.primaryColor || defaultBrandPrimary,
             heroTitle: defaultHeroTitle,
             heroDescription: defaultHeroDesc,
             heroBackgroundImageUrl: initialData.heroBackgroundImageUrl || "",
@@ -169,17 +174,21 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 flex flex-col flex-1">
                 {/* Brand Identity Section */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-xl">
-                            <Sparkles className="h-5 w-5 text-primary" />
-                            Brand Identity
-                        </CardTitle>
-                        <CardDescription>
-                            Configure your brand name, catalog archive routing & display titles, and brand media assets.
-                        </CardDescription>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang === "fr" ? "Identité de marque" : "Brand Identity"}
+                            </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang === "fr" 
+                                ? "Nom de boutique, logos officiels et couleur du thème." 
+                                : "Store name, brand logos, and primary theme color."}
+                        </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <FormField
@@ -193,6 +202,66 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
                                     </FormControl>
                                     <FormDescription>
                                         The public brand name displayed in headers, footers, and metadata.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Dynamic Primary Theme Color */}
+                        <FormField
+                            control={form.control}
+                            name="primaryColor"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center justify-between">
+                                        <span>{lang === "fr" ? "Couleur Principale du Thème (Primary)" : "Primary Brand Color"}</span>
+                                        {field.value && (
+                                            <span className="text-xs font-mono text-muted-foreground uppercase">{field.value}</span>
+                                        )}
+                                    </FormLabel>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="relative flex items-center justify-center">
+                                            <input
+                                                type="color"
+                                                value={field.value || defaultBrandPrimary}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                                className="h-10 w-14 cursor-pointer rounded-md border border-input bg-transparent p-1 shadow-xs"
+                                                title={lang === "fr" ? "Choisir une couleur" : "Choose color"}
+                                            />
+                                        </div>
+                                        <FormControl>
+                                            <Input
+                                                placeholder={defaultBrandPrimary}
+                                                {...field}
+                                                value={field.value || ""}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                                className="font-mono text-sm max-w-[180px]"
+                                            />
+                                        </FormControl>
+                                        <div
+                                            className="h-10 px-4 rounded-md flex items-center justify-center text-xs font-medium border shadow-xs transition-colors"
+                                            style={{
+                                                backgroundColor: field.value || defaultBrandPrimary,
+                                                color: "#ffffff",
+                                            }}
+                                        >
+                                            {lang === "fr" ? "Aperçu du bouton" : "Button Preview"}
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => field.onChange(defaultBrandPrimary)}
+                                            className="text-xs cursor-pointer"
+                                        >
+                                            {lang === "fr" ? "Réinitialiser" : "Reset"} ({defaultBrandPrimary})
+                                        </Button>
+                                    </div>
+                                    <FormDescription>
+                                        {lang === "fr"
+                                            ? `Couleur utilisée pour les boutons, liens actifs, survols et badges de l'ensemble du site. Repli par défaut : ${defaultBrandPrimary}.`
+                                            : `Color used across buttons, active navigation states, hover effects, and category pills. Default fallback: ${defaultBrandPrimary}.`}
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -371,13 +440,17 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
                 {/* Homepage Hero Section */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-xl">
-                            <Globe className="h-5 w-5 text-primary" />
-                            Homepage Hero Section
-                        </CardTitle>
-                        <CardDescription>
-                            Customize the background image (with parallax effect), headline, and intro copy displayed on the storefront home page.
-                        </CardDescription>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Globe className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang === "fr" ? "Bannière d'accueil" : "Homepage Hero"}
+                            </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang === "fr"
+                                ? "Image d'arrière-plan, titre d'accroche et sous-titre."
+                                : "Hero background image, headline title, and subtitle."}
+                        </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {/* Hero Background Image Upload */}
@@ -550,13 +623,17 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
                 {/* Localization Section */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-xl">
-                            <Palette className="h-5 w-5 text-primary" />
-                            Localization
-                        </CardTitle>
-                        <CardDescription>
-                            Configure storefront visual theme enforcement and default transaction currency.
-                        </CardDescription>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Palette className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang === "fr" ? "Thème & Devise" : "Theme & Currency"}
+                            </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang === "fr"
+                                ? "Thème visuel par défaut et devise de transaction."
+                                : "Default visual theme and store transaction currency."}
+                        </p>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Default Theme */}
@@ -631,13 +708,17 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
                 {/* Footer & Socials Section */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-xl">
-                            <Share2 className="h-5 w-5 text-primary" />
-                            Footer & Socials
-                        </CardTitle>
-                        <CardDescription>
-                            Configure the brand description and social media links displayed in the storefront footer.
-                        </CardDescription>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Share2 className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang === "fr" ? "Pied de page & Réseaux" : "Footer & Social Links"}
+                            </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang === "fr"
+                                ? "Description de bas de page et liens vers vos réseaux sociaux."
+                                : "Footer brand description and social media profile links."}
+                        </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {/* Footer Description */}
@@ -690,30 +771,6 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
                                     )}
                                 />
                             )}
-                        </div>
-
-                        {/* Footer Right Menu Title */}
-                        <div className="space-y-2 pt-4 border-t">
-                            <FormField
-                                control={form.control}
-                                name="footerRightMenuTitle"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-base font-semibold">
-                                            {lang === "fr" ? "Titre de la colonne de droite du pied de page" : "Footer Right Menu Title"}
-                                        </FormLabel>
-                                        <FormDescription>
-                                            {lang === "fr"
-                                                ? "Titre affiché au-dessus des liens de pages dans la colonne de droite du footer (ex: Legal, Pages, Informations)."
-                                                : "Title displayed above the custom page links in the right column of the footer (e.g. Legal, Pages, Information)."}
-                                        </FormDescription>
-                                        <FormControl>
-                                            <Input placeholder="Legal" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
                         </div>
 
                         {/* Social Links */}
@@ -787,21 +844,66 @@ export function StoreSettingsForm({ initialData, lang }: StoreSettingsFormProps)
                                 </div>
                             )}
                         </div>
+
+                        {/* Footer Right Menu Title */}
+                        <div className="space-y-2 pt-4 border-t">
+                            <FormField
+                                control={form.control}
+                                name="footerRightMenuTitle"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-base font-semibold">
+                                            {lang === "fr" ? "Titre de la colonne de droite du pied de page" : "Footer Right Menu Title"}
+                                        </FormLabel>
+                                        <FormDescription>
+                                            {lang === "fr"
+                                                ? "Titre affiché au-dessus des liens de pages dans la colonne de droite du footer (ex: Legal, Pages, Informations)."
+                                                : "Title displayed above the custom page links in the right column of the footer (e.g. Legal, Pages, Information)."}
+                                        </FormDescription>
+                                        <FormControl>
+                                            <Input placeholder="Legal" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                     </CardContent>
                 </Card>
 
-                {/* Submit Action */}
-                <div className="flex justify-end pt-4">
-                    <Button type="submit" size="lg" disabled={isPending || isUploadingLogo || isUploadingFavicon || isUploadingHero} className="px-8 gap-2">
+                {children}
+
+                {/* Submit Action Bar */}
+                <div className="sticky bottom-0 z-40 flex items-center justify-end gap-4 border-t border-border bg-background p-4 sm:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-auto -mx-4 sm:-mx-8">
+                    <Button
+                        variant="outline"
+                        asChild
+                        type="button"
+                        className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
+                    >
+                        <Link
+                            href={`/${lang}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            {lang === "fr" ? "Voir le site" : "View website"}
+                        </Link>
+                    </Button>
+                    <Button
+                        type="submit"
+                        disabled={isPending || isUploadingLogo || isUploadingFavicon || isUploadingHero}
+                        className="bg-primary text-primary-foreground hover:opacity-90 text-white px-6 cursor-pointer"
+                    >
                         {isPending ? (
                             <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Saving Configuration...
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {lang === "fr" ? "Enregistrement..." : "Saving Configuration..."}
                             </>
                         ) : (
                             <>
-                                <Save className="h-4 w-4" />
-                                Save Configuration
+                                <Save className="mr-2 h-4 w-4" />
+                                {lang === "fr" ? "Enregistrer la configuration" : "Save Configuration"}
                             </>
                         )}
                     </Button>
