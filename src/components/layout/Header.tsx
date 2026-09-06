@@ -38,8 +38,8 @@ function HeaderContent({ lang, dict, pages = [] }: { lang: string, dict: any, pa
                         <ThemeToggle dict={dict.header} />
                         <LangToggle lang={lang} dict={dict.header} />
                     </div>
-                    <AccountToggle lang={lang} dict={dict} />
                     {isCartEnabled && <CartSheet dict={dict.header} />}
+                    <AccountToggle lang={lang} dict={dict} />
                 </div>
             </div>
         </header>
