@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, Eye, Globe, RotateCcw } from "lucide-react";
+import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, LayoutTemplate, RotateCcw } from "lucide-react";
 import Link from "next/link";
 
 import { createProduct, updateProduct, deleteProduct } from "@/actions/admin";
@@ -447,9 +447,11 @@ export function ProductForm({
                 {/* Hidden Order Field - Managed via Drag & Drop in products table */}
                 <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
-                <div className="space-y-6">
-                    {/* Bloc 1 : Médias */}
-                    <Card className="border rounded-xl bg-card shadow-xs">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Colonne principale (Gauche) */}
+                    <div className="col-span-1 lg:col-span-2 min-w-0 space-y-8">
+                        {/* Bloc 1 : Médias */}
+                        <Card className="border rounded-xl bg-card shadow-xs min-w-0">
                         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4">
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
@@ -858,118 +860,48 @@ export function ProductForm({
                             />
                         </CardContent>
                     </Card>
+                    </div>
 
-                    {/* Bloc 5 : Publication */}
-                    <Card className="border rounded-xl bg-card shadow-xs">
-                        <CardHeader className="border-b pb-4">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Eye className="w-5 h-5 text-muted-foreground" />
-                                <h2 className="text-lg font-medium tracking-tight">
-                                    {lang?.startsWith("fr") ? "Statut & Visibilité" : "Status & Visibility"}
-                                </h2>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {lang?.startsWith("fr") ? "Visibilité en boutique (brouillon ou publié)." : "Storefront visibility (draft or published)."}
-                            </p>
-                        </CardHeader>
-                        <CardContent className="pt-4">
-                            {isMulti ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                    {locales.map((loc) => (
-                                        <FormField
-                                            key={loc}
-                                            control={form.control}
-                                            name={`status.${loc}`}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{dict.status || "Status"} ({getLocaleDisplayName(loc)})</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value || "draft"}>
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="draft">{lang?.startsWith("fr") ? "Brouillon" : "Draft"}</SelectItem>
-                                                            <SelectItem value="published">{lang?.startsWith("fr") ? "Publié" : "Published"}</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    ))}
+                    {/* Colonne secondaire (Droite) */}
+                    <div className="col-span-1 min-w-0 space-y-8">
+                        {/* Bloc : URL & Publication */}
+                        <Card className="border rounded-xl bg-card shadow-xs min-w-0 overflow-hidden">
+                            <CardHeader className="border-b pb-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <LayoutTemplate className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang?.startsWith("fr") ? "Paramètres URL & Statut" : "URL & Publication"}
+                                    </h2>
                                 </div>
-                            ) : (
-                                <div className="max-w-xs">
-                                    <FormField
-                                        control={form.control}
-                                        name={`status.${locales[0]}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{dict.status || "Status"} ({locales[0].toUpperCase()})</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value || "draft"}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="draft">{lang?.startsWith("fr") ? "Brouillon" : "Draft"}</SelectItem>
-                                                        <SelectItem value="published">{lang?.startsWith("fr") ? "Publié" : "Published"}</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Bloc 6 : Routage & URL */}
-                    <Card className="border rounded-xl bg-card shadow-xs">
-                        <CardHeader className="border-b pb-4">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Globe className="w-5 h-5 text-muted-foreground" />
-                                <h2 className="text-lg font-medium tracking-tight">
-                                    {lang?.startsWith("fr") ? "Routage & URL" : "URL & Routing"}
-                                </h2>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {lang?.startsWith("fr")
-                                    ? "Identifiant unique utilisé pour générer l'adresse web publique du produit."
-                                    : "Unique identifier used to generate the public web address for the product."}
-                            </p>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-4">
-                            {isMulti ? (
-                                <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
-                                    {locales.map((loc) => {
-                                        const currentSlugVal = form.watch(`slug.${loc}`) || "";
-                                        return (
-                                            <AccordionItem key={loc} value={loc}>
-                                                <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                                                    {getLocaleDisplayName(loc)}
-                                                </AccordionTrigger>
-                                                <AccordionContent className="space-y-4 pt-3 px-1">
-                                                    <FormField
-                                                        control={form.control}
-                                                        name={`slug.${loc}`}
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                                    <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Badge variant="secondary" className="font-mono text-xs">
-                                                                            /{lang}/product/{currentSlugVal || "slug"}
-                                                                        </Badge>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr")
+                                        ? "Identifiant slug et visibilité du statut."
+                                        : "Slug handle and publication status."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-4 min-w-0">
+                                {isMulti ? (
+                                    <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
+                                        {locales.map((loc) => {
+                                            const currentSlugVal = form.watch(`slug.${loc}`) || "";
+                                            return (
+                                                <AccordionItem key={loc} value={loc}>
+                                                    <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                                                        {getLocaleDisplayName(loc)}
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="space-y-4 pt-3 px-1">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`slug.${loc}`}
+                                                            render={({ field }) => (
+                                                                <FormItem className="min-w-0 space-y-2">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <FormLabel>{dict.slug || (lang?.startsWith("fr") ? "Slug (URL)" : "Slug (URL)")} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
                                                                         <Button
                                                                             type="button"
                                                                             variant="ghost"
                                                                             size="sm"
-                                                                            className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
+                                                                            className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
                                                                             title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
                                                                             onClick={() => {
                                                                                 const currentName = form.getValues(`name.${loc}`) || "";
@@ -985,86 +917,149 @@ export function ProductForm({
                                                                             <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
                                                                         </Button>
                                                                     </div>
-                                                                </div>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        placeholder={`slug-${loc}...`}
-                                                                        className="font-mono text-sm max-w-md"
-                                                                        {...field}
-                                                                        value={field.value || ""}
-                                                                        onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
-                                                                        onBlur={() => handleSlugBlur(loc, field.onBlur)}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormDescription>
-                                                                    {lang?.startsWith("fr")
-                                                                        ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
-                                                                        : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
-                                                                </FormDescription>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        );
-                                    })}
-                                </Accordion>
-                            ) : (
-                                <FormField
-                                    control={form.control}
-                                    name={`slug.${locales[0]}`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary" className="font-mono text-xs">
-                                                        /{lang}/product/{field.value || "slug"}
-                                                    </Badge>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
-                                                        title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
-                                                        onClick={() => {
-                                                            const currentName = form.getValues(`name.${locales[0]}`) || "";
-                                                            if (currentName.trim()) {
-                                                                const regenerated = slugify(currentName);
-                                                                slugTouchedRef.current[locales[0]] = false;
-                                                                form.setValue(`slug.${locales[0]}`, regenerated, { shouldDirty: true, shouldValidate: true });
-                                                                toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
-                                                            }
-                                                        }}
-                                                    >
-                                                        <RotateCcw className="h-3 w-3" />
-                                                        <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="product-slug..."
-                                                    className="font-mono text-sm max-w-md"
-                                                    {...field}
-                                                    value={field.value || ""}
-                                                    onChange={(e) => handleSlugChange(locales[0], e.target.value, field.onChange)}
-                                                    onBlur={() => handleSlugBlur(locales[0], field.onBlur)}
-                                                />
-                                            </FormControl>
-                                            <FormDescription>
-                                                {lang?.startsWith("fr")
-                                                    ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
-                                                    : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            )}
-                        </CardContent>
-                    </Card>
+
+                                                                    <div className="min-w-0 overflow-hidden">
+                                                                        <Badge
+                                                                            variant="secondary"
+                                                                            className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                                            title={`/${lang}/product/${currentSlugVal || "slug"}`}
+                                                                        >
+                                                                            /{lang}/product/{currentSlugVal || "slug"}
+                                                                        </Badge>
+                                                                    </div>
+
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            placeholder={`slug-${loc}...`}
+                                                                            className="font-mono text-sm w-full"
+                                                                            {...field}
+                                                                            value={field.value || ""}
+                                                                            onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
+                                                                            onBlur={() => handleSlugBlur(loc, field.onBlur)}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormDescription>
+                                                                        {lang?.startsWith("fr")
+                                                                            ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                                            : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                                    </FormDescription>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`status.${loc}`}
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>{lang?.startsWith("fr") ? "Statut de publication" : "Publication Status"} ({loc.toUpperCase()})</FormLabel>
+                                                                    <Select onValueChange={field.onChange} value={field.value || "draft"}>
+                                                                        <FormControl>
+                                                                            <SelectTrigger>
+                                                                                <SelectValue />
+                                                                            </SelectTrigger>
+                                                                        </FormControl>
+                                                                        <SelectContent>
+                                                                            <SelectItem value="published">{lang?.startsWith("fr") ? "Publié (Visible)" : "Published (Visible)"}</SelectItem>
+                                                                            <SelectItem value="draft">{lang?.startsWith("fr") ? "Brouillon (Masqué)" : "Draft (Hidden)"}</SelectItem>
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            );
+                                        })}
+                                    </Accordion>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name={`slug.${locales[0]}`}
+                                            render={({ field }) => (
+                                                <FormItem className="min-w-0 space-y-2">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <FormLabel>{dict.slug || (lang?.startsWith("fr") ? "Slug (URL)" : "Slug (URL)")} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
+                                                            title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
+                                                            onClick={() => {
+                                                                const currentName = form.getValues(`name.${locales[0]}`) || "";
+                                                                if (currentName.trim()) {
+                                                                    const regenerated = slugify(currentName);
+                                                                    slugTouchedRef.current[locales[0]] = false;
+                                                                    form.setValue(`slug.${locales[0]}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                    toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
+                                                                }
+                                                            }}
+                                                        >
+                                                            <RotateCcw className="h-3 w-3" />
+                                                            <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                        </Button>
+                                                    </div>
+
+                                                    <div className="min-w-0 overflow-hidden">
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                            title={`/${lang}/product/${field.value || "slug"}`}
+                                                        >
+                                                            /{lang}/product/{field.value || "slug"}
+                                                        </Badge>
+                                                    </div>
+
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="product-slug..."
+                                                            className="font-mono text-sm w-full"
+                                                            {...field}
+                                                            value={field.value || ""}
+                                                            onChange={(e) => handleSlugChange(locales[0], e.target.value, field.onChange)}
+                                                            onBlur={() => handleSlugBlur(locales[0], field.onBlur)}
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        {lang?.startsWith("fr")
+                                                            ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                            : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name={`status.${locales[0]}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{lang?.startsWith("fr") ? "Statut de publication" : "Publication Status"} ({locales[0].toUpperCase()})</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || "draft"}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="published">{lang?.startsWith("fr") ? "Publié (Visible)" : "Published (Visible)"}</SelectItem>
+                                                            <SelectItem value="draft">{lang?.startsWith("fr") ? "Brouillon (Masqué)" : "Draft (Hidden)"}</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
 
                 {/* Submit Action Bar */}

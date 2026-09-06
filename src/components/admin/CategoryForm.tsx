@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink, Globe, RotateCcw } from "lucide-react";
+import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink, Globe, RotateCcw, FileText } from "lucide-react";
 import Link from "next/link";
 import { createCategory, updateCategory, deleteCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
@@ -289,336 +289,371 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8 flex flex-col flex-1">
-                {isMulti ? (
-                    <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
-                        {locales.map((loc) => (
-                            <AccordionItem key={loc} value={loc}>
-                                <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                                    {getLocaleDisplayName(loc)}
-                                </AccordionTrigger>
-                                <AccordionContent className="space-y-4 pt-4 px-2">
-                                    <FormField
-                                        control={form.control}
-                                        name={`name.${loc}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name={`intro.${loc}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{dict.intro || "Intro"} ({loc.toUpperCase()})</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder={`Short introduction (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name={`description.${loc}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </AccordionContent>
-                            </AccordionItem>
-                        ))}
-                    </Accordion>
-                ) : (
-                    <div className="space-y-4 border rounded-lg p-6 bg-card">
-                        <h3 className="text-base font-semibold text-foreground border-b pb-3">
-                            Category Information ({getLocaleDisplayName(locales[0])})
-                        </h3>
-                        <FormField
-                            control={form.control}
-                            name={`name.${locales[0]}`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Name..." {...field} value={field.value || ""} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name={`intro.${locales[0]}`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.intro || "Intro"} ({locales[0].toUpperCase()})</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Short introduction..." {...field} value={field.value || ""} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name={`description.${locales[0]}`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                )}
-
                 {/* Hidden Position / Order Field - Managed via Drag & Drop in categories table */}
                 <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
-                {/* Category Banner Image */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2 mb-1">
-                            <ImageIcon className="w-5 h-5 text-muted-foreground" />
-                            <h2 className="text-lg font-medium tracking-tight">
-                                {lang?.startsWith("fr") ? "Bannière de catégorie" : "Category Banner"}
-                            </h2>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            {lang?.startsWith("fr") 
-                                ? "Image d'en-tête et visuel d'aperçu dans le catalogue."
-                                : "Header banner and preview card visual in the catalog."}
-                        </p>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="border rounded-lg p-4 bg-muted/20 flex flex-col items-center justify-center min-h-[160px] gap-3 relative overflow-hidden">
-                            {imageUrlValue ? (
-                                <div className="w-full flex flex-col items-center gap-3">
-                                    <div className="relative w-full h-48 bg-background/80 rounded-lg border overflow-hidden">
-                                        <Image
-                                            src={imageUrlValue}
-                                            alt="Category Banner"
-                                            fill
-                                            className="object-cover"
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Colonne principale (Gauche) */}
+                    <div className="col-span-1 lg:col-span-2 min-w-0 space-y-8">
+                        {/* Bloc 1 : Informations Générales */}
+                        <Card className="border rounded-xl bg-card shadow-xs min-w-0 overflow-hidden">
+                            <CardHeader className="border-b pb-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <FileText className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang?.startsWith("fr") ? "Informations Générales" : "General Information"}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr")
+                                        ? "Nom, accroche et descriptions de la catégorie."
+                                        : "Category name, intro, and descriptions."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                                {isMulti ? (
+                                    <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
+                                        {locales.map((loc) => (
+                                            <AccordionItem key={loc} value={loc}>
+                                                <AccordionTrigger className="text-base font-semibold hover:no-underline">
+                                                    {getLocaleDisplayName(loc)}
+                                                </AccordionTrigger>
+                                                <AccordionContent className="space-y-4 pt-4 px-1">
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`name.${loc}`}
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                                <FormControl>
+                                                                    <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`intro.${loc}`}
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>{dict.intro || "Intro"} ({loc.toUpperCase()})</FormLabel>
+                                                                <FormControl>
+                                                                    <Input placeholder={`Short introduction (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`description.${loc}`}
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                                <FormControl>
+                                                                    <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name={`name.${locales[0]}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Name..." {...field} value={field.value || ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`intro.${locales[0]}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict.intro || "Intro"} ({locales[0].toUpperCase()})</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Short introduction..." {...field} value={field.value || ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`description.${locales[0]}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
                                         />
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => imageInputRef.current?.click()}
-                                            disabled={isUploadingImage || isLoading}
-                                            className="cursor-pointer"
-                                        >
-                                            {isUploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                            Change Image
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-destructive hover:bg-destructive/10 cursor-pointer"
-                                            onClick={() => form.setValue("imageUrl", "", { shouldDirty: true })}
-                                            disabled={isUploadingImage || isLoading}
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                            Remove
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center gap-2 text-center py-4">
-                                    <ImageIcon className="h-10 w-10 text-muted-foreground" />
-                                    <p className="text-xs text-muted-foreground">Recommended: 1200×600px landscape image (JPEG, PNG, WebP)</p>
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        size="sm"
-                                        onClick={() => imageInputRef.current?.click()}
-                                        disabled={isUploadingImage || isLoading}
-                                        className="cursor-pointer mt-1"
-                                    >
-                                        {isUploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                        Upload Category Image
-                                    </Button>
-                                </div>
-                            )}
-                            <input
-                                type="file"
-                                ref={imageInputRef}
-                                onChange={handleImageUpload}
-                                accept="image/png,image/jpeg,image/webp"
-                                className="hidden"
-                            />
-                        </div>
-                        <FormField
-                            control={form.control}
-                            name="imageUrl"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormControl>
-                                        <Input placeholder="Direct image URL or uploaded file path" {...field} value={field.value || ""} className="text-xs font-mono" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </CardContent>
-                </Card>
+                                )}
+                            </CardContent>
+                        </Card>
 
-                {/* URL & Routing Card */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Globe className="w-5 h-5 text-muted-foreground" />
-                            <h2 className="text-lg font-medium tracking-tight">
-                                {lang?.startsWith("fr") ? "Routage & URL" : "URL & Routing"}
-                            </h2>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            {lang?.startsWith("fr")
-                                ? "Identifiant unique utilisé pour générer l'adresse web publique de la catégorie."
-                                : "Unique identifier used to generate the public web address for the category."}
-                        </p>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {isMulti ? (
-                            <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
-                                {locales.map((loc) => {
-                                    const currentSlugVal = form.watch(`slug.${loc}`) || "";
-                                    return (
-                                        <AccordionItem key={loc} value={loc}>
-                                            <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                                                {getLocaleDisplayName(loc)}
-                                            </AccordionTrigger>
-                                            <AccordionContent className="space-y-4 pt-3 px-1">
-                                                <FormField
-                                                    control={form.control}
-                                                    name={`slug.${loc}`}
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                                <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                                <div className="flex items-center gap-2">
-                                                                    <Badge variant="secondary" className="font-mono text-xs">
-                                                                        /{lang}/{catalogSlug || "shop"}?category={currentSlugVal || "slug"}
-                                                                    </Badge>
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="ghost"
-                                                                        size="sm"
-                                                                        className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
-                                                                        title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
-                                                                        onClick={() => {
-                                                                            const currentName = form.getValues(`name.${loc}`) || "";
-                                                                            if (currentName.trim()) {
-                                                                                const regenerated = slugify(currentName);
-                                                                                slugTouchedRef.current[loc] = false;
-                                                                                form.setValue(`slug.${loc}`, regenerated, { shouldDirty: true, shouldValidate: true });
-                                                                                toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        <RotateCcw className="h-3 w-3" />
-                                                                        <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                            <FormControl>
-                                                                <Input
-                                                                    placeholder={`slug-${loc}...`}
-                                                                    className="font-mono text-sm max-w-md"
-                                                                    {...field}
-                                                                    value={field.value || ""}
-                                                                    onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
-                                                                    onBlur={() => handleSlugBlur(loc, field.onBlur)}
-                                                                />
-                                                            </FormControl>
-                                                            <FormDescription>
-                                                                {lang?.startsWith("fr")
-                                                                    ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
-                                                                    : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
-                                                            </FormDescription>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
+                        {/* Category Banner Image */}
+                        <Card className="border rounded-xl bg-card shadow-xs min-w-0 overflow-hidden">
+                            <CardHeader className="border-b pb-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang?.startsWith("fr") ? "Bannière de catégorie" : "Category Banner"}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr") 
+                                        ? "Image d'en-tête et visuel d'aperçu dans le catalogue."
+                                        : "Header banner and preview card visual in the catalog."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-4">
+                                <div className="border rounded-lg p-4 bg-muted/20 flex flex-col items-center justify-center min-h-[160px] gap-3 relative overflow-hidden">
+                                    {imageUrlValue ? (
+                                        <div className="w-full flex flex-col items-center gap-3">
+                                            <div className="relative w-full h-48 bg-background/80 rounded-lg border overflow-hidden">
+                                                <Image
+                                                    src={imageUrlValue}
+                                                    alt="Category Banner"
+                                                    fill
+                                                    className="object-cover"
                                                 />
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    );
-                                })}
-                            </Accordion>
-                        ) : (
-                            <FormField
-                                control={form.control}
-                                name={`slug.${locales[0]}`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                                            <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="secondary" className="font-mono text-xs">
-                                                    /{lang}/{catalogSlug || "shop"}?category={field.value || "slug"}
-                                                </Badge>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => imageInputRef.current?.click()}
+                                                    disabled={isUploadingImage || isLoading}
+                                                    className="cursor-pointer"
+                                                >
+                                                    {isUploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
+                                                    Change Image
+                                                </Button>
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
-                                                    title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
-                                                    onClick={() => {
-                                                        const currentName = form.getValues(`name.${locales[0]}`) || "";
-                                                        if (currentName.trim()) {
-                                                            const regenerated = slugify(currentName);
-                                                            slugTouchedRef.current[locales[0]] = false;
-                                                            form.setValue(`slug.${locales[0]}`, regenerated, { shouldDirty: true, shouldValidate: true });
-                                                            toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
-                                                        }
-                                                    }}
+                                                    className="text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                    onClick={() => form.setValue("imageUrl", "", { shouldDirty: true })}
+                                                    disabled={isUploadingImage || isLoading}
                                                 >
-                                                    <RotateCcw className="h-3 w-3" />
-                                                    <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                                    Remove
                                                 </Button>
                                             </div>
                                         </div>
-                                        <FormControl>
-                                            <Input
-                                                placeholder={`slug-${locales[0]}...`}
-                                                className="font-mono text-sm max-w-md"
-                                                {...field}
-                                                value={field.value || ""}
-                                                onChange={(e) => handleSlugChange(locales[0], e.target.value, field.onChange)}
-                                                onBlur={() => handleSlugBlur(locales[0], field.onBlur)}
-                                            />
-                                        </FormControl>
-                                        <FormDescription>
-                                            {lang?.startsWith("fr")
-                                                ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
-                                                : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-center py-4">
+                                            <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                                            <p className="text-xs text-muted-foreground">Recommended: 1200×600px landscape image (JPEG, PNG, WebP)</p>
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => imageInputRef.current?.click()}
+                                                disabled={isUploadingImage || isLoading}
+                                                className="cursor-pointer mt-1"
+                                            >
+                                                {isUploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
+                                                Upload Category Image
+                                            </Button>
+                                        </div>
+                                    )}
+                                    <input
+                                        type="file"
+                                        ref={imageInputRef}
+                                        onChange={handleImageUpload}
+                                        accept="image/png,image/jpeg,image/webp"
+                                        className="hidden"
+                                    />
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="imageUrl"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <Input placeholder="Direct image URL or uploaded file path" {...field} value={field.value || ""} className="text-xs font-mono" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Colonne secondaire (Droite) */}
+                    <div className="col-span-1 min-w-0 space-y-8">
+                        {/* URL & Routing Card */}
+                        <Card className="border rounded-xl bg-card shadow-xs min-w-0 overflow-hidden">
+                            <CardHeader className="border-b pb-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Globe className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang?.startsWith("fr") ? "Routage & URL" : "URL & Routing"}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr")
+                                        ? "Identifiant unique utilisé pour générer l'adresse web publique de la catégorie."
+                                        : "Unique identifier used to generate the public web address for the category."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-4 min-w-0">
+                                {isMulti ? (
+                                    <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
+                                        {locales.map((loc) => {
+                                            const currentSlugVal = form.watch(`slug.${loc}`) || "";
+                                            return (
+                                                <AccordionItem key={loc} value={loc}>
+                                                    <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                                                        {getLocaleDisplayName(loc)}
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="space-y-4 pt-3 px-1">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name={`slug.${loc}`}
+                                                            render={({ field }) => (
+                                                                <FormItem className="min-w-0 space-y-2">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
+                                                                            title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
+                                                                            onClick={() => {
+                                                                                const currentName = form.getValues(`name.${loc}`) || "";
+                                                                                if (currentName.trim()) {
+                                                                                    const regenerated = slugify(currentName);
+                                                                                    slugTouchedRef.current[loc] = false;
+                                                                                    form.setValue(`slug.${loc}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                                    toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <RotateCcw className="h-3 w-3" />
+                                                                            <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                                        </Button>
+                                                                    </div>
+
+                                                                    <div className="min-w-0 overflow-hidden">
+                                                                        <Badge
+                                                                            variant="secondary"
+                                                                            className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                                            title={`/${lang}/${catalogSlug || "shop"}?category=${currentSlugVal || "slug"}`}
+                                                                        >
+                                                                            /{lang}/{catalogSlug || "shop"}?category={currentSlugVal || "slug"}
+                                                                        </Badge>
+                                                                    </div>
+
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            placeholder={`slug-${loc}...`}
+                                                                            className="font-mono text-sm w-full"
+                                                                            {...field}
+                                                                            value={field.value || ""}
+                                                                            onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
+                                                                            onBlur={() => handleSlugBlur(loc, field.onBlur)}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormDescription>
+                                                                        {lang?.startsWith("fr")
+                                                                            ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                                            : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                                    </FormDescription>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            );
+                                        })}
+                                    </Accordion>
+                                ) : (
+                                    <FormField
+                                        control={form.control}
+                                        name={`slug.${locales[0]}`}
+                                        render={({ field }) => (
+                                            <FormItem className="min-w-0 space-y-2">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
+                                                        title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
+                                                        onClick={() => {
+                                                            const currentName = form.getValues(`name.${locales[0]}`) || "";
+                                                            if (currentName.trim()) {
+                                                                const regenerated = slugify(currentName);
+                                                                slugTouchedRef.current[locales[0]] = false;
+                                                                form.setValue(`slug.${locales[0]}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
+                                                            }
+                                                        }}
+                                                    >
+                                                        <RotateCcw className="h-3 w-3" />
+                                                        <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                    </Button>
+                                                </div>
+
+                                                <div className="min-w-0 overflow-hidden">
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                        title={`/${lang}/${catalogSlug || "shop"}?category=${field.value || "slug"}`}
+                                                    >
+                                                        /{lang}/{catalogSlug || "shop"}?category={field.value || "slug"}
+                                                    </Badge>
+                                                </div>
+
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder={`slug-${locales[0]}...`}
+                                                        className="font-mono text-sm w-full"
+                                                        {...field}
+                                                        value={field.value || ""}
+                                                        onChange={(e) => handleSlugChange(locales[0], e.target.value, field.onChange)}
+                                                        onBlur={() => handleSlugBlur(locales[0], field.onBlur)}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {lang?.startsWith("fr")
+                                                        ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                        : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 )}
-                            />
-                        )}
-                    </CardContent>
-                </Card>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
 
                 {/* Submit Action Bar */}
                 <div className="sticky bottom-0 z-40 flex items-center justify-end gap-4 border-t border-border bg-background p-4 sm:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-auto -mx-4 sm:-mx-8">

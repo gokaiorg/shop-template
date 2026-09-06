@@ -8,7 +8,7 @@ import { getLocalizedField } from "@/lib/i18n";
 import { getStoreSettings } from "@/lib/services/settings";
 import { CategoryTable } from "@/components/admin/CategoryTable";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
-import { Folders } from "lucide-react";
+import { Folders, Plus } from "lucide-react";
 
 export default async function AdminCategoriesPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -54,8 +54,11 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
             description={lang === 'fr' ? 'Structure des collections et classement du catalogue.' : 'Collection taxonomy and catalog structure.'}
             icon={Folders}
             actions={
-                <Button asChild>
-                    <Link href={`/${lang}/admin/categories/new`}>{dict.admin.categories_create}</Link>
+                <Button asChild className="gap-2">
+                    <Link href={`/${lang}/admin/categories/new`}>
+                        <Plus className="w-4 h-4" />
+                        {dict.admin.categories_create}
+                    </Link>
                 </Button>
             }
         >

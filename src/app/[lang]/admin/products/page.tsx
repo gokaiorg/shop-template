@@ -7,7 +7,7 @@ import { protectAdminRoute } from "@/lib/auth-utils";
 import { getStoreSettings } from "@/lib/services/settings";
 import { ProductTable } from "@/components/admin/ProductTable";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
-import { Package } from "lucide-react";
+import { Package, Plus } from "lucide-react";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -71,8 +71,11 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
             description={lang === 'fr' ? 'Gestion du catalogue, des stocks et de la visibilité.' : 'Manage catalog, inventory, and visibility.'}
             icon={Package}
             actions={
-                <Button asChild>
-                    <Link href={`/${lang}/admin/products/new`}>{dict.admin?.products_create || "Create Product"}</Link>
+                <Button asChild className="gap-2">
+                    <Link href={`/${lang}/admin/products/new`}>
+                        <Plus className="w-4 h-4" />
+                        {dict.admin?.products_create || "Create Product"}
+                    </Link>
                 </Button>
             }
         >
