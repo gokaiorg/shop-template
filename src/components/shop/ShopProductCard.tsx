@@ -63,7 +63,12 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     <div className="flex flex-wrap gap-1.5 mb-2">
                         {product.categories.map((cat) => {
                             const catName = getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn);
-                            const catSlug = getLocalizedField(cat.slug, lang) || (lang === 'fr' ? cat.slugFr : cat.slugEn);
+                            const catSlug = 
+                                (typeof cat.slug === 'object' && cat.slug?.[lang])
+                                    ? cat.slug[lang]
+                                    : (lang === 'fr' ? cat.slugFr : cat.slugEn) ||
+                                      getLocalizedField(cat.slug, lang) ||
+                                      (typeof cat.slug === 'string' ? cat.slug : '');
                             if (!catName) return null;
 
                             return catSlug ? (

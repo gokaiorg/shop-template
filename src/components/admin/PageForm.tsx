@@ -22,6 +22,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
     Form,
     FormControl,
@@ -45,7 +46,7 @@ import {
 } from "@/components/ui/select";
 import { Page } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
-import { getLocaleDisplayName } from "@/lib/i18n";
+import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 
 function generateSlug(text: string): string {
     return text
@@ -74,16 +75,18 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
 
     const defaultTitles: Record<string, string> = {};
     const defaultContents: Record<string, string> = {};
+    const defaultSlugs: Record<string, string> = {};
 
     supportedLocales.forEach((loc) => {
         defaultTitles[loc] = initialData?.title?.[loc] || (loc === 'fr' ? initialData?.title_fr : initialData?.title_en) || initialData?.title?.en || "";
         defaultContents[loc] = initialData?.content?.[loc] || (loc === 'fr' ? initialData?.content_fr : initialData?.content_en) || initialData?.content?.en || "";
+        defaultSlugs[loc] = initialData?.slug?.[loc] || (loc === 'fr' ? (initialData as any)?.slug_fr : (initialData as any)?.slug_en) || (typeof initialData?.slug === 'string' ? initialData.slug : '') || "";
     });
 
     const form = useForm<PageFormData>({
         resolver: zodResolver(pageSchema) as any,
         defaultValues: {
-            slug: initialData?.slug || initialData?.id || "",
+            slug: defaultSlugs,
             title: defaultTitles,
             content: defaultContents,
             status: initialData?.status || "published",
@@ -93,44 +96,51 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
         },
     });
 
-    const slugTouchedRef = useRef<boolean>(false);
+    const slugTouchedRef = useRef<Record<string, boolean>>(
+        isEditMode
+            ? supportedLocales.reduce((acc, loc) => ({ ...acc, [loc]: true }), {})
+            : {}
+    );
 
-    // Live auto-slug generation from title
+    // Live auto-slug generation from title per locale
     useEffect(() => {
         // 1. Initial generation in create mode if title has content but slug is empty
         if (!isEditMode) {
-            const currentSlug = form.getValues("slug");
-            if (!slugTouchedRef.current || !currentSlug) {
-                const titles = form.getValues("title") || {};
-                const sourceTitle = titles[defaultLocale] || Object.values(titles).find((t) => typeof t === "string" && t.trim().length > 0) || "";
-                if (sourceTitle.trim()) {
-                    form.setValue("slug", generateSlug(sourceTitle), { shouldValidate: true });
+            supportedLocales.forEach((loc) => {
+                const currentSlug = form.getValues(`slug.${loc}`);
+                if (!slugTouchedRef.current[loc] || !currentSlug) {
+                    const currentTitle = form.getValues(`title.${loc}`) || "";
+                    if (currentTitle.trim()) {
+                        form.setValue(`slug.${loc}`, generateSlug(currentTitle), { shouldValidate: true });
+                    }
                 }
-            }
+            });
         }
 
-        // 2. React Hook Form subscription on title keystrokes (both create and edit)
+        // 2. React Hook Form subscription on title keystrokes per locale
         const subscription = form.watch((value, { name }) => {
             if (!name || !name.startsWith("title")) return;
 
-            const currentSlug = form.getValues("slug");
-            if (!slugTouchedRef.current || !currentSlug) {
-                const titles = form.getValues("title") || {};
-                const sourceTitle = titles[defaultLocale] || Object.values(titles).find((t) => typeof t === "string" && t.trim().length > 0) || "";
-                if (sourceTitle.trim()) {
-                    form.setValue("slug", generateSlug(sourceTitle), { shouldValidate: true });
+            const targetLoc = name.split(".")[1];
+            if (targetLoc && supportedLocales.includes(targetLoc)) {
+                const currentSlug = form.getValues(`slug.${targetLoc}`);
+                if (!slugTouchedRef.current[targetLoc] || !currentSlug) {
+                    const currentTitle = form.getValues(`title.${targetLoc}`) || "";
+                    if (currentTitle.trim()) {
+                        form.setValue(`slug.${targetLoc}`, generateSlug(currentTitle), { shouldValidate: true, shouldDirty: true });
+                    }
                 }
             }
         });
 
         return () => subscription.unsubscribe();
-    }, [isEditMode, defaultLocale, form]);
+    }, [isEditMode, supportedLocales, form]);
 
-    const handleSlugChange = (rawValue: string, onChange: (val: string) => void) => {
+    const handleSlugChange = (loc: string, rawValue: string, onChange: (val: string) => void) => {
         if (!rawValue.trim()) {
-            slugTouchedRef.current = false;
+            slugTouchedRef.current[loc] = false;
         } else {
-            slugTouchedRef.current = true;
+            slugTouchedRef.current[loc] = true;
         }
         const cleanSlug = rawValue
             .toLowerCase()
@@ -139,20 +149,19 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
         onChange(cleanSlug);
     };
 
-    const handleSlugBlur = (onBlur: () => void) => {
+    const handleSlugBlur = (loc: string, onBlur: () => void) => {
         onBlur();
-        const currentVal = form.getValues("slug") || "";
+        const currentVal = form.getValues(`slug.${loc}`) || "";
         if (!currentVal.trim()) {
-            slugTouchedRef.current = false;
-            const titles = form.getValues("title") || {};
-            const sourceTitle = titles[defaultLocale] || Object.values(titles).find((t) => typeof t === "string" && t.trim().length > 0) || "";
-            if (sourceTitle.trim()) {
-                form.setValue("slug", generateSlug(sourceTitle), { shouldDirty: true, shouldValidate: true });
+            slugTouchedRef.current[loc] = false;
+            const currentTitle = form.getValues(`title.${loc}`) || "";
+            if (currentTitle.trim()) {
+                form.setValue(`slug.${loc}`, generateSlug(currentTitle), { shouldDirty: true, shouldValidate: true });
             }
         } else {
             const trimmed = currentVal.replace(/^-+|-+$/g, "");
             if (trimmed !== currentVal) {
-                form.setValue("slug", trimmed, { shouldDirty: true, shouldValidate: true });
+                form.setValue(`slug.${loc}`, trimmed, { shouldDirty: true, shouldValidate: true });
             }
         }
     };
@@ -167,9 +176,24 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
     };
 
     function onSubmit(values: PageFormData) {
+        const completeSlug: Record<string, string> = { ...values.slug };
+        supportedLocales.forEach((loc) => {
+            if (!completeSlug[loc]) {
+                completeSlug[loc] = completeSlug[defaultLocale] || Object.values(completeSlug).find((s) => s && s.trim().length > 0) || "";
+            }
+            if (completeSlug[loc]) {
+                completeSlug[loc] = generateSlug(completeSlug[loc]);
+            }
+        });
+
+        const payload = {
+            ...values,
+            slug: completeSlug,
+        };
+
         startTransition(async () => {
             if (isEditMode && initialData?.id) {
-                const res = await updatePage(initialData.id, values);
+                const res = await updatePage(initialData.id, payload);
                 if (res.success) {
                     toast.success(dict?.forms?.success || "Page saved successfully!");
                     router.push(`/${lang}/admin/pages`);
@@ -178,7 +202,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                     toast.error(res.error || "Failed to update page");
                 }
             } else {
-                const res = await createPage(values);
+                const res = await createPage(payload);
                 if (res.success) {
                     toast.success(dict?.forms?.success || "Page created successfully!");
                     router.push(`/${lang}/admin/pages`);
@@ -250,7 +274,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                         <TabsList className="mb-4">
                                             {supportedLocales.map((loc) => (
                                                 <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                    {getLocaleDisplayName(loc)} ({loc})
+                                                    {loc.toUpperCase()}
                                                 </TabsTrigger>
                                             ))}
                                         </TabsList>
@@ -261,9 +285,9 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                     name={`title.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>{dict?.forms?.title || 'Title'} ({getLocaleDisplayName(loc)}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                            <FormLabel>{dict?.forms?.title || 'Title'} <span className="text-destructive ml-1">*</span></FormLabel>
                                                             <FormControl>
-                                                                <Input placeholder={`Page title in ${getLocaleDisplayName(loc)}...`} {...field} />
+                                                                <Input placeholder={`Page title in ${loc.toUpperCase()}...`} {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -274,11 +298,11 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                     name={`content.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>{dict?.forms?.content || 'Content'} ({getLocaleDisplayName(loc)}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                            <FormLabel>{dict?.forms?.content || 'Content'} <span className="text-destructive ml-1">*</span></FormLabel>
                                                             <FormControl>
                                                                 <Textarea
                                                                     rows={12}
-                                                                    placeholder={`HTML or text content in ${getLocaleDisplayName(loc)}...`}
+                                                                    placeholder={`HTML or text content in ${loc.toUpperCase()}...`}
                                                                     className="font-mono text-sm"
                                                                     {...field}
                                                                 />
@@ -350,52 +374,141 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                 </p>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <FormField
-                                    control={form.control}
-                                    name="slug"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                <FormLabel>Slug (URL) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
-                                                    title={lang === "fr" ? "Regénérer depuis le titre" : "Regenerate from title"}
-                                                    onClick={() => {
-                                                        const titles = form.getValues("title") || {};
-                                                        const sourceTitle = titles[defaultLocale] || Object.values(titles).find((t) => typeof t === "string" && t.trim().length > 0) || "";
-                                                        if (sourceTitle.trim()) {
-                                                            const regenerated = generateSlug(sourceTitle);
-                                                            slugTouchedRef.current = false;
-                                                            form.setValue("slug", regenerated, { shouldDirty: true, shouldValidate: true });
-                                                            toast.success(lang === "fr" ? "Slug regénéré !" : "Slug regenerated!");
-                                                        }
-                                                    }}
-                                                >
-                                                    <RotateCcw className="h-3 w-3" />
-                                                    <span className="text-[11px]">{lang === "fr" ? "Regénérer" : "Regenerate"}</span>
-                                                </Button>
-                                            </div>
-                                            <FormControl>
-                                                <Input 
-                                                    placeholder="e.g. about, privacy-policy" 
-                                                    {...field} 
-                                                    disabled={isLoading}
-                                                    value={field.value || ""}
-                                                    onChange={(e) => handleSlugChange(e.target.value, field.onChange)}
-                                                    onBlur={() => handleSlugBlur(field.onBlur)}
-                                                    className="font-mono text-xs" 
-                                                />
-                                            </FormControl>
-                                            <FormDescription>
-                                                Public path: <code className="text-xs">/pages/{field.value || 'slug'}</code>
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                {isMultiLocale ? (
+                                    <Tabs defaultValue={defaultLocale} className="w-full">
+                                        <TabsList className="mb-4">
+                                            {supportedLocales.map((loc) => (
+                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                                    {loc.toUpperCase()}
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+                                        {supportedLocales.map((loc) => {
+                                            const currentSlugVal = form.watch(`slug.${loc}`) || "";
+                                            return (
+                                                <TabsContent key={loc} value={loc} className="space-y-4">
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`slug.${loc}`}
+                                                        render={({ field }) => (
+                                                            <FormItem className="min-w-0 space-y-2">
+                                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                                    <FormLabel>Slug <span className="text-destructive ml-1">*</span></FormLabel>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
+                                                                        title={lang === "fr" ? "Regénérer depuis le titre" : "Regenerate from title"}
+                                                                        onClick={() => {
+                                                                            const currentTitle = form.getValues(`title.${loc}`) || "";
+                                                                            if (currentTitle.trim()) {
+                                                                                const regenerated = generateSlug(currentTitle);
+                                                                                slugTouchedRef.current[loc] = false;
+                                                                                form.setValue(`slug.${loc}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                                toast.success(lang === "fr" ? "Slug regénéré !" : "Slug regenerated!");
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <RotateCcw className="h-3 w-3" />
+                                                                        <span className="text-[11px]">{lang === "fr" ? "Regénérer" : "Regenerate"}</span>
+                                                                    </Button>
+                                                                </div>
+
+                                                                <div className="min-w-0 overflow-hidden">
+                                                                    <Badge
+                                                                        variant="secondary"
+                                                                        className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                                        title={`/${lang}/pages/${currentSlugVal || "slug"}`}
+                                                                    >
+                                                                        /{lang}/pages/{currentSlugVal || "slug"}
+                                                                    </Badge>
+                                                                </div>
+
+                                                                <FormControl>
+                                                                    <Input
+                                                                        placeholder={`e.g. about-${loc}...`}
+                                                                        {...field}
+                                                                        disabled={isLoading}
+                                                                        value={field.value || ""}
+                                                                        onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
+                                                                        onBlur={() => handleSlugBlur(loc, field.onBlur)}
+                                                                        className="font-mono text-xs"
+                                                                    />
+                                                                </FormControl>
+                                                                <FormDescription>
+                                                                    {lang === "fr"
+                                                                        ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                                        : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                                </FormDescription>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </TabsContent>
+                                            );
+                                        })}
+                                    </Tabs>
+                                ) : (
+                                    <FormField
+                                        control={form.control}
+                                        name={`slug.${defaultLocale}`}
+                                        render={({ field }) => (
+                                            <FormItem className="min-w-0 space-y-2">
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <FormLabel>Slug <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
+                                                        title={lang === "fr" ? "Regénérer depuis le titre" : "Regenerate from title"}
+                                                        onClick={() => {
+                                                            const currentTitle = form.getValues(`title.${defaultLocale}`) || "";
+                                                            if (currentTitle.trim()) {
+                                                                const regenerated = generateSlug(currentTitle);
+                                                                slugTouchedRef.current[defaultLocale] = false;
+                                                                form.setValue(`slug.${defaultLocale}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                toast.success(lang === "fr" ? "Slug regénéré !" : "Slug regenerated!");
+                                                            }
+                                                        }}
+                                                    >
+                                                        <RotateCcw className="h-3 w-3" />
+                                                        <span className="text-[11px]">{lang === "fr" ? "Regénérer" : "Regenerate"}</span>
+                                                    </Button>
+                                                </div>
+
+                                                <div className="min-w-0 overflow-hidden">
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                        title={`/${lang}/pages/${field.value || "slug"}`}
+                                                    >
+                                                        /{lang}/pages/{field.value || "slug"}
+                                                    </Badge>
+                                                </div>
+
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="e.g. about..."
+                                                        {...field}
+                                                        disabled={isLoading}
+                                                        value={field.value || ""}
+                                                        onChange={(e) => handleSlugChange(defaultLocale, e.target.value, field.onChange)}
+                                                        onBlur={() => handleSlugBlur(defaultLocale, field.onBlur)}
+                                                        className="font-mono text-xs"
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {lang === "fr"
+                                                        ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                        : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
 
                                 <FormField
                                     control={form.control}
@@ -522,23 +635,26 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                         </AlertDialog>
                     )}
 
-                    {isEditMode && (
-                        <Button
-                            variant="outline"
-                            asChild
-                            type="button"
-                            className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
-                        >
-                            <Link
-                                href={`/${lang}/pages/${initialData?.slug || form.watch("slug")}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                    {isEditMode && (() => {
+                        const previewSlug = form.watch(`slug.${lang}`) || form.watch(`slug.${defaultLocale}`) || getLocalizedField(initialData?.slug, lang) || (typeof initialData?.slug === 'string' ? initialData.slug : '');
+                        return (
+                            <Button
+                                variant="outline"
+                                asChild
+                                type="button"
+                                className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
                             >
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                {lang === 'fr' ? 'Voir sur le site' : 'View on website'}
-                            </Link>
-                        </Button>
-                    )}
+                                <Link
+                                    href={`/${lang}/pages/${previewSlug || 'page'}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    {lang === 'fr' ? 'Voir sur le site' : 'View on website'}
+                                </Link>
+                            </Button>
+                        );
+                    })()}
 
                     <Button
                         type="submit"

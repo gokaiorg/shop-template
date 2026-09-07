@@ -58,6 +58,9 @@ function SortableCategoryRow({ category, lang, catalogSlug = 'shop' }: SortableC
         opacity: isDragging ? 0.5 : 1,
     };
 
+    const status = category.status || "published";
+    const isPublished = status === "published" || status === "publié";
+
     return (
         <tr
             ref={setNodeRef}
@@ -83,6 +86,15 @@ function SortableCategoryRow({ category, lang, catalogSlug = 'shop' }: SortableC
             </td>
             <td className="px-6 py-4 text-muted-foreground font-mono text-xs whitespace-nowrap">
                 {getLocalizedField(category.slug, lang) || (lang === 'fr' ? category.slugFr : category.slugEn) || "unknown"}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                    isPublished
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                }`}>
+                    {status}
+                </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
                 {category._count?.products ?? 0}
@@ -234,6 +246,7 @@ export function CategoryTable({ categories: initialCategories, lang, catalogSlug
                             <th className="px-4 py-3 w-12 text-center whitespace-nowrap" aria-label="Order Handle"></th>
                             <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Nom" : "Name"}</th>
                             <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Slug" : "Slug"}</th>
+                            <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Statut" : "Status"}</th>
                             <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Nombre de produits" : "Products Count"}</th>
                             <th className="px-6 py-3 whitespace-nowrap">{lang === "fr" ? "Date de création" : "Created At"}</th>
                             <th className="px-6 py-3 text-right whitespace-nowrap">Actions</th>
@@ -246,7 +259,7 @@ export function CategoryTable({ categories: initialCategories, lang, catalogSlug
                         <tbody>
                             {categories.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                                    <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
                                         {lang === "fr"
                                             ? "Aucune catégorie trouvée. Créez une nouvelle catégorie."
                                             : "No categories found. Create a new category."}

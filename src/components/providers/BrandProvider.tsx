@@ -15,6 +15,7 @@ export interface BrandContextType {
     defaultTheme: 'light' | 'dark' | 'system';
     catalogTitle?: Record<string, string>;
     catalogSlug?: string;
+    catalogSlugs?: Record<string, string>;
 }
 
 const BrandContext = createContext<BrandContextType>({
@@ -28,6 +29,7 @@ const BrandContext = createContext<BrandContextType>({
     defaultTheme: 'system',
     catalogTitle: { en: 'Shop', fr: 'Boutique' },
     catalogSlug: 'shop',
+    catalogSlugs: { en: 'shop', fr: 'boutique' },
 });
 
 export function BrandProvider({
@@ -41,6 +43,7 @@ export function BrandProvider({
     defaultTheme = 'system',
     catalogTitle = { en: 'Shop', fr: 'Boutique' },
     catalogSlug = 'shop',
+    catalogSlugs = { en: 'shop', fr: 'boutique' },
 }: {
     children: React.ReactNode;
     brand: BrandConfig;
@@ -52,6 +55,7 @@ export function BrandProvider({
     defaultTheme?: 'light' | 'dark' | 'system';
     catalogTitle?: Record<string, string>;
     catalogSlug?: string;
+    catalogSlugs?: Record<string, string>;
 }) {
     const isMulti = supportedLocales.length > 1;
     return (
@@ -67,6 +71,7 @@ export function BrandProvider({
                 defaultTheme,
                 catalogTitle,
                 catalogSlug,
+                catalogSlugs,
             }}
         >
             {children}

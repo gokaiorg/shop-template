@@ -7,12 +7,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink, Globe, RotateCcw, FileText } from "lucide-react";
+import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink, RotateCcw, FileText, LayoutTemplate } from "lucide-react";
 import Link from "next/link";
 import { createCategory, updateCategory, deleteCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
 import { uploadProductImage } from "@/lib/firebase-storage";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 import {
@@ -39,7 +39,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import { Category } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
@@ -84,6 +91,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
             slug: defaultSlug,
             intro: defaultIntro,
             description: defaultDesc,
+            status: (initialData?.status as "draft" | "published") || "published",
             imageUrl: initialData?.imageUrl || "",
             order: initialData?.order !== undefined ? initialData.order : Date.now(),
         },
@@ -108,20 +116,21 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
             });
         }
 
-        // 2. React Hook Form subscription: live keystroke listener on name
+        // 2. React Hook Form subscription: live keystroke listener on name per locale
         const subscription = form.watch((value, { name }) => {
             if (!name || !name.startsWith("name")) return;
 
-            locales.forEach((loc) => {
-                const currentSlug = form.getValues(`slug.${loc}`);
-                if (!slugTouchedRef.current[loc] || !currentSlug) {
-                    const currentName = form.getValues(`name.${loc}`) || "";
+            const targetLoc = name.split(".")[1];
+            if (targetLoc && locales.includes(targetLoc)) {
+                const currentSlug = form.getValues(`slug.${targetLoc}`);
+                if (!slugTouchedRef.current[targetLoc] || !currentSlug) {
+                    const currentName = form.getValues(`name.${targetLoc}`) || "";
                     if (currentName.trim()) {
                         const generated = generateSlug(currentName);
-                        form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
+                        form.setValue(`slug.${targetLoc}`, generated, { shouldValidate: true, shouldDirty: true });
                     }
                 }
-            });
+            }
         });
 
         return () => subscription.unsubscribe();
@@ -296,8 +305,8 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                     {/* Colonne principale (Gauche) */}
                     <div className="col-span-1 lg:col-span-2 min-w-0 space-y-8">
                         {/* Bloc 1 : Informations Générales */}
-                        <Card className="border rounded-xl bg-card shadow-xs min-w-0 overflow-hidden">
-                            <CardHeader className="border-b pb-4">
+                        <Card className="min-w-0 overflow-hidden">
+                            <CardHeader>
                                 <div className="flex items-center gap-2 mb-1">
                                     <FileText className="w-5 h-5 text-muted-foreground" />
                                     <h2 className="text-lg font-medium tracking-tight">
@@ -310,58 +319,60 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                         : "Category name, intro, and descriptions."}
                                 </p>
                             </CardHeader>
-                            <CardContent className="pt-4">
+                            <CardContent className="space-y-6">
                                 {isMulti ? (
-                                    <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
+                                    <Tabs defaultValue={defaultLocale} className="w-full">
+                                        <TabsList className="mb-4">
+                                            {locales.map((loc) => (
+                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                                    {loc.toUpperCase()}
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
                                         {locales.map((loc) => (
-                                            <AccordionItem key={loc} value={loc}>
-                                                <AccordionTrigger className="text-base font-semibold hover:no-underline">
-                                                    {getLocaleDisplayName(loc)}
-                                                </AccordionTrigger>
-                                                <AccordionContent className="space-y-4 pt-4 px-1">
-                                                    <FormField
-                                                        control={form.control}
-                                                        name={`name.${loc}`}
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                                <FormControl>
-                                                                    <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                    <FormField
-                                                        control={form.control}
-                                                        name={`intro.${loc}`}
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>{dict.intro || "Intro"} ({loc.toUpperCase()})</FormLabel>
-                                                                <FormControl>
-                                                                    <Input placeholder={`Short introduction (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                    <FormField
-                                                        control={form.control}
-                                                        name={`description.${loc}`}
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                                <FormControl>
-                                                                    <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </AccordionContent>
-                                            </AccordionItem>
+                                            <TabsContent key={loc} value={loc} className="space-y-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`name.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict.name || "Name"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`intro.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict.intro || "Intro"}</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder={`Short introduction (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`description.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict.description || "Description"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                            <FormControl>
+                                                                <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </TabsContent>
                                         ))}
-                                    </Accordion>
+                                    </Tabs>
                                 ) : (
                                     <div className="space-y-4">
                                         <FormField
@@ -369,7 +380,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                             name={`name.${locales[0]}`}
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <FormLabel>{dict.name || "Name"} <span className="text-destructive ml-1">*</span></FormLabel>
                                                     <FormControl>
                                                         <Input placeholder="Name..." {...field} value={field.value || ""} />
                                                     </FormControl>
@@ -382,7 +393,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                             name={`intro.${locales[0]}`}
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{dict.intro || "Intro"} ({locales[0].toUpperCase()})</FormLabel>
+                                                    <FormLabel>{dict.intro || "Intro"}</FormLabel>
                                                     <FormControl>
                                                         <Input placeholder="Short introduction..." {...field} value={field.value || ""} />
                                                     </FormControl>
@@ -395,7 +406,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                             name={`description.${locales[0]}`}
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <FormLabel>{dict.description || "Description"} <span className="text-destructive ml-1">*</span></FormLabel>
                                                     <FormControl>
                                                         <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
                                                     </FormControl>
@@ -409,8 +420,8 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                         </Card>
 
                         {/* Category Banner Image */}
-                        <Card className="border rounded-xl bg-card shadow-xs min-w-0 overflow-hidden">
-                            <CardHeader className="border-b pb-4">
+                        <Card className="min-w-0 overflow-hidden">
+                            <CardHeader>
                                 <div className="flex items-center gap-2 mb-1">
                                     <ImageIcon className="w-5 h-5 text-muted-foreground" />
                                     <h2 className="text-lg font-medium tracking-tight">
@@ -423,7 +434,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                         : "Header banner and preview card visual in the catalog."}
                                 </p>
                             </CardHeader>
-                            <CardContent className="pt-4 space-y-4">
+                            <CardContent className="space-y-4">
                                 <div className="border rounded-lg p-4 bg-muted/20 flex flex-col items-center justify-center min-h-[160px] gap-3 relative overflow-hidden">
                                     {imageUrlValue ? (
                                         <div className="w-full flex flex-col items-center gap-3">
@@ -503,94 +514,96 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
 
                     {/* Colonne secondaire (Droite) */}
                     <div className="col-span-1 min-w-0 space-y-8">
-                        {/* URL & Routing Card */}
-                        <Card className="border rounded-xl bg-card shadow-xs min-w-0 overflow-hidden">
-                            <CardHeader className="border-b pb-4">
+                        {/* URL & Publication Card */}
+                        <Card className="min-w-0 overflow-hidden">
+                            <CardHeader>
                                 <div className="flex items-center gap-2 mb-1">
-                                    <Globe className="w-5 h-5 text-muted-foreground" />
+                                    <LayoutTemplate className="w-5 h-5 text-muted-foreground" />
                                     <h2 className="text-lg font-medium tracking-tight">
-                                        {lang?.startsWith("fr") ? "Routage & URL" : "URL & Routing"}
+                                        {lang?.startsWith("fr") ? "Paramètres URL & Statut" : "URL & Publication"}
                                     </h2>
                                 </div>
                                 <p className="text-sm text-muted-foreground mb-4">
                                     {lang?.startsWith("fr")
-                                        ? "Identifiant unique utilisé pour générer l'adresse web publique de la catégorie."
-                                        : "Unique identifier used to generate the public web address for the category."}
+                                        ? "Identifiant slug et visibilité du statut."
+                                        : "Slug handle and publication status."}
                                 </p>
                             </CardHeader>
-                            <CardContent className="pt-4 space-y-4 min-w-0">
+                            <CardContent className="space-y-4 min-w-0">
                                 {isMulti ? (
-                                    <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
+                                    <Tabs defaultValue={defaultLocale} className="w-full">
+                                        <TabsList className="mb-4">
+                                            {locales.map((loc) => (
+                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                                    {loc.toUpperCase()}
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
                                         {locales.map((loc) => {
                                             const currentSlugVal = form.watch(`slug.${loc}`) || "";
                                             return (
-                                                <AccordionItem key={loc} value={loc}>
-                                                    <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                                                        {getLocaleDisplayName(loc)}
-                                                    </AccordionTrigger>
-                                                    <AccordionContent className="space-y-4 pt-3 px-1">
-                                                        <FormField
-                                                            control={form.control}
-                                                            name={`slug.${loc}`}
-                                                            render={({ field }) => (
-                                                                <FormItem className="min-w-0 space-y-2">
-                                                                    <div className="flex items-center justify-between gap-2">
-                                                                        <FormLabel>{dict.slug || "Slug"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
-                                                                            title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
-                                                                            onClick={() => {
-                                                                                const currentName = form.getValues(`name.${loc}`) || "";
-                                                                                if (currentName.trim()) {
-                                                                                    const regenerated = slugify(currentName);
-                                                                                    slugTouchedRef.current[loc] = false;
-                                                                                    form.setValue(`slug.${loc}`, regenerated, { shouldDirty: true, shouldValidate: true });
-                                                                                    toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            <RotateCcw className="h-3 w-3" />
-                                                                            <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
-                                                                        </Button>
-                                                                    </div>
+                                                <TabsContent key={loc} value={loc} className="space-y-4">
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`slug.${loc}`}
+                                                        render={({ field }) => (
+                                                            <FormItem className="min-w-0 space-y-2">
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <FormLabel>{dict.slug || "Slug"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
+                                                                        title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
+                                                                        onClick={() => {
+                                                                            const currentName = form.getValues(`name.${loc}`) || "";
+                                                                            if (currentName.trim()) {
+                                                                                const regenerated = slugify(currentName);
+                                                                                slugTouchedRef.current[loc] = false;
+                                                                                form.setValue(`slug.${loc}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                                toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <RotateCcw className="h-3 w-3" />
+                                                                        <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                                    </Button>
+                                                                </div>
 
-                                                                    <div className="min-w-0 overflow-hidden">
-                                                                        <Badge
-                                                                            variant="secondary"
-                                                                            className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
-                                                                            title={`/${lang}/${catalogSlug || "shop"}?category=${currentSlugVal || "slug"}`}
-                                                                        >
-                                                                            /{lang}/{catalogSlug || "shop"}?category={currentSlugVal || "slug"}
-                                                                        </Badge>
-                                                                    </div>
+                                                                <div className="min-w-0 overflow-hidden">
+                                                                    <Badge
+                                                                        variant="secondary"
+                                                                        className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                                        title={`/${lang}/${catalogSlug || "shop"}?category=${currentSlugVal || "slug"}`}
+                                                                    >
+                                                                        /{lang}/{catalogSlug || "shop"}?category={currentSlugVal || "slug"}
+                                                                    </Badge>
+                                                                </div>
 
-                                                                    <FormControl>
-                                                                        <Input
-                                                                            placeholder={`slug-${loc}...`}
-                                                                            className="font-mono text-sm w-full"
-                                                                            {...field}
-                                                                            value={field.value || ""}
-                                                                            onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
-                                                                            onBlur={() => handleSlugBlur(loc, field.onBlur)}
-                                                                        />
-                                                                    </FormControl>
-                                                                    <FormDescription>
-                                                                        {lang?.startsWith("fr")
-                                                                            ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
-                                                                            : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
-                                                                    </FormDescription>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </AccordionContent>
-                                                </AccordionItem>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        placeholder={`slug-${loc}...`}
+                                                                        className="font-mono text-sm w-full"
+                                                                        {...field}
+                                                                        value={field.value || ""}
+                                                                        onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
+                                                                        onBlur={() => handleSlugBlur(loc, field.onBlur)}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormDescription>
+                                                                    {lang?.startsWith("fr")
+                                                                        ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                                        : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                                </FormDescription>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </TabsContent>
                                             );
                                         })}
-                                    </Accordion>
+                                    </Tabs>
                                 ) : (
                                     <FormField
                                         control={form.control}
@@ -598,7 +611,7 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                         render={({ field }) => (
                                             <FormItem className="min-w-0 space-y-2">
                                                 <div className="flex items-center justify-between gap-2">
-                                                    <FormLabel>{dict.slug || "Slug"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <FormLabel>{dict.slug || "Slug"} <span className="text-destructive ml-1">*</span></FormLabel>
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
@@ -650,6 +663,34 @@ export function CategoryForm({ dict, lang, initialData }: { dict: Record<string,
                                         )}
                                     />
                                 )}
+
+                                <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                {lang?.startsWith("fr") ? "Statut de publication" : "Publication Status"}
+                                            </FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value || "published"}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="published">
+                                                        {lang?.startsWith("fr") ? "Publié (Visible)" : "Published (Visible)"}
+                                                    </SelectItem>
+                                                    <SelectItem value="draft">
+                                                        {lang?.startsWith("fr") ? "Brouillon (Masqué)" : "Draft (Hidden)"}
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </CardContent>
                         </Card>
                     </div>

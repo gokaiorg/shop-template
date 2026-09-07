@@ -17,8 +17,17 @@ export default async function AdminPageEdit({ params }: { params: Promise<{ lang
     let pageDoc = await adminDb.collection("pages").doc(slug).get();
 
     if (!pageDoc.exists) {
-        // Try searching by slug field
-        const snap = await adminDb.collection("pages").where("slug", "==", slug).limit(1).get();
+        // Try searching by slug field (legacy string or nested object)
+        let snap = await adminDb.collection("pages").where("slug", "==", slug).limit(1).get();
+        if (snap.empty) {
+            snap = await adminDb.collection("pages").where(`slug.${lang}`, "==", slug).limit(1).get();
+        }
+        if (snap.empty) {
+            snap = await adminDb.collection("pages").where("slug.en", "==", slug).limit(1).get();
+        }
+        if (snap.empty) {
+            snap = await adminDb.collection("pages").where("slug.fr", "==", slug).limit(1).get();
+        }
         if (snap.empty) {
             notFound();
         }

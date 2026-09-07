@@ -62,7 +62,7 @@ export default async function AdminCategoriesPage({ params }: { params: Promise<
                 </Button>
             }
         >
-            <CategoryTable categories={categories} lang={lang} catalogSlug={storeSettings?.catalogSlug || 'shop'} />
+            <CategoryTable categories={categories} lang={lang} catalogSlug={getLocalizedField(storeSettings?.catalogSlug, lang) || (typeof storeSettings?.catalogSlug === 'string' ? storeSettings.catalogSlug : 'shop')} />
         </AdminPageLayout>
     );
 }

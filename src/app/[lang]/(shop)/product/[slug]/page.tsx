@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product } from "@/types/database";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
@@ -12,6 +12,7 @@ import { getLocalizedField } from "@/lib/i18n";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { getStoreSettings } from "@/lib/services/settings";
 import { formatPrice } from "@/lib/currency";
+import { ProductTranslationSync } from "@/components/shop/ProductTranslationSync";
 
 interface PageProps {
     params: Promise<{ lang: string; slug: string }>;
@@ -43,33 +44,64 @@ function normalizeProduct(docId: string, data: Record<string, unknown>): Product
     } as Product;
 }
 
-async function findProductBySlug(lang: string, slug: string): Promise<Product | null> {
-    // 1. Query nested slug map
-    let snapshot = await adminDb.collection("products").where(`slug.${lang}`, "==", slug).limit(1).get();
+interface ProductLookupResult {
+    product: Product | null;
+    correctSlugForLang?: string;
+    shouldRedirect?: boolean;
+}
+
+async function lookupProductBySlug(lang: string, slug: string): Promise<ProductLookupResult> {
+    // 1. Query nested slug map for active lang
+    const snapshot = await adminDb.collection("products").where(`slug.${lang}`, "==", slug).limit(1).get();
     if (!snapshot.empty) {
         const doc = snapshot.docs[0];
-        return normalizeProduct(doc.id, doc.data());
+        return { product: normalizeProduct(doc.id, doc.data()), shouldRedirect: false };
     }
 
-    // 2. Query legacy flat slug fields
+    // 2. Query legacy flat slug fields for active lang
     const legacyField = lang === 'fr' ? 'slugFr' : 'slugEn';
-    snapshot = await adminDb.collection("products").where(legacyField, "==", slug).limit(1).get();
-    if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        return normalizeProduct(doc.id, doc.data());
+    const legacySnapshot = await adminDb.collection("products").where(legacyField, "==", slug).limit(1).get();
+    if (!legacySnapshot.empty) {
+        const doc = legacySnapshot.docs[0];
+        return { product: normalizeProduct(doc.id, doc.data()), shouldRedirect: false };
     }
 
-    // 3. Fallback: Scan collection
+    // 3. Scan collection for exact locale match (e.g. getLocalizedField) or cross-locale match
     const allSnapshot = await adminDb.collection("products").get();
+    let crossLocaleProduct: Product | null = null;
+
     for (const doc of allSnapshot.docs) {
-        const data = doc.data() as Product;
-        const localizedSlug = getLocalizedField(data.slug, lang) || (lang === 'fr' ? data.slugFr : data.slugEn);
-        if (localizedSlug === slug || data.slugEn === slug || data.slugFr === slug) {
-            return normalizeProduct(doc.id, doc.data());
+        const normalized = normalizeProduct(doc.id, doc.data());
+        const localizedSlug = getLocalizedField(normalized.slug, lang) || (lang === 'fr' ? normalized.slugFr : normalized.slugEn);
+        
+        if (localizedSlug === slug) {
+            return { product: normalized, shouldRedirect: false };
+        }
+
+        // Check if slug matches this product in another language
+        const allProductSlugs = [
+            ...(typeof normalized.slug === 'object' && normalized.slug ? Object.values(normalized.slug) : []),
+            normalized.slugEn,
+            normalized.slugFr,
+        ].filter((s): s is string => typeof s === 'string' && Boolean(s));
+
+        if (allProductSlugs.includes(slug) && !crossLocaleProduct) {
+            crossLocaleProduct = normalized;
         }
     }
 
-    return null;
+    if (crossLocaleProduct) {
+        const correctSlug = getLocalizedField(crossLocaleProduct.slug, lang) || (lang === 'fr' ? crossLocaleProduct.slugFr : crossLocaleProduct.slugEn);
+        if (correctSlug && correctSlug !== slug) {
+            return {
+                product: crossLocaleProduct,
+                correctSlugForLang: correctSlug,
+                shouldRedirect: true,
+            };
+        }
+    }
+
+    return { product: null };
 }
 
 function cleanDescription(text?: string | null, maxLength = 160): string {
@@ -87,12 +119,13 @@ function cleanDescription(text?: string | null, maxLength = 160): string {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { lang, slug } = await params;
-    const [product, storeSettings] = await Promise.all([
-        findProductBySlug(lang, slug),
+    const [lookupResult, storeSettings] = await Promise.all([
+        lookupProductBySlug(lang, slug),
         getStoreSettings(),
     ]);
+    const { product, shouldRedirect } = lookupResult;
     
-    if (!product) {
+    if (!product || shouldRedirect) {
         return {
             title: "Product Not Found",
         };
@@ -174,11 +207,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductPage({ params }: PageProps) {
     const { lang, slug } = await params;
-    const product = await findProductBySlug(lang, slug);
+    const { product, shouldRedirect, correctSlugForLang } = await lookupProductBySlug(lang, slug);
+
+    if (shouldRedirect && correctSlugForLang) {
+        permanentRedirect(`/${lang}/product/${correctSlugForLang}`);
+    }
 
     if (!product) {
         notFound();
     }
+
+    const productSlugMap: Record<string, string> | null = (() => {
+        const map: Record<string, string> = {};
+        if (typeof product.slug === 'object' && product.slug !== null) {
+            Object.entries(product.slug).forEach(([loc, s]) => {
+                if (typeof s === 'string' && s) map[loc] = s;
+            });
+        } else if (typeof product.slug === 'string' && product.slug) {
+            map['en'] = product.slug;
+        }
+        if (product.slugEn && !map['en']) map['en'] = product.slugEn;
+        if (product.slugFr && !map['fr']) map['fr'] = product.slugFr;
+        return Object.keys(map).length > 0 ? map : null;
+    })();
 
     const [dict, storeSettings] = await Promise.all([
         getDictionary(lang as Locale),
@@ -186,7 +237,7 @@ export default async function ProductPage({ params }: PageProps) {
     ]);
     const shopDict = dict.shop;
     const currency = storeSettings.defaultCurrency || "THB";
-    const catalogSlug = storeSettings.catalogSlug || "shop";
+    const catalogSlug = getLocalizedField(storeSettings.catalogSlug, lang) || (typeof storeSettings.catalogSlug === 'string' ? storeSettings.catalogSlug : "shop");
 
     const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "Product";
     const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
@@ -207,11 +258,15 @@ export default async function ProductPage({ params }: PageProps) {
         const catDocs = await Promise.all(
             catIds.map(id => adminDb.collection("categories").doc(id).get())
         );
-        assignedCategories = catDocs.filter(d => d.exists).map(d => ({ id: d.id, ...d.data() } as Category));
+        assignedCategories = catDocs
+            .filter(d => d.exists)
+            .map(d => ({ id: d.id, ...d.data() } as Category))
+            .filter(c => (c.status ?? 'published') === 'published');
     }
 
     return (
         <main className="container mx-auto px-4 py-8">
+            <ProductTranslationSync productSlugs={productSlugMap} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
                 {/* Left column: Gallery */}
                 <div className="w-full">
@@ -225,7 +280,12 @@ export default async function ProductPage({ params }: PageProps) {
                             <div className="flex flex-wrap gap-2 mb-3">
                                 {assignedCategories.map((cat) => {
                                     const catName = getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn);
-                                    const catSlug = getLocalizedField(cat.slug, lang) || (lang === 'fr' ? cat.slugFr : cat.slugEn);
+                                    const catSlug = 
+                                        (typeof cat.slug === 'object' && cat.slug?.[lang])
+                                            ? cat.slug[lang]
+                                            : (lang === 'fr' ? cat.slugFr : cat.slugEn) ||
+                                              getLocalizedField(cat.slug, lang) ||
+                                              (typeof cat.slug === 'string' ? cat.slug : '');
                                     return (
                                         <Link key={cat.id} href={`/${lang}/${catalogSlug}?category=${catSlug}`}>
                                             <Badge variant="secondary" className="hover:bg-primary/20 transition-colors text-xs font-normal">

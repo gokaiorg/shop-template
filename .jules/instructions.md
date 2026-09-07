@@ -10,9 +10,8 @@ When I trigger these keywords, execute the following sequences:
 
 ### "Run-[Brand]" (e.g. `Run-ST`, `Run-AF`, `Run-GL`, `Run-GG`)
 1. **Command**: Run `pnpm dev:[brand]` (e.g., `pnpm dev:st`, `pnpm dev:af`, `pnpm dev:gl`, `pnpm dev:gg`).
-2. **Wait**: Monitor logs for `Ready` / server listening on `http://localhost:3000`.
-3. **Action**: Open Antigravity Browser and launch `http://localhost:3000`.
-4. **Output**: "🚀 Development server running for [Brand]. Browser opened at http://localhost:3000."
+2. **Wait**: Monitor logs for `Ready` / server listening.
+3. **Output**: "🚀 Development server running for [Brand]. Please open http://127.0.0.1:3000 in your external browser."
 
 ### "Deploy-[Brand]" (e.g. `Deploy-ST`, `Deploy-AF`, `Deploy-GL`, `Deploy-GG`)
 1. **GCP Context Verification**: Use the `gcp-cloud-run` skill to verify the active GCP Project ID matching the brand environment.

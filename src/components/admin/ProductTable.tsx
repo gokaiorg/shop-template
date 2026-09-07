@@ -77,9 +77,8 @@ function SortableProductRow({ product, currency, lang }: SortableProductRowProps
         <tr
             ref={setNodeRef}
             style={style}
-            className={`border-b last:border-0 transition-colors ${
-                isDragging ? "bg-muted/40 shadow-sm" : "hover:bg-muted/20"
-            }`}
+            className={`border-b last:border-0 transition-colors ${isDragging ? "bg-muted/40 shadow-sm" : "hover:bg-muted/20"
+                }`}
         >
             <td className="px-4 py-4 w-12 text-center whitespace-nowrap">
                 <button
@@ -110,11 +109,10 @@ function SortableProductRow({ product, currency, lang }: SortableProductRowProps
                 </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                    isPublished
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${isPublished
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                         : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                }`}>
+                    }`}>
                     {status}
                 </span>
             </td>
@@ -327,8 +325,8 @@ export function ProductTable({
     const selectedCategoryObj = availableCategories.find((c) => c.id === selectedCategory);
     const selectedCategoryName = selectedCategoryObj
         ? getLocalizedField(selectedCategoryObj.name, lang) ||
-          (lang === "fr" ? (selectedCategoryObj as any).nameFr : (selectedCategoryObj as any).nameEn) ||
-          selectedCategoryObj.id
+        (lang === "fr" ? (selectedCategoryObj as any).nameFr : (selectedCategoryObj as any).nameEn) ||
+        selectedCategoryObj.id
         : "";
 
     return (
@@ -393,8 +391,8 @@ export function ProductTable({
                                 ? `Réorganisation active pour « ${selectedCategoryName} » (${displayedProducts.length})`
                                 : `Reordering active for "${selectedCategoryName}" (${displayedProducts.length})`
                             : lang === "fr"
-                            ? "Glissez-déposez les poignées pour réorganiser le catalogue"
-                            : "Drag & drop handles to reorder the catalog"}
+                                ? "Glissez-déposez les poignées pour réorganiser le catalogue"
+                                : "Drag & drop handles to reorder the catalog"}
                     </span>
                 </div>
             </div>
@@ -431,8 +429,8 @@ export function ProductTable({
                                                     ? "Aucun produit dans cette catégorie."
                                                     : "No products in this category."
                                                 : lang === "fr"
-                                                ? "Aucun produit trouvé. Créez un nouveau produit."
-                                                : "No products found. Generate demo data or create a new product."}
+                                                    ? "Aucun produit trouvé. Créez un nouveau produit."
+                                                    : "No products found. Generate demo data or create a new product."}
                                         </td>
                                     </tr>
                                 ) : (

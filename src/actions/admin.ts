@@ -60,6 +60,7 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
             slug: slugMap,
             intro: introMap,
             description: descMap,
+            status: result.data.status || "published",
             order: Math.round(Number(result.data.order ?? 0)) || 0,
             nameEn,
             nameFr,
@@ -129,6 +130,7 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
             slug: slugMap,
             intro: introMap,
             description: descMap,
+            status: result.data.status || "published",
             order: Math.round(Number(result.data.order ?? 0)) || 0,
             nameEn,
             nameFr,
@@ -537,22 +539,41 @@ export async function createPage(data: z.infer<typeof pageSchema>) {
     }
 
     try {
-        const slug = result.data.slug.trim().toLowerCase();
-        const docRef = adminDb.collection("pages").doc(slug);
-        const docSnap = await docRef.get();
+        const defaultLocale = getDefaultLocale();
+        const slugMap = { ...result.data.slug };
+        const primarySlug = slugMap[defaultLocale] || Object.values(slugMap).find((s) => s && s.trim().length > 0) || "";
 
-        if (docSnap.exists) {
-            return { success: false, error: `A page with slug "${slug}" already exists.` };
+        if (!primarySlug) {
+            return { success: false, error: "A valid slug is required." };
+        }
+
+        // Uniqueness check: check if any page already uses this primary slug
+        const directDoc = await adminDb.collection("pages").doc(primarySlug).get();
+        if (directDoc.exists) {
+            return { success: false, error: `A page with slug "${primarySlug}" already exists.` };
+        }
+
+        const existingQuery = await adminDb.collection("pages")
+            .where(`slug.${defaultLocale}`, "==", primarySlug)
+            .get();
+        if (!existingQuery.empty) {
+            return { success: false, error: `A page with slug "${primarySlug}" already exists.` };
         }
 
         const title_en = result.data.title?.en || Object.values(result.data.title)[0] || "";
         const title_fr = result.data.title?.fr || title_en;
+        const slug_en = slugMap.en || slugMap[defaultLocale] || primarySlug;
+        const slug_fr = slugMap.fr || slugMap[defaultLocale] || primarySlug;
         const content_en = result.data.content?.en || Object.values(result.data.content)[0] || "";
         const content_fr = result.data.content?.fr || content_en;
 
+        const docRef = adminDb.collection("pages").doc(primarySlug);
         const pageData = {
             ...result.data,
-            slug,
+            id: primarySlug,
+            slug: slugMap,
+            slug_en,
+            slug_fr,
             order: result.data.order !== undefined ? Math.round(Number(result.data.order)) : Date.now(),
             title_en,
             title_fr,
@@ -565,7 +586,7 @@ export async function createPage(data: z.infer<typeof pageSchema>) {
         await docRef.set(pageData);
 
         revalidatePath("/", "layout");
-        return { success: true, id: slug };
+        return { success: true, id: primarySlug };
     } catch (error: any) {
         console.error("CREATE_PAGE_ERROR:", error);
         return { success: false, error: error?.message || "Failed to create page." };
@@ -585,6 +606,11 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
     }
 
     try {
+        const defaultLocale = getDefaultLocale();
+        const slugMap = { ...result.data.slug };
+        const slug_en = slugMap.en || slugMap[defaultLocale] || "";
+        const slug_fr = slugMap.fr || slugMap[defaultLocale] || "";
+
         const title_en = result.data.title?.en || Object.values(result.data.title)[0] || "";
         const title_fr = result.data.title?.fr || title_en;
         const content_en = result.data.content?.en || Object.values(result.data.content)[0] || "";
@@ -593,6 +619,9 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
         const ref = adminDb.collection("pages").doc(id);
         const pageData: any = {
             ...result.data,
+            slug: slugMap,
+            slug_en,
+            slug_fr,
             title_en,
             title_fr,
             content_en,

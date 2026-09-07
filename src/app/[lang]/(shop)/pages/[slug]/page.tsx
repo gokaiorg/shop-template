@@ -20,7 +20,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!page || page.status === "draft") return {};
 
-  const title = getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || page.slug;
+  const displaySlug = getLocalizedField(page.slug, lang) || (typeof page.slug === 'string' ? page.slug : page.id);
+  const title = getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || displaySlug;
   const description = getLocalizedField(page.content, lang)
     ?.replace(/<[^>]*>?/gm, "")
     .slice(0, 160) || "";
@@ -49,10 +50,15 @@ export default async function PublicSlugPage({ params }: PageProps) {
     notFound();
   }
 
-  const title = getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || page.slug;
+  const displaySlug = getLocalizedField(page.slug, lang) || (typeof page.slug === 'string' ? page.slug : page.id);
+  const title = getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || displaySlug;
   const content = getLocalizedField(page.content, lang) || (lang === "fr" ? page.content_fr : page.content_en) || "";
 
-  const isContactPage = slug === "contact" || page.slug === "contact";
+  const isContactPage =
+    slug === "contact" ||
+    (typeof page.slug === "string" && page.slug === "contact") ||
+    (typeof page.slug === "object" && Object.values(page.slug).includes("contact")) ||
+    page.id === "contact";
 
   return (
     <main className="flex-1 bg-zinc-50 dark:bg-black">

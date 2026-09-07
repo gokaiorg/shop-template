@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getIsCartEnabled } from "@/config/brand.config";
 
 import { getStoreSettings } from "@/lib/services/settings";
+import { getLocalizedField } from "@/lib/i18n";
 
 export default async function CheckoutSuccessPage({
     params,
@@ -22,7 +23,9 @@ export default async function CheckoutSuccessPage({
         searchParams,
         getStoreSettings(),
     ]);
-    const catalogSlug = storeSettings.catalogSlug || "shop";
+    const catalogSlug = typeof storeSettings.catalogSlug === 'object'
+        ? getLocalizedField(storeSettings.catalogSlug, lang) || "shop"
+        : (storeSettings.catalogSlug || "shop");
 
     return (
         <main className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

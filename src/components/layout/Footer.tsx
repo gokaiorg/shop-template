@@ -11,7 +11,7 @@ interface FooterProps {
     dict: any;
     pages?: Page[];
     catalogTitle?: Record<string, string>;
-    catalogSlug?: string;
+    catalogSlug?: string | Record<string, string>;
     brandName?: string;
     footerDescription?: Record<string, string>;
     socialLinks?: SocialLink[];
@@ -38,7 +38,9 @@ export async function Footer({
 
     const activeBrandName = brandName || settings?.brandName || brandConfig.identity.name;
     const activeCatalogTitle = catalogTitle || settings?.catalogTitle;
-    const activeCatalogSlug = catalogSlug || settings?.catalogSlug || 'shop';
+    const activeCatalogSlug = (typeof catalogSlug === 'object' ? getLocalizedField(catalogSlug, lang) : catalogSlug)
+        || (typeof settings?.catalogSlug === 'object' ? getLocalizedField(settings.catalogSlug, lang) : settings?.catalogSlug)
+        || 'shop';
     const activeFooterDesc = footerDescription || settings?.footerDescription;
     const activeSocialLinks = socialLinks || settings?.socialLinks || brandConfig.navigation?.socials || [];
     const activeFooterRightTitle = footerRightMenuTitle || settings?.footerRightMenuTitle;
@@ -59,7 +61,9 @@ export async function Footer({
     let categories: Category[] = [];
     try {
         const catSnap = await adminDb.collection('categories').orderBy('order', 'asc').get();
-        categories = catSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Category));
+        categories = catSnap.docs
+            .map((doc) => ({ id: doc.id, ...doc.data() } as Category))
+            .filter((c) => (c.status ?? 'published') === 'published');
         categories.sort((a, b) => {
             const orderDiff = (a.order ?? 0) - (b.order ?? 0);
             if (orderDiff !== 0) return orderDiff;
@@ -106,7 +110,12 @@ export async function Footer({
                     </h2>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {categories.slice(0, 6).map((category) => {
-                            const catSlug = getLocalizedField(category.slug, lang) || (isFr ? category.slugFr : category.slugEn) || category.id;
+                            const catSlug = 
+                                (typeof category.slug === 'object' && category.slug?.[lang])
+                                    ? category.slug[lang]
+                                    : (isFr ? category.slugFr : category.slugEn) ||
+                                      getLocalizedField(category.slug, lang) ||
+                                      (typeof category.slug === 'string' ? category.slug : category.id);
                             const catName = getLocalizedField(category.name, lang) || (isFr ? category.nameFr : category.nameEn);
                             if (!catName) return null;
 
@@ -129,10 +138,11 @@ export async function Footer({
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {footerPages.length > 0 ? (
                             footerPages.map((page) => {
-                                const label = getLocalizedField(page.title, lang) || (isFr ? page.title_fr : page.title_en) || page.slug;
+                                const pageSlug = getLocalizedField(page.slug, lang) || (typeof page.slug === 'string' ? page.slug : page.id);
+                                const label = getLocalizedField(page.title, lang) || (isFr ? page.title_fr : page.title_en) || pageSlug;
                                 return (
-                                    <li key={page.id || page.slug}>
-                                        <Link href={`/${lang}/pages/${page.slug}`} className="hover:text-primary transition-colors">
+                                    <li key={page.id || pageSlug}>
+                                        <Link href={`/${lang}/pages/${pageSlug}`} className="hover:text-primary transition-colors">
                                             {label}
                                         </Link>
                                     </li>

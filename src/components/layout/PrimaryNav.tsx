@@ -42,13 +42,14 @@ export function PrimaryNav({ lang, dict, pages = [], className, onNavClick }: Pr
 
             {/* Dynamic Pages with showInHeader === true */}
             {pages.map((page) => {
-                const href = `/${lang}/pages/${page.slug}`;
-                const isActive = pathname === href || pathname === `/${lang}/${page.slug}`;
-                const label = getLocalizedField(page.title, lang) || (lang === 'fr' ? page.title_fr : page.title_en) || page.slug;
+                const pageSlug = getLocalizedField(page.slug, lang) || (typeof page.slug === 'string' ? page.slug : page.id);
+                const href = `/${lang}/pages/${pageSlug}`;
+                const isActive = pathname === href || pathname === `/${lang}/${pageSlug}`;
+                const label = getLocalizedField(page.title, lang) || (lang === 'fr' ? page.title_fr : page.title_en) || pageSlug;
 
                 return (
                     <Link
-                        key={page.id || page.slug}
+                        key={page.id || pageSlug}
                         href={href}
                         onClick={onNavClick}
                         aria-current={isActive ? "page" : undefined}

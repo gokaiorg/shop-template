@@ -36,7 +36,10 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             en: '',
             fr: '',
         },
-        catalogSlug: 'shop',
+        catalogSlug: {
+            en: 'shop',
+            fr: 'boutique',
+        },
         catalogBannerUrl: brand.assets?.heroBanner || (brand.assets as any)?.banner || '',
         footerDescription: {
             en: brand.identity.description?.en || '',
@@ -67,7 +70,11 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 heroBackgroundImageUrl: typeof data?.heroBackgroundImageUrl === 'string' ? data.heroBackgroundImageUrl : fallbackSettings.heroBackgroundImageUrl,
                 catalogTitle: (data?.catalogTitle && typeof data.catalogTitle === 'object') ? data.catalogTitle : fallbackSettings.catalogTitle,
                 catalogDescription: (data?.catalogDescription && typeof data.catalogDescription === 'object') ? data.catalogDescription : fallbackSettings.catalogDescription,
-                catalogSlug: (typeof data?.catalogSlug === 'string' && data.catalogSlug.trim().length > 0) ? data.catalogSlug.trim().toLowerCase() : fallbackSettings.catalogSlug,
+                catalogSlug: (data?.catalogSlug && typeof data.catalogSlug === 'object')
+                    ? data.catalogSlug
+                    : (typeof data?.catalogSlug === 'string' && data.catalogSlug.trim().length > 0)
+                        ? { en: data.catalogSlug.trim().toLowerCase(), fr: data.catalogSlug.trim().toLowerCase() }
+                        : fallbackSettings.catalogSlug,
                 catalogBannerUrl: typeof data?.catalogBannerUrl === 'string' ? data.catalogBannerUrl : fallbackSettings.catalogBannerUrl,
                 footerDescription: (data?.footerDescription && typeof data.footerDescription === 'object') ? data.footerDescription : fallbackSettings.footerDescription,
                 footerRightMenuTitle: typeof data?.footerRightMenuTitle === 'string' && data.footerRightMenuTitle.trim() ? data.footerRightMenuTitle : fallbackSettings.footerRightMenuTitle,

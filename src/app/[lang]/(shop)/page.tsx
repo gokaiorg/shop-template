@@ -50,8 +50,8 @@ export async function generateMetadata({
     || "";
   const absoluteImageUrl = heroImage
     ? (heroImage.startsWith("http://") || heroImage.startsWith("https://")
-        ? heroImage
-        : `${baseUrl}${heroImage.startsWith("/") ? "" : "/"}${heroImage}`)
+      ? heroImage
+      : `${baseUrl}${heroImage.startsWith("/") ? "" : "/"}${heroImage}`)
     : undefined;
 
   return {
@@ -93,16 +93,18 @@ export default async function Home({
     getStoreSettings()
   ]);
 
-  const rawCategories = categoriesSnap.docs.map(doc => {
-    const data = doc.data();
-    return {
-      ...data,
-      id: doc.id,
-      order: typeof data.order === 'number' ? data.order : 0,
-      createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null),
-      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
-    };
-  }) as Category[];
+  const rawCategories = categoriesSnap.docs
+    .map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+        order: typeof data.order === 'number' ? data.order : 0,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
+      } as Category;
+    })
+    .filter(cat => (cat.status ?? "published") === "published");
 
   const categories = rawCategories.sort((a, b) => {
     const orderDiff = (a.order ?? 0) - (b.order ?? 0);
@@ -151,16 +153,15 @@ export default async function Home({
 
   const heroBackgroundImageUrl = storeSettings.heroBackgroundImageUrl;
   const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (isFr ? "Boutique" : "Shop");
-  const catalogSlug = storeSettings.catalogSlug || "shop";
-  const shopByCategoryTitle = isFr ? `${catalogName} par catégorie` : `${catalogName}`;
+  const catalogSlug = getLocalizedField(storeSettings.catalogSlug, lang) || (typeof storeSettings.catalogSlug === 'string' ? storeSettings.catalogSlug : "shop");
+  const shopByCategoryTitle = isFr ? `${catalogName}` : `${catalogName}`;
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black w-full">
       {/* Hero Section with Dynamic Parallax Background & Glassmorphic Card */}
       <section
-        className={`relative flex w-full flex-col items-center justify-center min-h-[60vh] py-24 sm:py-32 px-6 md:px-16 text-center bg-center bg-cover bg-no-repeat ${
-          heroBackgroundImageUrl ? "bg-fixed" : "bg-white dark:bg-black"
-        }`}
+        className={`relative flex w-full flex-col items-center justify-center min-h-[60vh] py-24 sm:py-32 px-6 md:px-16 text-center bg-center bg-cover bg-no-repeat ${heroBackgroundImageUrl ? "bg-fixed" : "bg-white dark:bg-black"
+          }`}
         style={heroBackgroundImageUrl ? { backgroundImage: `url("${heroBackgroundImageUrl}")` } : undefined}
       >
         {/* Subtle contrast overlay when background image is present */}
@@ -202,39 +203,39 @@ export default async function Home({
               asTabs={true}
             />
 
-          {categories.map((category) => {
-            const categoryProducts = allProducts.filter(p => p.categoryIds?.includes(category.id) || p.categoryId === category.id);
-            const catSlug = getLocalizedField(category.slug, lang) || (isFr ? category.slugFr : category.slugEn);
-            const categoryHref = catSlug ? `/${lang}/${catalogSlug}?category=${catSlug}` : `/${lang}/${catalogSlug}`;
+            {categories.map((category) => {
+              const categoryProducts = allProducts.filter(p => p.categoryIds?.includes(category.id) || p.categoryId === category.id);
+              const catSlug = getLocalizedField(category.slug, lang) || (isFr ? category.slugFr : category.slugEn);
+              const categoryHref = catSlug ? `/${lang}/${catalogSlug}?category=${catSlug}` : `/${lang}/${catalogSlug}`;
 
-            return (
-              <TabsContent key={category.id} value={category.id} className="mt-0 outline-none focus-visible:ring-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {categoryProducts.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-muted-foreground">
-                      {shopDict.empty_state || "No products in this category"}
-                    </div>
-                  ) : (
-                    categoryProducts.slice(0, 4).map((product) => (
-                      <ShopProductCard key={product.id} product={product} lang={lang} dict={shopDict} />
-                    ))
-                  )}
-                </div>
-                {categoryProducts.length > 0 && (
-                  <div className="mt-12 flex justify-center">
-                    <Link href={categoryHref}>
-                      <Button variant="outline" size="lg" className="rounded-full px-8 shadow-xs hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer group">
-                        <span>{homeDict.view_all || (isFr ? "Voir tout" : "View All")}</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      </Button>
-                    </Link>
+              return (
+                <TabsContent key={category.id} value={category.id} className="mt-0 outline-none focus-visible:ring-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {categoryProducts.length === 0 ? (
+                      <div className="col-span-full text-center py-12 text-muted-foreground">
+                        {shopDict.empty_state || "No products in this category"}
+                      </div>
+                    ) : (
+                      categoryProducts.slice(0, 4).map((product) => (
+                        <ShopProductCard key={product.id} product={product} lang={lang} dict={shopDict} />
+                      ))
+                    )}
                   </div>
-                )}
-              </TabsContent>
-            );
-          })}
-        </Tabs>
-      )}
+                  {categoryProducts.length > 0 && (
+                    <div className="mt-12 flex justify-center">
+                      <Link href={categoryHref}>
+                        <Button variant="outline" size="lg" className="rounded-full px-8 shadow-xs hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer group">
+                          <span>{homeDict.view_all || (isFr ? "Voir tout" : "View All")}</span>
+                          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </TabsContent>
+              );
+            })}
+          </Tabs>
+        )}
       </section>
     </div>
   );

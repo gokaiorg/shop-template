@@ -8,7 +8,12 @@ export const socialLinkSchema = z.object({
 export const catalogSettingsSchema = z.object({
     catalogTitle: z.record(z.string(), z.string()).optional(),
     catalogDescription: z.record(z.string(), z.string()).optional(),
-    catalogSlug: z.string().min(1, 'Catalog slug is required').regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens (e.g. shop or galerie)'),
+    catalogSlug: z.union([
+        z.record(z.string(), z.string()).refine((val) => Object.values(val).some(v => v && v.trim().length > 0), {
+            message: 'Catalog slug is required in at least one language',
+        }),
+        z.string().min(1, 'Catalog slug is required').regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens (e.g. shop or galerie)'),
+    ]),
     catalogBannerUrl: z.string().optional(),
 });
 

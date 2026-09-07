@@ -7,6 +7,7 @@ import { getSupportedLocales, getDefaultLocale } from "@/app/i18n-config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { constructSiteMetadata } from "@/config/site";
 import { BrandConfig } from "@/config/types";
+import { getLocalizedField } from "@/lib/i18n";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -137,7 +138,8 @@ export default async function RootLayout({
             currency={defaultCurrency}
             defaultTheme={defaultTheme}
             catalogTitle={storeSettings.catalogTitle}
-            catalogSlug={storeSettings.catalogSlug}
+            catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
+            catalogSlugs={typeof storeSettings.catalogSlug === 'object' ? storeSettings.catalogSlug : { [defaultLocale]: storeSettings.catalogSlug || 'shop' }}
           >
             {children}
           </BrandProvider>

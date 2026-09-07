@@ -63,6 +63,7 @@ export interface Category {
   slug: Record<string, string>;
   description: Record<string, string>;
   intro?: Record<string, string> | null;
+  status?: "draft" | "published" | string;
   imageUrl?: string | null;
   // Legacy optional fields for compatibility
   nameEn?: string;
@@ -127,7 +128,7 @@ export interface VerificationToken {
 
 export interface Page {
   id: string; // The doc ID or slug
-  slug: string;
+  slug: Record<string, string>;
   title: Record<string, string>;
   content: Record<string, string>;
   status: "draft" | "published";
@@ -139,6 +140,8 @@ export interface Page {
   createdAt?: Date | string;
   updatedAt?: Date | string;
   // Legacy optional fields for compatibility
+  slug_en?: string;
+  slug_fr?: string;
   title_en?: string;
   title_fr?: string;
   content_en?: string;
@@ -177,7 +180,7 @@ export interface StoreSettings {
   heroBackgroundImageUrl?: string;
   catalogTitle?: Record<string, string>;
   catalogDescription?: Record<string, string>;
-  catalogSlug?: string;
+  catalogSlug?: Record<string, string> | string;
   catalogBannerUrl?: string;
   footerDescription?: Record<string, string>;
   footerRightMenuTitle?: string;

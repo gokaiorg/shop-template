@@ -29,7 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import {
     Form,
     FormControl,
@@ -42,7 +42,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { Category, Product } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
@@ -150,20 +150,21 @@ export function ProductForm({
             }
         });
 
-        // 2. React Hook Form subscription: live keystroke listener
+        // 2. React Hook Form subscription: live keystroke listener on name per locale
         const subscription = form.watch((value, { name }) => {
             if (!name || !name.startsWith("name")) return;
 
-            locales.forEach((loc) => {
-                const currentSlug = form.getValues(`slug.${loc}`);
-                if (!slugTouchedRef.current[loc] || !currentSlug) {
-                    const currentName = form.getValues(`name.${loc}`) || "";
+            const targetLoc = name.split(".")[1];
+            if (targetLoc && locales.includes(targetLoc)) {
+                const currentSlug = form.getValues(`slug.${targetLoc}`);
+                if (!slugTouchedRef.current[targetLoc] || !currentSlug) {
+                    const currentName = form.getValues(`name.${targetLoc}`) || "";
                     if (currentName.trim()) {
                         const generated = generateSlug(currentName);
-                        form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
+                        form.setValue(`slug.${targetLoc}`, generated, { shouldValidate: true, shouldDirty: true });
                     }
                 }
-            });
+            }
         });
 
         return () => subscription.unsubscribe();
@@ -450,193 +451,37 @@ export function ProductForm({
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Colonne principale (Gauche) */}
                     <div className="col-span-1 lg:col-span-2 min-w-0 space-y-8">
-                        {/* Bloc 1 : Médias */}
-                        <Card className="border rounded-xl bg-card shadow-xs min-w-0">
-                        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4">
-                            <div>
+                        {/* Bloc 1 : Informations Principales */}
+                        <Card>
+                            <CardHeader>
                                 <div className="flex items-center gap-2 mb-1">
-                                    <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                    <FileText className="w-5 h-5 text-muted-foreground" />
                                     <h2 className="text-lg font-medium tracking-tight">
-                                        {dict.imageUrl || (lang?.startsWith("fr") ? "Médias du produit" : "Product Images")}
+                                        {lang?.startsWith("fr") ? "Informations Générales" : "General Information"}
                                     </h2>
-                                    <Badge variant="secondary" className="text-xs ml-1">
-                                        {images.length} {images.length === 1 ? "image" : "images"}
-                                    </Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    {lang?.startsWith("fr") ? "Photos du produit. La première sert de couverture." : "Product photos. First image serves as cover."}
+                                    {lang?.startsWith("fr") ? "Nom, accroche et descriptions." : "Product name, intro, and descriptions."}
                                 </p>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={isUploading}
-                                onClick={() => fileInputRef.current?.click()}
-                                className="cursor-pointer shrink-0"
-                            >
-                                {isUploading ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                                        <span>{lang?.startsWith("fr") ? "Envoi en cours..." : "Uploading..."}</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Upload className="h-4 w-4 mr-1.5" />
-                                        <span>{images.length > 0 ? (lang?.startsWith("fr") ? "Ajouter des images" : "Add Images") : (lang?.startsWith("fr") ? "Téléverser des images" : "Upload Images")}</span>
-                                    </>
-                                )}
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-4">
-                            {/* Grille des images existantes */}
-                            {images.length > 0 ? (
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                        {images.map((imgUrl, idx) => {
-                                            const isCover = idx === 0;
-                                            return (
-                                                <div
-                                                    key={`${imgUrl}-${idx}`}
-                                                    className={`relative group aspect-square rounded-xl overflow-hidden border-2 bg-muted/30 transition-all ${
-                                                        isCover ? "border-primary shadow-xs ring-2 ring-primary/20" : "border-border/80 hover:border-border"
-                                                    }`}
-                                                >
-                                                    <Image
-                                                        src={imgUrl}
-                                                        alt={`Product image ${idx + 1}`}
-                                                        fill
-                                                        sizes="(max-width: 768px) 50vw, 25vw"
-                                                        className="object-cover"
-                                                    />
-
-                                                    {/* Badge Couverture sur la 1ère image */}
-                                                    {isCover ? (
-                                                        <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground font-semibold shadow-xs z-10">
-                                                            {lang?.startsWith("fr") ? "Couverture" : "Cover"}
-                                                        </Badge>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleSetPrimary(idx)}
-                                                            className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-xs border shadow-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
-                                                            title={lang?.startsWith("fr") ? "Définir comme couverture" : "Set as cover image"}
-                                                        >
-                                                            {lang?.startsWith("fr") ? "Couverture" : "Set cover"}
-                                                        </button>
-                                                    )}
-
-                                                    {/* Bouton de suppression corbeille */}
-                                                    <Button
-                                                        type="button"
-                                                        variant="destructive"
-                                                        size="icon"
-                                                        onClick={() => handleRemoveImage(idx)}
-                                                        className="absolute top-2 right-2 h-7 w-7 rounded-lg opacity-90 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer z-10"
-                                                        aria-label="Remove image"
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </Button>
-
-                                                    {/* Numéro d'ordre */}
-                                                    <span className="absolute bottom-6 right-1.5 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
-                                                        #{idx + 1}
-                                                    </span>
-
-                                                    {/* Affichage de l'URL source */}
-                                                    <div
-                                                        className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-[9px] font-mono p-1 truncate text-center backdrop-blur-sm z-10"
-                                                        title={imgUrl}
-                                                    >
-                                                        {imgUrl}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* Zone de drop secondaire compacte */}
-                                    <div
-                                        onDrop={handleDrop}
-                                        onDragOver={handleDragOver}
-                                        onDragLeave={handleDragLeave}
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className={`flex items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                                            isDragOver
-                                                ? "border-primary bg-primary/5"
-                                                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                            <Upload className="h-4 w-4 text-primary" />
-                                            <span>{lang?.startsWith("fr") ? "Déposez d'autres images ici ou cliquez pour parcourir" : "Drop additional images here or click to browse"}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                /* Zone de drop principale (vide) */
-                                <div
-                                    onDrop={handleDrop}
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                                        isDragOver
-                                            ? "border-primary bg-primary/5"
-                                            : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30"
-                                    }`}
-                                >
-                                    <div className="p-3 bg-muted rounded-full mb-3 text-muted-foreground">
-                                        <ImageIcon className="h-6 w-6" />
-                                    </div>
-                                    <p className="text-sm font-medium text-foreground text-center">
-                                        {dict.uploadImage || (lang?.startsWith("fr") ? "Cliquez ou glissez-déposez des images ici" : "Click or drag images here")}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        PNG, JPG, WEBP • Multiple files allowed
-                                    </p>
-                                </div>
-                            )}
-
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                onChange={handleFileInputChange}
-                                className="hidden"
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* Bloc 2 : Informations Principales */}
-                    <Card className="border rounded-xl bg-card shadow-xs">
-                        <CardHeader className="border-b pb-4">
-                            <div className="flex items-center gap-2 mb-1">
-                                <FileText className="w-5 h-5 text-muted-foreground" />
-                                <h2 className="text-lg font-medium tracking-tight">
-                                    {lang?.startsWith("fr") ? "Informations Générales" : "General Information"}
-                                </h2>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {lang?.startsWith("fr") ? "Nom, accroche et descriptions." : "Product name, intro, and descriptions."}
-                            </p>
-                        </CardHeader>
-                        <CardContent className="pt-4">
-                            {isMulti ? (
-                                <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
-                                    {locales.map((loc) => (
-                                        <AccordionItem key={loc} value={loc}>
-                                            <AccordionTrigger className="text-base font-semibold hover:no-underline">
-                                                {getLocaleDisplayName(loc)}
-                                            </AccordionTrigger>
-                                            <AccordionContent className="space-y-4 pt-4 px-1">
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {isMulti ? (
+                                    <Tabs defaultValue={defaultLocale} className="w-full">
+                                        <TabsList className="mb-4">
+                                            {locales.map((loc) => (
+                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                                    {loc.toUpperCase()}
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+                                        {locales.map((loc) => (
+                                            <TabsContent key={loc} value={loc} className="space-y-4">
                                                 <FormField
                                                     control={form.control}
                                                     name={`name.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>{dict.name || "Name"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                            <FormLabel>{dict.name || "Name"} <span className="text-destructive ml-1">*</span></FormLabel>
                                                             <FormControl>
                                                                 <Input placeholder={`Name (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
                                                             </FormControl>
@@ -649,7 +494,7 @@ export function ProductForm({
                                                     name={`intro.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>{dict.intro || "Intro"} ({loc.toUpperCase()})</FormLabel>
+                                                            <FormLabel>{dict.intro || "Intro"}</FormLabel>
                                                             <FormControl>
                                                                 <Input placeholder={`Short introduction (${loc.toUpperCase()})...`} {...field} value={field.value || ""} />
                                                             </FormControl>
@@ -662,7 +507,7 @@ export function ProductForm({
                                                     name={`description.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>{dict.description || "Description"} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                            <FormLabel>{dict.description || "Description"} <span className="text-destructive ml-1">*</span></FormLabel>
                                                             <FormControl>
                                                                 <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
                                                             </FormControl>
@@ -670,59 +515,217 @@ export function ProductForm({
                                                         </FormItem>
                                                     )}
                                                 />
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    ))}
-                                </Accordion>
-                            ) : (
-                                <div className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name={`name.${locales[0]}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{dict.name || "Name"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Name..." {...field} value={field.value || ""} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name={`intro.${locales[0]}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{dict.intro || "Intro"} ({locales[0].toUpperCase()})</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Short introduction..." {...field} value={field.value || ""} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name={`description.${locales[0]}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{dict.description || "Description"} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                            </TabsContent>
+                                        ))}
+                                    </Tabs>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name={`name.${locales[0]}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict.name || "Name"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Name..." {...field} value={field.value || ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`intro.${locales[0]}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict.intro || "Intro"}</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Short introduction..." {...field} value={field.value || ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`description.${locales[0]}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict.description || "Description"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Bloc 2 : Médias */}
+                        <Card className="min-w-0">
+                            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                        <h2 className="text-lg font-medium tracking-tight">
+                                            {dict.imageUrl || (lang?.startsWith("fr") ? "Médias du produit" : "Product Images")}
+                                        </h2>
+                                        <Badge variant="secondary" className="text-xs ml-1">
+                                            {images.length} {images.length === 1 ? "image" : "images"}
+                                        </Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        {lang?.startsWith("fr") ? "Photos du produit. La première sert de couverture." : "Product photos. First image serves as cover."}
+                                    </p>
                                 </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isUploading}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="cursor-pointer shrink-0"
+                                >
+                                    {isUploading ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                                            <span>{lang?.startsWith("fr") ? "Envoi en cours..." : "Uploading..."}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload className="h-4 w-4 mr-1.5" />
+                                            <span>{images.length > 0 ? (lang?.startsWith("fr") ? "Ajouter des images" : "Add Images") : (lang?.startsWith("fr") ? "Téléverser des images" : "Upload Images")}</span>
+                                        </>
+                                    )}
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {/* Grille des images existantes */}
+                                {images.length > 0 ? (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                            {images.map((imgUrl, idx) => {
+                                                const isCover = idx === 0;
+                                                return (
+                                                    <div
+                                                        key={`${imgUrl}-${idx}`}
+                                                        className={`relative group aspect-square rounded-xl overflow-hidden border-2 bg-muted/30 transition-all ${
+                                                            isCover ? "border-primary shadow-xs ring-2 ring-primary/20" : "border-border/80 hover:border-border"
+                                                        }`}
+                                                    >
+                                                        <Image
+                                                            src={imgUrl}
+                                                            alt={`Product image ${idx + 1}`}
+                                                            fill
+                                                            sizes="(max-width: 768px) 50vw, 25vw"
+                                                            className="object-cover"
+                                                        />
+
+                                                        {/* Badge Couverture sur la 1ère image */}
+                                                        {isCover ? (
+                                                            <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground font-semibold shadow-xs z-10">
+                                                                {lang?.startsWith("fr") ? "Couverture" : "Cover"}
+                                                            </Badge>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSetPrimary(idx)}
+                                                                className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-xs border shadow-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
+                                                                title={lang?.startsWith("fr") ? "Définir comme couverture" : "Set as cover image"}
+                                                            >
+                                                                {lang?.startsWith("fr") ? "Couverture" : "Set cover"}
+                                                            </button>
+                                                        )}
+
+                                                        {/* Bouton de suppression corbeille */}
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="icon"
+                                                            onClick={() => handleRemoveImage(idx)}
+                                                            className="absolute top-2 right-2 h-7 w-7 rounded-lg opacity-90 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer z-10"
+                                                            aria-label="Remove image"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+
+                                                        {/* Numéro d'ordre */}
+                                                        <span className="absolute bottom-6 right-1.5 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
+                                                            #{idx + 1}
+                                                        </span>
+
+                                                        {/* Affichage de l'URL source */}
+                                                        <div
+                                                            className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-[9px] font-mono p-1 truncate text-center backdrop-blur-sm z-10"
+                                                            title={imgUrl}
+                                                        >
+                                                            {imgUrl}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Zone de drop secondaire compacte */}
+                                        <div
+                                            onDrop={handleDrop}
+                                            onDragOver={handleDragOver}
+                                            onDragLeave={handleDragLeave}
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                                                isDragOver
+                                                    ? "border-primary bg-primary/5"
+                                                    : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <Upload className="h-4 w-4 text-primary" />
+                                                <span>{lang?.startsWith("fr") ? "Déposez d'autres images ici ou cliquez pour parcourir" : "Drop additional images here or click to browse"}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Zone de drop principale (vide) */
+                                    <div
+                                        onDrop={handleDrop}
+                                        onDragOver={handleDragOver}
+                                        onDragLeave={handleDragLeave}
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                                            isDragOver
+                                                ? "border-primary bg-primary/5"
+                                                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30"
+                                        }`}
+                                    >
+                                        <div className="p-3 bg-muted rounded-full mb-3 text-muted-foreground">
+                                            <ImageIcon className="h-6 w-6" />
+                                        </div>
+                                        <p className="text-sm font-medium text-foreground text-center">
+                                            {dict.uploadImage || (lang?.startsWith("fr") ? "Cliquez ou glissez-déposez des images ici" : "Click or drag images here")}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            PNG, JPG, WEBP • Multiple files allowed
+                                        </p>
+                                    </div>
+                                )}
+
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleFileInputChange}
+                                    className="hidden"
+                                />
+                            </CardContent>
+                        </Card>
 
                     {/* Bloc 3 : Prix et Inventaire */}
-                    <Card className="border rounded-xl bg-card shadow-xs">
-                        <CardHeader className="border-b pb-4">
+                    <Card>
+                        <CardHeader>
                             <div className="flex items-center gap-2 mb-1">
                                 <DollarSign className="w-5 h-5 text-muted-foreground" />
                                 <h2 className="text-lg font-medium tracking-tight">
@@ -733,7 +736,7 @@ export function ProductForm({
                                 {lang?.startsWith("fr") ? "Tarif unitaire et quantité disponible en stock." : "Unit pricing and available inventory stock."}
                             </p>
                         </CardHeader>
-                        <CardContent className="pt-4">
+                        <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
@@ -775,8 +778,8 @@ export function ProductForm({
                     </Card>
 
                     {/* Bloc 4 : Organisation */}
-                    <Card className="border rounded-xl bg-card shadow-xs">
-                        <CardHeader className="border-b pb-4">
+                    <Card>
+                        <CardHeader>
                             <div className="flex items-center gap-2 mb-1">
                                 <FolderTree className="w-5 h-5 text-muted-foreground" />
                                 <h2 className="text-lg font-medium tracking-tight">
@@ -787,7 +790,7 @@ export function ProductForm({
                                 {lang?.startsWith("fr") ? "Catégories associées et artiste ou vendeur." : "Associated categories and artist or vendor."}
                             </p>
                         </CardHeader>
-                        <CardContent className="pt-4 space-y-6">
+                        <CardContent className="space-y-6">
                             <FormField
                                 control={form.control}
                                 name="categoryIds"
@@ -865,8 +868,8 @@ export function ProductForm({
                     {/* Colonne secondaire (Droite) */}
                     <div className="col-span-1 min-w-0 space-y-8">
                         {/* Bloc : URL & Publication */}
-                        <Card className="border rounded-xl bg-card shadow-xs min-w-0 overflow-hidden">
-                            <CardHeader className="border-b pb-4">
+                        <Card className="min-w-0 overflow-hidden">
+                            <CardHeader>
                                 <div className="flex items-center gap-2 mb-1">
                                     <LayoutTemplate className="w-5 h-5 text-muted-foreground" />
                                     <h2 className="text-lg font-medium tracking-tight">
@@ -879,101 +882,103 @@ export function ProductForm({
                                         : "Slug handle and publication status."}
                                 </p>
                             </CardHeader>
-                            <CardContent className="pt-4 space-y-4 min-w-0">
+                            <CardContent className="space-y-4 min-w-0">
                                 {isMulti ? (
-                                    <Accordion type="single" defaultValue={defaultLocale} collapsible className="w-full">
+                                    <Tabs defaultValue={defaultLocale} className="w-full">
+                                        <TabsList className="mb-4">
+                                            {locales.map((loc) => (
+                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                                    {loc.toUpperCase()}
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
                                         {locales.map((loc) => {
                                             const currentSlugVal = form.watch(`slug.${loc}`) || "";
                                             return (
-                                                <AccordionItem key={loc} value={loc}>
-                                                    <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                                                        {getLocaleDisplayName(loc)}
-                                                    </AccordionTrigger>
-                                                    <AccordionContent className="space-y-4 pt-3 px-1">
-                                                        <FormField
-                                                            control={form.control}
-                                                            name={`slug.${loc}`}
-                                                            render={({ field }) => (
-                                                                <FormItem className="min-w-0 space-y-2">
-                                                                    <div className="flex items-center justify-between gap-2">
-                                                                        <FormLabel>{dict.slug || (lang?.startsWith("fr") ? "Slug (URL)" : "Slug (URL)")} ({loc.toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
-                                                                            title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
-                                                                            onClick={() => {
-                                                                                const currentName = form.getValues(`name.${loc}`) || "";
-                                                                                if (currentName.trim()) {
-                                                                                    const regenerated = slugify(currentName);
-                                                                                    slugTouchedRef.current[loc] = false;
-                                                                                    form.setValue(`slug.${loc}`, regenerated, { shouldDirty: true, shouldValidate: true });
-                                                                                    toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            <RotateCcw className="h-3 w-3" />
-                                                                            <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
-                                                                        </Button>
-                                                                    </div>
+                                                <TabsContent key={loc} value={loc} className="space-y-4">
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`slug.${loc}`}
+                                                        render={({ field }) => (
+                                                            <FormItem className="min-w-0 space-y-2">
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <FormLabel>{dict.slug || (lang?.startsWith("fr") ? "Slug (URL)" : "Slug (URL)")} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
+                                                                        title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
+                                                                        onClick={() => {
+                                                                            const currentName = form.getValues(`name.${loc}`) || "";
+                                                                            if (currentName.trim()) {
+                                                                                const regenerated = slugify(currentName);
+                                                                                slugTouchedRef.current[loc] = false;
+                                                                                form.setValue(`slug.${loc}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                                toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <RotateCcw className="h-3 w-3" />
+                                                                        <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                                    </Button>
+                                                                </div>
 
-                                                                    <div className="min-w-0 overflow-hidden">
-                                                                        <Badge
-                                                                            variant="secondary"
-                                                                            className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
-                                                                            title={`/${lang}/product/${currentSlugVal || "slug"}`}
-                                                                        >
-                                                                            /{lang}/product/{currentSlugVal || "slug"}
-                                                                        </Badge>
-                                                                    </div>
+                                                                <div className="min-w-0 overflow-hidden">
+                                                                    <Badge
+                                                                        variant="secondary"
+                                                                        className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                                        title={`/${lang}/product/${currentSlugVal || "slug"}`}
+                                                                    >
+                                                                        /{lang}/product/{currentSlugVal || "slug"}
+                                                                    </Badge>
+                                                                </div>
 
+                                                                <FormControl>
+                                                                    <Input
+                                                                        placeholder={`slug-${loc}...`}
+                                                                        className="font-mono text-sm w-full"
+                                                                        {...field}
+                                                                        value={field.value || ""}
+                                                                        onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
+                                                                        onBlur={() => handleSlugBlur(loc, field.onBlur)}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormDescription>
+                                                                    {lang?.startsWith("fr")
+                                                                        ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                                        : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                                </FormDescription>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`status.${loc}`}
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>{lang?.startsWith("fr") ? "Statut de publication" : "Publication Status"}</FormLabel>
+                                                                <Select onValueChange={field.onChange} value={field.value || "draft"}>
                                                                     <FormControl>
-                                                                        <Input
-                                                                            placeholder={`slug-${loc}...`}
-                                                                            className="font-mono text-sm w-full"
-                                                                            {...field}
-                                                                            value={field.value || ""}
-                                                                            onChange={(e) => handleSlugChange(loc, e.target.value, field.onChange)}
-                                                                            onBlur={() => handleSlugBlur(loc, field.onBlur)}
-                                                                        />
+                                                                        <SelectTrigger>
+                                                                            <SelectValue />
+                                                                        </SelectTrigger>
                                                                     </FormControl>
-                                                                    <FormDescription>
-                                                                        {lang?.startsWith("fr")
-                                                                            ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
-                                                                            : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
-                                                                    </FormDescription>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-
-                                                        <FormField
-                                                            control={form.control}
-                                                            name={`status.${loc}`}
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>{lang?.startsWith("fr") ? "Statut de publication" : "Publication Status"} ({loc.toUpperCase()})</FormLabel>
-                                                                    <Select onValueChange={field.onChange} value={field.value || "draft"}>
-                                                                        <FormControl>
-                                                                            <SelectTrigger>
-                                                                                <SelectValue />
-                                                                            </SelectTrigger>
-                                                                        </FormControl>
-                                                                        <SelectContent>
-                                                                            <SelectItem value="published">{lang?.startsWith("fr") ? "Publié (Visible)" : "Published (Visible)"}</SelectItem>
-                                                                            <SelectItem value="draft">{lang?.startsWith("fr") ? "Brouillon (Masqué)" : "Draft (Hidden)"}</SelectItem>
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </AccordionContent>
-                                                </AccordionItem>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="published">{lang?.startsWith("fr") ? "Publié (Visible)" : "Published (Visible)"}</SelectItem>
+                                                                        <SelectItem value="draft">{lang?.startsWith("fr") ? "Brouillon (Masqué)" : "Draft (Hidden)"}</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </TabsContent>
                                             );
                                         })}
-                                    </Accordion>
+                                    </Tabs>
                                 ) : (
                                     <div className="space-y-4">
                                         <FormField
@@ -982,7 +987,7 @@ export function ProductForm({
                                             render={({ field }) => (
                                                 <FormItem className="min-w-0 space-y-2">
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <FormLabel>{dict.slug || (lang?.startsWith("fr") ? "Slug (URL)" : "Slug (URL)")} ({locales[0].toUpperCase()}) <span className="text-destructive ml-1">*</span></FormLabel>
+                                                        <FormLabel>{dict.slug || (lang?.startsWith("fr") ? "Slug (URL)" : "Slug (URL)")} <span className="text-destructive ml-1">*</span></FormLabel>
                                                         <Button
                                                             type="button"
                                                             variant="ghost"
@@ -1039,7 +1044,7 @@ export function ProductForm({
                                             name={`status.${locales[0]}`}
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{lang?.startsWith("fr") ? "Statut de publication" : "Publication Status"} ({locales[0].toUpperCase()})</FormLabel>
+                                                    <FormLabel>{lang?.startsWith("fr") ? "Statut de publication" : "Publication Status"}</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value || "draft"}>
                                                         <FormControl>
                                                             <SelectTrigger>

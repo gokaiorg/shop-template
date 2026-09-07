@@ -91,14 +91,23 @@ export function CategoryPillsNav({
             <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 mb-8 w-max sm:w-auto">
                 {categories.map((category) => {
                     const categorySlug =
-                        getLocalizedField(category.slug, lang) ||
-                        (lang === "fr" ? category.slugFr : category.slugEn) ||
-                        "";
+                        (typeof category.slug === "object" && category.slug?.[lang])
+                            ? category.slug[lang]
+                            : (lang === "fr" ? category.slugFr : category.slugEn) ||
+                              getLocalizedField(category.slug, lang) ||
+                              (typeof category.slug === "string" ? category.slug : "");
                     const categoryName =
                         getLocalizedField(category.name, lang) ||
                         (lang === "fr" ? category.nameFr : category.nameEn) ||
                         "";
-                    const isActive = activeId === categorySlug || activeId === category.id;
+                    const isActive =
+                        activeId === categorySlug ||
+                        (typeof category.slug === "object" && activeId === category.slug?.[lang]) ||
+                        (typeof category.slug === "object" && activeId === category.slug?.["en"]) ||
+                        (typeof category.slug === "object" && activeId === category.slug?.["fr"]) ||
+                        activeId === category.slugFr ||
+                        activeId === category.slugEn ||
+                        activeId === category.id;
 
                     return (
                         <button

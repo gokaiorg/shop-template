@@ -13,11 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useBrand } from "@/components/providers/BrandProvider"
 import { getLocaleDisplayName } from "@/lib/i18n"
+import { useTranslationStore } from "@/store/useTranslationStore"
 
 export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, string> }) {
-    const { isMultiLocale, supportedLocales } = useBrand();
+    const { isMultiLocale, supportedLocales, catalogSlugs } = useBrand();
     const pathname = usePathname();
     const router = useRouter();
+    const storeCategorySlugs = useTranslationStore((state) => state.categorySlugs);
+    const storeProductSlugs = useTranslationStore((state) => state.productSlugs);
 
     if (!isMultiLocale || supportedLocales.length <= 1) {
         return null;
@@ -32,7 +35,42 @@ export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, 
         } else {
             segments.splice(1, 0, targetLang);
         }
-        router.push(segments.join('/') || `/${targetLang}`);
+
+        // If on the catalog page: e.g. /en/shop or /fr/boutique
+        // segments[2] is the catalogSlug segment
+        if (segments.length >= 3 && catalogSlugs) {
+            const currentSlug = segments[2];
+            const allSlugs = Object.values(catalogSlugs).map((s) => s.toLowerCase());
+            if (allSlugs.includes(currentSlug.toLowerCase())) {
+                segments[2] = (catalogSlugs[targetLang] || 'shop').toLowerCase();
+            }
+        }
+
+        // If on a product page: e.g. /fr/product/tasse-matinale-tachetee
+        // segments[2] === 'product' and segments.length >= 4
+        if (segments.length >= 4 && segments[2].toLowerCase() === 'product') {
+            const activeProductSlugs = useTranslationStore.getState().productSlugs || storeProductSlugs || useTranslationStore.getState().alternateSlugs;
+            if (activeProductSlugs && activeProductSlugs[targetLang]) {
+                const slugIndex = segments[segments.length - 1] === '' ? segments.length - 2 : segments.length - 1;
+                segments[slugIndex] = activeProductSlugs[targetLang];
+            }
+        }
+
+        // Read and preserve current URL search parameters
+        const currentSearch = typeof window !== 'undefined' ? window.location.search : '';
+        const searchParams = new URLSearchParams(currentSearch);
+
+        // If category query parameter is present, translate its value for targetLocale
+        if (searchParams.has('category')) {
+            const activeCategorySlugs = useTranslationStore.getState().categorySlugs || storeCategorySlugs;
+            if (activeCategorySlugs && activeCategorySlugs[targetLang]) {
+                searchParams.set('category', activeCategorySlugs[targetLang]);
+            }
+        }
+
+        const queryString = searchParams.toString();
+        const targetUrl = `${segments.join('/') || `/${targetLang}`}${queryString ? `?${queryString}` : ''}`;
+        router.push(targetUrl);
     };
 
     return (

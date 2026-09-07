@@ -8,6 +8,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product } from "@/types/database";
 import { ShopCategoryFilter } from "@/components/shop/ShopCategoryFilter";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
+import { CategoryTranslationSync } from "@/components/shop/CategoryTranslationSync";
 import { Metadata } from "next";
 import { brandConfig } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
@@ -24,11 +25,12 @@ export async function generateMetadata(props: CatalogPageProps): Promise<Metadat
     const { lang, catalogSlug } = params;
 
     const storeSettings = await getStoreSettings();
-    const activeCatalogSlug = (storeSettings.catalogSlug || 'shop').toLowerCase();
+    const localizedCatalogSlug = (getLocalizedField(storeSettings.catalogSlug, lang) || (typeof storeSettings.catalogSlug === 'string' ? storeSettings.catalogSlug : 'shop')).toLowerCase();
 
-    if (catalogSlug.toLowerCase() !== activeCatalogSlug) {
+    if (catalogSlug.toLowerCase() !== localizedCatalogSlug) {
         return {};
     }
+    const activeCatalogSlug = localizedCatalogSlug;
 
     const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
     const rawCatalogDisplayTitle = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === 'fr' ? 'Boutique' : 'Shop');
@@ -48,14 +50,44 @@ export async function generateMetadata(props: CatalogPageProps): Promise<Metadat
     const currentCategorySlug = typeof categoryQuery === 'string' ? categoryQuery : null;
 
     if (currentCategorySlug) {
-        const catSnap = await adminDb.collection('categories').get();
-        const categoryDoc = catSnap.docs.find(d => {
-            const data = d.data() as Category;
-            return getLocalizedField(data.slug, lang) === currentCategorySlug || data.slugEn === currentCategorySlug || data.slugFr === currentCategorySlug;
-        });
+        let categoryDoc: Category | null = null;
+        try {
+            const querySnap = await adminDb.collection('categories')
+                .where(`slug.${lang}`, '==', currentCategorySlug)
+                .get();
+            if (!querySnap.empty) {
+                const data = querySnap.docs[0].data() as Category;
+                if ((data.status ?? 'published') === 'published') {
+                    categoryDoc = data;
+                }
+            }
+        } catch (err) {
+            console.error("Error finding category in metadata by slug:", err);
+        }
+
+        if (!categoryDoc) {
+            const catSnap = await adminDb.collection('categories').get();
+            const foundDoc = catSnap.docs.find(d => {
+                const data = d.data() as Category;
+                if ((data.status ?? 'published') !== 'published') return false;
+                return (
+                    data.slug?.[lang] === currentCategorySlug ||
+                    (lang === 'fr' ? data.slugFr === currentCategorySlug : data.slugEn === currentCategorySlug) ||
+                    getLocalizedField(data.slug, lang) === currentCategorySlug ||
+                    (typeof data.slug === 'string' && data.slug === currentCategorySlug) ||
+                    data.slugEn === currentCategorySlug ||
+                    data.slugFr === currentCategorySlug ||
+                    data.slug?.['en'] === currentCategorySlug ||
+                    data.slug?.['fr'] === currentCategorySlug
+                );
+            });
+            if (foundDoc) {
+                categoryDoc = foundDoc.data() as Category;
+            }
+        }
         
         if (categoryDoc) {
-            const category = categoryDoc.data() as Category;
+            const category = categoryDoc;
             const catName = getLocalizedField(category.name, lang) || (lang === 'fr' ? category.nameFr : category.nameEn) || '';
             const catIntro = getLocalizedField(category.intro, lang) || (lang === 'fr' ? category.introFr : category.introEn) || '';
             const catDesc = getLocalizedField(category.description, lang) || (lang === 'fr' ? category.descriptionFr : category.descriptionEn) || '';
@@ -116,12 +148,13 @@ export default async function CatalogPage(props: CatalogPageProps) {
     const { lang, catalogSlug } = params;
 
     const storeSettings = await getStoreSettings();
-    const activeCatalogSlug = (storeSettings.catalogSlug || 'shop').toLowerCase();
+    const localizedCatalogSlug = (getLocalizedField(storeSettings.catalogSlug, lang) || (typeof storeSettings.catalogSlug === 'string' ? storeSettings.catalogSlug : 'shop')).toLowerCase();
 
-    // Enforce dynamic slug match from Firestore settings
-    if (catalogSlug.toLowerCase() !== activeCatalogSlug) {
+    // Enforce dynamic slug match for current locale from Firestore settings
+    if (catalogSlug.toLowerCase() !== localizedCatalogSlug) {
         notFound();
     }
+    const activeCatalogSlug = localizedCatalogSlug;
 
     // Safety map to convert Firestore Timestamps to strings
     const serializeFirestoreData = (docId: string, data: Record<string, any>) => {
@@ -159,9 +192,9 @@ export default async function CatalogPage(props: CatalogPageProps) {
         categoriesPromise
     ]);
 
-    const rawCategories = categoriesSnapshot.docs.map(doc => 
-        serializeFirestoreData(doc.id, doc.data()) as Category
-    );
+    const rawCategories = categoriesSnapshot.docs
+        .map(doc => serializeFirestoreData(doc.id, doc.data()) as Category)
+        .filter(c => (c.status ?? 'published') === 'published');
 
     const categories = rawCategories.sort((a, b) => {
         const orderDiff = (a.order ?? 0) - (b.order ?? 0);
@@ -179,10 +212,54 @@ export default async function CatalogPage(props: CatalogPageProps) {
     let products: Product[] = [];
 
     if (currentCategorySlug) {
-        selectedCategory = categories.find(c => 
-            getLocalizedField(c.slug, lang) === currentCategorySlug || 
-            (lang === 'fr' ? c.slugFr === currentCategorySlug : c.slugEn === currentCategorySlug)
-        ) || null;
+        // 1. Exact match on the active locale slug (category.slug[lang] or legacy slugFr/slugEn)
+        selectedCategory = categories.find(c => {
+            const locSlug = (typeof c.slug === 'object' && c.slug?.[lang])
+                ? c.slug[lang]
+                : (lang === 'fr' ? c.slugFr : c.slugEn) || getLocalizedField(c.slug, lang);
+            return locSlug === currentCategorySlug || c.slug?.[lang] === currentCategorySlug;
+        }) || null;
+
+        // 2. Direct Firestore query by slug.[lang] if not found in categories snapshot
+        if (!selectedCategory) {
+            try {
+                const snap = await adminDb.collection('categories')
+                    .where(`slug.${lang}`, '==', currentCategorySlug)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    const catData = serializeFirestoreData(doc.id, doc.data()) as Category;
+                    if ((catData.status ?? 'published') === 'published') {
+                        selectedCategory = catData;
+                    }
+                } else if (lang === 'fr') {
+                    const snapFr = await adminDb.collection('categories')
+                        .where('slugFr', '==', currentCategorySlug)
+                        .get();
+                    if (!snapFr.empty) {
+                        const doc = snapFr.docs[0];
+                        const catData = serializeFirestoreData(doc.id, doc.data()) as Category;
+                        if ((catData.status ?? 'published') === 'published') {
+                            selectedCategory = catData;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error querying category by slug in Firestore:", err);
+            }
+        }
+
+        // 3. Fallback: cross-language matching in case the URL still has another language's slug
+        if (!selectedCategory) {
+            selectedCategory = categories.find(c => 
+                (typeof c.slug === 'string' && c.slug === currentCategorySlug) ||
+                c.slugEn === currentCategorySlug ||
+                c.slugFr === currentCategorySlug ||
+                c.slug?.['en'] === currentCategorySlug ||
+                c.slug?.['fr'] === currentCategorySlug ||
+                c.id === currentCategorySlug
+            ) || null;
+        }
 
         if (selectedCategory) {
             let productsSnapshot;
@@ -244,8 +321,23 @@ export default async function CatalogPage(props: CatalogPageProps) {
         ? (selectedCategory ? (getLocalizedField(selectedCategory.intro, lang) || (lang === 'fr' ? selectedCategory.introFr : selectedCategory.introEn)) : '')
         : catalogDescription;
 
+    const categorySlugMap: Record<string, string> | null = selectedCategory ? (() => {
+        const map: Record<string, string> = {};
+        if (typeof selectedCategory.slug === 'object' && selectedCategory.slug !== null) {
+            Object.entries(selectedCategory.slug).forEach(([loc, s]) => {
+                if (typeof s === 'string' && s) map[loc] = s;
+            });
+        } else if (typeof selectedCategory.slug === 'string' && selectedCategory.slug) {
+            map['en'] = selectedCategory.slug;
+        }
+        if (selectedCategory.slugEn && !map['en']) map['en'] = selectedCategory.slugEn;
+        if (selectedCategory.slugFr && !map['fr']) map['fr'] = selectedCategory.slugFr;
+        return Object.keys(map).length > 0 ? map : null;
+    })() : null;
+
     return (
         <div className="w-full flex flex-col">
+            <CategoryTranslationSync categorySlugs={categorySlugMap} />
             {/* Edge-to-Edge Illustrated Catalog / Category Banner */}
             <section
                 className={`relative w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center bg-center bg-cover bg-no-repeat mb-12 ${
@@ -296,7 +388,12 @@ export default async function CatalogPage(props: CatalogPageProps) {
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                                 {categories.map((category) => {
-                                    const catSlug = getLocalizedField(category.slug, lang) || (lang === 'fr' ? category.slugFr : category.slugEn) || "";
+                                    const catSlug = 
+                                        (typeof category.slug === 'object' && category.slug?.[lang])
+                                            ? category.slug[lang]
+                                            : (lang === 'fr' ? category.slugFr : category.slugEn) ||
+                                              getLocalizedField(category.slug, lang) ||
+                                              (typeof category.slug === 'string' ? category.slug : '');
                                     const catName = getLocalizedField(category.name, lang) || (lang === 'fr' ? category.nameFr : category.nameEn) || "";
                                     const catIntro = getLocalizedField(category.intro, lang) || (lang === 'fr' ? category.introFr : category.introEn) || "";
                                     const catImg = category.imageUrl || brandConfig.assets?.placeholderImage || "";

@@ -5,6 +5,7 @@ import { Locale } from "@/app/i18n-config";
 import { auth } from "@/auth";
 import { getPublishedPages } from "@/lib/services/pages";
 import { getStoreSettings } from "@/lib/services/settings";
+import { getLocalizedField } from "@/lib/i18n";
 
 export default async function ShopLayout({
     children,
@@ -40,7 +41,7 @@ export default async function ShopLayout({
                     dict={dict}
                     pages={footerPages}
                     catalogTitle={storeSettings.catalogTitle}
-                    catalogSlug={storeSettings.catalogSlug}
+                    catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
                     brandName={storeSettings.brandName}
                     footerDescription={storeSettings.footerDescription}
                     footerRightMenuTitle={storeSettings.footerRightMenuTitle}

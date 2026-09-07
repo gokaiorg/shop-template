@@ -54,7 +54,10 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
         opacity: isDragging ? 0.5 : 1,
     };
 
-    const title = getLocalizedField(page.title, lang) || (lang === 'fr' ? page.title_fr : page.title_en) || page.slug;
+    const displaySlug = getLocalizedField(page.slug, lang) || (typeof page.slug === 'string' ? page.slug : page.id);
+    const title = getLocalizedField(page.title, lang) || (lang === 'fr' ? page.title_fr : page.title_en) || displaySlug;
+    const status = page.status || "draft";
+    const isPublished = (status as string) === "published" || (status as string) === "publié";
 
     return (
         <tr
@@ -80,12 +83,16 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
                 {title}
             </td>
             <td className="px-6 py-4 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                /pages/{page.slug}
+                /pages/{displaySlug}
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
-                <Badge variant={page.status === 'published' ? 'default' : 'secondary'}>
-                    {page.status === 'published' ? 'Published' : 'Draft'}
-                </Badge>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                    isPublished
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                }`}>
+                    {status}
+                </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex gap-1.5 whitespace-nowrap">
@@ -116,7 +123,7 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
                         className="text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
                         title={lang === 'fr' ? 'Voir sur le site' : 'View public page'}
                     >
-                        <Link href={`/${lang}/pages/${page.slug}`} target="_blank" rel="noopener noreferrer">
+                        <Link href={`/${lang}/pages/${displaySlug}`} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="w-4 h-4" />
                         </Link>
                     </Button>

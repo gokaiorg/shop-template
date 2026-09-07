@@ -551,7 +551,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                     <TabsList className="mb-4">
                                         {supportedLocales.map((loc) => (
                                             <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {getLocaleDisplayName(loc)} ({loc})
+                                                {loc.toUpperCase()}
                                             </TabsTrigger>
                                         ))}
                                     </TabsList>
@@ -562,7 +562,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                 name={`heroTitle.${loc}`}
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Hero Title ({getLocaleDisplayName(loc)})</FormLabel>
+                                                        <FormLabel>Hero Title</FormLabel>
                                                         <FormControl>
                                                             <Input placeholder={`Hero headline in ${getLocaleDisplayName(loc)}`} {...field} />
                                                         </FormControl>
@@ -575,7 +575,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                 name={`heroDescription.${loc}`}
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Hero Subtitle / Description ({getLocaleDisplayName(loc)})</FormLabel>
+                                                        <FormLabel>Hero Subtitle / Description</FormLabel>
                                                         <FormControl>
                                                             <Textarea rows={3} placeholder={`Hero description in ${getLocaleDisplayName(loc)}`} {...field} />
                                                         </FormControl>
@@ -732,7 +732,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                     <TabsList className="mb-4">
                                         {supportedLocales.map((loc) => (
                                             <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {getLocaleDisplayName(loc)} ({loc})
+                                                {loc.toUpperCase()}
                                             </TabsTrigger>
                                         ))}
                                     </TabsList>

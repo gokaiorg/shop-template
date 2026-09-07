@@ -56,16 +56,22 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
 
     const defaultCatalogTitle: Record<string, string> = {};
     const defaultCatalogDesc: Record<string, string> = {};
+    const defaultCatalogSlug: Record<string, string> = {};
 
     supportedLocales.forEach((loc) => {
         defaultCatalogTitle[loc] = initialData.catalogTitle?.[loc] || (loc === "fr" ? "Boutique" : "Shop");
         defaultCatalogDesc[loc] = initialData.catalogDescription?.[loc] || initialData.catalogDescription?.en || "";
+        defaultCatalogSlug[loc] = (typeof initialData.catalogSlug === 'object' && initialData.catalogSlug?.[loc])
+            ? initialData.catalogSlug[loc]
+            : (typeof initialData.catalogSlug === 'string' && initialData.catalogSlug)
+                ? initialData.catalogSlug
+                : (loc === "fr" ? "boutique" : "shop");
     });
 
     const form = useForm<CatalogSettingsFormData>({
         resolver: zodResolver(catalogSettingsSchema) as any,
         defaultValues: {
-            catalogSlug: initialData.catalogSlug || "shop",
+            catalogSlug: defaultCatalogSlug,
             catalogTitle: defaultCatalogTitle,
             catalogDescription: defaultCatalogDesc,
             catalogBannerUrl: initialData.catalogBannerUrl || "",
@@ -73,7 +79,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
     });
 
     const catalogBannerUrlValue = form.watch("catalogBannerUrl");
-    const currentSlug = form.watch("catalogSlug") || "shop";
+    const currentSlug = form.watch(`catalogSlug.${lang}`) || form.watch(`catalogSlug.${defaultLocale}`) || (typeof form.watch("catalogSlug") === 'string' ? form.watch("catalogSlug") : "shop");
 
     const handleCatalogBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -126,49 +132,69 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                         </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {/* Multilingual Catalog Titles */}
-                        <div className="space-y-3">
-                            <FormLabel className="text-sm font-medium">
-                                {lang === "fr" ? "Titre Public du Catalogue" : "Catalog Display Title"}
-                            </FormLabel>
-                            {isMultiLocale ? (
-                                <Tabs defaultValue={defaultLocale} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {supportedLocales.map((loc) => (
-                                            <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {getLocaleDisplayName(loc)} ({loc})
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
+                        {isMultiLocale ? (
+                            <Tabs defaultValue={defaultLocale} className="w-full">
+                                <TabsList className="mb-4">
                                     {supportedLocales.map((loc) => (
-                                        <TabsContent key={loc} value={loc} className="space-y-4">
-                                            <FormField
-                                                control={form.control}
-                                                name={`catalogTitle.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Title ({getLocaleDisplayName(loc)})</FormLabel>
-                                                        <FormControl>
-                                                            <Input placeholder={loc === "fr" ? "e.g. Boutique ou Galerie" : "e.g. Shop or Gallery"} {...field} />
-                                                        </FormControl>
-                                                        <FormDescription>
-                                                            {lang === "fr" 
-                                                                ? `Utilisé dans la barre de navigation, le pied de page et l'en-tête pour ${getLocaleDisplayName(loc)}.`
-                                                                : `Used in navigation bars, footers, and page headings for ${getLocaleDisplayName(loc)}.`}
-                                                        </FormDescription>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </TabsContent>
+                                        <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                            {loc.toUpperCase()}
+                                        </TabsTrigger>
                                     ))}
-                                </Tabs>
-                            ) : (
+                                </TabsList>
+                                {supportedLocales.map((loc) => (
+                                    <TabsContent key={loc} value={loc} className="space-y-6">
+                                        <FormField
+                                            control={form.control}
+                                            name={`catalogTitle.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{lang === "fr" ? "Titre" : "Title"}</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder={loc === "fr" ? "e.g. Boutique ou Galerie" : "e.g. Shop or Gallery"} {...field} />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        {lang === "fr" 
+                                                            ? "Utilisé dans la barre de navigation, le pied de page et l'en-tête."
+                                                            : "Used in navigation bars, footers, and page headings."}
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name={`catalogDescription.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{lang === "fr" ? "Description" : "Description"}</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            rows={3}
+                                                            placeholder={loc === "fr" ? "e.g. Découvrez notre sélection exclusive d'œuvres contemporaines..." : "e.g. Discover our exclusive curated collection..."}
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        {lang === "fr"
+                                                            ? "Affiché sur la bannière de la page catalogue et utilisé pour le SEO."
+                                                            : "Displayed on the catalog banner and used for SEO metadata."}
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </TabsContent>
+                                ))}
+                            </Tabs>
+                        ) : (
+                            <div className="space-y-6">
                                 <FormField
                                     control={form.control}
                                     name={`catalogTitle.${defaultLocale}`}
                                     render={({ field }) => (
                                         <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Titre" : "Title"}</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="e.g. Shop or Gallery" {...field} />
                                             </FormControl>
@@ -179,56 +205,12 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                         </FormItem>
                                     )}
                                 />
-                            )}
-                        </div>
-
-                        {/* Multilingual Catalog Description */}
-                        <div className="space-y-3 pt-4 border-t">
-                            <FormLabel className="text-sm font-medium">
-                                {lang === "fr" ? "Description du Catalogue" : "Catalog Description"}
-                            </FormLabel>
-                            {isMultiLocale ? (
-                                <Tabs defaultValue={defaultLocale} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {supportedLocales.map((loc) => (
-                                            <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {getLocaleDisplayName(loc)} ({loc})
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
-                                    {supportedLocales.map((loc) => (
-                                        <TabsContent key={loc} value={loc} className="space-y-4">
-                                            <FormField
-                                                control={form.control}
-                                                name={`catalogDescription.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Description ({getLocaleDisplayName(loc)})</FormLabel>
-                                                        <FormControl>
-                                                            <Textarea
-                                                                rows={3}
-                                                                placeholder={loc === "fr" ? "e.g. Découvrez notre sélection exclusive d'œuvres contemporaines..." : "e.g. Discover our exclusive curated collection..."}
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormDescription>
-                                                            {lang === "fr"
-                                                                ? `Affiché sur la bannière de la page catalogue et utilisé pour le SEO en ${getLocaleDisplayName(loc)}.`
-                                                                : `Displayed on the catalog banner and used for SEO metadata in ${getLocaleDisplayName(loc)}.`}
-                                                        </FormDescription>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </TabsContent>
-                                    ))}
-                                </Tabs>
-                            ) : (
                                 <FormField
                                     control={form.control}
                                     name={`catalogDescription.${defaultLocale}`}
                                     render={({ field }) => (
                                         <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Description" : "Description"}</FormLabel>
                                             <FormControl>
                                                 <Textarea
                                                     rows={3}
@@ -243,8 +225,8 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                         </FormItem>
                                     )}
                                 />
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -359,19 +341,11 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                         {/* 3. Catalog Routing & URL Card */}
                         <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 mb-1">
-                                <ShoppingBag className="w-5 h-5 text-muted-foreground" />
-                                <h2 className="text-lg font-medium tracking-tight">
-                                    {lang === "fr" ? "Routage URL" : "URL Routing"}
-                                </h2>
-                            </div>
-                            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors">
-                                <Link href={`/${lang}/${currentSlug}`} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                    {lang === "fr" ? "Voir le catalogue" : "View Catalog"}
-                                </Link>
-                            </Button>
+                        <div className="flex items-center gap-2 mb-1">
+                            <ShoppingBag className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang === "fr" ? "Routage URL" : "URL Routing"}
+                            </h2>
                         </div>
                         <p className="text-sm text-muted-foreground mb-4">
                             {lang === "fr" 
@@ -380,41 +354,92 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                         </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="catalogSlug"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <div className="flex items-center justify-between">
-                                        <FormLabel>{lang === "fr" ? "Slug URL du Catalogue" : "Catalog URL Slug"}</FormLabel>
-                                        <Badge variant="secondary" className="font-mono text-xs">
-                                            /{lang}/{field.value || "shop"}
-                                        </Badge>
-                                    </div>
-                                    <FormControl>
-                                        <Input
-                                            placeholder="e.g. artworks, shop, boutique, galerie"
-                                            value={field.value}
-                                            onChange={(e) => {
-                                                const cleanSlug = e.target.value
-                                                    .toLowerCase()
-                                                    .replace(/\s+/g, "-")
-                                                    .replace(/[^a-z0-9-]/g, "")
-                                                    .replace(/-+/g, "-");
-                                                field.onChange(cleanSlug);
-                                            }}
-                                            className="font-mono text-sm max-w-md"
+                        {isMultiLocale ? (
+                            <Tabs defaultValue={defaultLocale} className="w-full">
+                                <TabsList className="mb-4">
+                                    {supportedLocales.map((loc) => (
+                                        <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                            {loc.toUpperCase()}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                                {supportedLocales.map((loc) => (
+                                    <TabsContent key={loc} value={loc} className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name={`catalogSlug.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <div className="flex items-center justify-between">
+                                                        <FormLabel>Slug</FormLabel>
+                                                        <Badge variant="secondary" className="font-mono text-xs">
+                                                            /{loc}/{field.value || (loc === "fr" ? "boutique" : "shop")}
+                                                        </Badge>
+                                                    </div>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder={loc === "fr" ? "e.g. boutique, galerie" : "e.g. artworks, shop"}
+                                                            value={field.value || ""}
+                                                            onChange={(e) => {
+                                                                const cleanSlug = e.target.value
+                                                                    .toLowerCase()
+                                                                    .replace(/\s+/g, "-")
+                                                                    .replace(/[^a-z0-9-]/g, "")
+                                                                    .replace(/-+/g, "-");
+                                                                field.onChange(cleanSlug);
+                                                            }}
+                                                            className="font-mono text-sm max-w-md"
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        {lang === "fr"
+                                                            ? "Formaté automatiquement en minuscules avec des traits d'union (ex: artworks, boutique, shop, galerie)."
+                                                            : "Automatically formatted to lowercase with hyphens (e.g. artworks, shop, boutique, gallery)."}
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
                                         />
-                                    </FormControl>
-                                    <FormDescription>
-                                        {lang === "fr"
-                                            ? "Formaté automatiquement en minuscules avec des traits d'union (ex: artworks, boutique, shop, galerie)."
-                                            : "Automatically formatted to lowercase with hyphens (e.g. artworks, shop, boutique, gallery)."}
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                                    </TabsContent>
+                                ))}
+                            </Tabs>
+                        ) : (
+                            <FormField
+                                control={form.control}
+                                name={`catalogSlug.${defaultLocale}`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div className="flex items-center justify-between">
+                                            <FormLabel>Slug</FormLabel>
+                                            <Badge variant="secondary" className="font-mono text-xs">
+                                                /{defaultLocale}/{field.value || "shop"}
+                                            </Badge>
+                                        </div>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="e.g. artworks, shop, boutique, galerie"
+                                                value={field.value || ""}
+                                                onChange={(e) => {
+                                                    const cleanSlug = e.target.value
+                                                        .toLowerCase()
+                                                        .replace(/\s+/g, "-")
+                                                        .replace(/[^a-z0-9-]/g, "")
+                                                        .replace(/-+/g, "-");
+                                                    field.onChange(cleanSlug);
+                                                }}
+                                                className="font-mono text-sm max-w-md"
+                                            />
+                                        </FormControl>
+                                        <FormDescription>
+                                            {lang === "fr"
+                                                ? "Formaté automatiquement en minuscules avec des traits d'union (ex: artworks, boutique, shop, galerie)."
+                                                : "Automatically formatted to lowercase with hyphens (e.g. artworks, shop, boutique, gallery)."}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
                     </CardContent>
                 </Card>
                     </div>
