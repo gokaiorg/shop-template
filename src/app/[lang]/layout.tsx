@@ -8,6 +8,7 @@ import { getStoreSettings } from "@/lib/services/settings";
 import { constructSiteMetadata } from "@/config/site";
 import { BrandConfig } from "@/config/types";
 import { getLocalizedField } from "@/lib/i18n";
+import { GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -144,6 +145,9 @@ export default async function RootLayout({
             {children}
           </BrandProvider>
         </ThemeProvider>
+        {process.env.NEXT_PUBLIC_GTM_ID && (
+          <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID as string} />
+        )}
       </body>
     </html>
   );
