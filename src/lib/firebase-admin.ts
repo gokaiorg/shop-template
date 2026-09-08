@@ -8,6 +8,9 @@ import path from 'path';
 let projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 let clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+if (privateKey && (privateKey.includes('...') || privateKey.trim() === '')) {
+  privateKey = undefined;
+}
 
 // Local service account fallback for local development
 if (!clientEmail || !privateKey || !projectId) {
@@ -68,7 +71,6 @@ if (getApps().length === 0) {
 }
 
 const rawDbId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
-// Only fallback to specific named databases if the project is explicitly known to require them
 const defaultDbForProject = 
   projectId === "shop-gcp" ? "shop-template-database" :
   projectId === "green-ghost-gcp" ? "green-ghost-database" :
@@ -76,6 +78,7 @@ const defaultDbForProject =
   undefined;
 
 const targetDbId = rawDbId || defaultDbForProject;
+export const adminApp = app;
 export const adminDb = !targetDbId || targetDbId === "(default)" || targetDbId.trim() === ""
   ? getFirestore(app)
   : getFirestore(app, targetDbId);
