@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Category, Product } from "@/types/database";
-import { Pencil, GripVertical, Filter, ExternalLink } from "lucide-react";
+import { Pencil, GripVertical, Filter, ExternalLink, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { getLocalizedField } from "@/lib/i18n";
 import { formatPrice } from "@/lib/currency";
 import { toast } from "sonner";
@@ -48,9 +49,10 @@ interface SortableProductRowProps {
     product: ProductWithCategories;
     currency: string;
     lang: string;
+    catalogSlug?: string;
 }
 
-function SortableProductRow({ product, currency, lang }: SortableProductRowProps) {
+function SortableProductRow({ product, currency, lang, catalogSlug = "shop" }: SortableProductRowProps) {
     const {
         attributes,
         listeners,
@@ -71,7 +73,11 @@ function SortableProductRow({ product, currency, lang }: SortableProductRowProps
     const status = getLocalizedField(product.status, lang) || (lang === 'fr' ? product.statusFr : product.statusEn) || "draft";
     const isPublished = status === 'published' || status === 'publié';
     const productSlug = getLocalizedField(product.slug, lang) || (lang === 'fr' ? product.slugFr : product.slugEn) || (typeof product.slug === 'string' ? product.slug : product.id);
-    const productUrl = `/${lang}/product/${productSlug}`;
+    const firstCat = product.categories?.[0];
+    const catSlug = firstCat
+        ? (getLocalizedField(firstCat.slug, lang) || (lang === 'fr' ? firstCat.slugFr : firstCat.slugEn) || (typeof firstCat.slug === 'string' ? firstCat.slug : firstCat.id))
+        : 'all';
+    const productUrl = `/${lang}/${catalogSlug}/${catSlug}/${productSlug}`;
 
     return (
         <tr
@@ -161,6 +167,7 @@ interface ProductTableProps {
     categories?: Category[];
     currency: string;
     lang: string;
+    catalogSlug?: string;
 }
 
 export function ProductTable({
@@ -168,10 +175,12 @@ export function ProductTable({
     categories: initialCategories = [],
     currency,
     lang,
+    catalogSlug = "shop",
 }: ProductTableProps) {
     const router = useRouter();
     const [products, setProducts] = useState<ProductWithCategories[]>(initialProducts);
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState<string>("");
 
     useEffect(() => {
         setProducts(initialProducts);
@@ -193,18 +202,27 @@ export function ProductTable({
         return Array.from(map.values());
     }, [initialCategories, products]);
 
-    // Products displayed according to active category filter, preserving manual catalog order
+    // Products displayed according to active category filter and search query, preserving manual catalog order
     const displayedProducts = useMemo(() => {
-        if (selectedCategory === "all") {
-            return products;
+        let list = products;
+        if (selectedCategory !== "all") {
+            list = list.filter((p) => {
+                return (
+                    p.categoryIds?.includes(selectedCategory) ||
+                    p.categories?.some((c: any) => c.id === selectedCategory)
+                );
+            });
         }
-        return products.filter((p) => {
-            return (
-                p.categoryIds?.includes(selectedCategory) ||
-                p.categories?.some((c: any) => c.id === selectedCategory)
-            );
-        });
-    }, [products, selectedCategory]);
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            list = list.filter((p) => {
+                const name = (getLocalizedField(p.name, lang) || (lang === 'fr' ? (p as any).nameFr : (p as any).nameEn) || '').toLowerCase();
+                const slug = (getLocalizedField(p.slug, lang) || (lang === 'fr' ? (p as any).slugFr : (p as any).slugEn) || '').toLowerCase();
+                return name.includes(query) || slug.includes(query);
+            });
+        }
+        return list;
+    }, [products, selectedCategory, searchQuery, lang]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -232,19 +250,17 @@ export function ProductTable({
         const previousProducts = [...products];
         let newFullProducts: ProductWithCategories[];
 
-        if (selectedCategory === "all") {
+        if (selectedCategory === "all" && !searchQuery.trim()) {
             newFullProducts = reorderedFiltered.map((prod, idx) => ({
                 ...prod,
                 order: idx,
             }));
         } else {
-            // Find global indices where filtered category items exist in the main list
+            // Find global indices where filtered items exist in the main list
+            const displayedIds = new Set(displayedProducts.map(p => p.id));
             const categoryIndices: number[] = [];
             products.forEach((p, idx) => {
-                const belongs =
-                    p.categoryIds?.includes(selectedCategory) ||
-                    p.categories?.some((c: any) => c.id === selectedCategory);
-                if (belongs) {
+                if (displayedIds.has(p.id)) {
                     categoryIndices.push(idx);
                 }
             });
@@ -331,14 +347,22 @@ export function ProductTable({
 
     return (
         <div className="space-y-4">
-            {/* Category Filter Toolbar */}
+            {/* Products Table Toolbar */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-muted/30 rounded-lg border border-border/60">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                    <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">
-                        {lang === "fr" ? "Filtrer par catégorie :" : "Filter by category:"}
-                    </span>
-                    <div className="w-64">
+                <div className="flex items-center gap-2.5 flex-nowrap overflow-x-auto min-w-0 max-w-full">
+                    {/* Search Input */}
+                    <div className="relative w-48 sm:w-64 shrink-0">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        <Input
+                            placeholder={lang === "fr" ? "Rechercher par nom..." : "Search by name..."}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10 h-8 text-xs sm:text-sm bg-background"
+                        />
+                    </div>
+
+                    {/* Category Filter */}
+                    <div className="w-44 sm:w-56 shrink-0">
                         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                             <SelectTrigger className="h-8 text-xs sm:text-sm bg-background">
                                 <SelectValue placeholder={lang === "fr" ? "Toutes les catégories" : "All categories"} />
@@ -371,28 +395,27 @@ export function ProductTable({
                         </Select>
                     </div>
 
-                    {selectedCategory !== "all" && (
+                    {(selectedCategory !== "all" || searchQuery) && (
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setSelectedCategory("all")}
-                            className="h-8 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                            onClick={() => {
+                                setSelectedCategory("all");
+                                setSearchQuery("");
+                            }}
+                            className="h-8 text-xs text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                         >
-                            {lang === "fr" ? "Effacer le filtre" : "Clear filter"}
+                            {lang === "fr" ? "Effacer les filtres" : "Clear filters"}
                         </Button>
                     )}
                 </div>
 
-                <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <div className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
                     <span>
-                        {selectedCategory !== "all"
-                            ? lang === "fr"
-                                ? `Réorganisation active pour « ${selectedCategoryName} » (${displayedProducts.length})`
-                                : `Reordering active for "${selectedCategoryName}" (${displayedProducts.length})`
-                            : lang === "fr"
-                                ? "Glissez-déposez les poignées pour réorganiser le catalogue"
-                                : "Drag & drop handles to reorder the catalog"}
+                        {lang === "fr"
+                            ? "Glissez-déposez les poignées pour réorganiser"
+                            : "Drag & drop handles to reorder"}
                     </span>
                 </div>
             </div>
@@ -424,10 +447,10 @@ export function ProductTable({
                                 {displayedProducts.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                                            {selectedCategory !== "all"
+                                            {searchQuery || selectedCategory !== "all"
                                                 ? lang === "fr"
-                                                    ? "Aucun produit dans cette catégorie."
-                                                    : "No products in this category."
+                                                    ? "Aucun produit ne correspond à votre recherche."
+                                                    : "No products match your search or filter."
                                                 : lang === "fr"
                                                     ? "Aucun produit trouvé. Créez un nouveau produit."
                                                     : "No products found. Generate demo data or create a new product."}
@@ -440,6 +463,7 @@ export function ProductTable({
                                             product={product}
                                             currency={currency}
                                             lang={lang}
+                                            catalogSlug={catalogSlug}
                                         />
                                     ))
                                 )}

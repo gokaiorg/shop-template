@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, LayoutTemplate, RotateCcw } from "lucide-react";
+import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, LayoutTemplate, RotateCcw, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 import { createProduct, updateProduct, deleteProduct } from "@/actions/admin";
@@ -61,21 +61,36 @@ function generateSlug(text: string): string {
 
 const slugify = generateSlug;
 
+function getCategorySlugForLocale(cat: Category | undefined, loc: string): string {
+    if (!cat) return "category";
+    if (typeof cat.slug === 'object' && cat.slug?.[loc]) return cat.slug[loc];
+    if (loc === 'fr' && (cat.slugFr || (cat as any).slug_fr)) return (cat.slugFr || (cat as any).slug_fr);
+    if (loc === 'en' && (cat.slugEn || (cat as any).slug_en)) return (cat.slugEn || (cat as any).slug_en);
+    if (typeof cat.slug === 'string' && cat.slug) return cat.slug;
+    return getLocalizedField(cat.slug, loc) || cat.id || "category";
+}
+
+interface ProductFormProps {
+    categories: Category[];
+    dict: Record<string, string>;
+    lang: string;
+    initialData?: Product;
+    vendors?: string[];
+    catalogSlugs?: Record<string, string>;
+}
+
 export function ProductForm({
     categories,
     dict,
     lang,
     initialData,
     vendors = [],
-}: {
-    categories: Category[];
-    dict: Record<string, string>;
-    lang: string;
-    initialData?: Product;
-    vendors?: string[];
-}) {
+    catalogSlugs: propCatalogSlugs,
+}: ProductFormProps) {
     const router = useRouter();
-    const { supportedLocales: locales, defaultLocale, isMultiLocale: isMulti } = useBrand();
+    const { supportedLocales: locales, defaultLocale, isMultiLocale: isMulti, catalogSlugs: brandCatalogSlugs } = useBrand();
+    const catalogSlugs = propCatalogSlugs || brandCatalogSlugs || { en: 'shop', fr: 'boutique' };
+    const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
 
     const [isPending, startTransition] = useTransition();
     const [isUploading, setIsUploading] = useState(false);
@@ -448,6 +463,15 @@ export function ProductForm({
                 {/* Hidden Order Field - Managed via Drag & Drop in products table */}
                 <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
+                <div className="flex items-center justify-between">
+                    <Button asChild variant="ghost" size="sm">
+                        <Link href={`/${lang}/admin/products`} className="flex items-center gap-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            {dict?.back_to_products || (lang?.startsWith('fr') ? 'Retour aux produits' : 'Back to products')}
+                        </Link>
+                    </Button>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Colonne principale (Gauche) */}
                     <div className="col-span-1 lg:col-span-2 min-w-0 space-y-8">
@@ -466,7 +490,7 @@ export function ProductForm({
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {isMulti ? (
-                                    <Tabs defaultValue={defaultLocale} className="w-full">
+                                    <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
                                         <TabsList className="mb-4">
                                             {locales.map((loc) => (
                                                 <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
@@ -884,16 +908,15 @@ export function ProductForm({
                             </CardHeader>
                             <CardContent className="space-y-4 min-w-0">
                                 {isMulti ? (
-                                    <Tabs defaultValue={defaultLocale} className="w-full">
-                                        <TabsList className="mb-4">
-                                            {locales.map((loc) => (
-                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                    {loc.toUpperCase()}
-                                                </TabsTrigger>
-                                            ))}
-                                        </TabsList>
+                                    <Tabs value={activeLang} className="w-full">
                                         {locales.map((loc) => {
                                             const currentSlugVal = form.watch(`slug.${loc}`) || "";
+                                            const currentCatalogSlug = catalogSlugs?.[loc] || (loc === 'fr' ? 'boutique' : 'shop');
+                                            const selectedCatIds = form.watch("categoryIds") || (form.watch("categoryId") ? [form.watch("categoryId")] : []);
+                                            const parentCat = categories.find((c) => selectedCatIds.includes(c.id));
+                                            const parentCatSlug = getCategorySlugForLocale(parentCat, loc);
+                                            const previewUrl = `/${loc}/${currentCatalogSlug}/${parentCatSlug}/${currentSlugVal || "slug"}`;
+
                                             return (
                                                 <TabsContent key={loc} value={loc} className="space-y-4">
                                                     <FormField
@@ -928,9 +951,9 @@ export function ProductForm({
                                                                     <Badge
                                                                         variant="secondary"
                                                                         className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
-                                                                        title={`/${lang}/product/${currentSlugVal || "slug"}`}
+                                                                        title={previewUrl}
                                                                     >
-                                                                        /{lang}/product/{currentSlugVal || "slug"}
+                                                                        {previewUrl}
                                                                     </Badge>
                                                                 </div>
 
@@ -984,59 +1007,68 @@ export function ProductForm({
                                         <FormField
                                             control={form.control}
                                             name={`slug.${locales[0]}`}
-                                            render={({ field }) => (
-                                                <FormItem className="min-w-0 space-y-2">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <FormLabel>{dict.slug || (lang?.startsWith("fr") ? "Slug (URL)" : "Slug (URL)")} <span className="text-destructive ml-1">*</span></FormLabel>
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
-                                                            title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
-                                                            onClick={() => {
-                                                                const currentName = form.getValues(`name.${locales[0]}`) || "";
-                                                                if (currentName.trim()) {
-                                                                    const regenerated = slugify(currentName);
-                                                                    slugTouchedRef.current[locales[0]] = false;
-                                                                    form.setValue(`slug.${locales[0]}`, regenerated, { shouldDirty: true, shouldValidate: true });
-                                                                    toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
-                                                                }
-                                                            }}
-                                                        >
-                                                            <RotateCcw className="h-3 w-3" />
-                                                            <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
-                                                        </Button>
-                                                    </div>
+                                            render={({ field }) => {
+                                                const singleLoc = locales[0] || defaultLocale;
+                                                const currentCatalogSlug = catalogSlugs?.[singleLoc] || (singleLoc === 'fr' ? 'boutique' : 'shop');
+                                                const selectedCatIds = form.watch("categoryIds") || (form.watch("categoryId") ? [form.watch("categoryId")] : []);
+                                                const parentCat = categories.find((c) => selectedCatIds.includes(c.id));
+                                                const parentCatSlug = getCategorySlugForLocale(parentCat, singleLoc);
+                                                const previewUrl = `/${singleLoc}/${currentCatalogSlug}/${parentCatSlug}/${field.value || "slug"}`;
 
-                                                    <div className="min-w-0 overflow-hidden">
-                                                        <Badge
-                                                            variant="secondary"
-                                                            className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
-                                                            title={`/${lang}/product/${field.value || "slug"}`}
-                                                        >
-                                                            /{lang}/product/{field.value || "slug"}
-                                                        </Badge>
-                                                    </div>
+                                                return (
+                                                    <FormItem className="min-w-0 space-y-2">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <FormLabel>{dict.slug || (lang?.startsWith("fr") ? "Slug (URL)" : "Slug (URL)")} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
+                                                                title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
+                                                                onClick={() => {
+                                                                    const currentName = form.getValues(`name.${locales[0]}`) || "";
+                                                                    if (currentName.trim()) {
+                                                                        const regenerated = slugify(currentName);
+                                                                        slugTouchedRef.current[locales[0]] = false;
+                                                                        form.setValue(`slug.${locales[0]}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                        toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <RotateCcw className="h-3 w-3" />
+                                                                <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                            </Button>
+                                                        </div>
 
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="product-slug..."
-                                                            className="font-mono text-sm w-full"
-                                                            {...field}
-                                                            value={field.value || ""}
-                                                            onChange={(e) => handleSlugChange(locales[0], e.target.value, field.onChange)}
-                                                            onBlur={() => handleSlugBlur(locales[0], field.onBlur)}
-                                                        />
-                                                    </FormControl>
-                                                    <FormDescription>
-                                                        {lang?.startsWith("fr")
-                                                            ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
-                                                            : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
+                                                        <div className="min-w-0 overflow-hidden">
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                                title={previewUrl}
+                                                            >
+                                                                {previewUrl}
+                                                            </Badge>
+                                                        </div>
+
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder="product-slug..."
+                                                                className="font-mono text-sm w-full"
+                                                                {...field}
+                                                                value={field.value || ""}
+                                                                onChange={(e) => handleSlugChange(locales[0], e.target.value, field.onChange)}
+                                                                onBlur={() => handleSlugBlur(locales[0], field.onBlur)}
+                                                            />
+                                                        </FormControl>
+                                                        <FormDescription>
+                                                            {lang?.startsWith("fr")
+                                                                ? "Segment d'URL public. Formaté automatiquement en minuscules avec des traits d'union."
+                                                                : "Public URL path segment. Automatically formatted to lowercase with hyphens."}
+                                                        </FormDescription>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                );
+                                            }}
                                         />
 
                                         <FormField
@@ -1100,23 +1132,30 @@ export function ProductForm({
                         </AlertDialog>
                     )}
 
-                    {initialData?.id && (
-                        <Button
-                            variant="outline"
-                            asChild
-                            type="button"
-                            className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
-                        >
-                            <Link
-                                href={`/${lang}/product/${getLocalizedField(initialData.slug, lang) || (lang === 'fr' ? (initialData as any).slugFr : (initialData as any).slugEn) || (typeof initialData.slug === 'string' ? initialData.slug : initialData.id)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                    {initialData?.id && (() => {
+                        const activeCatalog = catalogSlugs?.[activeLang] || (activeLang === 'fr' ? 'boutique' : 'shop');
+                        const selectedCatIds = form.watch("categoryIds") || (initialData.categoryIds || (initialData.categoryId ? [initialData.categoryId] : []));
+                        const parentCat = categories.find((c) => selectedCatIds.includes(c.id)) || categories[0];
+                        const parentCatSlug = getCategorySlugForLocale(parentCat, activeLang);
+                        const activeProdSlug = form.watch(`slug.${activeLang}`) || (initialData?.slug as any)?.[activeLang] || (activeLang === 'fr' ? (initialData as any).slugFr : (initialData as any).slugEn) || (typeof initialData.slug === 'string' ? initialData.slug : initialData.id);
+                        return (
+                            <Button
+                                variant="outline"
+                                asChild
+                                type="button"
+                                className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
                             >
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                {lang === 'fr' ? 'Voir sur le site' : 'View on website'}
-                            </Link>
-                        </Button>
-                    )}
+                                <Link
+                                    href={`/${activeLang}/${activeCatalog}/${parentCatSlug}/${activeProdSlug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    {lang === 'fr' ? 'Voir sur le site' : 'View on website'}
+                                </Link>
+                            </Button>
+                        );
+                    })()}
 
                     <Button
                         type="submit"
@@ -1140,3 +1179,5 @@ export function ProductForm({
         </Form>
     );
 }
+
+export const AdminProductForm = ProductForm;

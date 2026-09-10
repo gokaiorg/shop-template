@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Page } from "@/types/database";
-import { Pencil, GripVertical, ExternalLink, Globe } from "lucide-react";
+import { Pencil, GripVertical, ExternalLink, Globe, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { getLocalizedField } from "@/lib/i18n";
 import { toast } from "sonner";
 import { db } from "@/lib/firebase";
@@ -83,7 +84,7 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
                 {title}
             </td>
             <td className="px-6 py-4 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                /pages/{displaySlug}
+                /{displaySlug}
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
@@ -123,7 +124,7 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
                         className="text-muted-foreground hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
                         title={lang === 'fr' ? 'Voir sur le site' : 'View public page'}
                     >
-                        <Link href={`/${lang}/pages/${displaySlug}`} target="_blank" rel="noopener noreferrer">
+                        <Link href={`/${lang}/${displaySlug}`} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="w-4 h-4" />
                         </Link>
                     </Button>
@@ -152,10 +153,21 @@ interface PageTableProps {
 export function PageTable({ pages: initialPages, lang }: PageTableProps) {
     const router = useRouter();
     const [pages, setPages] = useState<Page[]>(initialPages);
+    const [searchQuery, setSearchQuery] = useState<string>("");
 
     useEffect(() => {
         setPages(initialPages);
     }, [initialPages]);
+
+    const displayedPages = useMemo(() => {
+        if (!searchQuery.trim()) return pages;
+        const query = searchQuery.toLowerCase().trim();
+        return pages.filter((p) => {
+            const title = (getLocalizedField(p.title, lang) || (lang === 'fr' ? (p as any).title_fr : (p as any).title_en) || '').toLowerCase();
+            const slug = (getLocalizedField(p.slug, lang) || (typeof p.slug === 'string' ? p.slug : p.id) || '').toLowerCase();
+            return title.includes(query) || slug.includes(query);
+        });
+    }, [pages, searchQuery, lang]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -172,16 +184,36 @@ export function PageTable({ pages: initialPages, lang }: PageTableProps) {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
-        const oldIndex = pages.findIndex((p) => p.id === active.id);
-        const newIndex = pages.findIndex((p) => p.id === over.id);
+        const oldIndex = displayedPages.findIndex((p) => p.id === active.id);
+        const newIndex = displayedPages.findIndex((p) => p.id === over.id);
         if (oldIndex === -1 || newIndex === -1) return;
 
         const previousPages = [...pages];
+        const reorderedFiltered = arrayMove(displayedPages, oldIndex, newIndex);
 
-        const reordered = arrayMove(pages, oldIndex, newIndex).map((p, idx) => ({
-            ...p,
-            order: idx,
-        }));
+        let reordered: Page[];
+        if (!searchQuery.trim()) {
+            reordered = reorderedFiltered.map((p, idx) => ({
+                ...p,
+                order: idx,
+            }));
+        } else {
+            const displayedIds = new Set(displayedPages.map((p) => p.id));
+            const subsetIndices: number[] = [];
+            pages.forEach((p, idx) => {
+                if (displayedIds.has(p.id)) {
+                    subsetIndices.push(idx);
+                }
+            });
+            reordered = [...pages];
+            subsetIndices.forEach((globalIndex, i) => {
+                reordered[globalIndex] = reorderedFiltered[i];
+            });
+            reordered = reordered.map((p, idx) => ({
+                ...p,
+                order: idx,
+            }));
+        }
         setPages(reordered);
 
         const changedItems: { id: string; order: number }[] = [];
@@ -247,38 +279,90 @@ export function PageTable({ pages: initialPages, lang }: PageTableProps) {
     }
 
     return (
-        <div className="bg-background border rounded-lg p-0 overflow-x-auto shadow-sm">
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-            >
-                <table className="w-full text-sm text-left min-w-[750px]">
-                    <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
-                        <tr>
-                            <th className="px-4 py-3 w-12 text-center whitespace-nowrap">
-                                <span className="sr-only">{lang === 'fr' ? 'Ordre' : 'Order'}</span>
-                            </th>
-                            <th className="px-6 py-3 whitespace-nowrap">{lang === 'fr' ? 'Titre' : 'Title'}</th>
-                            <th className="px-6 py-3 whitespace-nowrap">Slug (URL)</th>
-                            <th className="px-6 py-3 whitespace-nowrap">{lang === 'fr' ? 'Statut' : 'Status'}</th>
-                            <th className="px-6 py-3 whitespace-nowrap">Navigation</th>
-                            <th className="px-6 py-3 whitespace-nowrap">{lang === 'fr' ? 'Dernière mise à jour' : 'Last Updated'}</th>
-                            <th className="px-6 py-3 text-right whitespace-nowrap">Actions</th>
-                        </tr>
-                    </thead>
-                    <SortableContext
-                        items={pages.map((p) => p.id)}
-                        strategy={verticalListSortingStrategy}
-                    >
-                        <tbody>
-                            {pages.map((page) => (
-                                <SortablePageRow key={page.id} page={page} lang={lang} />
-                            ))}
-                        </tbody>
-                    </SortableContext>
-                </table>
-            </DndContext>
+        <div className="space-y-4">
+            {/* Pages Table Toolbar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-muted/30 rounded-lg border border-border/60">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                    {/* Search Input */}
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        <Input
+                            placeholder={lang === "fr" ? "Rechercher par nom..." : "Search by name..."}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10 h-8 text-xs sm:text-sm bg-background"
+                        />
+                    </div>
+                    {searchQuery && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSearchQuery("")}
+                            className="h-8 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                        >
+                            {lang === "fr" ? "Effacer" : "Clear"}
+                        </Button>
+                    )}
+                </div>
+
+                <div className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                    <span>
+                        {lang === "fr"
+                            ? "Glissez-déposez les poignées pour réorganiser"
+                            : "Drag & drop handles to reorder"}
+                    </span>
+                </div>
+            </div>
+
+            {/* Pages Table with Drag and Drop */}
+            <div className="bg-background border rounded-lg p-0 overflow-x-auto shadow-sm">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <table className="w-full text-sm text-left min-w-[750px]">
+                        <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
+                            <tr>
+                                <th className="px-4 py-3 w-12 text-center whitespace-nowrap">
+                                    <span className="sr-only">{lang === 'fr' ? 'Ordre' : 'Order'}</span>
+                                </th>
+                                <th className="px-6 py-3 whitespace-nowrap">{lang === 'fr' ? 'Nom' : 'Name'}</th>
+                                <th className="px-6 py-3 whitespace-nowrap">Slug (URL)</th>
+                                <th className="px-6 py-3 whitespace-nowrap">{lang === 'fr' ? 'Statut' : 'Status'}</th>
+                                <th className="px-6 py-3 whitespace-nowrap">Navigation</th>
+                                <th className="px-6 py-3 whitespace-nowrap">{lang === 'fr' ? 'Dernière mise à jour' : 'Last Updated'}</th>
+                                <th className="px-6 py-3 text-right whitespace-nowrap">Actions</th>
+                            </tr>
+                        </thead>
+                        <SortableContext
+                            items={displayedPages.map((p) => p.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <tbody>
+                                {displayedPages.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                                            {searchQuery
+                                                ? lang === "fr"
+                                                    ? "Aucune page ne correspond à votre recherche."
+                                                    : "No pages match your search."
+                                                : lang === "fr"
+                                                    ? "Aucune page personnalisée."
+                                                    : "No pages created yet."}
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    displayedPages.map((page) => (
+                                        <SortablePageRow key={page.id} page={page} lang={lang} />
+                                    ))
+                                )}
+                            </tbody>
+                        </SortableContext>
+                    </table>
+                </DndContext>
+            </div>
         </div>
     );
 }

@@ -68,6 +68,7 @@ interface PageFormProps {
 export function PageForm({ dict, lang, initialData }: PageFormProps) {
     const router = useRouter();
     const { supportedLocales, defaultLocale, isMultiLocale } = useBrand();
+    const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
     const [isPending, startTransition] = useTransition();
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -246,7 +247,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                     <Button asChild variant="ghost" size="sm">
                         <Link href={`/${lang}/admin/pages`} className="flex items-center gap-2">
                             <ArrowLeft className="h-4 w-4" />
-                            {lang === 'fr' ? 'Retour aux pages' : 'Back to pages'}
+                            {dict?.back_to_pages || (lang === 'fr' ? 'Retour aux pages' : 'Back to pages')}
                         </Link>
                     </Button>
                 </div>
@@ -270,7 +271,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                             </CardHeader>
                             <CardContent>
                                 {isMultiLocale ? (
-                                    <Tabs defaultValue={defaultLocale} className="w-full">
+                                    <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
                                         <TabsList className="mb-4">
                                             {supportedLocales.map((loc) => (
                                                 <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
@@ -375,16 +376,10 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {isMultiLocale ? (
-                                    <Tabs defaultValue={defaultLocale} className="w-full">
-                                        <TabsList className="mb-4">
-                                            {supportedLocales.map((loc) => (
-                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                    {loc.toUpperCase()}
-                                                </TabsTrigger>
-                                            ))}
-                                        </TabsList>
+                                    <Tabs value={activeLang} className="w-full">
                                         {supportedLocales.map((loc) => {
                                             const currentSlugVal = form.watch(`slug.${loc}`) || "";
+                                            const previewUrl = `/${loc}/${currentSlugVal || "slug"}`;
                                             return (
                                                 <TabsContent key={loc} value={loc} className="space-y-4">
                                                     <FormField
@@ -419,9 +414,9 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                                     <Badge
                                                                         variant="secondary"
                                                                         className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
-                                                                        title={`/${lang}/pages/${currentSlugVal || "slug"}`}
+                                                                        title={previewUrl}
                                                                     >
-                                                                        /{lang}/pages/{currentSlugVal || "slug"}
+                                                                        {previewUrl}
                                                                     </Badge>
                                                                 </div>
 
@@ -453,40 +448,43 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                     <FormField
                                         control={form.control}
                                         name={`slug.${defaultLocale}`}
-                                        render={({ field }) => (
-                                            <FormItem className="min-w-0 space-y-2">
-                                                <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                    <FormLabel>Slug <span className="text-destructive ml-1">*</span></FormLabel>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
-                                                        title={lang === "fr" ? "Regénérer depuis le titre" : "Regenerate from title"}
-                                                        onClick={() => {
-                                                            const currentTitle = form.getValues(`title.${defaultLocale}`) || "";
-                                                            if (currentTitle.trim()) {
-                                                                const regenerated = generateSlug(currentTitle);
-                                                                slugTouchedRef.current[defaultLocale] = false;
-                                                                form.setValue(`slug.${defaultLocale}`, regenerated, { shouldDirty: true, shouldValidate: true });
-                                                                toast.success(lang === "fr" ? "Slug regénéré !" : "Slug regenerated!");
-                                                            }
-                                                        }}
-                                                    >
-                                                        <RotateCcw className="h-3 w-3" />
-                                                        <span className="text-[11px]">{lang === "fr" ? "Regénérer" : "Regenerate"}</span>
-                                                    </Button>
-                                                </div>
+                                        render={({ field }) => {
+                                            const singleLoc = defaultLocale || lang || "en";
+                                            const previewUrl = `/${singleLoc}/${field.value || "slug"}`;
+                                            return (
+                                                <FormItem className="min-w-0 space-y-2">
+                                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                        <FormLabel>Slug <span className="text-destructive ml-1">*</span></FormLabel>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1"
+                                                            title={lang === "fr" ? "Regénérer depuis le titre" : "Regenerate from title"}
+                                                            onClick={() => {
+                                                                const currentTitle = form.getValues(`title.${defaultLocale}`) || "";
+                                                                if (currentTitle.trim()) {
+                                                                    const regenerated = generateSlug(currentTitle);
+                                                                    slugTouchedRef.current[defaultLocale] = false;
+                                                                    form.setValue(`slug.${defaultLocale}`, regenerated, { shouldDirty: true, shouldValidate: true });
+                                                                    toast.success(lang === "fr" ? "Slug regénéré !" : "Slug regenerated!");
+                                                                }
+                                                            }}
+                                                        >
+                                                            <RotateCcw className="h-3 w-3" />
+                                                            <span className="text-[11px]">{lang === "fr" ? "Regénérer" : "Regenerate"}</span>
+                                                        </Button>
+                                                    </div>
 
-                                                <div className="min-w-0 overflow-hidden">
-                                                    <Badge
-                                                        variant="secondary"
-                                                        className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
-                                                        title={`/${lang}/pages/${field.value || "slug"}`}
-                                                    >
-                                                        /{lang}/pages/{field.value || "slug"}
-                                                    </Badge>
-                                                </div>
+                                                    <div className="min-w-0 overflow-hidden">
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                            title={previewUrl}
+                                                        >
+                                                            {previewUrl}
+                                                        </Badge>
+                                                    </div>
 
                                                 <FormControl>
                                                     <Input
@@ -506,8 +504,9 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
-                                        )}
-                                    />
+                                        );
+                                    }}
+                                />
                                 )}
 
                                 <FormField
@@ -636,7 +635,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                     )}
 
                     {isEditMode && (() => {
-                        const previewSlug = form.watch(`slug.${lang}`) || form.watch(`slug.${defaultLocale}`) || getLocalizedField(initialData?.slug, lang) || (typeof initialData?.slug === 'string' ? initialData.slug : '');
+                        const previewSlug = form.watch(`slug.${activeLang}`) || form.watch(`slug.${defaultLocale}`) || getLocalizedField(initialData?.slug, activeLang) || (typeof initialData?.slug === 'string' ? initialData.slug : '');
                         return (
                             <Button
                                 variant="outline"
@@ -645,7 +644,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                 className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
                             >
                                 <Link
-                                    href={`/${lang}/pages/${previewSlug || 'page'}`}
+                                    href={`/${activeLang}/${previewSlug || 'page'}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
@@ -678,3 +677,5 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
         </Form>
     );
 }
+
+export const AdminPageForm = PageForm;

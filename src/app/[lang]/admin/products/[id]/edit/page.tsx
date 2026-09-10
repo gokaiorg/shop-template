@@ -51,6 +51,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ la
                 lang={lang}
                 initialData={product}
                 vendors={storeSettings.vendors || []}
+                catalogSlugs={typeof storeSettings.catalogSlug === 'object' ? storeSettings.catalogSlug : { en: 'shop', fr: 'boutique' }}
             />
         </AdminPageLayout>
     );

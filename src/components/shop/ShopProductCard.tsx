@@ -15,15 +15,30 @@ interface ShopProductCardProps {
     product: Product;
     lang: string;
     dict: Record<string, string>;
+    categorySlug?: string;
 }
 
-export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
+export function ShopProductCard({ product, lang, dict, categorySlug }: ShopProductCardProps) {
     const { brand, isCartEnabled, currency, catalogSlug } = useBrand();
     const activeCatalogSlug = catalogSlug || "shop";
     const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "";
     const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
     const slug = getLocalizedField(product.slug, lang) || (lang === 'fr' ? product.slugFr : product.slugEn) || "";
     const addItem = useCart(state => state.addItem);
+
+    // Compute effective category slug for product link
+    const primaryCat = (product.categories && product.categories.length > 0)
+        ? product.categories[0]
+        : product.category;
+    const defaultCatSlug = primaryCat
+        ? ((typeof primaryCat.slug === 'object' && primaryCat.slug?.[lang])
+            ? primaryCat.slug[lang]
+            : (lang === 'fr' ? primaryCat.slugFr : primaryCat.slugEn) ||
+              getLocalizedField(primaryCat.slug, lang) ||
+              (typeof primaryCat.slug === 'string' ? primaryCat.slug : primaryCat.id))
+        : 'all';
+    const effectiveCatSlug = categorySlug || defaultCatSlug;
+    const productHref = `/${lang}/${activeCatalogSlug}/${effectiveCatSlug}/${slug}`;
 
     const handleAddToCart = () => {
         addItem(product);
@@ -42,7 +57,7 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-background">
             {/* Image Container */}
-            <Link href={`/${lang}/product/${slug}`} className="relative aspect-square overflow-hidden bg-muted block">
+            <Link href={productHref} className="relative aspect-square overflow-hidden bg-muted block">
                 <Image
                     src={imageUrl}
                     alt={title}
@@ -74,7 +89,7 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                             return catSlug ? (
                                 <Link
                                     key={cat.id}
-                                    href={`/${lang}/${activeCatalogSlug}?category=${catSlug}`}
+                                    href={`/${lang}/${activeCatalogSlug}/${catSlug}`}
                                     className="relative z-10 cursor-pointer"
                                 >
                                     <Badge
@@ -93,7 +108,7 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     </div>
                 )}
 
-                <Link href={`/${lang}/product/${slug}`} className="hover:underline">
+                <Link href={productHref} className="hover:underline">
                     <h3 className="text-lg font-semibold">{title}</h3>
                 </Link>
                 <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">

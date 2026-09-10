@@ -62,6 +62,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
     const router = useRouter();
     const { brandKey, supportedLocales, defaultLocale, isMultiLocale } = useBrand();
     const defaultBrandPrimary = brandKey === "art-fate" ? "#14B3F6" : "#0f172a";
+    const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
     const [isPending, startTransition] = useTransition();
 
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -547,7 +548,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                         <div className="border-t pt-4">
                             <h4 className="text-sm font-semibold mb-3">Hero Text Content</h4>
                             {isMultiLocale ? (
-                                <Tabs defaultValue={defaultLocale} className="w-full">
+                                <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
                                     <TabsList className="mb-4">
                                         {supportedLocales.map((loc) => (
                                             <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
@@ -728,7 +729,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                 Brief brand summary displayed in the first column of the footer under the brand name.
                             </FormDescription>
                             {isMultiLocale ? (
-                                <Tabs defaultValue={defaultLocale} className="w-full">
+                                <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
                                     <TabsList className="mb-4">
                                         {supportedLocales.map((loc) => (
                                             <TabsTrigger key={loc} value={loc} className="uppercase text-xs">

@@ -37,6 +37,7 @@ export default async function NewProductPage({ params }: { params: Promise<{ lan
                 dict={dict.admin.forms}
                 lang={lang}
                 vendors={storeSettings.vendors || []}
+                catalogSlugs={typeof storeSettings.catalogSlug === 'object' ? storeSettings.catalogSlug : { en: 'shop', fr: 'boutique' }}
             />
         </AdminPageLayout>
     );

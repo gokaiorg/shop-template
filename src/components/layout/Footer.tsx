@@ -122,7 +122,7 @@ export async function Footer({
                             return (
                                 <li key={category.id}>
                                     <Link
-                                        href={`/${lang}/${activeCatalogSlug}?category=${catSlug}`}
+                                        href={`/${lang}/${activeCatalogSlug}/${catSlug}`}
                                         className="hover:text-primary transition-colors"
                                     >
                                         {catName}
@@ -142,7 +142,7 @@ export async function Footer({
                                 const label = getLocalizedField(page.title, lang) || (isFr ? page.title_fr : page.title_en) || pageSlug;
                                 return (
                                     <li key={page.id || pageSlug}>
-                                        <Link href={`/${lang}/pages/${pageSlug}`} className="hover:text-primary transition-colors">
+                                        <Link href={`/${lang}/${pageSlug}`} className="hover:text-primary transition-colors">
                                             {label}
                                         </Link>
                                     </li>

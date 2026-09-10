@@ -206,7 +206,7 @@ export default async function Home({
             {categories.map((category) => {
               const categoryProducts = allProducts.filter(p => p.categoryIds?.includes(category.id) || p.categoryId === category.id);
               const catSlug = getLocalizedField(category.slug, lang) || (isFr ? category.slugFr : category.slugEn);
-              const categoryHref = catSlug ? `/${lang}/${catalogSlug}?category=${catSlug}` : `/${lang}/${catalogSlug}`;
+              const categoryHref = catSlug ? `/${lang}/${catalogSlug}/${catSlug}` : `/${lang}/${catalogSlug}`;
 
               return (
                 <TabsContent key={category.id} value={category.id} className="mt-0 outline-none focus-visible:ring-0">
@@ -217,7 +217,7 @@ export default async function Home({
                       </div>
                     ) : (
                       categoryProducts.slice(0, 4).map((product) => (
-                        <ShopProductCard key={product.id} product={product} lang={lang} dict={shopDict} />
+                        <ShopProductCard key={product.id} product={product} lang={lang} dict={shopDict} categorySlug={catSlug} />
                       ))
                     )}
                   </div>

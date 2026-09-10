@@ -8,6 +8,7 @@ import { getStoreSettings } from "@/lib/services/settings";
 import { ProductTable } from "@/components/admin/ProductTable";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { Package, Plus } from "lucide-react";
+import { getLocalizedField } from "@/lib/i18n";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -79,7 +80,13 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
                 </Button>
             }
         >
-            <ProductTable products={products} categories={categoriesList} currency={currency} lang={lang} />
+            <ProductTable
+                products={products}
+                categories={categoriesList}
+                currency={currency}
+                lang={lang}
+                catalogSlug={getLocalizedField(storeSettings?.catalogSlug, lang) || (typeof storeSettings?.catalogSlug === 'string' ? storeSettings.catalogSlug : 'shop')}
+            />
         </AdminPageLayout>
     );
 }

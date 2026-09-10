@@ -30,7 +30,12 @@
         "dashboard_seedSuccess": "Données de démo générées avec succès !",
         "dashboard_seedError": "Échec de la génération des données de démo.",
         "pages_edit": "Modifier la Page",
+        "back_to_pages": "Retour aux pages",
+        "back_to_categories": "Retour aux catégories",
+        "back_to_products": "Retour aux produits",
         "forms": {
+            "back_to_categories": "Retour aux catégories",
+            "back_to_products": "Retour aux produits",
             "nameFr": "Nom (FR)",
             "nameEn": "Nom (EN)",
             "slugFr": "Slug (FR)",

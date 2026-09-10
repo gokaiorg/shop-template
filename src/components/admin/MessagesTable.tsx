@@ -262,7 +262,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
 
         {/* Search Input */}
         <div className="relative sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -271,7 +271,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                 ? "Rechercher un message..."
                 : "Search messages..."
             }
-            className="pl-9 h-9 text-sm"
+            className="pl-10 h-9 text-sm"
           />
         </div>
       </div>

@@ -7,11 +7,16 @@ import { CategoryForm } from "@/components/admin/CategoryForm";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { Pencil } from "lucide-react";
 
+import { getStoreSettings } from "@/lib/services/settings";
+
 export default async function EditCategoryPage({ params }: { params: Promise<{ lang: string, id: string }> }) {
     const { lang, id } = await params;
-    const dict = await getDictionary(lang as Locale);
+    const [dict, doc, storeSettings] = await Promise.all([
+        getDictionary(lang as Locale),
+        adminDb.collection("categories").doc(id).get(),
+        getStoreSettings(),
+    ]);
 
-    const doc = await adminDb.collection("categories").doc(id).get();
     if (!doc.exists) {
         notFound();
     }
@@ -30,7 +35,12 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ l
             icon={Pencil}
             hasStickyFooter={true}
         >
-            <CategoryForm dict={dict.admin.forms} lang={lang} initialData={category} />
+            <CategoryForm
+                dict={dict.admin.forms}
+                lang={lang}
+                initialData={category}
+                catalogSlugs={typeof storeSettings.catalogSlug === 'object' ? storeSettings.catalogSlug : { en: 'shop', fr: 'boutique' }}
+            />
         </AdminPageLayout>
     );
 }

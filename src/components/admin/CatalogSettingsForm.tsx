@@ -51,6 +51,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
     const { supportedLocales, defaultLocale, isMultiLocale } = useBrand();
     const [isPending, startTransition] = useTransition();
 
+    const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
     const [isUploadingCatalogBanner, setIsUploadingCatalogBanner] = useState(false);
     const catalogBannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -79,7 +80,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
     });
 
     const catalogBannerUrlValue = form.watch("catalogBannerUrl");
-    const currentSlug = form.watch(`catalogSlug.${lang}`) || form.watch(`catalogSlug.${defaultLocale}`) || (typeof form.watch("catalogSlug") === 'string' ? form.watch("catalogSlug") : "shop");
+    const activeCatalogSlug = form.watch(`catalogSlug.${activeLang}`) || form.watch(`catalogSlug.${defaultLocale}`) || (typeof form.watch("catalogSlug") === 'string' ? form.watch("catalogSlug") : (activeLang === "fr" ? "boutique" : "shop"));
 
     const handleCatalogBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -133,7 +134,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {isMultiLocale ? (
-                            <Tabs defaultValue={defaultLocale} className="w-full">
+                            <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
                                 <TabsList className="mb-4">
                                     {supportedLocales.map((loc) => (
                                         <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
@@ -355,50 +356,47 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {isMultiLocale ? (
-                            <Tabs defaultValue={defaultLocale} className="w-full">
-                                <TabsList className="mb-4">
-                                    {supportedLocales.map((loc) => (
-                                        <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                            {loc.toUpperCase()}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
+                            <Tabs value={activeLang} className="w-full">
                                 {supportedLocales.map((loc) => (
                                     <TabsContent key={loc} value={loc} className="space-y-4">
                                         <FormField
                                             control={form.control}
                                             name={`catalogSlug.${loc}`}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <div className="flex items-center justify-between">
-                                                        <FormLabel>Slug</FormLabel>
-                                                        <Badge variant="secondary" className="font-mono text-xs">
-                                                            /{loc}/{field.value || (loc === "fr" ? "boutique" : "shop")}
-                                                        </Badge>
-                                                    </div>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder={loc === "fr" ? "e.g. boutique, galerie" : "e.g. artworks, shop"}
-                                                            value={field.value || ""}
-                                                            onChange={(e) => {
-                                                                const cleanSlug = e.target.value
-                                                                    .toLowerCase()
-                                                                    .replace(/\s+/g, "-")
-                                                                    .replace(/[^a-z0-9-]/g, "")
-                                                                    .replace(/-+/g, "-");
-                                                                field.onChange(cleanSlug);
-                                                            }}
-                                                            className="font-mono text-sm max-w-md"
-                                                        />
-                                                    </FormControl>
-                                                    <FormDescription>
-                                                        {lang === "fr"
-                                                            ? "Formaté automatiquement en minuscules avec des traits d'union (ex: artworks, boutique, shop, galerie)."
-                                                            : "Automatically formatted to lowercase with hyphens (e.g. artworks, shop, boutique, gallery)."}
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
+                                            render={({ field }) => {
+                                                const currentSlugVal = field.value || (loc === "fr" ? "boutique" : "shop");
+                                                const previewUrl = `/${loc}/${currentSlugVal}`;
+                                                return (
+                                                    <FormItem>
+                                                        <div className="flex items-center justify-between">
+                                                            <FormLabel>Slug</FormLabel>
+                                                            <Badge variant="secondary" className="font-mono text-xs" title={previewUrl}>
+                                                                {previewUrl}
+                                                            </Badge>
+                                                        </div>
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder={loc === "fr" ? "e.g. boutique, galerie" : "e.g. artworks, shop"}
+                                                                value={field.value || ""}
+                                                                onChange={(e) => {
+                                                                    const cleanSlug = e.target.value
+                                                                        .toLowerCase()
+                                                                        .replace(/\s+/g, "-")
+                                                                        .replace(/[^a-z0-9-]/g, "")
+                                                                        .replace(/-+/g, "-");
+                                                                    field.onChange(cleanSlug);
+                                                                }}
+                                                                className="font-mono text-sm max-w-md"
+                                                            />
+                                                        </FormControl>
+                                                        <FormDescription>
+                                                            {lang === "fr"
+                                                                ? "Formaté automatiquement en minuscules avec des traits d'union (ex: artworks, boutique, shop, galerie)."
+                                                                : "Automatically formatted to lowercase with hyphens (e.g. artworks, shop, boutique, gallery)."}
+                                                        </FormDescription>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                );
+                                            }}
                                         />
                                     </TabsContent>
                                 ))}
@@ -407,37 +405,41 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                             <FormField
                                 control={form.control}
                                 name={`catalogSlug.${defaultLocale}`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <div className="flex items-center justify-between">
-                                            <FormLabel>Slug</FormLabel>
-                                            <Badge variant="secondary" className="font-mono text-xs">
-                                                /{defaultLocale}/{field.value || "shop"}
-                                            </Badge>
-                                        </div>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="e.g. artworks, shop, boutique, galerie"
-                                                value={field.value || ""}
-                                                onChange={(e) => {
-                                                    const cleanSlug = e.target.value
-                                                        .toLowerCase()
-                                                        .replace(/\s+/g, "-")
-                                                        .replace(/[^a-z0-9-]/g, "")
-                                                        .replace(/-+/g, "-");
-                                                    field.onChange(cleanSlug);
-                                                }}
-                                                className="font-mono text-sm max-w-md"
-                                            />
-                                        </FormControl>
-                                        <FormDescription>
-                                            {lang === "fr"
-                                                ? "Formaté automatiquement en minuscules avec des traits d'union (ex: artworks, boutique, shop, galerie)."
-                                                : "Automatically formatted to lowercase with hyphens (e.g. artworks, shop, boutique, gallery)."}
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                render={({ field }) => {
+                                    const currentSlugVal = field.value || "shop";
+                                    const previewUrl = `/${defaultLocale}/${currentSlugVal}`;
+                                    return (
+                                        <FormItem>
+                                            <div className="flex items-center justify-between">
+                                                <FormLabel>Slug</FormLabel>
+                                                <Badge variant="secondary" className="font-mono text-xs" title={previewUrl}>
+                                                    {previewUrl}
+                                                </Badge>
+                                            </div>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="e.g. artworks, shop, boutique, galerie"
+                                                    value={field.value || ""}
+                                                    onChange={(e) => {
+                                                        const cleanSlug = e.target.value
+                                                            .toLowerCase()
+                                                            .replace(/\s+/g, "-")
+                                                            .replace(/[^a-z0-9-]/g, "")
+                                                            .replace(/-+/g, "-");
+                                                        field.onChange(cleanSlug);
+                                                    }}
+                                                    className="font-mono text-sm max-w-md"
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                {lang === "fr"
+                                                    ? "Formaté automatiquement en minuscules avec des traits d'union (ex: artworks, boutique, shop, galerie)."
+                                                    : "Automatically formatted to lowercase with hyphens (e.g. artworks, shop, boutique, gallery)."}
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    );
+                                }}
                             />
                         )}
                     </CardContent>
@@ -454,7 +456,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                         className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-colors cursor-pointer"
                     >
                         <Link
-                            href={`/${lang}/${currentSlug}`}
+                            href={`/${activeLang}/${activeCatalogSlug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -484,3 +486,5 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
         </Form>
     );
 }
+
+export const AdminCatalogForm = CatalogSettingsForm;

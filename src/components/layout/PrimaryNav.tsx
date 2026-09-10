@@ -22,7 +22,7 @@ export function PrimaryNav({ lang, dict, pages = [], className, onNavClick }: Pr
 
     const activeSlug = catalogSlug || "shop";
     const catalogHref = `/${lang}/${activeSlug}`;
-    const isCatalogActive = pathname === catalogHref || pathname.startsWith(`/${lang}/${activeSlug}/`) || pathname.startsWith(`/${lang}/product/`);
+    const isCatalogActive = pathname === catalogHref || pathname.startsWith(`/${lang}/${activeSlug}/`);
     const catalogLabel = getLocalizedField(catalogTitle, lang) || dict?.shop || (lang === "fr" ? "Boutique" : "Shop");
 
     return (
@@ -43,8 +43,8 @@ export function PrimaryNav({ lang, dict, pages = [], className, onNavClick }: Pr
             {/* Dynamic Pages with showInHeader === true */}
             {pages.map((page) => {
                 const pageSlug = getLocalizedField(page.slug, lang) || (typeof page.slug === 'string' ? page.slug : page.id);
-                const href = `/${lang}/pages/${pageSlug}`;
-                const isActive = pathname === href || pathname === `/${lang}/${pageSlug}`;
+                const href = `/${lang}/${pageSlug}`;
+                const isActive = pathname === href;
                 const label = getLocalizedField(page.title, lang) || (lang === 'fr' ? page.title_fr : page.title_en) || pageSlug;
 
                 return (
