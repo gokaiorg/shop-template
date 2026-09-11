@@ -54,11 +54,18 @@ export async function generateMetadata({
       : `${baseUrl}${heroImage.startsWith("/") ? "" : "/"}${heroImage}`)
     : undefined;
 
+  const languagesAlternate: Record<string, string> = {
+    en: `${baseUrl}/en`,
+    fr: `${baseUrl}/fr`,
+    "x-default": `${baseUrl}/en`,
+  };
+
   return {
     title,
     description,
     alternates: {
       canonical: canonicalUrl,
+      languages: languagesAlternate,
     },
     openGraph: {
       title,
@@ -154,10 +161,41 @@ export default async function Home({
   const heroBackgroundImageUrl = storeSettings.heroBackgroundImageUrl;
   const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (isFr ? "Boutique" : "Shop");
   const catalogSlug = getLocalizedField(storeSettings.catalogSlug, lang) || (typeof storeSettings.catalogSlug === 'string' ? storeSettings.catalogSlug : "shop");
-  const shopByCategoryTitle = isFr ? `${catalogName}` : `${catalogName}`;
+  const shopByCategoryTitle = catalogName;
+  const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
+  const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+  const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
+  const logoUrl = storeSettings.logoUrl || brandConfig.assets?.logo?.src || "";
+  const absoluteLogoUrl = logoUrl ? (logoUrl.startsWith("http") ? logoUrl : `${baseUrl}${logoUrl.startsWith("/") ? "" : "/"}${logoUrl}`) : undefined;
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: brandName,
+    url: `${baseUrl}/${lang}`,
+    inLanguage: lang,
+    description: heroSubtitle,
+  };
+
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: brandName,
+    url: baseUrl,
+    ...(absoluteLogoUrl ? { logo: absoluteLogoUrl } : {}),
+    ...(storeSettings.socialLinks && storeSettings.socialLinks.length > 0 ? {
+      sameAs: storeSettings.socialLinks.map((s: any) => s.url).filter(Boolean)
+    } : {}),
+  };
+
+  const jsonLd = [websiteSchema, organizationSchema];
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black w-full">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero Section with Dynamic Parallax Background & Glassmorphic Card */}
       <section
         className={`relative flex w-full flex-col items-center justify-center min-h-[60vh] py-24 sm:py-32 px-6 md:px-16 text-center bg-center bg-cover bg-no-repeat ${heroBackgroundImageUrl ? "bg-fixed" : "bg-white dark:bg-black"
@@ -210,17 +248,19 @@ export default async function Home({
 
               return (
                 <TabsContent key={category.id} value={category.id} className="mt-0 outline-none focus-visible:ring-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  <ul role="list" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {categoryProducts.length === 0 ? (
-                      <div className="col-span-full text-center py-12 text-muted-foreground">
+                      <li className="col-span-full text-center py-12 text-muted-foreground list-none">
                         {shopDict.empty_state || "No products in this category"}
-                      </div>
+                      </li>
                     ) : (
                       categoryProducts.slice(0, 4).map((product) => (
-                        <ShopProductCard key={product.id} product={product} lang={lang} dict={shopDict} categorySlug={catSlug} />
+                        <li key={product.id} className="flex flex-col">
+                          <ShopProductCard product={product} lang={lang} dict={shopDict} categorySlug={catSlug} />
+                        </li>
                       ))
                     )}
-                  </div>
+                  </ul>
                   {categoryProducts.length > 0 && (
                     <div className="mt-12 flex justify-center">
                       <Link href={categoryHref}>

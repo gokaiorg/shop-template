@@ -152,20 +152,20 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     const cleanedDescription = cleanDescription(chosenDescriptionText, 160);
 
     const catIds = product.categoryIds || (product.categoryId ? [product.categoryId] : []);
-    let categoryName = "";
-    if (product.category) {
-        categoryName = getLocalizedField(product.category.name, lang) || (lang === "fr" ? product.category.nameFr : product.category.nameEn) || "";
-    } else if (catIds.length > 0) {
+    let categoryData: Category | null = product.category || null;
+    if (!categoryData && catIds.length > 0) {
         try {
             const catDoc = await adminDb.collection("categories").doc(catIds[0]).get();
             if (catDoc.exists) {
-                const catData = catDoc.data() as Category;
-                categoryName = getLocalizedField(catData.name, lang) || (lang === "fr" ? catData.nameFr : catData.nameEn) || "";
+                categoryData = catDoc.data() as Category;
             }
         } catch (error) {
             console.error("[GENERATE_METADATA_CATEGORY_FETCH_ERROR]", error);
         }
     }
+    const categoryName = categoryData
+        ? (getLocalizedField(categoryData.name, lang) || (lang === "fr" ? categoryData.nameFr : categoryData.nameEn) || "")
+        : "";
 
     const rawKeywords = categoryName
         ? [categoryName, brandName, productName]
@@ -180,6 +180,29 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     const baseUrl = rawBaseUrl.replace(/\/+$/, "");
     const canonicalUrl = `${baseUrl}/${lang}/${localizedCatalogSlug}/${categorySlug}/${productSlug}`;
 
+    const enCatalogSlug = (typeof storeSettings.catalogSlug === "object" ? storeSettings.catalogSlug?.en : "shop") || "shop";
+    const frCatalogSlug = (typeof storeSettings.catalogSlug === "object" ? storeSettings.catalogSlug?.fr : "boutique") || "boutique";
+
+    const enCatSlug = (categoryData && typeof categoryData.slug === "object" && categoryData.slug?.en)
+        ? categoryData.slug.en
+        : (categoryData?.slugEn || getLocalizedField(categoryData?.slug, "en") || categorySlug);
+    const frCatSlug = (categoryData && typeof categoryData.slug === "object" && categoryData.slug?.fr)
+        ? categoryData.slug.fr
+        : (categoryData?.slugFr || getLocalizedField(categoryData?.slug, "fr") || categorySlug);
+
+    const enProdSlug = (typeof product.slug === "object" && product.slug?.en)
+        ? product.slug.en
+        : (product.slugEn || getLocalizedField(product.slug, "en") || productSlug);
+    const frProdSlug = (typeof product.slug === "object" && product.slug?.fr)
+        ? product.slug.fr
+        : (product.slugFr || getLocalizedField(product.slug, "fr") || productSlug);
+
+    const languagesAlternate: Record<string, string> = {
+        en: `${baseUrl}/en/${enCatalogSlug}/${enCatSlug}/${enProdSlug}`,
+        fr: `${baseUrl}/fr/${frCatalogSlug}/${frCatSlug}/${frProdSlug}`,
+        "x-default": `${baseUrl}/en/${enCatalogSlug}/${enCatSlug}/${enProdSlug}`,
+    };
+
     const artistOrVendor = product.artist?.trim() || product.vendor?.trim();
     const authorName = artistOrVendor || brandName;
 
@@ -191,6 +214,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
         creator: authorName,
         alternates: {
             canonical: canonicalUrl,
+            languages: languagesAlternate,
         },
         openGraph: {
             title: productName,
@@ -318,8 +342,77 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
     const isCartEnabled = (process.env.ENABLE_CART || process.env.NEXT_PUBLIC_ENABLE_CART) !== "false";
     const isOutOfStock = (product.stock ?? 0) <= 0;
 
+    const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
+    const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+    const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
+    const categoryName = activeCategory
+        ? (getLocalizedField(activeCategory.name, lang) || (lang === "fr" ? activeCategory.nameFr : activeCategory.nameEn) || primaryCatSlug)
+        : primaryCatSlug;
+    const absoluteImages = images.map((img) =>
+        img.startsWith("http") ? img : `${baseUrl}${img.startsWith("/") ? "" : "/"}${img}`
+    );
+    const productDescription = cleanDescription(description || intro || title, 5000) || title;
+    const brandName = (product as unknown as { brand?: string }).brand || product.vendor || storeSettings.brandName || brandConfig.identity.name || "Store";
+    const sku = (product as unknown as { sku?: string }).sku || product.id;
+
+    const productSchema = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: title,
+        description: productDescription,
+        image: absoluteImages,
+        sku: sku,
+        brand: {
+            "@type": "Brand",
+            name: brandName,
+        },
+        offers: {
+            "@type": "Offer",
+            price: product.price ?? 0,
+            priceCurrency: currency,
+            availability: isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+            url: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}/${productSlug}`,
+            itemCondition: "https://schema.org/NewCondition",
+        },
+    };
+
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: lang === "fr" ? "Accueil" : "Home",
+                item: `${baseUrl}/${lang}`,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: catalogName,
+                item: `${baseUrl}/${lang}/${localizedCatalogSlug}`,
+            },
+            {
+                "@type": "ListItem",
+                position: 3,
+                name: categoryName,
+                item: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}`,
+            },
+            {
+                "@type": "ListItem",
+                position: 4,
+                name: title,
+                item: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}/${productSlug}`,
+            },
+        ],
+    };
+
     return (
-        <main className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify([productSchema, breadcrumbSchema]) }}
+            />
             <ProductTranslationSync productSlugs={productSlugMap} />
             <CategoryTranslationSync categorySlugs={categorySlugMap} />
 
@@ -384,6 +477,6 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                     )}
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

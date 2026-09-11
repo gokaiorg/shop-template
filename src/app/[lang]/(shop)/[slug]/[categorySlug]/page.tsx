@@ -142,12 +142,28 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
     const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
     const baseUrl = rawBaseUrl.replace(/\/+$/, "");
     const categoryCanonical = `${baseUrl}/${lang}/${localizedCatalogSlug}/${categorySlug}`;
+    const enCatalogSlug = (typeof storeSettings.catalogSlug === "object" ? storeSettings.catalogSlug?.en : "shop") || "shop";
+    const frCatalogSlug = (typeof storeSettings.catalogSlug === "object" ? storeSettings.catalogSlug?.fr : "boutique") || "boutique";
+
+    const enCatSlug = (typeof category.slug === "object" && category.slug?.en)
+        ? category.slug.en
+        : (category.slugEn || getLocalizedField(category.slug, "en") || categorySlug);
+    const frCatSlug = (typeof category.slug === "object" && category.slug?.fr)
+        ? category.slug.fr
+        : (category.slugFr || getLocalizedField(category.slug, "fr") || categorySlug);
+
+    const languagesAlternate: Record<string, string> = {
+        en: `${baseUrl}/en/${enCatalogSlug}/${enCatSlug}`,
+        fr: `${baseUrl}/fr/${frCatalogSlug}/${frCatSlug}`,
+        "x-default": `${baseUrl}/en/${enCatalogSlug}/${enCatSlug}`,
+    };
 
     return {
         title: categoryTitle,
         description: pageDescription,
         alternates: {
             canonical: categoryCanonical,
+            languages: languagesAlternate,
         },
         openGraph: {
             title: categoryTitle,
@@ -266,9 +282,41 @@ export default async function CategoryPage(props: CategoryPageProps) {
     }
     if (category.slugEn && !categorySlugMap["en"]) categorySlugMap["en"] = category.slugEn;
     if (category.slugFr && !categorySlugMap["fr"]) categorySlugMap["fr"] = category.slugFr;
+    const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
+    const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+    const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
+
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: lang === "fr" ? "Accueil" : "Home",
+                item: `${baseUrl}/${lang}`,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: catalogName,
+                item: `${baseUrl}/${lang}/${localizedCatalogSlug}`,
+            },
+            {
+                "@type": "ListItem",
+                position: 3,
+                name: bannerTitle,
+                item: `${baseUrl}/${lang}/${localizedCatalogSlug}/${categorySlug}`,
+            },
+        ],
+    };
 
     return (
         <div className="w-full flex flex-col">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+            />
             <CategoryTranslationSync categorySlugs={Object.keys(categorySlugMap).length > 0 ? categorySlugMap : null} />
 
             {/* Edge-to-Edge Category Banner */}
@@ -315,17 +363,18 @@ export default async function CategoryPage(props: CategoryPageProps) {
                         <h2 className="sr-only">
                             {dict.shop?.products_list || (lang === "fr" ? "Liste des produits" : "Products list")}
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <ul role="list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {products.map((product) => (
-                                <ShopProductCard
-                                    key={product.id}
-                                    product={product}
-                                    lang={lang}
-                                    dict={dict.shop || dict}
-                                    categorySlug={categorySlug}
-                                />
+                                <li key={product.id} className="flex flex-col">
+                                    <ShopProductCard
+                                        product={product}
+                                        lang={lang}
+                                        dict={dict.shop || dict}
+                                        categorySlug={categorySlug}
+                                    />
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     </div>
                 )}
             </div>

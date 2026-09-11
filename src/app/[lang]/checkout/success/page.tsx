@@ -1,10 +1,19 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getIsCartEnabled } from "@/config/brand.config";
 
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
+
+export const metadata: Metadata = {
+    title: "Order Confirmation",
+    robots: {
+        index: false,
+        follow: false,
+    },
+};
 
 export default async function CheckoutSuccessPage({
     params,
@@ -34,9 +43,9 @@ export default async function CheckoutSuccessPage({
                     <CheckCircle2 className="h-16 w-16 text-green-500" />
                 </div>
                 <div>
-                    <h2 className="mt-4 text-3xl font-extrabold text-gray-900">
+                    <h1 className="mt-4 text-3xl font-extrabold text-gray-900">
                         {lang === 'fr' ? "Paiement réussi!" : "Payment Successful!"}
-                    </h2>
+                    </h1>
                     <p className="mt-2 text-sm text-gray-600">
                         {lang === 'fr' 
                            ? "Merci pour votre commande. Nous la préparons dès maintenant." 

@@ -17,12 +17,13 @@ import { AuthSheet } from "@/components/auth/AuthSheet"
 
 export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
     const { data: session, status } = useSession()
+    const accountLabel = dict?.account || "Account";
 
     if (status === "loading") {
         return (
-            <Button size="icon" disabled className="rounded-full bg-primary text-primary-foreground opacity-50">
+            <Button size="icon" disabled aria-label={accountLabel} className="rounded-full bg-primary text-primary-foreground opacity-50">
                 <User className="h-[1.2rem] w-[1.2rem]" />
-                <span className="sr-only">{dict.account || "Account"}</span>
+                <span className="sr-only">{accountLabel}</span>
             </Button>
         )
     }
@@ -31,9 +32,9 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button size="icon" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
+                    <Button size="icon" aria-label={accountLabel} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
                         <User className="h-[1.2rem] w-[1.2rem]" />
-                        <span className="sr-only">{dict.account || "Account"}</span>
+                        <span className="sr-only">{accountLabel}</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -61,9 +62,9 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
 
     return (
         <AuthSheet dict={dict.auth || {}}>
-            <Button size="icon" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
+            <Button size="icon" aria-label={accountLabel} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
                 <User className="h-[1.2rem] w-[1.2rem]" />
-                <span className="sr-only">{dict.account || "Account"}</span>
+                <span className="sr-only">{accountLabel}</span>
             </Button>
         </AuthSheet>
     )

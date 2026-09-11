@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Tabs as TabsPrimitive } from "radix-ui";
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Category } from "@/types/database";
 import { getLocalizedField } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -46,23 +46,6 @@ export function CategoryPillsNav({
     asTabs = false,
     className,
 }: CategoryPillsNavProps) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-
-    const handleCategoryClick = (category: Category, slug: string) => {
-        if (onSelect) {
-            onSelect(category);
-            return;
-        }
-        if (catalogSlug) {
-            if (slug) {
-                router.push(`/${lang}/${catalogSlug}/${slug}`);
-            } else {
-                router.push(`/${lang}/${catalogSlug}`);
-            }
-        }
-    };
-
     if (asTabs) {
         return (
             <div className={cn("w-full overflow-x-auto no-scrollbar scrollbar-none pb-2 sm:pb-0", className)}>
@@ -93,8 +76,8 @@ export function CategoryPillsNav({
     }
 
     return (
-        <div className={cn("w-full overflow-x-auto no-scrollbar scrollbar-none pb-2 sm:pb-0", className)}>
-            <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 mb-8 w-max sm:w-auto">
+        <nav aria-label="Categories" className={cn("w-full overflow-x-auto no-scrollbar scrollbar-none pb-2 sm:pb-0", className)}>
+            <ul role="list" className="flex flex-nowrap sm:flex-wrap items-center gap-2 mb-8 w-max sm:w-auto">
                 {categories.map((category) => {
                     const rawCategorySlug =
                         (typeof category.slug === "object" && category.slug?.[lang])
@@ -120,23 +103,34 @@ export function CategoryPillsNav({
                             normalizedActiveId === category.id
                         );
 
+                    const href = categorySlug
+                        ? `/${lang}/${catalogSlug}/${categorySlug}`
+                        : `/${lang}/${catalogSlug}`;
+
                     return (
-                        <button
-                            key={category.id}
-                            type="button"
-                            onClick={() => handleCategoryClick(category, categorySlug)}
-                            className={cn(
-                                BASE_PILL_CLASS,
-                                isActive ? ACTIVE_PILL_CLASS : INACTIVE_PILL_CLASS
-                            )}
-                            data-state={isActive ? "active" : "inactive"}
-                            aria-current={isActive ? "page" : undefined}
-                        >
-                            {categoryName}
-                        </button>
+                        <li key={category.id}>
+                            <Link
+                                href={href}
+                                onClick={(e) => {
+                                    if (onSelect) {
+                                        e.preventDefault();
+                                        onSelect(category);
+                                    }
+                                }}
+                                className={cn(
+                                    BASE_PILL_CLASS,
+                                    "inline-block",
+                                    isActive ? ACTIVE_PILL_CLASS : INACTIVE_PILL_CLASS
+                                )}
+                                data-state={isActive ? "active" : "inactive"}
+                                aria-current={isActive ? "page" : undefined}
+                            >
+                                {categoryName}
+                            </Link>
+                        </li>
                     );
                 })}
-            </div>
-        </div>
+            </ul>
+        </nav>
     );
 }

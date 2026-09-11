@@ -32,22 +32,20 @@ export default async function ShopLayout({
     return (
         <div className="flex min-h-screen flex-col">
             <Header lang={lang} dict={dict} session={session} pages={headerPages} />
-            <main className="flex-1 flex flex-col">
-                <div className="flex-1">
-                    {children}
-                </div>
-                <Footer
-                    lang={lang}
-                    dict={dict}
-                    pages={footerPages}
-                    catalogTitle={storeSettings.catalogTitle}
-                    catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
-                    brandName={storeSettings.brandName}
-                    footerDescription={storeSettings.footerDescription}
-                    footerRightMenuTitle={storeSettings.footerRightMenuTitle}
-                    socialLinks={storeSettings.socialLinks}
-                />
+            <main className="flex-1">
+                {children}
             </main>
+            <Footer
+                lang={lang}
+                dict={dict}
+                pages={footerPages}
+                catalogTitle={storeSettings.catalogTitle}
+                catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
+                brandName={storeSettings.brandName}
+                footerDescription={storeSettings.footerDescription}
+                footerRightMenuTitle={storeSettings.footerRightMenuTitle}
+                socialLinks={storeSettings.socialLinks}
+            />
         </div>
     );
 }

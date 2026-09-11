@@ -25,43 +25,58 @@ export function PrimaryNav({ lang, dict, pages = [], className, onNavClick }: Pr
     const isCatalogActive = pathname === catalogHref || pathname.startsWith(`/${lang}/${activeSlug}/`);
     const catalogLabel = getLocalizedField(catalogTitle, lang) || dict?.shop || (lang === "fr" ? "Boutique" : "Shop");
 
+    const isColumn = className?.includes("flex-col");
+
     return (
-        <nav className={cn("gap-6", className)}>
-            {/* Dynamic Catalog Link */}
-            <Link
-                href={catalogHref}
-                onClick={onNavClick}
-                aria-current={isCatalogActive ? "page" : undefined}
+        <nav aria-label="Primary Navigation" className={cn(className?.includes("hidden") ? "hidden md:flex" : "flex", isColumn && "w-full")}>
+            <ul
+                role="list"
                 className={cn(
-                    "flex items-center text-sm font-medium transition-colors hover:text-primary",
-                    isCatalogActive ? "text-primary font-semibold" : "text-muted-foreground"
+                    isColumn
+                        ? "flex flex-col items-start gap-4 text-lg font-medium w-full"
+                        : "flex items-center gap-6"
                 )}
             >
-                {catalogLabel}
-            </Link>
-
-            {/* Dynamic Pages with showInHeader === true */}
-            {pages.map((page) => {
-                const pageSlug = getLocalizedField(page.slug, lang) || (typeof page.slug === 'string' ? page.slug : page.id);
-                const href = `/${lang}/${pageSlug}`;
-                const isActive = pathname === href;
-                const label = getLocalizedField(page.title, lang) || (lang === 'fr' ? page.title_fr : page.title_en) || pageSlug;
-
-                return (
+                <li>
                     <Link
-                        key={page.id || pageSlug}
-                        href={href}
+                        href={catalogHref}
                         onClick={onNavClick}
-                        aria-current={isActive ? "page" : undefined}
+                        aria-current={isCatalogActive ? "page" : undefined}
                         className={cn(
                             "flex items-center text-sm font-medium transition-colors hover:text-primary",
-                            isActive ? "text-primary font-semibold" : "text-muted-foreground"
+                            isColumn && "text-lg",
+                            isCatalogActive ? "text-primary font-semibold" : "text-muted-foreground"
                         )}
                     >
-                        {label}
+                        {catalogLabel}
                     </Link>
-                );
-            })}
+                </li>
+
+                {/* Dynamic Pages with showInHeader === true */}
+                {pages.map((page) => {
+                    const pageSlug = getLocalizedField(page.slug, lang) || (typeof page.slug === 'string' ? page.slug : page.id);
+                    const href = `/${lang}/${pageSlug}`;
+                    const isActive = pathname === href;
+                    const label = getLocalizedField(page.title, lang) || (lang === 'fr' ? page.title_fr : page.title_en) || pageSlug;
+
+                    return (
+                        <li key={page.id || pageSlug}>
+                            <Link
+                                href={href}
+                                onClick={onNavClick}
+                                aria-current={isActive ? "page" : undefined}
+                                className={cn(
+                                    "flex items-center text-sm font-medium transition-colors hover:text-primary",
+                                    isColumn && "text-lg",
+                                    isActive ? "text-primary font-semibold" : "text-muted-foreground"
+                                )}
+                            >
+                                {label}
+                            </Link>
+                        </li>
+                    );
+                })}
+            </ul>
         </nav>
     );
 }

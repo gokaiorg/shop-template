@@ -18,16 +18,19 @@ export function MobileNav({ lang, dict, pages = [] }: { lang: string, dict: Reco
     const { logo } = brand.assets;
     const brandName = brand.identity.name;
 
+    const menuLabel = dict?.toggle_menu || "Toggle menu";
+
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
                 <Button 
                     variant="ghost" 
                     size="icon" 
+                    aria-label={menuLabel}
                     className="md:hidden cursor-pointer bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground transition-colors"
                 >
                     <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle Menu</span>
+                    <span className="sr-only">{menuLabel}</span>
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] p-6 flex flex-col gap-6">

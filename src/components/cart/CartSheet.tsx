@@ -68,7 +68,7 @@ export function CartSheet({ dict }: { dict?: any }) {
 
     if (!mounted) {
         return (
-            <Button variant="ghost" size="icon" className="relative" disabled>
+            <Button variant="ghost" size="icon" aria-label={openCartLabel} className="relative" disabled>
                 <ShoppingCart className="h-5 w-5" />
                 <span className="sr-only">{openCartLabel}</span>
             </Button>
@@ -78,7 +78,7 @@ export function CartSheet({ dict }: { dict?: any }) {
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative cursor-pointer">
+                <Button variant="ghost" size="icon" aria-label={srOnlyLabel} className="relative cursor-pointer">
                     <ShoppingCart className="h-5 w-5" />
                     {totalItems > 0 && (
                         <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white" aria-hidden="true">
@@ -107,7 +107,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                             </SheetClose>
                         </div>
                     ) : (
-                        <div className="flex flex-1 flex-col gap-6">
+                        <ul role="list" className="flex flex-1 flex-col gap-6">
                             {items.map((item) => {
                                 const imageUrl = item.imageUrl
                                     || (item.images && item.images.length > 0 ? item.images[0] : null)
@@ -116,7 +116,7 @@ export function CartSheet({ dict }: { dict?: any }) {
 
                                 const itemName = getLocalizedField(item.name, lang) || (lang === "fr" ? item.nameFr : item.nameEn) || "Product";
                                 return (
-                                    <div key={item.id} className="flex items-center gap-4">
+                                    <li key={item.id} className="flex items-center gap-4">
                                         <div className="relative h-16 w-16 overflow-hidden rounded-md border bg-muted">
                                             <Image
                                                 src={imageUrl}
@@ -137,6 +137,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
+                                                    aria-label={`Remove ${itemName}`}
                                                     className="h-8 w-8 text-muted-foreground hover:text-red-500 cursor-pointer"
                                                     onClick={() => removeItem(item.id)}
                                                 >
@@ -150,6 +151,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
+                                                        aria-label={`Decrease quantity of ${itemName}`}
                                                         className="h-8 w-8 rounded-none cursor-pointer"
                                                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                                         disabled={isLoading}
@@ -163,6 +165,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
+                                                        aria-label={`Increase quantity of ${itemName}`}
                                                         className="h-8 w-8 rounded-none cursor-pointer"
                                                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                                         disabled={isLoading}
@@ -173,10 +176,10 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </li>
                                 );
                             })}
-                        </div>
+                        </ul>
                     )}
                 </div>
 

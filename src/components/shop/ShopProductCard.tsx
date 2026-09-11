@@ -55,7 +55,7 @@ export function ShopProductCard({ product, lang, dict, categorySlug }: ShopProdu
     const isOutOfStock = (product.stock ?? 0) <= 0;
 
     return (
-        <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-background">
+        <article className="group relative flex flex-col overflow-hidden rounded-lg border bg-background h-full">
             {/* Image Container */}
             <Link href={productHref} className="relative aspect-square overflow-hidden bg-muted block">
                 <Image
@@ -133,6 +133,6 @@ export function ShopProductCard({ product, lang, dict, categorySlug }: ShopProdu
                     )}
                 </div>
             </div>
-        </div>
+        </article>
     );
 }

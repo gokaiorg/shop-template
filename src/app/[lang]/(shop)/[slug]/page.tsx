@@ -65,11 +65,21 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
         const catalogBannerUrl = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "";
         const canonicalUrl = `${baseUrl}/${lang}/${localizedCatalogSlug}`;
 
+        const enCatalogSlug = (typeof storeSettings.catalogSlug === "object" ? storeSettings.catalogSlug?.en : "shop") || "shop";
+        const frCatalogSlug = (typeof storeSettings.catalogSlug === "object" ? storeSettings.catalogSlug?.fr : "boutique") || "boutique";
+
+        const languagesAlternate: Record<string, string> = {
+            en: `${baseUrl}/en/${enCatalogSlug}`,
+            fr: `${baseUrl}/fr/${frCatalogSlug}`,
+            "x-default": `${baseUrl}/en/${enCatalogSlug}`,
+        };
+
         return {
             title: catalogDisplayTitle,
             description: catalogDescription,
             alternates: {
                 canonical: canonicalUrl,
+                languages: languagesAlternate,
             },
             openGraph: {
                 title: catalogDisplayTitle,
@@ -95,11 +105,25 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
         const description = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || getLocalizedField(page.content, lang)?.replace(/<[^>]*>?/gm, "").slice(0, 160) || "";
         const canonicalUrl = `${baseUrl}/${lang}/${slug}`;
 
+        const enPageSlug = (typeof page.slug === "object" && page.slug?.en)
+            ? page.slug.en
+            : (page.slug_en || (typeof page.slug === "string" ? page.slug : slug));
+        const frPageSlug = (typeof page.slug === "object" && page.slug?.fr)
+            ? page.slug.fr
+            : (page.slug_fr || (typeof page.slug === "string" ? page.slug : slug));
+
+        const languagesAlternate: Record<string, string> = {
+            en: `${baseUrl}/en/${enPageSlug}`,
+            fr: `${baseUrl}/fr/${frPageSlug}`,
+            "x-default": `${baseUrl}/en/${enPageSlug}`,
+        };
+
         return {
             title,
             description,
             alternates: {
                 canonical: canonicalUrl,
+                languages: languagesAlternate,
             },
             openGraph: {
                 title,
@@ -204,7 +228,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                             {dict.shop?.empty_state || "No categories found."}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                        <ul role="list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                             {categories.map((category) => {
                                 const catSlug =
                                     (typeof category.slug === "object" && category.slug?.[lang])
@@ -217,44 +241,45 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                 const catImg = category.imageUrl || brandConfig.assets?.placeholderImage || "";
 
                                 return (
-                                    <Link
-                                        key={category.id}
-                                        href={`/${lang}/${localizedCatalogSlug}/${catSlug}`}
-                                        className="group relative block aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden border bg-muted shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer"
-                                    >
-                                        {catImg ? (
-                                            <Image
-                                                src={catImg}
-                                                alt={catName}
-                                                fill
-                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                                className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-900" />
-                                        )}
-
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:from-black/90 transition-colors duration-300" />
-
-                                        <div className="absolute inset-0 p-6 flex flex-col justify-end text-white">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <h3 className="text-2xl font-bold tracking-tight group-hover:translate-x-1 transition-transform duration-300">
-                                                    {catName}
-                                                </h3>
-                                                <span className="h-9 w-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:bg-white group-hover:text-black transition-all duration-300">
-                                                    <ArrowRight className="h-4 w-4" />
-                                                </span>
-                                            </div>
-                                            {catIntro && (
-                                                <p className="mt-2 text-sm text-zinc-300 line-clamp-2">
-                                                    {catIntro}
-                                                </p>
+                                    <li key={category.id}>
+                                        <Link
+                                            href={`/${lang}/${localizedCatalogSlug}/${catSlug}`}
+                                            className="group relative block aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden border bg-muted shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                                        >
+                                            {catImg ? (
+                                                <Image
+                                                    src={catImg}
+                                                    alt={catName}
+                                                    fill
+                                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-900" />
                                             )}
-                                        </div>
-                                    </Link>
+
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:from-black/90 transition-colors duration-300" />
+
+                                            <div className="absolute inset-0 p-6 flex flex-col justify-end text-white">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <h3 className="text-2xl font-bold tracking-tight group-hover:translate-x-1 transition-transform duration-300">
+                                                        {catName}
+                                                    </h3>
+                                                    <span className="h-9 w-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:bg-white group-hover:text-black transition-all duration-300">
+                                                        <ArrowRight className="h-4 w-4" />
+                                                    </span>
+                                                </div>
+                                                {catIntro && (
+                                                    <p className="mt-2 text-sm text-zinc-300 line-clamp-2">
+                                                        {catIntro}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </Link>
+                                    </li>
                                 );
                             })}
-                        </div>
+                        </ul>
                     )}
                 </div>
             </div>
@@ -310,7 +335,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
     if (page.slug_fr && !pageSlugMap["fr"]) pageSlugMap["fr"] = page.slug_fr;
 
     return (
-        <main className="flex-1 bg-zinc-50 dark:bg-black">
+        <div className="flex-1 bg-zinc-50 dark:bg-black">
             <PageTranslationSync pageSlugs={Object.keys(pageSlugMap).length > 0 ? pageSlugMap : null} />
             <div className="w-full max-w-7xl mx-auto py-16 px-6 md:px-16">
                 <h1 className="text-4xl font-bold tracking-tight mb-8">{title}</h1>
@@ -324,6 +349,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                     </div>
                 )}
             </div>
-        </main>
+        </div>
     );
 }

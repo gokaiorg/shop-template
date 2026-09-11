@@ -104,12 +104,14 @@ export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, 
         router.push(targetUrl);
     };
 
+    const toggleLangLabel = dict?.toggle_language || "Toggle language";
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" aria-label={toggleLangLabel}>
                     <Globe className="h-[1.2rem] w-[1.2rem]" />
-                    <span className="sr-only">{dict.toggle_language || "Toggle language"}</span>
+                    <span className="sr-only">{toggleLangLabel}</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
