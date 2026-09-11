@@ -1,5 +1,6 @@
 import { notFound, permanentRedirect } from "next/navigation";
 import { Metadata } from "next";
+import Image from "next/image";
 
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
@@ -320,16 +321,20 @@ export default async function CategoryPage(props: CategoryPageProps) {
             <CategoryTranslationSync categorySlugs={Object.keys(categorySlugMap).length > 0 ? categorySlugMap : null} />
 
             {/* Edge-to-Edge Category Banner */}
-            <section
-                className={`relative w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center bg-center bg-cover bg-no-repeat mb-12 ${
-                    bannerImageUrl ? "bg-fixed" : "bg-gradient-to-br from-zinc-800 via-zinc-900 to-black"
-                }`}
-                style={bannerImageUrl ? { backgroundImage: `url("${bannerImageUrl}")` } : undefined}
-            >
-                {!bannerImageUrl && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black" />
+            <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
+                {bannerImageUrl ? (
+                    <Image
+                        src={bannerImageUrl}
+                        alt={bannerTitle || "Category Banner"}
+                        fill
+                        priority
+                        sizes="100vw"
+                        className="object-cover pointer-events-none"
+                    />
+                ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black z-0" />
                 )}
-                <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+                <div className="absolute inset-0 bg-black/40 pointer-events-none z-[1]" />
 
                 <div className="relative z-10 px-6 max-w-4xl mx-auto flex flex-col items-center">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight drop-shadow-md">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { adminDb } from "@/lib/firebase-admin";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
@@ -196,15 +197,23 @@ export default async function Home({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {/* Hero Section with Dynamic Parallax Background & Glassmorphic Card */}
-      <section
-        className={`relative flex w-full flex-col items-center justify-center min-h-[60vh] py-24 sm:py-32 px-6 md:px-16 text-center bg-center bg-cover bg-no-repeat ${heroBackgroundImageUrl ? "bg-fixed" : "bg-white dark:bg-black"
-          }`}
-        style={heroBackgroundImageUrl ? { backgroundImage: `url("${heroBackgroundImageUrl}")` } : undefined}
-      >
+      {/* Hero Section with Optimized LCP Image & Glassmorphic Card */}
+      <section className={`relative isolate flex w-full flex-col items-center justify-center min-h-[60vh] py-24 sm:py-32 px-6 md:px-16 text-center overflow-hidden ${
+        heroBackgroundImageUrl ? "" : "bg-white dark:bg-black"
+      }`}>
+        {heroBackgroundImageUrl && (
+          <Image
+            src={heroBackgroundImageUrl}
+            alt={stripHtml(heroTitle) || "Hero Banner"}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover pointer-events-none"
+          />
+        )}
         {/* Subtle contrast overlay when background image is present */}
         {heroBackgroundImageUrl && (
-          <div className="absolute inset-0 bg-black/20 dark:bg-black/40 pointer-events-none" />
+          <div className="absolute inset-0 bg-black/20 dark:bg-black/40 pointer-events-none z-[1]" />
         )}
 
         {/* Glassmorphic Central Wrapper for optimal text contrast and readability */}
