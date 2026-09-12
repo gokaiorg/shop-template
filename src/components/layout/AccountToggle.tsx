@@ -17,7 +17,40 @@ import { AuthSheet } from "@/components/auth/AuthSheet"
 
 export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
     const { data: session, status } = useSession()
-    const accountLabel = dict?.account || "Account";
+    
+    const accountLabel =
+        typeof dict?.header?.account === "string"
+            ? dict.header.account
+            : typeof dict?.account?.title === "string"
+            ? dict.account.title
+            : typeof dict?.account === "string"
+            ? dict.account
+            : lang === "fr"
+            ? "Mon Compte"
+            : "Account";
+
+    const adminPanelLabel =
+        typeof dict?.header?.admin_panel === "string"
+            ? dict.header.admin_panel
+            : lang === "fr"
+            ? "Panneau Admin"
+            : "Admin Panel";
+
+    const myAccountLabel =
+        typeof dict?.header?.account === "string"
+            ? dict.header.account
+            : typeof dict?.account?.title === "string"
+            ? dict.account.title
+            : lang === "fr"
+            ? "Mon Compte"
+            : "My Account";
+
+    const signOutLabel =
+        typeof dict?.header?.sign_out === "string"
+            ? dict.header.sign_out
+            : lang === "fr"
+            ? "Déconnexion"
+            : "Sign Out";
 
     if (status === "loading") {
         return (
@@ -45,7 +78,7 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
                         >
                             <Link href={`/${lang}/admin`} className="flex items-center w-full">
                                 <LayoutDashboard className="mr-2 h-4 w-4" />
-                                <span>{dict.header?.admin_panel || "Admin Panel"}</span>
+                                <span>{adminPanelLabel}</span>
                             </Link>
                         </DropdownMenuItem>
                     )}
@@ -55,7 +88,7 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
                     >
                         <Link href={`/${lang}/account`} className="flex items-center w-full">
                             <User className="mr-2 h-4 w-4" />
-                            <span>{dict.header?.account || (lang === "fr" ? "Mon Compte" : "My Account")}</span>
+                            <span>{myAccountLabel}</span>
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -64,7 +97,7 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
                         className="cursor-pointer text-destructive focus:bg-destructive focus:text-white hover:bg-destructive hover:text-white group"
                     >
                         <LogOut className="mr-2 h-4 w-4 text-destructive group-hover:text-white group-focus:text-white" />
-                        <span>{dict.header?.sign_out || "Sign Out"}</span>
+                        <span>{signOutLabel}</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
