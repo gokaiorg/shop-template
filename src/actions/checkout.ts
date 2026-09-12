@@ -7,6 +7,7 @@ import { getStripe } from "@/lib/stripe";
 import { toStripeUnitAmount } from "@/lib/currency";
 import { getLocalizedField } from "@/lib/i18n";
 import { headers } from "next/headers";
+import { auth } from "@/auth";
 
 export async function checkoutOrder(
     items: { id: string; quantity: number; name?: Record<string, string>; nameFr?: string; nameEn?: string; price?: number }[],
@@ -56,6 +57,7 @@ export async function checkoutOrder(
             0
         );
 
+        const session = await auth();
         const storeSettings = await getStoreSettings();
         const currency = (storeSettings.defaultCurrency || "THB").toLowerCase();
 
@@ -67,7 +69,9 @@ export async function checkoutOrder(
             status: "PENDING",
             totalAmount: totalAmount,
             currency: currency.toUpperCase(),
-            userId: null,
+            userId: session?.user?.id || null,
+            customerEmail: session?.user?.email || null,
+            customerName: session?.user?.name || null,
             items: verifiedItems.map((item) => ({
                 id: adminDb.collection("orders").doc().id, // Random ID
                 productId: item.id,

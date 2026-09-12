@@ -21,7 +21,7 @@ export const BASE_PILL_CLASS =
     "rounded-full border px-4 py-2 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap outline-none";
 
 export const INACTIVE_PILL_CLASS =
-    "border-border bg-transparent text-muted-foreground hover:bg-accent hover:text-accent-foreground dark:border-border dark:bg-transparent dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-accent-foreground";
+    "border-border bg-transparent text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 dark:border-border dark:bg-transparent dark:text-muted-foreground dark:hover:bg-primary/15 dark:hover:text-primary dark:hover:border-primary/40";
 
 export const ACTIVE_PILL_CLASS =
     "border-primary bg-primary text-primary-foreground hover:opacity-90 dark:border-primary dark:bg-primary dark:text-primary-foreground shadow-xs";
@@ -29,9 +29,9 @@ export const ACTIVE_PILL_CLASS =
 export const TAB_TRIGGER_CLASS = cn(
     BASE_PILL_CLASS,
     // Inactive state via data-[state=inactive] and default
-    "border-border bg-transparent text-muted-foreground hover:bg-accent hover:text-accent-foreground dark:border-border dark:bg-transparent dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-accent-foreground",
-    "data-[state=inactive]:border-border data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-accent data-[state=inactive]:hover:text-accent-foreground",
-    "dark:data-[state=inactive]:border-border dark:data-[state=inactive]:bg-transparent dark:data-[state=inactive]:text-muted-foreground dark:data-[state=inactive]:hover:bg-accent dark:data-[state=inactive]:hover:text-accent-foreground",
+    "border-border bg-transparent text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 dark:border-border dark:bg-transparent dark:text-muted-foreground dark:hover:bg-primary/15 dark:hover:text-primary dark:hover:border-primary/40",
+    "data-[state=inactive]:border-border data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-primary/10 data-[state=inactive]:hover:text-primary data-[state=inactive]:hover:border-primary/30",
+    "dark:data-[state=inactive]:border-border dark:data-[state=inactive]:bg-transparent dark:data-[state=inactive]:text-muted-foreground dark:data-[state=inactive]:hover:bg-primary/15 dark:data-[state=inactive]:hover:text-primary dark:data-[state=inactive]:hover:border-primary/40",
     // Active state (light + dark)
     "data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:opacity-90 data-[state=active]:shadow-xs",
     "dark:data-[state=active]:border-primary dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground"

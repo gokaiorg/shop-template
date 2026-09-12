@@ -38,22 +38,33 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                    {session.user?.role === "admin" && (
+                        <DropdownMenuItem 
+                            asChild
+                            className="cursor-pointer focus:bg-primary focus:text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                        >
+                            <Link href={`/${lang}/admin`} className="flex items-center w-full">
+                                <LayoutDashboard className="mr-2 h-4 w-4" />
+                                <span>{dict.header?.admin_panel || "Admin Panel"}</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem 
                         asChild
                         className="cursor-pointer focus:bg-primary focus:text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                     >
-                        <Link href={`/${lang}/admin/dashboard`} className="flex items-center w-full">
-                            <LayoutDashboard className="mr-2 h-4 w-4" />
-                            <span>{dict.header?.dashboard || "Dashboard"}</span>
+                        <Link href={`/${lang}/account`} className="flex items-center w-full">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>{dict.header?.account || (lang === "fr" ? "Mon Compte" : "My Account")}</span>
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                        onClick={() => signOut({ callbackUrl: '/' })}
+                        onClick={() => signOut({ callbackUrl: `/${lang}` })}
                         className="cursor-pointer text-destructive focus:bg-destructive focus:text-white hover:bg-destructive hover:text-white group"
                     >
                         <LogOut className="mr-2 h-4 w-4 text-destructive group-hover:text-white group-focus:text-white" />
-                        <span>Sign Out</span>
+                        <span>{dict.header?.sign_out || "Sign Out"}</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

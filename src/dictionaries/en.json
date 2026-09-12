@@ -124,6 +124,9 @@
         "contact": "Contact",
         "login": "Login",
         "dashboard": "Dashboard",
+        "admin_panel": "Admin Panel",
+        "account": "My Account",
+        "sign_out": "Sign Out",
         "toggle_language": "Toggle Language",
         "theme_light": "Light",
         "theme_dark": "Dark",
@@ -176,5 +179,29 @@
             "subject_min": "Subject must be at least 5 characters",
             "message_min": "Message must be at least 10 characters"
         }
+    },
+    "account": {
+        "title": "My Account",
+        "welcome": "Welcome to your customer portal.",
+        "orders": "My Orders",
+        "profile": "My Information",
+        "orders_subtitle": "Order history and tracking.",
+        "no_orders": "You haven't placed any orders yet.",
+        "explore_shop": "Explore the shop",
+        "order_number": "Order",
+        "date": "Date",
+        "status": "Status",
+        "total": "Total",
+        "items": "items",
+        "profile_title": "Personal Information",
+        "profile_subtitle": "View and update your personal details.",
+        "name": "Name",
+        "email": "Email Address",
+        "password": "New Password (optional)",
+        "password_help": "Leave blank to keep your current password.",
+        "save": "Save Changes",
+        "saving": "Saving...",
+        "profile_updated": "Your profile has been updated successfully!",
+        "update_error": "Failed to update profile."
     }
 }

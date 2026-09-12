@@ -124,6 +124,9 @@
         "contact": "Contact",
         "login": "Connexion",
         "dashboard": "Tableau de bord",
+        "admin_panel": "Panneau Admin",
+        "account": "Mon Compte",
+        "sign_out": "Déconnexion",
         "toggle_language": "Changer de langue",
         "theme_light": "Clair",
         "theme_dark": "Sombre",
@@ -176,5 +179,29 @@
             "subject_min": "Le sujet doit comporter au moins 5 caractères",
             "message_min": "Le message doit comporter au moins 10 caractères"
         }
+    },
+    "account": {
+        "title": "Mon Compte",
+        "welcome": "Bienvenue dans votre espace client.",
+        "orders": "Mes Commandes",
+        "profile": "Mes Informations",
+        "orders_subtitle": "Historique et suivi de vos commandes.",
+        "no_orders": "Vous n'avez pas encore passé de commande.",
+        "explore_shop": "Découvrir la boutique",
+        "order_number": "Commande",
+        "date": "Date",
+        "status": "Statut",
+        "total": "Total",
+        "items": "articles",
+        "profile_title": "Informations Personnelles",
+        "profile_subtitle": "Consultez et mettez à jour vos coordonnées.",
+        "name": "Nom",
+        "email": "Adresse Email",
+        "password": "Nouveau mot de passe (facultatif)",
+        "password_help": "Laissez ce champ vide pour conserver votre mot de passe actuel.",
+        "save": "Enregistrer les modifications",
+        "saving": "Enregistrement en cours...",
+        "profile_updated": "Votre profil a été mis à jour avec succès !",
+        "update_error": "Échec de la mise à jour du profil."
     }
 }

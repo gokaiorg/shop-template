@@ -5,6 +5,7 @@ import { getStoreSettings } from "@/lib/services/settings";
 import { getStripe } from "@/lib/stripe";
 import { toStripeUnitAmount } from "@/lib/currency";
 import { getLocalizedField } from "@/lib/i18n";
+import { auth } from "@/auth";
 
 export async function POST(req: Request) {
     try {
@@ -57,6 +58,7 @@ export async function POST(req: Request) {
             0
         );
 
+        const session = await auth();
         // Fetch dynamic currency from Firestore settings
         const storeSettings = await getStoreSettings();
         const currency = (storeSettings.defaultCurrency || "THB").toLowerCase();
@@ -69,7 +71,9 @@ export async function POST(req: Request) {
             status: "PENDING",
             totalAmount: totalAmount,
             currency: currency.toUpperCase(),
-            userId: null,
+            userId: session?.user?.id || null,
+            customerEmail: session?.user?.email || null,
+            customerName: session?.user?.name || null,
             items: verifiedItems.map((item: any) => ({
                 id: adminDb.collection("orders").doc().id,
                 productId: item.id,
