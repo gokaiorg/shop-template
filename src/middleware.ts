@@ -34,7 +34,7 @@ export default auth((req) => {
         }
         
         const role = (req.auth?.user?.role || "").toLowerCase();
-        const isAuthorized = role === "admin" || role === "user";
+        const isAuthorized = role === "admin";
 
         if (!isAuthorized) {
             return NextResponse.redirect(new URL('/', nextUrl));

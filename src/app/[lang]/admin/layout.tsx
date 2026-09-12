@@ -41,7 +41,7 @@ export default async function AdminLayout({
     ]);
 
     const userRole = (session?.user?.role || "").toLowerCase();
-    const isAuthorized = userRole === "admin" || userRole === "user";
+    const isAuthorized = userRole === "admin";
 
     if (!session || !isAuthorized) {
         redirect(`/${lang}/login`);

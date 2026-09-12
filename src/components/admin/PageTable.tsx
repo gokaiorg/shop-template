@@ -10,8 +10,6 @@ import { Pencil, GripVertical, ExternalLink, Globe, Search } from "lucide-react"
 import { Input } from "@/components/ui/input";
 import { getLocalizedField } from "@/lib/i18n";
 import { toast } from "sonner";
-import { db } from "@/lib/firebase";
-import { doc, writeBatch } from "firebase/firestore";
 import { reorderPages } from "@/actions/admin";
 
 import {
@@ -227,42 +225,31 @@ export function PageTable({ pages: initialPages, lang }: PageTableProps) {
         if (changedItems.length === 0) return;
 
         try {
-            const batch = writeBatch(db);
-            changedItems.forEach(({ id, order }) => {
-                const pageRef = doc(db, "pages", id);
-                batch.update(pageRef, { order });
-            });
-
-            await batch.commit();
-            toast.success(
-                lang === "fr"
-                    ? "Ordre des pages mis à jour avec succès !"
-                    : "Page order updated successfully!"
-            );
-            router.refresh();
-        } catch (clientError: any) {
-            console.warn("Client batch write failed, attempting server action fallback:", clientError);
-            try {
-                const res = await reorderPages(changedItems);
-                if (res.success) {
-                    toast.success(
-                        lang === "fr"
-                            ? "Ordre des pages mis à jour avec succès !"
-                            : "Page order updated successfully!"
-                    );
-                    router.refresh();
-                } else {
-                    throw new Error(res.error || "Failed to update order");
-                }
-            } catch (serverError: any) {
-                console.error("Reorder pages error:", serverError);
-                toast.error(
+            const res = await reorderPages(changedItems);
+            if (res.success) {
+                toast.success(
                     lang === "fr"
-                        ? "Échec de la réorganisation des pages."
-                        : "Failed to update page order."
+                        ? "Ordre des pages mis à jour avec succès !"
+                        : "Page order updated successfully!"
                 );
+                router.refresh();
+            } else {
                 setPages(previousPages);
+                toast.error(
+                    res.error ||
+                    (lang === "fr"
+                        ? "Échec de la réorganisation des pages."
+                        : "Failed to update page order.")
+                );
             }
+        } catch (error: any) {
+            console.error("Reorder pages error:", error);
+            setPages(previousPages);
+            toast.error(
+                lang === "fr"
+                    ? "Échec de la réorganisation des pages."
+                    : "Failed to update page order."
+            );
         }
     };
 

@@ -1,14 +1,11 @@
 "use client";
 
-import React, { useState, useTransition, useRef } from "react";
+import React, { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { 
-    Upload, 
-    Trash2, 
     Loader2, 
     Save, 
     Image as ImageIcon,
@@ -16,6 +13,7 @@ import {
     ExternalLink,
     ShoppingBag,
 } from "lucide-react";
+import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,8 +50,6 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
     const [isPending, startTransition] = useTransition();
 
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
-    const [isUploadingCatalogBanner, setIsUploadingCatalogBanner] = useState(false);
-    const catalogBannerInputRef = useRef<HTMLInputElement>(null);
 
     const defaultCatalogTitle: Record<string, string> = {};
     const defaultCatalogDesc: Record<string, string> = {};
@@ -81,23 +77,6 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
 
     const catalogBannerUrlValue = form.watch("catalogBannerUrl");
     const activeCatalogSlug = form.watch(`catalogSlug.${activeLang}`) || form.watch(`catalogSlug.${defaultLocale}`) || (typeof form.watch("catalogSlug") === 'string' ? form.watch("catalogSlug") : (activeLang === "fr" ? "boutique" : "shop"));
-
-    const handleCatalogBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploadingCatalogBanner(true);
-        try {
-            const downloadUrl = await uploadBrandAsset(file, "hero");
-            form.setValue("catalogBannerUrl", downloadUrl, { shouldValidate: true, shouldDirty: true });
-            toast.success(lang === "fr" ? "Bannière du catalogue téléversée avec succès !" : "Catalog banner uploaded successfully!");
-        } catch (error: any) {
-            console.error(error);
-            toast.error(error?.message || (lang === "fr" ? "Échec du téléversement de la bannière" : "Failed to upload catalog banner"));
-        } finally {
-            setIsUploadingCatalogBanner(false);
-        }
-    };
 
     const onSubmit = (values: CatalogSettingsFormData) => {
         startTransition(async () => {
@@ -252,78 +231,39 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                         </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="border rounded-lg p-4 bg-background/50 flex flex-col items-center justify-center min-h-[180px] gap-3 relative overflow-hidden">
-                            {catalogBannerUrlValue ? (
-                                <div className="w-full flex flex-col items-center gap-3">
-                                    <div className="relative w-full h-48 bg-background rounded-lg border overflow-hidden">
-                                        <Image
-                                            src={catalogBannerUrlValue}
-                                            alt="Catalog Banner"
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => catalogBannerInputRef.current?.click()}
-                                            disabled={isUploadingCatalogBanner || isPending}
-                                            className="cursor-pointer"
-                                        >
-                                            {isUploadingCatalogBanner ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                            {lang === "fr" ? "Changer la bannière" : "Change Banner"}
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-destructive hover:bg-destructive/10 cursor-pointer"
-                                            onClick={() => form.setValue("catalogBannerUrl", "", { shouldDirty: true })}
-                                            disabled={isUploadingCatalogBanner || isPending}
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                            {lang === "fr" ? "Supprimer" : "Remove"}
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center gap-2 text-center py-6">
-                                    <ImageIcon className="h-10 w-10 text-muted-foreground" />
-                                    <p className="text-xs text-muted-foreground">
-                                        {lang === "fr" ? "Recommandé : 1920×800px paysage (JPEG, PNG, WebP)" : "Recommended: 1920×800px landscape image (JPEG, PNG, WebP)"}
-                                    </p>
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        size="sm"
-                                        onClick={() => catalogBannerInputRef.current?.click()}
-                                        disabled={isUploadingCatalogBanner || isPending}
-                                        className="mt-1 cursor-pointer"
-                                    >
-                                        {isUploadingCatalogBanner ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                        {lang === "fr" ? "Téléverser la Bannière" : "Upload Catalog Banner"}
-                                    </Button>
-                                </div>
-                            )}
-                            <input
-                                type="file"
-                                ref={catalogBannerInputRef}
-                                onChange={handleCatalogBannerUpload}
-                                accept="image/png,image/jpeg,image/webp"
-                                className="hidden"
-                            />
-                        </div>
-
                         <FormField
                             control={form.control}
                             name="catalogBannerUrl"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormControl>
-                                        <Input placeholder="Direct URL or uploaded path" {...field} value={field.value || ""} className="text-xs font-mono" />
+                                        <AdminImageDropzone
+                                            value={field.value}
+                                            onChange={(url) => field.onChange(url)}
+                                            maxFiles={1}
+                                            aspectRatio="banner"
+                                            recommendedText={
+                                                lang === "fr"
+                                                    ? "1920×800px paysage (JPEG, PNG, WebP)"
+                                                    : "1920×800px landscape image (JPEG, PNG, WebP)"
+                                            }
+                                            onUpload={(file) => uploadBrandAsset(file, "hero")}
+                                            lang={lang}
+                                            disabled={isPending}
+                                        />
                                     </FormControl>
+                                    <div className="pt-2">
+                                        <FormLabel className="text-xs text-muted-foreground">
+                                            {lang === "fr" ? "Ou saisir une URL directe :" : "Or enter direct URL:"}
+                                        </FormLabel>
+                                        <Input
+                                            placeholder="Direct URL or uploaded path"
+                                            {...field}
+                                            value={field.value || ""}
+                                            className="mt-1 text-xs font-mono"
+                                            disabled={isPending}
+                                        />
+                                    </div>
                                     <FormDescription className="text-xs">
                                         {lang === "fr"
                                             ? "Chemin d'accès ou URL publique de l'image de fond pour la page index du catalogue."
@@ -466,7 +406,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                     </Button>
                     <Button
                         type="submit"
-                        disabled={isPending || isUploadingCatalogBanner}
+                        disabled={isPending}
                         className="bg-primary text-primary-foreground hover:opacity-90 text-white px-6 cursor-pointer"
                     >
                         {isPending ? (

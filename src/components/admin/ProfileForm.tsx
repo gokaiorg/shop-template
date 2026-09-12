@@ -29,7 +29,7 @@ export function ProfileForm({ user, dict }: ProfileFormProps) {
         setLoading(true);
 
         try {
-            const result = await updateProfile(user.id, {
+            const result = await updateProfile({
                 name,
                 email,
                 password: password || undefined,

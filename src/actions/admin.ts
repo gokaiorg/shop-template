@@ -528,8 +528,8 @@ export async function seedDemoData() {
 export async function createPage(data: z.infer<typeof pageSchema>) {
     const session = await auth();
     const userRole = (session?.user?.role || "").toLowerCase();
-    if (userRole !== "admin" && userRole !== "user") {
-        return { success: false, error: "Unauthorized" };
+    if (userRole !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
     }
 
     const result = pageSchema.safeParse(data);
@@ -595,8 +595,8 @@ export async function createPage(data: z.infer<typeof pageSchema>) {
 export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
     const session = await auth();
     const userRole = (session?.user?.role || "").toLowerCase();
-    if (userRole !== "admin" && userRole !== "user") {
-        return { success: false, error: "Unauthorized" };
+    if (userRole !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
     }
 
     const result = pageSchema.safeParse(data);
@@ -643,8 +643,8 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
 export async function reorderPages(updates: { id: string; order: number }[]) {
     const session = await auth();
     const userRole = (session?.user?.role || "").toLowerCase();
-    if (userRole !== "admin" && userRole !== "user") {
-        return { success: false, error: "Unauthorized" };
+    if (userRole !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
     }
 
     if (!updates || !Array.isArray(updates) || updates.length === 0) {
@@ -746,8 +746,8 @@ export async function deleteProduct(id: string) {
 export async function deletePage(id: string) {
     const session = await auth();
     const userRole = (session?.user?.role || "").toLowerCase();
-    if (userRole !== "admin" && userRole !== "user") {
-        return { success: false, error: "Unauthorized" };
+    if (userRole !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
     }
 
     try {

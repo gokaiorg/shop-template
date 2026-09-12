@@ -4,8 +4,15 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const getClientFirebaseConfig = () => {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+
+  if (!apiKey || apiKey.trim() === "") {
+    throw new Error(
+      "Firebase client initialization error: Missing required environment variable NEXT_PUBLIC_FIREBASE_API_KEY."
+    );
+  }
+
   let pid = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  let apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
   let dbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
   let storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
@@ -13,7 +20,6 @@ const getClientFirebaseConfig = () => {
     const host = window.location.hostname.toLowerCase();
     if (host.includes("art-fate")) {
       pid = pid || "art-fate-database";
-      apiKey = apiKey || "AIzaSyBrj75bA4p69BkWBPvf0LVHet4lUlnIksQ";
       dbId = dbId || "(default)";
       storageBucket = storageBucket || "art-fate-database.firebasestorage.app";
     } else if (host.includes("green-ghost")) {
@@ -33,7 +39,7 @@ const getClientFirebaseConfig = () => {
 
   return {
     firebaseConfig: {
-      apiKey: apiKey || "AIzaSyFakeKeyForLocalDevPlaceholders",
+      apiKey,
       authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || `${finalProjectId}.firebaseapp.com`,
       projectId: finalProjectId,
       storageBucket: finalStorageBucket,

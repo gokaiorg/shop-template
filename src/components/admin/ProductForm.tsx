@@ -13,6 +13,7 @@ import Link from "next/link";
 import { createProduct, updateProduct, deleteProduct } from "@/actions/admin";
 import { productSchema } from "@/schemas/admin";
 import { uploadProductImage, deleteProductImage } from "@/lib/firebase-storage";
+import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 import {
     AlertDialog,
@@ -93,10 +94,7 @@ export function ProductForm({
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
 
     const [isPending, startTransition] = useTransition();
-    const [isUploading, setIsUploading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isDragOver, setIsDragOver] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const initialImages = (initialData?.images && Array.isArray(initialData.images) && initialData.images.length > 0)
         ? initialData.images
@@ -215,96 +213,7 @@ export function ProductForm({
         }
     };
 
-    const handleFilesSelect = async (files: FileList | File[]) => {
-        const validFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
-        if (validFiles.length === 0) {
-            toast.error("Please select valid image files (PNG, JPG, WebP).");
-            return;
-        }
 
-        setIsUploading(true);
-        const toastId = toast.loading(
-            validFiles.length === 1 
-                ? (dict.imageUploading || "Uploading image...") 
-                : `Uploading ${validFiles.length} images...`
-        );
-
-        try {
-            const uploadedUrls: string[] = [];
-            for (const file of validFiles) {
-                const url = await uploadProductImage(file);
-                uploadedUrls.push(url);
-            }
-
-            setImages(prev => {
-                const updated = [...prev, ...uploadedUrls];
-                form.setValue("images", updated);
-                form.setValue("imageUrl", updated[0] || null);
-                return updated;
-            });
-
-            toast.dismiss(toastId);
-            toast.success(
-                validFiles.length === 1 
-                    ? "Image uploaded successfully!" 
-                    : `${uploadedUrls.length} images uploaded successfully!`
-            );
-        } catch (uploadError) {
-            toast.dismiss(toastId);
-            console.error("Image upload failed:", uploadError);
-            toast.error(dict.imageUploadError || "Failed to upload image.");
-        } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
-        }
-    };
-
-    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            handleFilesSelect(e.target.files);
-        }
-    };
-
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            handleFilesSelect(e.dataTransfer.files);
-        }
-    };
-
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragOver(true);
-    };
-
-    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragOver(false);
-    };
-
-    const handleRemoveImage = (indexToRemove: number) => {
-        setImages(prev => {
-            const updated = prev.filter((_, idx) => idx !== indexToRemove);
-            form.setValue("images", updated);
-            form.setValue("imageUrl", updated[0] || null);
-            return updated;
-        });
-    };
-
-    const handleSetPrimary = (indexToPrimary: number) => {
-        if (indexToPrimary === 0) return;
-        setImages(prev => {
-            const target = prev[indexToPrimary];
-            const remaining = prev.filter((_, idx) => idx !== indexToPrimary);
-            const updated = [target, ...remaining];
-            form.setValue("images", updated);
-            form.setValue("imageUrl", updated[0] || null);
-            return updated;
-        });
-    };
 
     const onInvalid = (errors: any) => {
         console.warn("Product form validation errors:", errors);
@@ -455,7 +364,7 @@ export function ProductForm({
         }
     }
 
-    const isLoading = isPending || isUploading || isDeleting;
+    const isLoading = isPending || isDeleting;
 
     return (
         <Form {...form}>
@@ -588,164 +497,49 @@ export function ProductForm({
                             </CardContent>
                         </Card>
 
-                        {/* Bloc 2 : Médias */}
-                        <Card className="min-w-0">
-                            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <ImageIcon className="w-5 h-5 text-muted-foreground" />
-                                        <h2 className="text-lg font-medium tracking-tight">
-                                            {dict.imageUrl || (lang?.startsWith("fr") ? "Médias du produit" : "Product Images")}
-                                        </h2>
-                                        <Badge variant="secondary" className="text-xs ml-1">
-                                            {images.length} {images.length === 1 ? "image" : "images"}
-                                        </Badge>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mb-4">
-                                        {lang?.startsWith("fr") ? "Photos du produit. La première sert de couverture." : "Product photos. First image serves as cover."}
-                                    </p>
+                        {/* Bloc 2 : Images du Produit */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang?.startsWith("fr") ? "Images du produit" : "Product Images"}
+                                    </h2>
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={isUploading}
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="cursor-pointer shrink-0"
-                                >
-                                    {isUploading ? (
-                                        <>
-                                            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                                            <span>{lang?.startsWith("fr") ? "Envoi en cours..." : "Uploading..."}</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Upload className="h-4 w-4 mr-1.5" />
-                                            <span>{images.length > 0 ? (lang?.startsWith("fr") ? "Ajouter des images" : "Add Images") : (lang?.startsWith("fr") ? "Téléverser des images" : "Upload Images")}</span>
-                                        </>
-                                    )}
-                                </Button>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {/* Grille des images existantes */}
-                                {images.length > 0 ? (
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                            {images.map((imgUrl, idx) => {
-                                                const isCover = idx === 0;
-                                                return (
-                                                    <div
-                                                        key={`${imgUrl}-${idx}`}
-                                                        className={`relative group aspect-square rounded-xl overflow-hidden border-2 bg-muted/30 transition-all ${
-                                                            isCover ? "border-primary shadow-xs ring-2 ring-primary/20" : "border-border/80 hover:border-border"
-                                                        }`}
-                                                    >
-                                                        <Image
-                                                            src={imgUrl}
-                                                            alt={`Product image ${idx + 1}`}
-                                                            fill
-                                                            sizes="(max-width: 768px) 50vw, 25vw"
-                                                            className="object-cover"
-                                                        />
-
-                                                        {/* Badge Couverture sur la 1ère image */}
-                                                        {isCover ? (
-                                                            <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground font-semibold shadow-xs z-10">
-                                                                {lang?.startsWith("fr") ? "Couverture" : "Cover"}
-                                                            </Badge>
-                                                        ) : (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleSetPrimary(idx)}
-                                                                className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-xs border shadow-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
-                                                                title={lang?.startsWith("fr") ? "Définir comme couverture" : "Set as cover image"}
-                                                            >
-                                                                {lang?.startsWith("fr") ? "Couverture" : "Set cover"}
-                                                            </button>
-                                                        )}
-
-                                                        {/* Bouton de suppression corbeille */}
-                                                        <Button
-                                                            type="button"
-                                                            variant="destructive"
-                                                            size="icon"
-                                                            onClick={() => handleRemoveImage(idx)}
-                                                            className="absolute top-2 right-2 h-7 w-7 rounded-lg opacity-90 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer z-10"
-                                                            aria-label="Remove image"
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </Button>
-
-                                                        {/* Numéro d'ordre */}
-                                                        <span className="absolute bottom-6 right-1.5 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
-                                                            #{idx + 1}
-                                                        </span>
-
-                                                        {/* Affichage de l'URL source */}
-                                                        <div
-                                                            className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-[9px] font-mono p-1 truncate text-center backdrop-blur-sm z-10"
-                                                            title={imgUrl}
-                                                        >
-                                                            {imgUrl}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-
-                                        {/* Zone de drop secondaire compacte */}
-                                        <div
-                                            onDrop={handleDrop}
-                                            onDragOver={handleDragOver}
-                                            onDragLeave={handleDragLeave}
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                                                isDragOver
-                                                    ? "border-primary bg-primary/5"
-                                                    : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <Upload className="h-4 w-4 text-primary" />
-                                                <span>{lang?.startsWith("fr") ? "Déposez d'autres images ici ou cliquez pour parcourir" : "Drop additional images here or click to browse"}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    /* Zone de drop principale (vide) */
-                                    <div
-                                        onDrop={handleDrop}
-                                        onDragOver={handleDragOver}
-                                        onDragLeave={handleDragLeave}
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                                            isDragOver
-                                                ? "border-primary bg-primary/5"
-                                                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30"
-                                        }`}
-                                    >
-                                        <div className="p-3 bg-muted rounded-full mb-3 text-muted-foreground">
-                                            <ImageIcon className="h-6 w-6" />
-                                        </div>
-                                        <p className="text-sm font-medium text-foreground text-center">
-                                            {dict.uploadImage || (lang?.startsWith("fr") ? "Cliquez ou glissez-déposez des images ici" : "Click or drag images here")}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            PNG, JPG, WEBP • Multiple files allowed
-                                        </p>
-                                    </div>
+                            <p className="text-sm text-muted-foreground mb-4">
+                                {lang?.startsWith("fr") ? "Photos du produit. La première sert de couverture." : "Product photos. First image serves as cover."}
+                            </p>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="images"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <AdminImageDropzone
+                                                value={field.value || images}
+                                                onChange={(newImages) => {
+                                                    const arr = Array.isArray(newImages) ? newImages : (newImages ? [newImages] : []);
+                                                    setImages(arr);
+                                                    form.setValue("images", arr, { shouldValidate: true, shouldDirty: true });
+                                                    form.setValue("imageUrl", arr[0] || null, { shouldValidate: true, shouldDirty: true });
+                                                }}
+                                                multiple={true}
+                                                maxFiles={10}
+                                                lang={lang}
+                                                title={dict.uploadImage || (lang?.startsWith("fr") ? "Cliquez ou glissez-déposez des images ici" : "Click or drag images here")}
+                                                recommendedText={lang?.startsWith("fr") ? "PNG, JPG, WEBP • Plusieurs fichiers autorisés" : "PNG, JPG, WEBP • Multiple files allowed"}
+                                                onUpload={uploadProductImage}
+                                                disabled={isLoading}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
                                 )}
-
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={handleFileInputChange}
-                                    className="hidden"
-                                />
-                            </CardContent>
-                        </Card>
+                            />
+                        </CardContent>
+                    </Card>
 
                     {/* Bloc 3 : Prix et Inventaire */}
                     <Card>
@@ -1165,7 +959,7 @@ export function ProductForm({
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {isUploading ? (dict.imageUploading || "Uploading image...") : isDeleting ? (dict.deleting || "Deleting...") : (dict.submitting || "Saving...")}
+                                {isDeleting ? (dict.deleting || "Deleting...") : (dict.submitting || "Saving...")}
                             </>
                         ) : (
                             <>

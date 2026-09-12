@@ -20,8 +20,8 @@ export async function updateCatalogSettings(data: CatalogSettingsFormData) {
     }
 
     const role = (session.user.role || "").toLowerCase();
-    if (role !== "admin" && role !== "user") {
-        return { success: false, error: "Forbidden: Admin or authorized role required" };
+    if (role !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
     }
 
     const parsed = catalogSettingsSchema.safeParse(data);
@@ -50,8 +50,8 @@ export async function updateGlobalSettings(data: GlobalSettingsFormData) {
     }
 
     const role = (session.user.role || "").toLowerCase();
-    if (role !== "admin" && role !== "user") {
-        return { success: false, error: "Forbidden: Admin or authorized role required" };
+    if (role !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
     }
 
     const parsed = globalSettingsSchema.safeParse(data);
@@ -84,8 +84,8 @@ export async function updateStoreSettings(data: GlobalSettingsFormData | StoreSe
     }
 
     const role = (session.user.role || "").toLowerCase();
-    if (role !== "admin" && role !== "user") {
-        return { success: false, error: "Forbidden: Admin or authorized role required" };
+    if (role !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
     }
 
     const parsedStore = storeSettingsSchema.safeParse(data);

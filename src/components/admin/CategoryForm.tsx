@@ -11,6 +11,7 @@ import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink, RotateCcw, File
 import Link from "next/link";
 import { createCategory, updateCategory, deleteCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
+import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 import { uploadProductImage } from "@/lib/firebase-storage";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,8 +79,6 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
     const [isPending, startTransition] = useTransition();
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isUploadingImage, setIsUploadingImage] = useState(false);
-    const imageInputRef = useRef<HTMLInputElement>(null);
 
     const defaultName: Record<string, string> = {};
     const defaultSlug: Record<string, string> = {};
@@ -176,23 +175,6 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
     };
 
     const imageUrlValue = form.watch("imageUrl");
-
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploadingImage(true);
-        try {
-            const downloadUrl = await uploadProductImage(file, `categories/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`);
-            form.setValue("imageUrl", downloadUrl, { shouldValidate: true, shouldDirty: true });
-            toast.success("Category image uploaded successfully!");
-        } catch (error: any) {
-            console.error(error);
-            toast.error(error?.message || "Failed to upload image");
-        } finally {
-            setIsUploadingImage(false);
-        }
-    };
 
     const onInvalid = (errors: any) => {
         console.warn("Category form validation errors:", errors);
@@ -457,67 +439,28 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                                 </p>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="border rounded-lg p-4 bg-muted/20 flex flex-col items-center justify-center min-h-[160px] gap-3 relative overflow-hidden">
-                                    {imageUrlValue ? (
-                                        <div className="w-full flex flex-col items-center gap-3">
-                                            <div className="relative w-full h-48 bg-background/80 rounded-lg border overflow-hidden">
-                                                <Image
-                                                    src={imageUrlValue}
-                                                    alt="Category Banner"
-                                                    fill
-                                                    className="object-cover"
+                                <FormField
+                                    control={form.control}
+                                    name="imageUrl"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <AdminImageDropzone
+                                                    value={field.value}
+                                                    onChange={(val) => field.onChange(val)}
+                                                    maxFiles={1}
+                                                    aspectRatio="video"
+                                                    lang={lang}
+                                                    title={lang?.startsWith("fr") ? "Cliquez ou glissez-déposez la bannière de catégorie" : "Click or drag category banner here"}
+                                                    recommendedText={lang?.startsWith("fr") ? "Recommandé : 1200×600px paysage (JPEG, PNG, WebP)" : "Recommended: 1200×600px landscape image (JPEG, PNG, WebP)"}
+                                                    onUpload={(file) => uploadProductImage(file, `categories/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`)}
+                                                    disabled={isLoading}
                                                 />
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => imageInputRef.current?.click()}
-                                                    disabled={isUploadingImage || isLoading}
-                                                    className="cursor-pointer"
-                                                >
-                                                    {isUploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                                    Change Image
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-destructive hover:bg-destructive/10 cursor-pointer"
-                                                    onClick={() => form.setValue("imageUrl", "", { shouldDirty: true })}
-                                                    disabled={isUploadingImage || isLoading}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                                    Remove
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 text-center py-4">
-                                            <ImageIcon className="h-10 w-10 text-muted-foreground" />
-                                            <p className="text-xs text-muted-foreground">Recommended: 1200×600px landscape image (JPEG, PNG, WebP)</p>
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                size="sm"
-                                                onClick={() => imageInputRef.current?.click()}
-                                                disabled={isUploadingImage || isLoading}
-                                                className="cursor-pointer mt-1"
-                                            >
-                                                {isUploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                                Upload Category Image
-                                            </Button>
-                                        </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
-                                    <input
-                                        type="file"
-                                        ref={imageInputRef}
-                                        onChange={handleImageUpload}
-                                        accept="image/png,image/jpeg,image/webp"
-                                        className="hidden"
-                                    />
-                                </div>
+                                />
                                 <FormField
                                     control={form.control}
                                     name="imageUrl"
@@ -775,7 +718,7 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
 
                     <Button
                         type="submit"
-                        disabled={isLoading || isUploadingImage}
+                        disabled={isLoading}
                         className="bg-primary text-primary-foreground hover:opacity-90 text-white px-6 cursor-pointer"
                     >
                         {isLoading ? (

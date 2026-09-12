@@ -2,6 +2,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import parse from "html-react-parser";
+import DOMPurify from "isomorphic-dompurify";
 import { ArrowRight } from "lucide-react";
 import { Metadata } from "next";
 
@@ -338,13 +339,24 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
     if (page.slug_en && !pageSlugMap["en"]) pageSlugMap["en"] = page.slug_en;
     if (page.slug_fr && !pageSlugMap["fr"]) pageSlugMap["fr"] = page.slug_fr;
 
+    const sanitizedContent = DOMPurify.sanitize(content || "<p></p>", {
+        ALLOWED_TAGS: [
+            "h1", "h2", "h3", "h4", "h5", "h6",
+            "p", "span", "strong", "em", "b", "i", "u", "s", "strike",
+            "ul", "ol", "li", "blockquote", "a", "img",
+            "table", "thead", "tbody", "tr", "th", "td",
+            "br", "hr", "code", "pre"
+        ],
+        ALLOWED_ATTR: ["href", "src", "alt", "title", "class", "target", "rel", "width", "height"],
+    });
+
     return (
         <div className="flex-1 bg-zinc-50 dark:bg-black">
             <PageTranslationSync pageSlugs={Object.keys(pageSlugMap).length > 0 ? pageSlugMap : null} />
             <div className="w-full max-w-7xl mx-auto py-16 px-6 md:px-16">
                 <h1 className="text-4xl font-bold tracking-tight mb-8">{title}</h1>
                 <article className="prose prose-zinc dark:prose-invert max-w-none">
-                    {parse(content || "<p></p>")}
+                    {parse(sanitizedContent)}
                 </article>
 
                 {isContactPage && (

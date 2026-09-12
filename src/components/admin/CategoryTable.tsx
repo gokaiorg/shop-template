@@ -9,8 +9,6 @@ import { Category } from "@/types/database";
 import { Pencil, GripVertical, ExternalLink, Search } from "lucide-react";
 import { getLocalizedField } from "@/lib/i18n";
 import { toast } from "sonner";
-import { db } from "@/lib/firebase";
-import { doc, writeBatch } from "firebase/firestore";
 import { reorderCategories } from "@/actions/admin";
 
 import {
@@ -223,49 +221,31 @@ export function CategoryTable({ categories: initialCategories, lang, catalogSlug
         if (changedItems.length === 0) return;
 
         try {
-            // Firestore Batch Write
-            const batch = writeBatch(db);
-            changedItems.forEach(({ id, order }) => {
-                const categoryRef = doc(db, "categories", id);
-                batch.update(categoryRef, { order });
-            });
-
-            await batch.commit();
-            toast.success(
-                lang === "fr"
-                    ? "Ordre des catégories mis à jour avec succès !"
-                    : "Category order updated successfully!"
-            );
-            router.refresh();
-        } catch (clientError: any) {
-            console.warn("Client batch write failed, attempting server action fallback:", clientError);
-            try {
-                const res = await reorderCategories(changedItems);
-                if (res.success) {
-                    toast.success(
-                        lang === "fr"
-                            ? "Ordre des catégories mis à jour avec succès !"
-                            : "Category order updated successfully!"
-                    );
-                    router.refresh();
-                } else {
-                    setCategories(previousCategories);
-                    toast.error(
-                        res.error ||
-                        (lang === "fr"
-                            ? "Échec de l'enregistrement de l'ordre des catégories"
-                            : "Failed to update category order")
-                    );
-                }
-            } catch (serverError: any) {
-                console.error("Server action fallback failed:", serverError);
+            const res = await reorderCategories(changedItems);
+            if (res.success) {
+                toast.success(
+                    lang === "fr"
+                        ? "Ordre des catégories mis à jour avec succès !"
+                        : "Category order updated successfully!"
+                );
+                router.refresh();
+            } else {
                 setCategories(previousCategories);
                 toast.error(
-                    lang === "fr"
-                        ? "Erreur lors de l'enregistrement de l'ordre"
-                        : "Failed to update category order"
+                    res.error ||
+                    (lang === "fr"
+                        ? "Échec de l'enregistrement de l'ordre des catégories"
+                        : "Failed to update category order")
                 );
             }
+        } catch (error: any) {
+            console.error("Error reordering categories:", error);
+            setCategories(previousCategories);
+            toast.error(
+                lang === "fr"
+                    ? "Erreur lors de l'enregistrement de l'ordre"
+                    : "Failed to update category order"
+            );
         }
     };
 

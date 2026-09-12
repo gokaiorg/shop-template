@@ -11,8 +11,6 @@ import { Input } from "@/components/ui/input";
 import { getLocalizedField } from "@/lib/i18n";
 import { formatPrice } from "@/lib/currency";
 import { toast } from "sonner";
-import { db } from "@/lib/firebase";
-import { doc, writeBatch } from "firebase/firestore";
 import { reorderProducts } from "@/actions/admin";
 import {
     Select,
@@ -292,49 +290,31 @@ export function ProductTable({
         if (changedItems.length === 0) return;
 
         try {
-            // Firestore Batch Write
-            const batch = writeBatch(db);
-            changedItems.forEach(({ id, order }) => {
-                const productRef = doc(db, "products", id);
-                batch.update(productRef, { order });
-            });
-
-            await batch.commit();
-            toast.success(
-                lang === "fr"
-                    ? "Ordre des produits mis à jour avec succès !"
-                    : "Product order updated successfully!"
-            );
-            router.refresh();
-        } catch (clientError: any) {
-            console.warn("Client batch write failed, attempting server action fallback:", clientError);
-            try {
-                const res = await reorderProducts(changedItems);
-                if (res.success) {
-                    toast.success(
-                        lang === "fr"
-                            ? "Ordre des produits mis à jour avec succès !"
-                            : "Product order updated successfully!"
-                    );
-                    router.refresh();
-                } else {
-                    setProducts(previousProducts);
-                    toast.error(
-                        res.error ||
-                        (lang === "fr"
-                            ? "Échec de l'enregistrement de l'ordre des produits"
-                            : "Failed to update product order")
-                    );
-                }
-            } catch (serverError: any) {
-                console.error("Server action fallback failed:", serverError);
+            const res = await reorderProducts(changedItems);
+            if (res.success) {
+                toast.success(
+                    lang === "fr"
+                        ? "Ordre des produits mis à jour avec succès !"
+                        : "Product order updated successfully!"
+                );
+                router.refresh();
+            } else {
                 setProducts(previousProducts);
                 toast.error(
-                    lang === "fr"
-                        ? "Erreur lors de l'enregistrement de l'ordre"
-                        : "Failed to save product order"
+                    res.error ||
+                    (lang === "fr"
+                        ? "Échec de l'enregistrement de l'ordre des produits"
+                        : "Failed to update product order")
                 );
             }
+        } catch (error: any) {
+            console.error("Error reordering products:", error);
+            setProducts(previousProducts);
+            toast.error(
+                lang === "fr"
+                    ? "Erreur lors de l'enregistrement de l'ordre"
+                    : "Failed to save product order"
+            );
         }
     };
 

@@ -1,19 +1,16 @@
 "use client";
 
-import React, { useState, useTransition, useRef } from "react";
+import React, { useState, useTransition } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { 
-    Upload, 
     Trash2, 
     Loader2, 
     Save, 
     Globe, 
-    Image as ImageIcon,
     Sparkles,
     Palette,
     Coins,
@@ -21,6 +18,7 @@ import {
     Share2,
     ExternalLink,
 } from "lucide-react";
+import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,14 +63,6 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
     const [isPending, startTransition] = useTransition();
 
-    const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-    const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
-    const [isUploadingHero, setIsUploadingHero] = useState(false);
-
-    const logoInputRef = useRef<HTMLInputElement>(null);
-    const faviconInputRef = useRef<HTMLInputElement>(null);
-    const heroInputRef = useRef<HTMLInputElement>(null);
-
     const defaultHeroTitle: Record<string, string> = {};
     const defaultHeroDesc: Record<string, string> = {};
     const defaultFooterDesc: Record<string, string> = {};
@@ -105,61 +95,6 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
         control: form.control,
         name: "socialLinks",
     });
-
-    const logoUrlValue = form.watch("logoUrl");
-    const faviconUrlValue = form.watch("faviconUrl");
-    const heroBgUrlValue = form.watch("heroBackgroundImageUrl");
-
-    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploadingLogo(true);
-        try {
-            const downloadUrl = await uploadBrandAsset(file, "logo");
-            form.setValue("logoUrl", downloadUrl, { shouldValidate: true, shouldDirty: true });
-            toast.success("Logo uploaded successfully!");
-        } catch (error: any) {
-            console.error(error);
-            toast.error(error?.message || "Failed to upload logo");
-        } finally {
-            setIsUploadingLogo(false);
-        }
-    };
-
-    const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploadingFavicon(true);
-        try {
-            const downloadUrl = await uploadBrandAsset(file, "favicon");
-            form.setValue("faviconUrl", downloadUrl, { shouldValidate: true, shouldDirty: true });
-            toast.success("Favicon uploaded successfully!");
-        } catch (error: any) {
-            console.error(error);
-            toast.error(error?.message || "Failed to upload favicon");
-        } finally {
-            setIsUploadingFavicon(false);
-        }
-    };
-
-    const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploadingHero(true);
-        try {
-            const downloadUrl = await uploadBrandAsset(file, "hero");
-            form.setValue("heroBackgroundImageUrl", downloadUrl, { shouldValidate: true, shouldDirty: true });
-            toast.success("Hero background image uploaded successfully!");
-        } catch (error: any) {
-            console.error(error);
-            toast.error(error?.message || "Failed to upload hero image");
-        } finally {
-            setIsUploadingHero(false);
-        }
-    };
 
     const onSubmit = (values: GlobalSettingsFormData) => {
         startTransition(async () => {
@@ -272,168 +207,94 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                         {/* Media Assets (Logo & Favicon) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t">
                             {/* Logo Asset Upload */}
-                            <div className="space-y-3">
-                                <FormLabel className="flex items-center justify-between">
-                                    <span>Brand Logo</span>
-                                    {logoUrlValue && (
-                                        <Badge variant="outline" className="text-[10px]">Active</Badge>
-                                    )}
-                                </FormLabel>
-                                
-                                <div className="border rounded-lg p-4 bg-muted/20 flex flex-col items-center justify-center min-h-[160px] gap-3 relative">
-                                    {logoUrlValue ? (
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="relative h-16 w-32 bg-background/80 rounded border p-2 flex items-center justify-center">
-                                                <Image
-                                                    src={logoUrlValue}
-                                                    alt="Brand Logo"
-                                                    width={100}
-                                                    height={50}
-                                                    className="object-contain max-h-full max-w-full"
-                                                />
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => logoInputRef.current?.click()}
-                                                    disabled={isUploadingLogo || isPending}
-                                                >
-                                                    {isUploadingLogo ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                                    Change Logo
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-destructive hover:bg-destructive/10"
-                                                    onClick={() => form.setValue("logoUrl", "", { shouldDirty: true })}
-                                                    disabled={isUploadingLogo || isPending}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-                                            </div>
+                            <FormField
+                                control={form.control}
+                                name="logoUrl"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center justify-between">
+                                            <span>{lang === "fr" ? "Logo de la boutique" : "Brand Logo"}</span>
+                                            {field.value && (
+                                                <Badge variant="outline" className="text-[10px]">Active</Badge>
+                                            )}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <AdminImageDropzone
+                                                value={field.value}
+                                                onChange={(url) => field.onChange(url)}
+                                                maxFiles={1}
+                                                aspectRatio="square"
+                                                recommendedText={
+                                                    lang === "fr"
+                                                        ? "PNG, SVG ou WebP recommandé"
+                                                        : "PNG, SVG, or WebP recommended"
+                                                }
+                                                onUpload={(file) => uploadBrandAsset(file, "logo")}
+                                                lang={lang}
+                                                disabled={isPending}
+                                            />
+                                        </FormControl>
+                                        <div className="pt-2">
+                                            <FormLabel className="text-xs text-muted-foreground">
+                                                {lang === "fr" ? "Ou saisir une URL directe :" : "Or enter direct URL:"}
+                                            </FormLabel>
+                                            <Input
+                                                placeholder="Direct URL or uploaded path"
+                                                {...field}
+                                                value={field.value || ""}
+                                                className="mt-1 text-xs font-mono"
+                                                disabled={isPending}
+                                            />
                                         </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 text-center">
-                                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                                            <p className="text-xs text-muted-foreground">PNG, SVG, or WebP recommended</p>
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                size="sm"
-                                                onClick={() => logoInputRef.current?.click()}
-                                                disabled={isUploadingLogo || isPending}
-                                            >
-                                                {isUploadingLogo ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                                Upload Logo
-                                            </Button>
-                                        </div>
-                                    )}
-                                    <input
-                                        type="file"
-                                        ref={logoInputRef}
-                                        onChange={handleLogoUpload}
-                                        accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                                        className="hidden"
-                                    />
-                                </div>
-                                <FormField
-                                    control={form.control}
-                                    name="logoUrl"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                <Input placeholder="Direct URL or uploaded path" {...field} className="text-xs font-mono" />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
                             {/* Favicon Asset Upload */}
-                            <div className="space-y-3">
-                                <FormLabel className="flex items-center justify-between">
-                                    <span>Favicon Icon</span>
-                                    {faviconUrlValue && (
-                                        <Badge variant="outline" className="text-[10px]">Active</Badge>
-                                    )}
-                                </FormLabel>
-
-                                <div className="border rounded-lg p-4 bg-muted/20 flex flex-col items-center justify-center min-h-[160px] gap-3 relative">
-                                    {faviconUrlValue ? (
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="relative h-12 w-12 bg-background/80 rounded border p-1 flex items-center justify-center">
-                                                <Image
-                                                    src={faviconUrlValue}
-                                                    alt="Favicon"
-                                                    width={32}
-                                                    height={32}
-                                                    className="object-contain"
-                                                />
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => faviconInputRef.current?.click()}
-                                                    disabled={isUploadingFavicon || isPending}
-                                                >
-                                                    {isUploadingFavicon ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                                    Change Favicon
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-destructive hover:bg-destructive/10"
-                                                    onClick={() => form.setValue("faviconUrl", "", { shouldDirty: true })}
-                                                    disabled={isUploadingFavicon || isPending}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-                                            </div>
+                            <FormField
+                                control={form.control}
+                                name="faviconUrl"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center justify-between">
+                                            <span>{lang === "fr" ? "Icône Favicon" : "Favicon Icon"}</span>
+                                            {field.value && (
+                                                <Badge variant="outline" className="text-[10px]">Active</Badge>
+                                            )}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <AdminImageDropzone
+                                                value={field.value}
+                                                onChange={(url) => field.onChange(url)}
+                                                maxFiles={1}
+                                                aspectRatio="square"
+                                                recommendedText={
+                                                    lang === "fr"
+                                                        ? "ICO, PNG ou SVG (32×32px)"
+                                                        : "ICO, PNG, or SVG (32×32px)"
+                                                }
+                                                onUpload={(file) => uploadBrandAsset(file, "favicon")}
+                                                lang={lang}
+                                                disabled={isPending}
+                                            />
+                                        </FormControl>
+                                        <div className="pt-2">
+                                            <FormLabel className="text-xs text-muted-foreground">
+                                                {lang === "fr" ? "Ou saisir une URL directe :" : "Or enter direct URL:"}
+                                            </FormLabel>
+                                            <Input
+                                                placeholder="Direct URL or uploaded path"
+                                                {...field}
+                                                value={field.value || ""}
+                                                className="mt-1 text-xs font-mono"
+                                                disabled={isPending}
+                                            />
                                         </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 text-center">
-                                            <Globe className="h-8 w-8 text-muted-foreground" />
-                                            <p className="text-xs text-muted-foreground">ICO, PNG, or SVG (32x32px)</p>
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                size="sm"
-                                                onClick={() => faviconInputRef.current?.click()}
-                                                disabled={isUploadingFavicon || isPending}
-                                            >
-                                                {isUploadingFavicon ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                                Upload Favicon
-                                            </Button>
-                                        </div>
-                                    )}
-                                    <input
-                                        type="file"
-                                        ref={faviconInputRef}
-                                        onChange={handleFaviconUpload}
-                                        accept="image/x-icon,image/png,image/svg+xml"
-                                        className="hidden"
-                                    />
-                                </div>
-                                <FormField
-                                    control={form.control}
-                                    name="faviconUrl"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                <Input placeholder="Direct URL or uploaded path" {...field} className="text-xs font-mono" />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                     </CardContent>
                 </Card>
@@ -455,94 +316,54 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {/* Hero Background Image Upload */}
-                        <div className="space-y-3">
-                            <FormLabel className="flex items-center justify-between">
-                                <span>Hero Background Image (Parallax)</span>
-                                {heroBgUrlValue && (
-                                    <Badge variant="outline" className="text-[10px]">Active</Badge>
-                                )}
-                            </FormLabel>
-
-                            <div className="border rounded-lg p-4 bg-muted/20 flex flex-col items-center justify-center min-h-[180px] gap-3 relative overflow-hidden">
-                                {heroBgUrlValue ? (
-                                    <div className="w-full flex flex-col items-center gap-3">
-                                        <div className="relative w-full h-48 bg-background/80 rounded-lg border overflow-hidden">
-                                            <Image
-                                                src={heroBgUrlValue}
-                                                alt="Hero Background"
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => heroInputRef.current?.click()}
-                                                disabled={isUploadingHero || isPending}
-                                            >
-                                                {isUploadingHero ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                                Change Image
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-destructive hover:bg-destructive/10"
-                                                onClick={() => form.setValue("heroBackgroundImageUrl", "", { shouldDirty: true })}
-                                                disabled={isUploadingHero || isPending}
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                                Remove
-                                            </Button>
-                                        </div>
+                        <FormField
+                            control={form.control}
+                            name="heroBackgroundImageUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center justify-between">
+                                        <span>{lang === "fr" ? "Image d'arrière-plan Hero (Parallaxe)" : "Hero Background Image (Parallax)"}</span>
+                                        {field.value && (
+                                            <Badge variant="outline" className="text-[10px]">Active</Badge>
+                                        )}
+                                    </FormLabel>
+                                    <FormControl>
+                                        <AdminImageDropzone
+                                            value={field.value}
+                                            onChange={(url) => field.onChange(url)}
+                                            maxFiles={1}
+                                            aspectRatio="banner"
+                                            recommendedText={
+                                                lang === "fr"
+                                                    ? "Paysage haute résolution (1920×1080px+, WebP/JPEG)"
+                                                    : "High resolution landscape (1920×1080px+, WebP/JPEG)"
+                                            }
+                                            onUpload={(file) => uploadBrandAsset(file, "hero")}
+                                            lang={lang}
+                                            disabled={isPending}
+                                        />
+                                    </FormControl>
+                                    <div className="pt-2">
+                                        <FormLabel className="text-xs text-muted-foreground">
+                                            {lang === "fr" ? "Ou saisir une URL directe :" : "Or enter direct URL:"}
+                                        </FormLabel>
+                                        <Input
+                                            placeholder="Direct URL or uploaded path"
+                                            {...field}
+                                            value={field.value || ""}
+                                            className="mt-1 text-xs font-mono"
+                                            disabled={isPending}
+                                        />
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col items-center gap-2 text-center py-6">
-                                        <ImageIcon className="h-10 w-10 text-muted-foreground" />
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-medium">No background image selected</p>
-                                            <p className="text-xs text-muted-foreground">High resolution landscape image (1920×1080px or higher, WebP/JPEG) recommended</p>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() => heroInputRef.current?.click()}
-                                            disabled={isUploadingHero || isPending}
-                                            className="mt-2"
-                                        >
-                                            {isUploadingHero ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-                                            Upload Hero Background
-                                        </Button>
-                                    </div>
-                                )}
-                                <input
-                                    type="file"
-                                    ref={heroInputRef}
-                                    onChange={handleHeroUpload}
-                                    accept="image/png,image/jpeg,image/webp"
-                                    className="hidden"
-                                />
-                            </div>
-
-                            <FormField
-                                control={form.control}
-                                name="heroBackgroundImageUrl"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <Input placeholder="Direct URL or uploaded path" {...field} className="text-xs font-mono" />
-                                        </FormControl>
-                                        <FormDescription className="text-xs">
-                                            The background image will automatically render with a native parallax scroll effect on the homepage.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                                    <FormDescription className="text-xs">
+                                        {lang === "fr"
+                                            ? "L'image d'arrière-plan s'affichera automatiquement avec un effet de parallaxe natif sur la page d'accueil."
+                                            : "The background image will automatically render with a native parallax scroll effect on the homepage."}
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         {/* Hero Text Content */}
                         <div className="border-t pt-4">
@@ -893,7 +714,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                     </Button>
                     <Button
                         type="submit"
-                        disabled={isPending || isUploadingLogo || isUploadingFavicon || isUploadingHero}
+                        disabled={isPending}
                         className="bg-primary text-primary-foreground hover:opacity-90 text-white px-6 cursor-pointer"
                     >
                         {isPending ? (
