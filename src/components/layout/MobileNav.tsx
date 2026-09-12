@@ -10,9 +10,19 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useBrand } from "@/components/providers/BrandProvider";
-import { Page } from "@/types/database";
+import { Page, Category } from "@/types/database";
 
-export function MobileNav({ lang, dict, pages = [] }: { lang: string, dict: Record<string, string>, pages?: Page[] }) {
+export function MobileNav({
+    lang,
+    dict,
+    pages = [],
+    categories = [],
+}: {
+    lang: string;
+    dict: Record<string, string>;
+    pages?: Page[];
+    categories?: Category[];
+}) {
     const [open, setOpen] = useState(false);
     const { brand } = useBrand();
     const { logo } = brand.assets;
@@ -48,6 +58,7 @@ export function MobileNav({ lang, dict, pages = [] }: { lang: string, dict: Reco
                         lang={lang}
                         dict={dict}
                         pages={pages}
+                        categories={categories}
                         className="flex flex-col items-start gap-4 text-lg font-medium"
                         onNavClick={() => setOpen(false)}
                     />

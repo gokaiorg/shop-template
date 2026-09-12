@@ -29,18 +29,24 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
             ? "Mon Compte"
             : "Account";
 
-    const adminPanelLabel =
-        typeof dict?.header?.admin_panel === "string"
-            ? dict.header.admin_panel
+    const dashboardLabel =
+        typeof dict?.header?.dashboard === "string"
+            ? dict.header.dashboard
+            : typeof dict?.admin?.dashboard === "string"
+            ? dict.admin.dashboard
+            : typeof dict?.dashboard === "string"
+            ? dict.dashboard
             : lang === "fr"
-            ? "Panneau Admin"
-            : "Admin Panel";
+            ? "Tableau de bord"
+            : "Dashboard";
 
     const myAccountLabel =
         typeof dict?.header?.account === "string"
             ? dict.header.account
             : typeof dict?.account?.title === "string"
             ? dict.account.title
+            : typeof dict?.account?.profile === "string"
+            ? dict.account.profile
             : lang === "fr"
             ? "Mon Compte"
             : "My Account";
@@ -62,6 +68,8 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
     }
 
     if (session) {
+        const isAdmin = session.user?.role === "admin";
+
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -71,26 +79,27 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                    {session.user?.role === "admin" && (
+                    {isAdmin ? (
                         <DropdownMenuItem 
                             asChild
                             className="cursor-pointer focus:bg-primary focus:text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                         >
                             <Link href={`/${lang}/admin`} className="flex items-center w-full">
                                 <LayoutDashboard className="mr-2 h-4 w-4" />
-                                <span>{adminPanelLabel}</span>
+                                <span>{dashboardLabel}</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    ) : (
+                        <DropdownMenuItem 
+                            asChild
+                            className="cursor-pointer focus:bg-primary focus:text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                        >
+                            <Link href={`/${lang}/account`} className="flex items-center w-full">
+                                <User className="mr-2 h-4 w-4" />
+                                <span>{myAccountLabel}</span>
                             </Link>
                         </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem 
-                        asChild
-                        className="cursor-pointer focus:bg-primary focus:text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                    >
-                        <Link href={`/${lang}/account`} className="flex items-center w-full">
-                            <User className="mr-2 h-4 w-4" />
-                            <span>{myAccountLabel}</span>
-                        </Link>
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                         onClick={() => signOut({ callbackUrl: `/${lang}` })}

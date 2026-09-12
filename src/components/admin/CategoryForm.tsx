@@ -7,13 +7,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink, RotateCcw, FileText, LayoutTemplate, ArrowLeft } from "lucide-react";
+import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink, RotateCcw, FileText, LayoutTemplate, ArrowLeft, Eye } from "lucide-react";
 import Link from "next/link";
 import { createCategory, updateCategory, deleteCategory } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 import { uploadProductImage } from "@/lib/firebase-storage";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 import {
@@ -102,6 +103,7 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
             status: (initialData?.status as "draft" | "published") || "published",
             imageUrl: initialData?.imageUrl || "",
             order: initialData?.order !== undefined ? initialData.order : Date.now(),
+            showInHeader: initialData?.showInHeader ?? false,
         },
     });
 
@@ -653,6 +655,50 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        {/* Navigation Placement Card */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Eye className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang?.startsWith("fr") ? "Emplacement navigation" : "Navigation Placement"}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr") 
+                                        ? "Affichage dans le menu principal." 
+                                        : "Display in main header menu."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="showInHeader"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={Boolean(field.value)}
+                                                    onCheckedChange={field.onChange}
+                                                    disabled={isLoading}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel className="text-sm font-medium cursor-pointer">
+                                                    Header Navigation
+                                                </FormLabel>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {lang?.startsWith("fr") 
+                                                        ? "Afficher le lien dans la barre de navigation principale." 
+                                                        : "Show link in main top navigation bar."}
+                                                </p>
+                                            </div>
                                         </FormItem>
                                     )}
                                 />

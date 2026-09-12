@@ -8,6 +8,7 @@ export const categorySchema = z.object({
     status: z.enum(["draft", "published"]).default("published"),
     imageUrl: z.string().optional().nullable(),
     order: z.coerce.number().int().default(0),
+    showInHeader: z.boolean().default(false),
 });
 
 export const productSchema = z.object({
