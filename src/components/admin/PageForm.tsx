@@ -244,7 +244,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8 w-full flex flex-col flex-1">
                 <div className="flex items-center justify-between">
-                    <Button asChild variant="ghost" size="sm">
+                    <Button asChild variant="ghost" size="sm" className="cursor-pointer text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
                         <Link href={`/${lang}/admin/pages`} className="flex items-center gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             {dict?.back_to_pages || (lang === 'fr' ? 'Retour aux pages' : 'Back to pages')}

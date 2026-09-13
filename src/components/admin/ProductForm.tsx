@@ -129,6 +129,7 @@ export function ProductForm({
             description: defaultDesc,
             status: defaultStatus,
             price: initialData?.price || 0,
+            hidePrice: initialData?.hidePrice ?? false,
             stock: initialData?.stock || 0,
             artist: initialData?.artist || initialData?.vendor || "",
             vendor: initialData?.vendor || initialData?.artist || "",
@@ -245,14 +246,6 @@ export function ProductForm({
                 hasError = true;
             }
 
-            if (!values.description?.[defaultLocale]?.trim()) {
-                form.setError(`description.${defaultLocale}` as any, {
-                    type: "manual",
-                    message: lang?.startsWith("fr") ? "La description est obligatoire." : "Description is required.",
-                });
-                hasError = true;
-            }
-
             if (!values.categoryIds || values.categoryIds.length === 0) {
                 form.setError("categoryIds" as any, {
                     type: "manual",
@@ -290,7 +283,7 @@ export function ProductForm({
             const completeName: Record<string, string> = { ...values.name };
             const completeSlug: Record<string, string> = { ...values.slug };
             const completeIntro: Record<string, string> = { ...(values.intro || {}) };
-            const completeDesc: Record<string, string> = { ...values.description };
+            const completeDesc: Record<string, string> = { ...(values.description || {}) };
             const completeStatus: Record<string, string> = { ...(values.status || {}) };
 
             locales.forEach((loc) => {
@@ -373,7 +366,7 @@ export function ProductForm({
                 <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
                 <div className="flex items-center justify-between">
-                    <Button asChild variant="ghost" size="sm">
+                    <Button asChild variant="ghost" size="sm" className="cursor-pointer text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
                         <Link href={`/${lang}/admin/products`} className="flex items-center gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             {dict?.back_to_products || (lang?.startsWith('fr') ? 'Retour aux produits' : 'Back to products')}
@@ -440,7 +433,7 @@ export function ProductForm({
                                                     name={`description.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>{dict.description || "Description"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                            <FormLabel>{dict.description || "Description"}</FormLabel>
                                                             <FormControl>
                                                                 <Textarea placeholder={`Detailed description (${loc.toUpperCase()})...`} className="min-h-32" {...field} value={field.value || ""} />
                                                             </FormControl>
@@ -484,7 +477,7 @@ export function ProductForm({
                                             name={`description.${locales[0]}`}
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{dict.description || "Description"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                    <FormLabel>{dict.description || "Description"}</FormLabel>
                                                     <FormControl>
                                                         <Textarea placeholder="Detailed description..." className="min-h-32" {...field} value={field.value || ""} />
                                                     </FormControl>
@@ -592,6 +585,32 @@ export function ProductForm({
                                     )}
                                 />
                             </div>
+
+                            <FormField
+                                control={form.control}
+                                name="hidePrice"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={Boolean(field.value)}
+                                                onCheckedChange={field.onChange}
+                                                disabled={isLoading}
+                                            />
+                                        </FormControl>
+                                        <div className="space-y-1 leading-none">
+                                            <FormLabel className="text-sm font-medium cursor-pointer">
+                                                {lang?.startsWith("fr") ? "Masquer le prix (Non destiné à la vente)" : "Hide price (Not for sale)"}
+                                            </FormLabel>
+                                            <p className="text-xs text-muted-foreground">
+                                                {lang?.startsWith("fr")
+                                                    ? "Masque le prix et le bouton d'ajout au panier sur la boutique pour les pièces d'exposition ou archives."
+                                                    : "Hides the price and add-to-cart button in the storefront for exhibition pieces or archives."}
+                                            </p>
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
                         </CardContent>
                     </Card>
 

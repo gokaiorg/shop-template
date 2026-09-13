@@ -295,7 +295,7 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                 <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
                 <div className="flex items-center justify-between">
-                    <Button asChild variant="ghost" size="sm">
+                    <Button asChild variant="ghost" size="sm" className="cursor-pointer text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
                         <Link href={`/${lang}/admin/categories`} className="flex items-center gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             {dict?.back_to_categories || (lang?.startsWith('fr') ? 'Retour aux catégories' : 'Back to categories')}

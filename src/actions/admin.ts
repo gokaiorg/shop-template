@@ -213,7 +213,7 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
         const nameMap = { ...result.data.name };
         const slugMap = { ...result.data.slug };
         const introMap = { ...(result.data.intro || {}) };
-        const descMap = { ...result.data.description };
+        const descMap = { ...(result.data.description || {}) };
         const statusMap = { ...(result.data.status || {}) };
 
         const nameEn = nameMap.en || nameMap[defaultLocale] || "";
@@ -235,6 +235,7 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
             id: ref.id,
             order: result.data.order !== undefined ? Math.round(Number(result.data.order)) : Date.now(),
             price: result.data.price,
+            hidePrice: Boolean(result.data.hidePrice),
             stock: result.data.stock,
             artist,
             vendor: artist,
@@ -310,7 +311,7 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
         const nameMap = { ...result.data.name };
         const slugMap = { ...result.data.slug };
         const introMap = { ...(result.data.intro || {}) };
-        const descMap = { ...result.data.description };
+        const descMap = { ...(result.data.description || {}) };
         const statusMap = { ...(result.data.status || {}) };
 
         const nameEn = nameMap.en || nameMap[defaultLocale] || "";
@@ -330,6 +331,7 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
 
         const productData: any = {
             price: result.data.price,
+            hidePrice: Boolean(result.data.hidePrice),
             stock: result.data.stock,
             artist,
             vendor: artist,

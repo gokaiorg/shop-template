@@ -366,14 +366,16 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
             "@type": "Brand",
             name: brandName,
         },
-        offers: {
-            "@type": "Offer",
-            price: product.price ?? 0,
-            priceCurrency: currency,
-            availability: isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-            url: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}/${productSlug}`,
-            itemCondition: "https://schema.org/NewCondition",
-        },
+        ...(!product.hidePrice ? {
+            offers: {
+                "@type": "Offer",
+                price: product.price ?? 0,
+                priceCurrency: currency,
+                availability: isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+                url: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}/${productSlug}`,
+                itemCondition: "https://schema.org/NewCondition",
+            },
+        } : {}),
     };
 
     const breadcrumbSchema = {
@@ -446,9 +448,11 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                             </div>
                         )}
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">{title}</h1>
-                        <p className="mt-4 text-3xl font-semibold text-foreground">
-                            {formatPrice(product.price, currency, lang)}
-                        </p>
+                        {!product.hidePrice && (
+                            <p className="mt-4 text-3xl font-semibold text-foreground">
+                                {formatPrice(product.price, currency, lang)}
+                            </p>
+                        )}
                     </div>
 
                     <h2 className="sr-only">Product Details</h2>
@@ -463,7 +467,7 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                         </p>
                     </div>
 
-                    {isCartEnabled && (
+                    {isCartEnabled && !product.hidePrice && (
                         <div className="pt-6 border-t">
                             <AddToCartButton
                                 product={product}

@@ -12,7 +12,9 @@ import {
     BookOpen,
     ExternalLink,
     ShoppingBag,
+    ArrowLeft,
 } from "lucide-react";
+import Link from "next/link";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 
 import { Button } from "@/components/ui/button";
@@ -36,7 +38,6 @@ import { updateCatalogSettings } from "@/actions/settings";
 import { uploadBrandAsset } from "@/lib/firebase-storage";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { getLocaleDisplayName } from "@/lib/i18n";
-import Link from "next/link";
 
 interface CatalogSettingsFormProps {
     initialData: StoreSettings;
@@ -93,6 +94,15 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 flex flex-col flex-1">
+                <div className="flex items-center justify-between">
+                    <Button asChild variant="ghost" size="sm" className="cursor-pointer text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
+                        <Link href={`/${lang}/admin/dashboard`} className="flex items-center gap-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            {dict?.back_to_dashboard || (lang === "fr" ? "Retour au tableau de bord" : "Back to dashboard")}
+                        </Link>
+                    </Button>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Colonne Principale (Gauche) */}
                     <div className="col-span-1 lg:col-span-2 space-y-8">

@@ -25,6 +25,7 @@ export interface Product {
   id: string;
   order?: number;
   price: number;
+  hidePrice?: boolean;
   stock: number;
   artist?: string | null;
   vendor?: string | null;
@@ -38,7 +39,7 @@ export interface Product {
   updatedAt: Date | string;
   name: Record<string, string>;
   slug: Record<string, string>;
-  description: Record<string, string>;
+  description?: Record<string, string>;
   intro?: Record<string, string> | null;
   status: Record<string, string>;
   // Legacy optional fields for compatibility

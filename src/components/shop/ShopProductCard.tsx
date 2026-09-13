@@ -116,22 +116,24 @@ export function ShopProductCard({ product, lang, dict, categorySlug }: ShopProdu
                 </p>
 
                 {/* Bottom Row */}
-                <div className="mt-auto flex items-center justify-between pt-4">
-                    <p className="text-lg font-bold">
-                        {formatPrice(product.price, currency, lang)}
-                    </p>
-                    {isCartEnabled && (
-                        <Button
-                            size="sm"
-                            disabled={isOutOfStock}
-                            className={`rounded-full shadow-xs ${isOutOfStock ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
-                            onClick={handleAddToCart}
-                            aria-label={`${isOutOfStock ? "Sold Out" : (dict.add_to_cart || "Add to cart")} ${title}`}
-                        >
-                            {isOutOfStock ? (dict.sold_out || "Sold Out") : (dict.add_to_cart || "Add to cart")}
-                        </Button>
-                    )}
-                </div>
+                {!product.hidePrice && (
+                    <div className="mt-auto flex items-center justify-between pt-4">
+                        <p className="text-lg font-bold">
+                            {formatPrice(product.price, currency, lang)}
+                        </p>
+                        {isCartEnabled && (
+                            <Button
+                                size="sm"
+                                disabled={isOutOfStock}
+                                className={`rounded-full shadow-xs ${isOutOfStock ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                                onClick={handleAddToCart}
+                                aria-label={`${isOutOfStock ? "Sold Out" : (dict.add_to_cart || "Add to cart")} ${title}`}
+                            >
+                                {isOutOfStock ? (dict.sold_out || "Sold Out") : (dict.add_to_cart || "Add to cart")}
+                            </Button>
+                        )}
+                    </div>
+                )}
             </div>
         </article>
     );

@@ -120,7 +120,18 @@ function SortableProductRow({ product, currency, lang, catalogSlug = "shop" }: S
                     {status}
                 </span>
             </td>
-            <td className="px-6 py-4 font-medium whitespace-nowrap">{formatPrice(product.price, currency, lang)}</td>
+            <td className="px-6 py-4 font-medium whitespace-nowrap">
+                {product.hidePrice ? (
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground line-through text-xs">{formatPrice(product.price, currency, lang)}</span>
+                        <Badge variant="outline" className="text-[10px] py-0 px-1 font-normal border-amber-500/40 text-amber-600 dark:text-amber-400">
+                            {lang === "fr" ? "Non à la vente" : "Not for sale"}
+                        </Badge>
+                    </div>
+                ) : (
+                    formatPrice(product.price, currency, lang)
+                )}
+            </td>
             <td className="px-6 py-4 whitespace-nowrap">
                 {(product.stock ?? 0) > 0 ? (
                     product.stock
