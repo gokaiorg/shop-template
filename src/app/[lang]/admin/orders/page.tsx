@@ -7,6 +7,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { getIsCartEnabled } from "@/config/brand.config";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
+import { ShoppingCart } from "lucide-react";
 
 interface AdminOrdersPageProps {
     params: Promise<{
@@ -16,6 +19,11 @@ interface AdminOrdersPageProps {
 
 export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) {
     const { lang } = await params;
+
+    // Guard route: if cart is disabled, redirect to admin dashboard
+    if (!getIsCartEnabled()) {
+        redirect(`/${lang}/admin/dashboard`);
+    }
 
     const session = await auth();
     if (!session) redirect(`/${lang}/login`);
@@ -52,29 +60,30 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">{ordersDict.title}</h1>
-                    <p className="text-muted-foreground">
-                        {lang === 'fr' ? 'Gérer les commandes de votre boutique.' : 'Manage your store orders.'}
-                    </p>
-                </div>
-            </div>
-
+        <AdminPageLayout
+            title={ordersDict.title}
+            description={lang === 'fr' ? 'Suivi et gestion des commandes clients.' : 'Tracking and fulfillment of customer orders.'}
+            icon={ShoppingCart}
+        >
             <Card>
                 <CardHeader>
-                    <CardTitle>{ordersDict.title}</CardTitle>
+                    <div className="flex items-center gap-2 mb-1">
+                        <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+                        <h2 className="text-lg font-medium tracking-tight">{ordersDict.title}</h2>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                        {lang === 'fr' ? 'Liste complète des commandes passées.' : 'Full list of processed store orders.'}
+                    </p>
                 </CardHeader>
-                <CardContent>
-                    <Table>
+                <CardContent className="overflow-x-auto">
+                    <Table className="min-w-[700px]">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>{ordersDict.columns.id}</TableHead>
-                                <TableHead>{ordersDict.columns.date}</TableHead>
-                                <TableHead>{ordersDict.columns.customer}</TableHead>
-                                <TableHead>{ordersDict.columns.total}</TableHead>
-                                <TableHead className="text-right">{ordersDict.columns.status}</TableHead>
+                                <TableHead className="whitespace-nowrap">{ordersDict.columns.id}</TableHead>
+                                <TableHead className="whitespace-nowrap">{ordersDict.columns.date}</TableHead>
+                                <TableHead className="whitespace-nowrap">{ordersDict.columns.customer}</TableHead>
+                                <TableHead className="whitespace-nowrap">{ordersDict.columns.total}</TableHead>
+                                <TableHead className="text-right whitespace-nowrap">{ordersDict.columns.status}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -87,21 +96,21 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
                             ) : (
                                 orders.map((order) => (
                                     <TableRow key={order.id}>
-                                        <TableCell className="font-medium">
+                                        <TableCell className="font-medium whitespace-nowrap">
                                             {order.id.substring(order.id.length - 8).toUpperCase()}
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground">
+                                        <TableCell className="text-muted-foreground whitespace-nowrap">
                                             {format(new Date(order.createdAt), "PPP p")}
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex flex-col">
-                                                <span>{order.customerName || "Guest"}</span>
-                                                <span className="text-xs text-muted-foreground">
+                                            <div className="flex flex-col min-w-[150px]">
+                                                <span className="font-medium">{order.customerName || "Guest"}</span>
+                                                <span className="text-xs text-muted-foreground truncate">
                                                     {order.customerEmail}
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="whitespace-nowrap">
                                             <div className="flex flex-col">
                                                 <span className="font-semibold">{formatCurrency(order.totalAmount)}</span>
                                                 <span className="text-xs text-muted-foreground">
@@ -109,9 +118,10 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className="text-right whitespace-nowrap">
                                             <Badge
                                                 variant={order.status === "COMPLETED" || order.status === "PAID" ? "default" : order.status === "PENDING" ? "secondary" : "destructive"}
+                                                className="whitespace-nowrap"
                                             >
                                                 {order.status}
                                             </Badge>
@@ -123,6 +133,6 @@ export default async function AdminOrdersPage({ params }: AdminOrdersPageProps) 
                     </Table>
                 </CardContent>
             </Card>
-        </div>
+        </AdminPageLayout>
     );
 }

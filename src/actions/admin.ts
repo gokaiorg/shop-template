@@ -1,11 +1,16 @@
 "use server"
 
 import { z } from "zod";
-import { adminDb } from "@/lib/firebase-admin";
+import { adminDb, adminStorage } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 
 import { categorySchema, productSchema, pageSchema } from "@/schemas/admin";
+import { brandConfig } from "@/config/brand.config";
+import { shopTemplateSeed } from "@/config/seed/shop-template.seed";
+import { getDefaultLocale, getSupportedLocales } from "@/app/i18n-config";
+import { FieldValue } from "firebase-admin/firestore";
+import { SETTINGS_COLLECTION, STORE_FRONT_DOC_ID } from "@/lib/services/settings";
 
 export async function createCategory(data: z.infer<typeof categorySchema>) {
     const session = await auth();
@@ -20,23 +25,60 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
     }
 
     try {
-        // Basic unique slug check
-        const existingFr = await adminDb.collection("categories").where("slugFr", "==", result.data.slugFr).get();
-        if (!existingFr.empty) return { success: false, error: "A category with this French slug already exists." };
-        
-        const existingEn = await adminDb.collection("categories").where("slugEn", "==", result.data.slugEn).get();
-        if (!existingEn.empty) return { success: false, error: "A category with this English slug already exists." };
+        const defaultLocale = getDefaultLocale();
+        const primarySlug = result.data.slug[defaultLocale] || Object.values(result.data.slug)[0];
+
+        // Slug uniqueness check on default locale
+        if (primarySlug) {
+            const existing = await adminDb.collection("categories")
+                .where(`slug.${defaultLocale}`, "==", primarySlug)
+                .get();
+            if (!existing.empty) {
+                return { success: false, error: `A category with slug "${primarySlug}" already exists.` };
+            }
+        }
+
+        const nameMap = { ...result.data.name };
+        const slugMap = { ...result.data.slug };
+        const introMap = { ...(result.data.intro || {}) };
+        const descMap = { ...result.data.description };
+
+        // Populate fallback fields for backward compatibility
+        const nameEn = nameMap.en || nameMap[defaultLocale] || "";
+        const nameFr = nameMap.fr || nameMap[defaultLocale] || "";
+        const slugEn = slugMap.en || slugMap[defaultLocale] || "";
+        const slugFr = slugMap.fr || slugMap[defaultLocale] || "";
+        const introEn = introMap.en || introMap[defaultLocale] || "";
+        const introFr = introMap.fr || introMap[defaultLocale] || "";
+        const descriptionEn = descMap.en || descMap[defaultLocale] || "";
+        const descriptionFr = descMap.fr || descMap[defaultLocale] || "";
 
         const ref = adminDb.collection("categories").doc();
         const categoryData = {
             id: ref.id,
-            ...result.data,
+            name: nameMap,
+            slug: slugMap,
+            intro: introMap,
+            description: descMap,
+            status: result.data.status || "published",
+            order: Math.round(Number(result.data.order ?? 0)) || 0,
+            showInHeader: Boolean(result.data.showInHeader),
+            nameEn,
+            nameFr,
+            slugEn,
+            slugFr,
+            introEn,
+            introFr,
+            descriptionEn,
+            descriptionFr,
+            imageUrl: result.data.imageUrl || null,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
         await ref.set(categoryData);
 
         revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/', 'layout');
         return { success: true, category: categoryData };
     } catch (error) {
         console.error("CREATE_CATEGORY_ERROR:", error);
@@ -57,24 +99,95 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
     }
 
     try {
-        const existingFr = await adminDb.collection("categories").where("slugFr", "==", result.data.slugFr).get();
-        if (!existingFr.empty && existingFr.docs[0].id !== id) return { success: false, error: "A category with this French slug already exists." };
-        
-        const existingEn = await adminDb.collection("categories").where("slugEn", "==", result.data.slugEn).get();
-        if (!existingEn.empty && existingEn.docs[0].id !== id) return { success: false, error: "A category with this English slug already exists." };
+        const defaultLocale = getDefaultLocale();
+        const primarySlug = result.data.slug[defaultLocale] || Object.values(result.data.slug)[0];
+
+        if (primarySlug) {
+            const existing = await adminDb.collection("categories")
+                .where(`slug.${defaultLocale}`, "==", primarySlug)
+                .get();
+            if (!existing.empty && existing.docs[0].id !== id) {
+                return { success: false, error: `A category with slug "${primarySlug}" already exists.` };
+            }
+        }
+
+        const nameMap = { ...result.data.name };
+        const slugMap = { ...result.data.slug };
+        const introMap = { ...(result.data.intro || {}) };
+        const descMap = { ...result.data.description };
+
+        const nameEn = nameMap.en || nameMap[defaultLocale] || "";
+        const nameFr = nameMap.fr || nameMap[defaultLocale] || "";
+        const slugEn = slugMap.en || slugMap[defaultLocale] || "";
+        const slugFr = slugMap.fr || slugMap[defaultLocale] || "";
+        const introEn = introMap.en || introMap[defaultLocale] || "";
+        const introFr = introMap.fr || introMap[defaultLocale] || "";
+        const descriptionEn = descMap.en || descMap[defaultLocale] || "";
+        const descriptionFr = descMap.fr || descMap[defaultLocale] || "";
 
         const ref = adminDb.collection("categories").doc(id);
         const categoryData = {
-            ...result.data,
+            name: nameMap,
+            slug: slugMap,
+            intro: introMap,
+            description: descMap,
+            status: result.data.status || "published",
+            order: Math.round(Number(result.data.order ?? 0)) || 0,
+            showInHeader: Boolean(result.data.showInHeader),
+            nameEn,
+            nameFr,
+            slugEn,
+            slugFr,
+            introEn,
+            introFr,
+            descriptionEn,
+            descriptionFr,
+            imageUrl: result.data.imageUrl || null,
             updatedAt: new Date(),
         };
         await ref.update(categoryData);
 
         revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/', 'layout');
         return { success: true, category: { id, ...categoryData } };
     } catch (error) {
         console.error("UPDATE_CATEGORY_ERROR:", error);
         return { success: false, error: "Failed to update category." };
+    }
+}
+
+export async function reorderCategories(updates: { id: string; order: number }[]) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return { success: true };
+    }
+
+    try {
+        const batch = adminDb.batch();
+        for (const update of updates) {
+            if (update.id && typeof update.order === "number") {
+                const ref = adminDb.collection("categories").doc(update.id);
+                batch.update(ref, { 
+                    order: Math.round(update.order),
+                    updatedAt: new Date() 
+                });
+            }
+        }
+        await batch.commit();
+
+        revalidatePath('/[lang]/admin/categories', 'page');
+        revalidatePath('/[lang]', 'layout');
+        revalidatePath('/', 'layout');
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("REORDER_CATEGORIES_ERROR:", error);
+        return { success: false, error: error?.message || "Failed to reorder categories." };
     }
 }
 
@@ -91,16 +204,84 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
     }
 
     try {
+        const defaultLocale = getDefaultLocale();
         const ref = adminDb.collection("products").doc();
-        const productData = {
+        const images = result.data.images && result.data.images.length > 0 
+            ? result.data.images 
+            : (result.data.imageUrl ? [result.data.imageUrl] : []);
+
+        const nameMap = { ...result.data.name };
+        const slugMap = { ...result.data.slug };
+        const introMap = { ...(result.data.intro || {}) };
+        const descMap = { ...(result.data.description || {}) };
+        const statusMap = { ...(result.data.status || {}) };
+
+        const nameEn = nameMap.en || nameMap[defaultLocale] || "";
+        const nameFr = nameMap.fr || nameMap[defaultLocale] || "";
+        const slugEn = slugMap.en || slugMap[defaultLocale] || "";
+        const slugFr = slugMap.fr || slugMap[defaultLocale] || "";
+        const introEn = introMap.en || introMap[defaultLocale] || "";
+        const introFr = introMap.fr || introMap[defaultLocale] || "";
+        const descriptionEn = descMap.en || descMap[defaultLocale] || "";
+        const descriptionFr = descMap.fr || descMap[defaultLocale] || "";
+        const statusEn = statusMap.en || statusMap[defaultLocale] || "draft";
+        const statusFr = statusMap.fr || statusMap[defaultLocale] || (statusEn === "draft" ? "brouillon" : "publié");
+
+        const categoryIds = result.data.categoryIds || (result.data.categoryId ? [result.data.categoryId] : []);
+        const primaryCategoryId = categoryIds[0] || "";
+        const artist = result.data.artist?.trim() || result.data.vendor?.trim() || null;
+
+        const productData: any = {
             id: ref.id,
-            ...result.data,
+            order: result.data.order !== undefined ? Math.round(Number(result.data.order)) : Date.now(),
+            price: result.data.price,
+            hidePrice: Boolean(result.data.hidePrice),
+            stock: result.data.stock,
+            artist,
+            vendor: artist,
+            categoryIds,
+            categoryId: primaryCategoryId,
+            name: nameMap,
+            slug: slugMap,
+            intro: introMap,
+            description: descMap,
+            status: statusMap,
+            nameEn,
+            nameFr,
+            slugEn,
+            slugFr,
+            introEn,
+            introFr,
+            descriptionEn,
+            descriptionFr,
+            statusEn,
+            statusFr,
+            imageUrl: result.data.imageUrl || (images.length > 0 ? images[0] : null),
+            images,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
-        await ref.set(productData);
+
+        const batch = adminDb.batch();
+        batch.set(ref, productData);
+
+        if (artist) {
+            const settingsRef = adminDb.collection(SETTINGS_COLLECTION).doc(STORE_FRONT_DOC_ID);
+            const settingsDoc = await settingsRef.get();
+            const existingVendors: string[] = settingsDoc.exists ? (settingsDoc.data()?.vendors || []) : [];
+
+            if (!existingVendors.includes(artist)) {
+                batch.set(settingsRef, {
+                    vendors: FieldValue.arrayUnion(artist),
+                    updatedAt: new Date(),
+                }, { merge: true });
+            }
+        }
+
+        await batch.commit();
 
         revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/[lang]/[slug]', 'layout');
         return { success: true, product: productData };
     } catch (error) {
         console.error("CREATE_PRODUCT_ERROR:", error);
@@ -121,18 +302,125 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
     }
 
     try {
+        const defaultLocale = getDefaultLocale();
         const ref = adminDb.collection("products").doc(id);
-        const productData = {
-            ...result.data,
+        const images = result.data.images && result.data.images.length > 0 
+            ? result.data.images 
+            : (result.data.imageUrl ? [result.data.imageUrl] : []);
+
+        const nameMap = { ...result.data.name };
+        const slugMap = { ...result.data.slug };
+        const introMap = { ...(result.data.intro || {}) };
+        const descMap = { ...(result.data.description || {}) };
+        const statusMap = { ...(result.data.status || {}) };
+
+        const nameEn = nameMap.en || nameMap[defaultLocale] || "";
+        const nameFr = nameMap.fr || nameMap[defaultLocale] || "";
+        const slugEn = slugMap.en || slugMap[defaultLocale] || "";
+        const slugFr = slugMap.fr || slugMap[defaultLocale] || "";
+        const introEn = introMap.en || introMap[defaultLocale] || "";
+        const introFr = introMap.fr || introMap[defaultLocale] || "";
+        const descriptionEn = descMap.en || descMap[defaultLocale] || "";
+        const descriptionFr = descMap.fr || descMap[defaultLocale] || "";
+        const statusEn = statusMap.en || statusMap[defaultLocale] || "draft";
+        const statusFr = statusMap.fr || statusMap[defaultLocale] || (statusEn === "draft" ? "brouillon" : "publié");
+
+        const categoryIds = result.data.categoryIds || (result.data.categoryId ? [result.data.categoryId] : []);
+        const primaryCategoryId = categoryIds[0] || "";
+        const artist = result.data.artist?.trim() || result.data.vendor?.trim() || null;
+
+        const productData: any = {
+            price: result.data.price,
+            hidePrice: Boolean(result.data.hidePrice),
+            stock: result.data.stock,
+            artist,
+            vendor: artist,
+            categoryIds,
+            categoryId: primaryCategoryId,
+            name: nameMap,
+            slug: slugMap,
+            intro: introMap,
+            description: descMap,
+            status: statusMap,
+            nameEn,
+            nameFr,
+            slugEn,
+            slugFr,
+            introEn,
+            introFr,
+            descriptionEn,
+            descriptionFr,
+            statusEn,
+            statusFr,
+            imageUrl: result.data.imageUrl || (images.length > 0 ? images[0] : null),
+            images,
             updatedAt: new Date(),
         };
-        await ref.update(productData);
+
+        if (result.data.order !== undefined) {
+            productData.order = Math.round(Number(result.data.order));
+        }
+
+        const batch = adminDb.batch();
+        batch.update(ref, productData);
+
+        if (artist) {
+            const settingsRef = adminDb.collection(SETTINGS_COLLECTION).doc(STORE_FRONT_DOC_ID);
+            const settingsDoc = await settingsRef.get();
+            const existingVendors: string[] = settingsDoc.exists ? (settingsDoc.data()?.vendors || []) : [];
+
+            if (!existingVendors.includes(artist)) {
+                batch.set(settingsRef, {
+                    vendors: FieldValue.arrayUnion(artist),
+                    updatedAt: new Date(),
+                }, { merge: true });
+            }
+        }
+
+        await batch.commit();
 
         revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/[lang]/[slug]', 'layout');
         return { success: true, product: { id, ...productData } };
     } catch (error) {
         console.error("UPDATE_PRODUCT_ERROR:", error);
         return { success: false, error: "Failed to update product." };
+    }
+}
+
+export async function reorderProducts(updates: { id: string; order: number }[]) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return { success: true };
+    }
+
+    try {
+        const batch = adminDb.batch();
+        for (const update of updates) {
+            if (update.id && typeof update.order === "number") {
+                const ref = adminDb.collection("products").doc(update.id);
+                batch.update(ref, { 
+                    order: Math.round(update.order),
+                    updatedAt: new Date() 
+                });
+            }
+        }
+        await batch.commit();
+
+        revalidatePath('/[lang]/admin/products', 'page');
+        revalidatePath('/[lang]', 'layout');
+        revalidatePath('/[lang]/[slug]', 'layout');
+        revalidatePath('/', 'layout');
+
+        return { success: true };
+    } catch (error) {
+        console.error("REORDER_PRODUCTS_ERROR:", error);
+        return { success: false, error: "Failed to reorder products." };
     }
 }
 
@@ -144,56 +432,96 @@ export async function seedDemoData() {
     }
 
     try {
-        // Instead of deleteMany, in Firestore we should delete docs individually or in batches
-        // Wait: for a demo seed, this might be complex if there are many. Since it's a template, we just get them and delete.
+        const defaultLocale = getDefaultLocale();
         const prevProducts = await adminDb.collection("products").get();
         const prevCategories = await adminDb.collection("categories").get();
         
-        const batch = adminDb.batch();
-        prevProducts.docs.forEach(doc => batch.delete(doc.ref));
-        prevCategories.docs.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
+        const deleteBatch = adminDb.batch();
+        prevProducts.docs.forEach(doc => deleteBatch.delete(doc.ref));
+        prevCategories.docs.forEach(doc => deleteBatch.delete(doc.ref));
+        await deleteBatch.commit();
 
-        const categoriesData = [
-            { nameFr: "Forfaits Web", nameEn: "Web Packages", slugFr: "forfaits-web", slugEn: "web-packages", introFr: "Création de sites internet.", introEn: "Website creation.", descriptionFr: "Des forfaits complets pour votre présence en ligne.", descriptionEn: "Complete packages for your online presence." },
-            { nameFr: "Maintenance", nameEn: "Maintenance", slugFr: "maintenance", slugEn: "maintenance-en", introFr: "Gardez votre site à jour.", introEn: "Keep your site up to date.", descriptionFr: "Services de maintenance mensuelle ou annuelle.", descriptionEn: "Monthly or yearly maintenance services." },
-            { nameFr: "Fleurs CBD", nameEn: "CBD Flowers", slugFr: "fleurs-cbd", slugEn: "cbd-flowers", introFr: "Fleurs de qualité premium.", introEn: "Premium quality flowers.", descriptionFr: "Découvrez notre sélection de fleurs cultivées avec soin.", descriptionEn: "Discover our selection of carefully grown flowers." },
-            { nameFr: "Accessoires", nameEn: "Accessories", slugFr: "accessoires", slugEn: "accessories", introFr: "Tout pour vos besoins.", introEn: "Everything for your needs.", descriptionFr: "Feuilles, filtres, grinders et plus encore.", descriptionEn: "Papers, filters, grinders and more." },
-        ];
+        const seedCatalog = brandConfig.seedData || shopTemplateSeed;
+        const categoriesData = seedCatalog.categories;
+        const productsData = seedCatalog.products;
 
-        const categories = [];
+        const categories: any[] = [];
         for (const cat of categoriesData) {
             const ref = adminDb.collection("categories").doc();
-            const data = { id: ref.id, ...cat, createdAt: new Date(), updatedAt: new Date() };
+            const nameEn = cat.name.en || cat.name[defaultLocale] || "";
+            const nameFr = cat.name.fr || cat.name[defaultLocale] || "";
+            const slugEn = cat.slug.en || cat.slug[defaultLocale] || "";
+            const slugFr = cat.slug.fr || cat.slug[defaultLocale] || "";
+            const introEn = cat.intro?.en || cat.intro?.[defaultLocale] || "";
+            const introFr = cat.intro?.fr || cat.intro?.[defaultLocale] || "";
+            const descriptionEn = cat.description.en || cat.description[defaultLocale] || "";
+            const descriptionFr = cat.description.fr || cat.description[defaultLocale] || "";
+
+            const data = {
+                id: ref.id,
+                ...cat,
+                order: typeof cat.order === 'number' ? cat.order : (categories.length * 10),
+                nameEn,
+                nameFr,
+                slugEn,
+                slugFr,
+                introEn,
+                introFr,
+                descriptionEn,
+                descriptionFr,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
             await ref.set(data);
             categories.push(data);
         }
 
-        const productsData = [
-            // Web Packages
-            { nameFr: "Site Vitrine", nameEn: "Showcase Website", slugFr: "site-vitrine", slugEn: "showcase-website", introFr: "Présentez votre entreprise.", introEn: "Present your business.", descriptionFr: "Un site simple et efficace de 5 pages.", descriptionEn: "A simple and effective 5-page website.", price: 999, stock: 10, categoryId: categories[0].id, statusFr: "publié", statusEn: "published" },
-            { nameFr: "Site E-commerce", nameEn: "E-commerce Website", slugFr: "site-ecommerce", slugEn: "ecommerce-website", introFr: "Vendez en ligne.", introEn: "Sell online.", descriptionFr: "Boutique en ligne complète avec paiement sécurisé.", descriptionEn: "Complete online store with secure payment.", price: 2999, stock: 5, categoryId: categories[0].id, statusFr: "publié", statusEn: "published" },
-            { nameFr: "Sur Mesure", nameEn: "Custom Build", slugFr: "sur-mesure", slugEn: "custom-build", introFr: "Application web complexe.", introEn: "Complex web application.", descriptionFr: "Développement spécifique selon vos besoins.", descriptionEn: "Specific development according to your needs.", price: 5000, stock: 2, categoryId: categories[0].id, statusFr: "brouillon", statusEn: "draft" },
-            // Maintenance
-            { nameFr: "Maintenance Mensuelle", nameEn: "Monthly Maintenance", slugFr: "maintenance-mensuelle", slugEn: "monthly-maintenance", introFr: "Tranquillité d'esprit.", introEn: "Peace of mind.", descriptionFr: "Mises à jour et sauvegardes chaque mois.", descriptionEn: "Updates and backups every month.", price: 49, stock: 100, categoryId: categories[1].id, statusFr: "publié", statusEn: "published" },
-            { nameFr: "Audit de Sécurité", nameEn: "Security Audit", slugFr: "audit-securite", slugEn: "security-audit", introFr: "Sécurisez votre plateforme.", introEn: "Secure your platform.", descriptionFr: "Analyse complète des vulnérabilités.", descriptionEn: "Complete analysis of vulnerabilities.", price: 499, stock: 10, categoryId: categories[1].id, statusFr: "publié", statusEn: "published" },
-            // CBD Flowers
-            { nameFr: "Amnesia Haze", nameEn: "Amnesia Haze", slugFr: "amnesia-haze", slugEn: "amnesia-haze", introFr: "L'incontournable.", introEn: "The essential.", descriptionFr: "Fleur CBD indoor puissante.", descriptionEn: "Powerful indoor CBD flower.", price: 9.90, stock: 200, categoryId: categories[2].id, statusFr: "publié", statusEn: "published" },
-            { nameFr: "White Widow", nameEn: "White Widow", slugFr: "white-widow", slugEn: "white-widow", introFr: "Douce et relaxante.", introEn: "Sweet and relaxing.", descriptionFr: "Un classique indémodable.", descriptionEn: "A timeless classic.", price: 8.50, stock: 150, categoryId: categories[2].id, statusFr: "publié", statusEn: "published" },
-            { nameFr: "OG Kush", nameEn: "OG Kush", slugFr: "og-kush", slugEn: "og-kush", introFr: "Saveurs intenses.", introEn: "Intense flavors.", descriptionFr: "Parfaite pour la fin de journée.", descriptionEn: "Perfect for the end of the day.", price: 11.00, stock: 50, categoryId: categories[2].id, statusFr: "brouillon", statusEn: "draft" },
-            // Accessories
-            { nameFr: "Grinder OCB", nameEn: "OCB Grinder", slugFr: "grinder-ocb", slugEn: "ocb-grinder", introFr: "Broyez avec précision.", introEn: "Grind with precision.", descriptionFr: "Grinder en métal 4 parties.", descriptionEn: "4-part metal grinder.", price: 15.00, stock: 30, categoryId: categories[3].id, statusFr: "publié", statusEn: "published" },
-            { nameFr: "Feuilles RAW", nameEn: "RAW Papers", slugFr: "feuilles-raw", slugEn: "raw-papers", introFr: "Naturelles et non blanchies.", introEn: "Natural and unbleached.", descriptionFr: "Carnet de feuilles slim.", descriptionEn: "Slim rolling papers booklet.", price: 1.50, stock: 500, categoryId: categories[3].id, statusFr: "publié", statusEn: "published" },
-        ];
-
         const productBatch = adminDb.batch();
         productsData.forEach(prod => {
+            const indices = prod.categoryIndices || (typeof prod.categoryIndex === 'number' ? [prod.categoryIndex] : [0]);
+            const assignedCats = indices.map(idx => categories[idx] || categories[0]);
+            const categoryIds = assignedCats.map(c => c.id);
+            const primaryCategory = assignedCats[0] || categories[0];
+
             const ref = adminDb.collection("products").doc();
-            productBatch.set(ref, { id: ref.id, ...prod, createdAt: new Date(), updatedAt: new Date(), images: [] });
+            const { categoryIndex: _ignored1, categoryIndices: _ignored2, ...rest } = prod;
+
+            const nameEn = prod.name.en || prod.name[defaultLocale] || "";
+            const nameFr = prod.name.fr || prod.name[defaultLocale] || "";
+            const slugEn = prod.slug.en || prod.slug[defaultLocale] || "";
+            const slugFr = prod.slug.fr || prod.slug[defaultLocale] || "";
+            const introEn = prod.intro?.en || prod.intro?.[defaultLocale] || "";
+            const introFr = prod.intro?.fr || prod.intro?.[defaultLocale] || "";
+            const descriptionEn = prod.description.en || prod.description[defaultLocale] || "";
+            const descriptionFr = prod.description.fr || prod.description[defaultLocale] || "";
+            const statusEn = prod.status.en || prod.status[defaultLocale] || "published";
+            const statusFr = prod.status.fr || prod.status[defaultLocale] || "publié";
+
+            productBatch.set(ref, {
+                id: ref.id,
+                ...rest,
+                nameEn,
+                nameFr,
+                slugEn,
+                slugFr,
+                introEn,
+                introFr,
+                descriptionEn,
+                descriptionFr,
+                statusEn,
+                statusFr,
+                categoryIds,
+                categoryId: primaryCategory.id,
+                imageUrl: prod.images && prod.images.length > 0 ? prod.images[0] : null,
+                images: prod.images || [],
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
         });
         await productBatch.commit();
 
         revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/[lang]/[slug]', 'layout');
         return { success: true };
     } catch (error) {
         console.error("SEED_DEMO_DATA_ERROR:", error);
@@ -201,11 +529,11 @@ export async function seedDemoData() {
     }
 }
 
-export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
+export async function createPage(data: z.infer<typeof pageSchema>) {
     const session = await auth();
     const userRole = (session?.user?.role || "").toLowerCase();
     if (userRole !== "admin") {
-        return { success: false, error: "Unauthorized" };
+        return { success: false, error: "Forbidden: Admin role required" };
     }
 
     const result = pageSchema.safeParse(data);
@@ -214,20 +542,225 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
     }
 
     try {
-        const ref = adminDb.collection("pages").doc(id);
+        const defaultLocale = getDefaultLocale();
+        const slugMap = { ...result.data.slug };
+        const primarySlug = slugMap[defaultLocale] || Object.values(slugMap).find((s) => s && s.trim().length > 0) || "";
+
+        if (!primarySlug) {
+            return { success: false, error: "A valid slug is required." };
+        }
+
+        // Uniqueness check: check if any page already uses this primary slug
+        const directDoc = await adminDb.collection("pages").doc(primarySlug).get();
+        if (directDoc.exists) {
+            return { success: false, error: `A page with slug "${primarySlug}" already exists.` };
+        }
+
+        const existingQuery = await adminDb.collection("pages")
+            .where(`slug.${defaultLocale}`, "==", primarySlug)
+            .get();
+        if (!existingQuery.empty) {
+            return { success: false, error: `A page with slug "${primarySlug}" already exists.` };
+        }
+
+        const title_en = result.data.title?.en || Object.values(result.data.title)[0] || "";
+        const title_fr = result.data.title?.fr || title_en;
+        const slug_en = slugMap.en || slugMap[defaultLocale] || primarySlug;
+        const slug_fr = slugMap.fr || slugMap[defaultLocale] || primarySlug;
+        const content_en = result.data.content?.en || Object.values(result.data.content)[0] || "";
+        const content_fr = result.data.content?.fr || content_en;
+
+        const docRef = adminDb.collection("pages").doc(primarySlug);
         const pageData = {
             ...result.data,
+            id: primarySlug,
+            slug: slugMap,
+            slug_en,
+            slug_fr,
+            order: result.data.order !== undefined ? Math.round(Number(result.data.order)) : Date.now(),
+            title_en,
+            title_fr,
+            content_en,
+            content_fr,
+            createdAt: new Date(),
             updatedAt: new Date(),
         };
-        await ref.update(pageData);
+
+        await docRef.set(pageData);
+
+        revalidatePath("/", "layout");
+        return { success: true, id: primarySlug };
+    } catch (error: any) {
+        console.error("CREATE_PAGE_ERROR:", error);
+        return { success: false, error: error?.message || "Failed to create page." };
+    }
+}
+
+export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
+    }
+
+    const result = pageSchema.safeParse(data);
+    if (!result.success) {
+        return { success: false, errors: result.error.flatten().fieldErrors };
+    }
+
+    try {
+        const defaultLocale = getDefaultLocale();
+        const slugMap = { ...result.data.slug };
+        const slug_en = slugMap.en || slugMap[defaultLocale] || "";
+        const slug_fr = slugMap.fr || slugMap[defaultLocale] || "";
+
+        const title_en = result.data.title?.en || Object.values(result.data.title)[0] || "";
+        const title_fr = result.data.title?.fr || title_en;
+        const content_en = result.data.content?.en || Object.values(result.data.content)[0] || "";
+        const content_fr = result.data.content?.fr || content_en;
+
+        const ref = adminDb.collection("pages").doc(id);
+        const pageData: any = {
+            ...result.data,
+            slug: slugMap,
+            slug_en,
+            slug_fr,
+            title_en,
+            title_fr,
+            content_en,
+            content_fr,
+            updatedAt: new Date(),
+        };
+        if (result.data.order !== undefined) {
+            pageData.order = Math.round(Number(result.data.order));
+        }
+        await ref.set(pageData, { merge: true });
+
+        revalidatePath("/", "layout");
+        return { success: true, page: { id, ...pageData } };
+    } catch (error: any) {
+        console.error("UPDATE_PAGE_ERROR:", error);
+        return { success: false, error: error?.message || "Failed to update page." };
+    }
+}
+
+export async function reorderPages(updates: { id: string; order: number }[]) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
+    }
+
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return { success: true };
+    }
+
+    try {
+        const batch = adminDb.batch();
+        for (const update of updates) {
+            if (update.id && typeof update.order === "number") {
+                const ref = adminDb.collection("pages").doc(update.id);
+                batch.update(ref, { 
+                    order: Math.round(update.order),
+                    updatedAt: new Date() 
+                });
+            }
+        }
+        await batch.commit();
+
+        revalidatePath('/[lang]/admin/pages', 'page');
+        revalidatePath('/[lang]', 'layout');
+        revalidatePath('/', 'layout');
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("REORDER_PAGES_ERROR:", error);
+        return { success: false, error: error?.message || "Failed to reorder pages." };
+    }
+}
+
+export async function deleteCategory(id: string) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+        await adminDb.collection("categories").doc(id).delete();
 
         revalidatePath('/[lang]/admin', 'layout');
-        // Also revalidate the public page route
-        revalidatePath('/[lang]/(shop)/[slug]', 'page');
-        
-        return { success: true, page: { id, ...pageData } };
+        revalidatePath('/[lang]/[slug]', 'layout');
+        return { success: true };
     } catch (error) {
-        console.error("UPDATE_PAGE_ERROR:", error);
-        return { success: false, error: "Failed to update page." };
+        console.error("DELETE_CATEGORY_ERROR:", error);
+        return { success: false, error: "Failed to delete category." };
+    }
+}
+
+export async function deleteProduct(id: string) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+        const productRef = adminDb.collection("products").doc(id);
+        const productDoc = await productRef.get();
+
+        if (productDoc.exists) {
+            const productData = productDoc.data();
+            const imagesToDelete = [productData?.imageUrl, ...(productData?.images || [])].filter(Boolean);
+
+            for (const imgUrl of imagesToDelete) {
+                if (typeof imgUrl === 'string') {
+                    try {
+                        let filePath = imgUrl;
+                        if (imgUrl.includes('/o/')) {
+                            const pathPart = imgUrl.split('/o/')[1]?.split('?')[0];
+                            if (pathPart) filePath = decodeURIComponent(pathPart);
+                        }
+                        if (imgUrl.includes('firebasestorage.googleapis.com') || imgUrl.includes('storage.googleapis.com') || (!imgUrl.startsWith('http://') && !imgUrl.startsWith('https://'))) {
+                            const bucket = adminStorage.bucket();
+                            const file = bucket.file(filePath);
+                            const [exists] = await file.exists();
+                            if (exists) {
+                                await file.delete();
+                            }
+                        }
+                    } catch (storageErr) {
+                        console.warn('[STORAGE_CLEANUP_WARNING]', storageErr);
+                    }
+                }
+            }
+        }
+
+        await productRef.delete();
+
+        revalidatePath('/[lang]/admin', 'layout');
+        revalidatePath('/[lang]/[slug]', 'layout');
+        return { success: true };
+    } catch (error) {
+        console.error("DELETE_PRODUCT_ERROR:", error);
+        return { success: false, error: "Failed to delete product." };
+    }
+}
+
+export async function deletePage(id: string) {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
+    }
+
+    try {
+        await adminDb.collection("pages").doc(id).delete();
+
+        revalidatePath("/", "layout");
+        return { success: true };
+    } catch (error) {
+        console.error("DELETE_PAGE_ERROR:", error);
+        return { success: false, error: "Failed to delete page." };
     }
 }

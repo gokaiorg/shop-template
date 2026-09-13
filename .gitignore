@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -41,5 +42,8 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
-shop-gcp-firebase-adminsdk-fbsvc-*.json
+*-firebase-adminsdk-*.json
+cors.json
 
+
+/art-fate-images

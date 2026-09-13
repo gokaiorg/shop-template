@@ -6,27 +6,49 @@ import { Menu } from "lucide-react";
 import { PrimaryNav } from "./PrimaryNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useBrand } from "@/components/providers/BrandProvider";
+import { Page, Category } from "@/types/database";
 
-export function MobileNav({ lang, dict }: { lang: string, dict: Record<string, string> }) {
+export function MobileNav({
+    lang,
+    dict,
+    pages = [],
+    categories = [],
+}: {
+    lang: string;
+    dict: Record<string, string>;
+    pages?: Page[];
+    categories?: Category[];
+}) {
     const [open, setOpen] = useState(false);
+    const { brand } = useBrand();
+    const { logo } = brand.assets;
+    const brandName = brand.identity.name;
+
+    const menuLabel = dict?.toggle_menu || "Toggle menu";
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    aria-label={menuLabel}
+                    className="md:hidden cursor-pointer bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground transition-colors"
+                >
                     <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle Menu</span>
+                    <span className="sr-only">{menuLabel}</span>
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] p-6 flex flex-col gap-6">
                 <SheetHeader className="text-left">
                     <SheetTitle asChild>
                         <Link href={`/${lang}`} onClick={() => setOpen(false)} className="flex items-center gap-2 font-bold text-lg">
-                            <Image src="/logo.png" alt="Shop Template Logo" width={32} height={32} />
-                            <span>Shop Template</span>
+                            <Image src={logo.src} alt={logo.alt || `${brandName} Logo`} width={logo.width || 32} height={logo.height || 32} className="object-contain" />
+                            <span>{brandName}</span>
                         </Link>
                     </SheetTitle>
                 </SheetHeader>
@@ -35,6 +57,8 @@ export function MobileNav({ lang, dict }: { lang: string, dict: Record<string, s
                     <PrimaryNav
                         lang={lang}
                         dict={dict}
+                        pages={pages}
+                        categories={categories}
                         className="flex flex-col items-start gap-4 text-lg font-medium"
                         onNavClick={() => setOpen(false)}
                     />

@@ -1,7 +1,19 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { getDictionary } from "@/lib/dictionaries";
-import { Locale } from "@/app/i18n-config";
+import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { getIsCartEnabled } from "@/config/brand.config";
+
+import { getStoreSettings } from "@/lib/services/settings";
+import { getLocalizedField } from "@/lib/i18n";
+
+export const metadata: Metadata = {
+    title: "Order Confirmation",
+    robots: {
+        index: false,
+        follow: false,
+    },
+};
 
 export default async function CheckoutSuccessPage({
     params,
@@ -11,8 +23,18 @@ export default async function CheckoutSuccessPage({
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const { lang } = await params;
-    const { session_id } = await searchParams;
-    const dict = await getDictionary(lang as Locale);
+    
+    if (!getIsCartEnabled()) {
+        redirect(`/${lang}`);
+    }
+
+    const [{ session_id }, storeSettings] = await Promise.all([
+        searchParams,
+        getStoreSettings(),
+    ]);
+    const catalogSlug = typeof storeSettings.catalogSlug === 'object'
+        ? getLocalizedField(storeSettings.catalogSlug, lang) || "shop"
+        : (storeSettings.catalogSlug || "shop");
 
     return (
         <main className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -21,9 +43,9 @@ export default async function CheckoutSuccessPage({
                     <CheckCircle2 className="h-16 w-16 text-green-500" />
                 </div>
                 <div>
-                    <h2 className="mt-4 text-3xl font-extrabold text-gray-900">
+                    <h1 className="mt-4 text-3xl font-extrabold text-gray-900">
                         {lang === 'fr' ? "Paiement réussi!" : "Payment Successful!"}
-                    </h2>
+                    </h1>
                     <p className="mt-2 text-sm text-gray-600">
                         {lang === 'fr' 
                            ? "Merci pour votre commande. Nous la préparons dès maintenant." 
@@ -38,7 +60,7 @@ export default async function CheckoutSuccessPage({
 
                 <div className="mt-8">
                     <Link
-                        href={`/${lang}/shop`}
+                        href={`/${lang}/${catalogSlug}`}
                         className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 transition-colors"
                     >
                         {lang === 'fr' ? "Retour à la boutique" : "Return to Shop"}

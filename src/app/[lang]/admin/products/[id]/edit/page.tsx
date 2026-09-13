@@ -4,14 +4,18 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Product, Category } from "@/types/database";
 import { notFound } from "next/navigation";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { getStoreSettings } from "@/lib/services/settings";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
+import { Pencil } from "lucide-react";
 
 export default async function EditProductPage({ params }: { params: Promise<{ lang: string, id: string }> }) {
     const { lang, id } = await params;
-    const dict = await getDictionary(lang as Locale);
 
-    const [productDoc, categoriesSnap] = await Promise.all([
+    const [dict, productDoc, categoriesSnap, storeSettings] = await Promise.all([
+        getDictionary(lang as Locale),
         adminDb.collection("products").doc(id).get(),
-        adminDb.collection("categories").get()
+        adminDb.collection("categories").orderBy("order", "asc").get(),
+        getStoreSettings(),
     ]);
 
     if (!productDoc.exists) {
@@ -35,13 +39,20 @@ export default async function EditProductPage({ params }: { params: Promise<{ la
     });
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">{dict.admin.products_edit || "Edit Product"}</h1>
-            </div>
-            <div className="bg-background border rounded-lg p-6">
-                <ProductForm categories={categories} dict={dict.admin.forms} lang={lang} initialData={product} />
-            </div>
-        </div>
+        <AdminPageLayout
+            title={dict.admin.products_edit || "Edit Product"}
+            description={lang === 'fr' ? 'Modifier les détails et visuels du produit.' : 'Edit product details and assets.'}
+            icon={Pencil}
+            hasStickyFooter={true}
+        >
+            <ProductForm
+                categories={categories}
+                dict={dict.admin.forms}
+                lang={lang}
+                initialData={product}
+                vendors={storeSettings.vendors || []}
+                catalogSlugs={typeof storeSettings.catalogSlug === 'object' ? storeSettings.catalogSlug : { en: 'shop', fr: 'boutique' }}
+            />
+        </AdminPageLayout>
     );
 }

@@ -23,36 +23,59 @@ export interface User {
 
 export interface Product {
   id: string;
+  order?: number;
   price: number;
+  hidePrice?: boolean;
   stock: number;
+  artist?: string | null;
+  vendor?: string | null;
+  imageUrl?: string | null;
   images: string[];
-  categoryId: string;
+  categoryIds: string[];
+  categoryId?: string;
+  categories?: Category[];
+  category?: Category | null;
   createdAt: Date | string;
   updatedAt: Date | string;
-  descriptionEn: string;
-  descriptionFr: string;
+  name: Record<string, string>;
+  slug: Record<string, string>;
+  description?: Record<string, string>;
+  intro?: Record<string, string> | null;
+  status: Record<string, string>;
+  // Legacy optional fields for compatibility
+  nameEn?: string;
+  nameFr?: string;
+  slugEn?: string;
+  slugFr?: string;
+  descriptionEn?: string;
+  descriptionFr?: string;
   introEn?: string | null;
   introFr?: string | null;
-  nameEn: string;
-  nameFr: string;
-  slugEn: string;
-  slugFr: string;
-  statusEn: string;
-  statusFr: string;
+  statusEn?: string;
+  statusFr?: string;
 }
 
 export interface Category {
   id: string;
+  order?: number;
+  showInHeader?: boolean;
   createdAt: Date | string;
-  descriptionEn: string;
-  descriptionFr: string;
+  updatedAt: Date | string;
+  name: Record<string, string>;
+  slug: Record<string, string>;
+  description: Record<string, string>;
+  intro?: Record<string, string> | null;
+  status?: "draft" | "published" | string;
+  imageUrl?: string | null;
+  // Legacy optional fields for compatibility
+  nameEn?: string;
+  nameFr?: string;
+  slugEn?: string;
+  slugFr?: string;
+  descriptionEn?: string;
+  descriptionFr?: string;
   introEn?: string | null;
   introFr?: string | null;
-  nameEn: string;
-  nameFr: string;
-  slugEn: string;
-  slugFr: string;
-  updatedAt: Date | string;
 }
 
 export interface Order {
@@ -60,6 +83,7 @@ export interface Order {
   userId?: string | null;
   status: string; // Pending, Completed, Cancelled
   totalAmount: number;
+  currency?: string;
   customerEmail?: string | null;
   customerName?: string | null;
   stripeSessionId?: string | null;
@@ -105,14 +129,67 @@ export interface VerificationToken {
 }
 
 export interface Page {
-  id: string; // The slug (e.g., 'about')
-  title_en: string;
-  title_fr: string;
-  content_en: string;
-  content_fr: string;
-  meta_title_en: string;
-  meta_title_fr: string;
-  meta_description_en: string;
-  meta_description_fr: string;
+  id: string; // The doc ID or slug
+  slug: Record<string, string>;
+  title: Record<string, string>;
+  content: Record<string, string>;
+  status: "draft" | "published";
+  showInHeader: boolean;
+  showInFooter: boolean;
+  order?: number;
+  metaTitle?: Record<string, string>;
+  metaDescription?: Record<string, string>;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  // Legacy optional fields for compatibility
+  slug_en?: string;
+  slug_fr?: string;
+  title_en?: string;
+  title_fr?: string;
+  content_en?: string;
+  content_fr?: string;
+  meta_title_en?: string;
+  meta_title_fr?: string;
+  meta_description_en?: string;
+  meta_description_fr?: string;
+}
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'unread' | 'read' | 'archived';
+  createdAt: string;
+  brandKey: string;
+  brandName?: string;
+  updatedAt?: string;
+}
+
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
+export interface StoreSettings {
+  id?: string;
+  brandName: string;
+  logoUrl: string;
+  faviconUrl: string;
+  heroTitle: Record<string, string>;
+  heroDescription: Record<string, string>;
+  heroBackgroundImageUrl?: string;
+  catalogTitle?: Record<string, string>;
+  catalogDescription?: Record<string, string>;
+  catalogSlug?: Record<string, string> | string;
+  catalogBannerUrl?: string;
+  footerDescription?: Record<string, string>;
+  footerRightMenuTitle?: string;
+  socialLinks?: SocialLink[];
+  defaultTheme?: 'light' | 'dark' | 'system';
+  defaultCurrency?: string;
+  primaryColor?: string;
+  vendors?: string[];
   updatedAt?: Date | string;
 }

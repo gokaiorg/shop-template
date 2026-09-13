@@ -3,21 +3,42 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Product } from "@/types/database";
 import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
+import { getLocalizedField } from "@/lib/i18n";
+import { useBrand } from "@/components/providers/BrandProvider";
+import { formatPrice } from "@/lib/currency";
 
 interface ShopProductCardProps {
     product: Product;
     lang: string;
     dict: Record<string, string>;
+    categorySlug?: string;
 }
 
-export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
-    const title = lang === 'fr' ? product.nameFr : product.nameEn;
-    const description = lang === 'fr' ? product.descriptionFr : product.descriptionEn;
-    const slug = lang === 'fr' ? product.slugFr : product.slugEn;
+export function ShopProductCard({ product, lang, dict, categorySlug }: ShopProductCardProps) {
+    const { brand, isCartEnabled, currency, catalogSlug } = useBrand();
+    const activeCatalogSlug = catalogSlug || "shop";
+    const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "";
+    const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
+    const slug = getLocalizedField(product.slug, lang) || (lang === 'fr' ? product.slugFr : product.slugEn) || "";
     const addItem = useCart(state => state.addItem);
+
+    // Compute effective category slug for product link
+    const primaryCat = (product.categories && product.categories.length > 0)
+        ? product.categories[0]
+        : product.category;
+    const defaultCatSlug = primaryCat
+        ? ((typeof primaryCat.slug === 'object' && primaryCat.slug?.[lang])
+            ? primaryCat.slug[lang]
+            : (lang === 'fr' ? primaryCat.slugFr : primaryCat.slugEn) ||
+              getLocalizedField(primaryCat.slug, lang) ||
+              (typeof primaryCat.slug === 'string' ? primaryCat.slug : primaryCat.id))
+        : 'all';
+    const effectiveCatSlug = categorySlug || defaultCatSlug;
+    const productHref = `/${lang}/${activeCatalogSlug}/${effectiveCatSlug}/${slug}`;
 
     const handleAddToCart = () => {
         addItem(product);
@@ -26,15 +47,17 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
         });
     };
 
-    // We get the first image or a placeholder
-    const imageUrl = product.images && product.images.length > 0
-        ? product.images[0]
-        : "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=2670&auto=format&fit=crop";
+    // Prioritize product.imageUrl, then product.images[0], then brand's placeholder
+    const imageUrl = product.imageUrl
+        || (product.images && product.images.length > 0 ? product.images[0] : null)
+        || brand.assets.placeholderImage;
+
+    const isOutOfStock = (product.stock ?? 0) <= 0;
 
     return (
-        <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-background">
+        <article className="group relative flex flex-col overflow-hidden rounded-lg border bg-background h-full">
             {/* Image Container */}
-            <Link href={`/${lang}/product/${slug}`} className="relative aspect-square overflow-hidden bg-muted block">
+            <Link href={productHref} className="relative aspect-square overflow-hidden bg-muted block">
                 <Image
                     src={imageUrl}
                     alt={title}
@@ -42,11 +65,50 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                {isOutOfStock && (
+                    <span className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 uppercase font-bold tracking-wider z-10 shadow-sm rounded-xs">
+                        Sold
+                    </span>
+                )}
             </Link>
 
             {/* Content Container */}
             <div className="flex flex-1 flex-col p-4">
-                <Link href={`/${lang}/product/${slug}`} className="hover:underline">
+                {product.categories && product.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                        {product.categories.map((cat) => {
+                            const catName = getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn);
+                            const catSlug = 
+                                (typeof cat.slug === 'object' && cat.slug?.[lang])
+                                    ? cat.slug[lang]
+                                    : (lang === 'fr' ? cat.slugFr : cat.slugEn) ||
+                                      getLocalizedField(cat.slug, lang) ||
+                                      (typeof cat.slug === 'string' ? cat.slug : '');
+                            if (!catName) return null;
+
+                            return catSlug ? (
+                                <Link
+                                    key={cat.id}
+                                    href={`/${lang}/${activeCatalogSlug}/${catSlug}`}
+                                    className="relative z-10 cursor-pointer"
+                                >
+                                    <Badge
+                                        variant="secondary"
+                                        className="hover:bg-primary/20 transition-colors text-[11px] font-normal px-2 py-0.5 cursor-pointer"
+                                    >
+                                        {catName}
+                                    </Badge>
+                                </Link>
+                            ) : (
+                                <Badge key={cat.id} variant="secondary" className="text-[11px] font-normal px-2 py-0.5">
+                                    {catName}
+                                </Badge>
+                            );
+                        })}
+                    </div>
+                )}
+
+                <Link href={productHref} className="hover:underline">
                     <h3 className="text-lg font-semibold">{title}</h3>
                 </Link>
                 <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
@@ -54,26 +116,25 @@ export function ShopProductCard({ product, lang, dict }: ShopProductCardProps) {
                 </p>
 
                 {/* Bottom Row */}
-                <div className="mt-auto flex items-center justify-between pt-4">
-                    <p className="text-lg font-bold">
-                        ${product.price.toFixed(2)}
-                    </p>
-                    <Button
-                        size="sm"
-                        className="rounded-full shadow-xs cursor-pointer"
-                        onClick={handleAddToCart}
-                        aria-label={`${dict.add_to_cart || "Add to cart"} ${title}`}
-                    >
-                        {dict.add_to_cart || "Add to cart"}
-                    </Button>
-                </div>
+                {!product.hidePrice && (
+                    <div className="mt-auto flex items-center justify-between pt-4">
+                        <p className="text-lg font-bold">
+                            {formatPrice(product.price, currency, lang)}
+                        </p>
+                        {isCartEnabled && (
+                            <Button
+                                size="sm"
+                                disabled={isOutOfStock}
+                                className={`rounded-full shadow-xs ${isOutOfStock ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                                onClick={handleAddToCart}
+                                aria-label={`${isOutOfStock ? "Sold Out" : (dict.add_to_cart || "Add to cart")} ${title}`}
+                            >
+                                {isOutOfStock ? (dict.sold_out || "Sold Out") : (dict.add_to_cart || "Add to cart")}
+                            </Button>
+                        )}
+                    </div>
+                )}
             </div>
-
-            {/* Optional wrap the whole card block linking to product detail later  
-            <Link href={`/${lang}/shop/product/${slug}`} className="absolute inset-0">
-                <span className="sr-only">View {title}</span>
-            </Link> 
-            */}
-        </div>
+        </article>
     );
 }

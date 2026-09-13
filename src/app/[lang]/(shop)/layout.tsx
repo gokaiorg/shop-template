@@ -3,6 +3,10 @@ import { Footer } from "@/components/layout/Footer";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { auth } from "@/auth";
+import { getPublishedPages } from "@/lib/services/pages";
+import { getHeaderCategories } from "@/lib/services/categories";
+import { getStoreSettings } from "@/lib/services/settings";
+import { getLocalizedField } from "@/lib/i18n";
 
 export default async function ShopLayout({
     children,
@@ -12,20 +16,38 @@ export default async function ShopLayout({
     params: Promise<{ lang: string }>;
 }) {
     const { lang } = await params;
-    const [dict, session] = await Promise.all([
+    const [dict, session, publishedPages, storeSettings, headerCategories] = await Promise.all([
         getDictionary(lang as Locale),
-        auth()
+        auth(),
+        getPublishedPages(),
+        getStoreSettings(),
+        getHeaderCategories(),
     ]);
+
+    const headerPages = publishedPages
+        .filter((p) => p.showInHeader)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const footerPages = publishedPages
+        .filter((p) => p.showInFooter)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     return (
         <div className="flex min-h-screen flex-col">
-            <Header lang={lang} dict={dict} session={session} />
-            <main className="flex-1 flex flex-col">
-                <div className="flex-1">
-                    {children}
-                </div>
-                <Footer lang={lang} dict={dict} />
+            <Header lang={lang} dict={dict} session={session} pages={headerPages} categories={headerCategories} />
+            <main className="flex-1">
+                {children}
             </main>
+            <Footer
+                lang={lang}
+                dict={dict}
+                pages={footerPages}
+                catalogTitle={storeSettings.catalogTitle}
+                catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
+                brandName={storeSettings.brandName}
+                footerDescription={storeSettings.footerDescription}
+                footerRightMenuTitle={storeSettings.footerRightMenuTitle}
+                socialLinks={storeSettings.socialLinks}
+            />
         </div>
     );
 }

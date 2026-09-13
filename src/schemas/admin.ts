@@ -1,39 +1,59 @@
 import { z } from "zod";
 
 export const categorySchema = z.object({
-    nameFr: z.string().min(1, "Name (FR) is required"),
-    nameEn: z.string().min(1, "Name (EN) is required"),
-    slugFr: z.string().min(1, "Slug (FR) is required"),
-    slugEn: z.string().min(1, "Slug (EN) is required"),
-    introFr: z.string().optional(),
-    introEn: z.string().optional(),
-    descriptionFr: z.string().min(1, "Description (FR) is required"),
-    descriptionEn: z.string().min(1, "Description (EN) is required"),
+    name: z.record(z.string(), z.string()),
+    slug: z.record(z.string(), z.string()),
+    intro: z.record(z.string(), z.string()).optional(),
+    description: z.record(z.string(), z.string()),
+    status: z.enum(["draft", "published"]).default("published"),
+    imageUrl: z.string().optional().nullable(),
+    order: z.coerce.number().int().default(0),
+    showInHeader: z.boolean().default(false),
 });
 
 export const productSchema = z.object({
-    nameFr: z.string().min(1, "Name (FR) is required"),
-    nameEn: z.string().min(1, "Name (EN) is required"),
-    slugFr: z.string().min(1, "Slug (FR) is required"),
-    slugEn: z.string().min(1, "Slug (EN) is required"),
-    introFr: z.string().optional(),
-    introEn: z.string().optional(),
-    descriptionFr: z.string().min(1, "Description (FR) is required"),
-    descriptionEn: z.string().min(1, "Description (EN) is required"),
-    statusFr: z.string().min(1),
-    statusEn: z.string().min(1),
+    name: z.record(z.string(), z.string()),
+    slug: z.record(z.string(), z.string()),
+    intro: z.record(z.string(), z.string()).optional(),
+    description: z.record(z.string(), z.string()).optional(),
+    status: z.record(z.string(), z.string()).optional(),
     price: z.number().min(0),
+    hidePrice: z.boolean().default(false),
     stock: z.number().min(0).int(),
-    categoryId: z.string().min(1, "Category is required"),
+    artist: z.string().optional().nullable(),
+    vendor: z.string().optional().nullable(),
+    categoryIds: z.array(z.string()).min(1, "At least one category is required"),
+    categoryId: z.string().optional(),
+    imageUrl: z.string().optional().nullable(),
+    images: z.array(z.string()).optional(),
+    order: z.coerce.number().int().optional(),
 });
 
 export const pageSchema = z.object({
-    title_en: z.string().min(1, "Title (EN) is required"),
-    title_fr: z.string().min(1, "Title (FR) is required"),
-    meta_title_en: z.string().min(1, "Meta Title (EN) is required"),
-    meta_title_fr: z.string().min(1, "Meta Title (FR) is required"),
-    meta_description_en: z.string().min(1, "Meta Description (EN) is required"),
-    meta_description_fr: z.string().min(1, "Meta Description (FR) is required"),
-    content_en: z.string().min(1, "Content (EN) is required"),
-    content_fr: z.string().min(1, "Content (FR) is required"),
+    slug: z.record(z.string(), z.string()).refine(
+        (val) => Object.values(val).some((v) => v && v.trim().length > 0),
+        { message: "Slug is required in at least one language" }
+    ),
+    title: z.record(z.string(), z.string()).refine(
+        (val) => Object.values(val).some((v) => v && v.trim().length > 0),
+        { message: "Title is required in at least one language" }
+    ),
+    content: z.record(z.string(), z.string()),
+    status: z.enum(["draft", "published"]),
+    showInHeader: z.boolean(),
+    showInFooter: z.boolean(),
+    order: z.coerce.number().int().optional(),
+    // Optional legacy fields for backward compatibility
+    slug_en: z.string().optional(),
+    slug_fr: z.string().optional(),
+    title_en: z.string().optional(),
+    title_fr: z.string().optional(),
+    content_en: z.string().optional(),
+    content_fr: z.string().optional(),
+    meta_title_en: z.string().optional(),
+    meta_title_fr: z.string().optional(),
+    meta_description_en: z.string().optional(),
+    meta_description_fr: z.string().optional(),
 });
+
+export type PageFormData = z.infer<typeof pageSchema>;

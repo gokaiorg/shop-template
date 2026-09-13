@@ -5,13 +5,15 @@
         "categories": "Catégories",
         "pages": "Pages",
         "orders": "Commandes",
+        "messages": "Messages",
+        "settings": "Paramètres",
         "title": "Panneau d'administration",
         "view_site": "Voir le site",
         "welcome_title": "Bienvenue",
-        "welcome_text": "Bienvenue dans le tableau de bord d'administration, {name} !",
+        "welcome_text": "Vue d'ensemble et gestion rapide de votre boutique.",
         "profile": {
             "title": "Informations Personnelles",
-            "description": "Mettez à jour vos informations de compte et votre mot de passe."
+            "description": "Mettez à jour vos identifiants d'accès."
         },
         "name": "Nom",
         "email": "Email",
@@ -20,12 +22,21 @@
         "products_edit": "Modifier le produit",
         "categories_create": "Créer une catégorie",
         "categories_edit": "Modifier la catégorie",
+        "catalog": "Catalogue",
+        "catalog_settings": "Paramètres du Catalogue",
+        "view_catalog": "Voir mon catalogue",
         "dashboard_seedButton": "Générer des données de démo",
         "dashboard_seedWarning": "Attention : Ceci supprimera tous les produits et catégories existants.",
         "dashboard_seedSuccess": "Données de démo générées avec succès !",
         "dashboard_seedError": "Échec de la génération des données de démo.",
         "pages_edit": "Modifier la Page",
+        "back_to_pages": "Retour aux pages",
+        "back_to_categories": "Retour aux catégories",
+        "back_to_products": "Retour aux produits",
+        "back_to_dashboard": "Retour au tableau de bord",
         "forms": {
+            "back_to_categories": "Retour aux catégories",
+            "back_to_products": "Retour aux produits",
             "nameFr": "Nom (FR)",
             "nameEn": "Nom (EN)",
             "slugFr": "Slug (FR)",
@@ -38,7 +49,14 @@
             "statusEn": "Statut (EN)",
             "price": "Prix",
             "stock": "Stock",
+            "artist": "Artiste / Vendeur",
             "categoryId": "Catégorie",
+            "imageUrl": "Image du produit",
+            "uploadImage": "Téléverser une image",
+            "dragDropImage": "Glissez-déposez une image ou cliquez pour parcourir",
+            "removeImage": "Supprimer l'image",
+            "imageUploadError": "Échec de l'upload de l'image",
+            "imageUploading": "Upload de l'image en cours...",
             "submit": "Enregistrer",
             "submitting": "Enregistrement...",
             "success": "Enregistré avec succès !",
@@ -49,10 +67,12 @@
             "metaDescriptionEn": "Méta Description (EN)",
             "metaDescriptionFr": "Méta Description (FR)",
             "contentEn": "Contenu (EN)",
-            "contentFr": "Contenu (FR)"
+            "contentFr": "Contenu (FR)",
+            "order": "Position / Ordre",
+            "order_desc": "Définit la position numérique de cette catégorie dans les onglets, filtres du catalogue et grilles (les nombres les plus petits apparaissent en premier)."
         },
         "orders": {
-            "title": "Gérer les commandes",
+            "title": "Commandes",
             "columns": {
                 "id": "ID Commande",
                 "date": "Date",
@@ -60,6 +80,30 @@
                 "total": "Total",
                 "status": "Statut"
             }
+        },
+        "messages_section": {
+            "title": "Messages",
+            "subtitle": "Demandes de contact reçues depuis la boutique.",
+            "empty": "Aucun message reçu pour le moment.",
+            "columns": {
+                "name": "Nom",
+                "email": "Email",
+                "subject": "Sujet",
+                "date": "Date",
+                "status": "Statut",
+                "actions": "Actions"
+            },
+            "status": {
+                "unread": "Non lu",
+                "read": "Lu",
+                "archived": "Archivé"
+            },
+            "reply": "Répondre",
+            "mark_read": "Marquer comme lu",
+            "mark_unread": "Marquer comme non lu",
+            "archive": "Archiver",
+            "delete": "Supprimer",
+            "view": "Voir le message"
         }
     },
     "auth": {
@@ -81,6 +125,9 @@
         "contact": "Contact",
         "login": "Connexion",
         "dashboard": "Tableau de bord",
+        "admin_panel": "Panneau Admin",
+        "account": "Mon Compte",
+        "sign_out": "Déconnexion",
         "toggle_language": "Changer de langue",
         "theme_light": "Clair",
         "theme_dark": "Sombre",
@@ -92,6 +139,7 @@
     "shop": {
         "all_categories": "Toutes les catégories",
         "add_to_cart": "Ajouter au panier",
+        "products_list": "Liste des produits",
         "empty_state": "Aucun produit trouvé."
     },
     "home": {
@@ -99,7 +147,8 @@
         "featured_products": "Produits en vedette",
         "hero_title": "Un modèle. Des possibilités infinies.",
         "hero_subtitle": "Le boilerplate full-stack ultime. Que vous lanciez une marque de commerce électronique premium ou une agence numérique robuste, commencez avec une architecture sécurisée, entièrement localisée et magnifiquement conçue.",
-        "explore_all": "Tout explorer"
+        "explore_all": "Tout explorer",
+        "view_all": "Voir tout"
     },
     "legal": {
         "title": "Légal",
@@ -107,5 +156,53 @@
         "cgv": "CGV",
         "privacy_policy": "Politique de Confidentialité",
         "returns": "Retours & Remboursements"
+    },
+    "contact": {
+        "name_label": "Nom",
+        "name_placeholder": "Votre nom",
+        "email_label": "Email",
+        "email_placeholder": "votre@email.com",
+        "subject_label": "Sujet",
+        "subject_placeholder": "De quoi s'agit-il ?",
+        "message_label": "Message",
+        "message_placeholder": "Dites-nous en plus...",
+        "submit_button": "Envoyer le message",
+        "submitting_button": "Envoi en cours...",
+        "success_toast": "Message envoyé avec succès !",
+        "success_title": "Message envoyé avec succès !",
+        "success_message": "Merci de nous avoir contactés. Nous avons bien reçu votre demande et nous vous répondrons dans les plus brefs délais.",
+        "send_another": "Envoyer un autre message",
+        "error_toast": "Échec de l'envoi du message. Veuillez réessayer.",
+        "unexpected_error": "Une erreur inattendue est survenue.",
+        "validation": {
+            "name_min": "Le nom doit comporter au moins 2 caractères",
+            "email_invalid": "Adresse email invalide",
+            "subject_min": "Le sujet doit comporter au moins 5 caractères",
+            "message_min": "Le message doit comporter au moins 10 caractères"
+        }
+    },
+    "account": {
+        "title": "Mon Compte",
+        "welcome": "Bienvenue dans votre espace client.",
+        "orders": "Mes Commandes",
+        "profile": "Mes Informations",
+        "orders_subtitle": "Historique et suivi de vos commandes.",
+        "no_orders": "Vous n'avez pas encore passé de commande.",
+        "explore_shop": "Découvrir la boutique",
+        "order_number": "Commande",
+        "date": "Date",
+        "status": "Statut",
+        "total": "Total",
+        "items": "articles",
+        "profile_title": "Informations Personnelles",
+        "profile_subtitle": "Consultez et mettez à jour vos coordonnées.",
+        "name": "Nom",
+        "email": "Adresse Email",
+        "password": "Nouveau mot de passe (facultatif)",
+        "password_help": "Laissez ce champ vide pour conserver votre mot de passe actuel.",
+        "save": "Enregistrer les modifications",
+        "saving": "Enregistrement en cours...",
+        "profile_updated": "Votre profil a été mis à jour avec succès !",
+        "update_error": "Échec de la mise à jour du profil."
     }
 }

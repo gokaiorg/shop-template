@@ -6,7 +6,14 @@ const config: Config = {
     './src/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: 'var(--theme-primary)',
+          foreground: '#ffffff',
+        },
+      },
+    },
   },
   plugins: [
     typography,
