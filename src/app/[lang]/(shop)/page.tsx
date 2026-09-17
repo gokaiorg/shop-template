@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { CategoryPillsNav } from "@/components/shop/CategoryPillsNav";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
+import { FeaturedCategories } from "@/components/shop/FeaturedCategories";
+import { AboutSection } from "@/components/shop/AboutSection";
 import { ArrowRight } from "lucide-react";
 import { brandConfig, getActiveBrand } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
@@ -122,6 +124,8 @@ export default async function Home({
     return nameA.localeCompare(nameB, lang);
   });
 
+  const featuredCategories = categories.slice(0, 4);
+
   const categoryMap = new Map(categories.map(c => [c.id, c]));
 
   const rawProducts = productsSnap.docs.map(doc => {
@@ -232,6 +236,20 @@ export default async function Home({
         </div>
       </section>
 
+      {/* Featured Categories Section */}
+      {featuredCategories.length >= 2 && (
+        <section aria-labelledby="featured-categories-heading" className="w-full">
+          <h2 id="featured-categories-heading" className="sr-only">
+            {lang === "fr" ? "Nos Univers" : "Explore Collections"}
+          </h2>
+          <FeaturedCategories
+            categories={featuredCategories}
+            locale={lang}
+            catalogSlug={catalogSlug}
+          />
+        </section>
+      )}
+
       {/* Unified Shop Section */}
       <section className="w-full max-w-7xl mx-auto py-16 px-6 md:px-16 mb-16">
         <div className="flex justify-between items-end mb-8">
@@ -286,6 +304,14 @@ export default async function Home({
           </Tabs>
         )}
       </section>
+
+      {/* Homepage About Section */}
+      {storeSettings.aboutSection?.enabled && (
+        <AboutSection
+          aboutSection={storeSettings.aboutSection}
+          lang={lang}
+        />
+      )}
     </div>
   );
 }

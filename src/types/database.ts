@@ -172,6 +172,15 @@ export interface SocialLink {
   url: string;
 }
 
+export interface AboutSectionSettings {
+  enabled: boolean;
+  title: Record<string, string>;
+  description: Record<string, string>;
+  ctaLabel: Record<string, string>;
+  ctaUrl: string;
+  images: string[];
+}
+
 export interface StoreSettings {
   id?: string;
   brandName: string;
@@ -185,11 +194,12 @@ export interface StoreSettings {
   catalogSlug?: Record<string, string> | string;
   catalogBannerUrl?: string;
   footerDescription?: Record<string, string>;
-  footerRightMenuTitle?: string;
+  footerRightMenuTitle?: Record<string, string>;
   socialLinks?: SocialLink[];
   defaultTheme?: 'light' | 'dark' | 'system';
   defaultCurrency?: string;
   primaryColor?: string;
   vendors?: string[];
+  aboutSection?: AboutSectionSettings;
   updatedAt?: Date | string;
 }

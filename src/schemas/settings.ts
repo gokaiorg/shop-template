@@ -19,6 +19,17 @@ export const catalogSettingsSchema = z.object({
 
 export type CatalogSettingsFormData = z.infer<typeof catalogSettingsSchema>;
 
+export const aboutSectionSchema = z.object({
+    enabled: z.boolean().default(false),
+    title: z.record(z.string(), z.string()).default({}),
+    description: z.record(z.string(), z.string()).default({}),
+    ctaLabel: z.record(z.string(), z.string()).default({}),
+    ctaUrl: z.string().default(''),
+    images: z.array(z.string()).default([]),
+});
+
+export type AboutSectionFormData = z.infer<typeof aboutSectionSchema>;
+
 export const globalSettingsSchema = z.object({
     brandName: z.string().min(1, 'Brand name is required'),
     logoUrl: z.string().min(1, 'Logo URL is required'),
@@ -29,12 +40,13 @@ export const globalSettingsSchema = z.object({
     heroDescription: z.record(z.string(), z.string()),
     heroBackgroundImageUrl: z.string().optional(),
     footerDescription: z.record(z.string(), z.string()).optional(),
-    footerRightMenuTitle: z.string().optional().default('Legal'),
+    footerRightMenuTitle: z.record(z.string(), z.string()).optional(),
     socialLinks: z.array(socialLinkSchema).optional(),
     defaultTheme: z.enum(['light', 'dark', 'system']),
     defaultCurrency: z.string().min(1, 'Currency is required'),
     primaryColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color code (e.g. #14B3F6)').optional().or(z.literal('')),
     vendors: z.array(z.string()).default([]),
+    aboutSection: aboutSectionSchema.optional(),
 });
 
 export type GlobalSettingsFormData = z.infer<typeof globalSettingsSchema>;

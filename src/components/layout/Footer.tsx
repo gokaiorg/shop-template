@@ -15,7 +15,7 @@ interface FooterProps {
     brandName?: string;
     footerDescription?: Record<string, string>;
     socialLinks?: SocialLink[];
-    footerRightMenuTitle?: string;
+    footerRightMenuTitle?: Record<string, string>;
 }
 
 export async function Footer({
@@ -43,7 +43,7 @@ export async function Footer({
         || 'shop';
     const activeFooterDesc = footerDescription || settings?.footerDescription;
     const activeSocialLinks = socialLinks || settings?.socialLinks || brandConfig.navigation?.socials || [];
-    const activeFooterRightTitle = footerRightMenuTitle || settings?.footerRightMenuTitle;
+    const activeFooterRightTitle = getLocalizedField(footerRightMenuTitle, lang) || getLocalizedField(settings?.footerRightMenuTitle, lang) || (isFr ? 'Légal' : 'Legal');
 
     const isFr = lang === 'fr';
     const legalDict = dict.legal || {};

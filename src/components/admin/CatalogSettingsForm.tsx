@@ -95,12 +95,10 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 flex flex-col flex-1">
                 <div className="flex items-center justify-between">
-                    <Button asChild variant="ghost" size="sm" className="cursor-pointer text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-                        <Link href={`/${lang}/admin/dashboard`} className="flex items-center gap-2">
+                        <Link href={`/${lang}/admin/dashboard`} className="flex items-center gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors px-3 py-1.5 rounded-md w-fit">
                             <ArrowLeft className="h-4 w-4" />
                             {dict?.back_to_dashboard || (lang === "fr" ? "Retour au tableau de bord" : "Back to dashboard")}
                         </Link>
-                    </Button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

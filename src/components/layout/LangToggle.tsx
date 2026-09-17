@@ -119,7 +119,7 @@ export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, 
                     <DropdownMenuItem
                         key={loc}
                         onClick={() => switchLanguage(loc)}
-                        className={lang === loc ? "font-semibold bg-accent" : ""}
+                        className={lang === loc ? "font-semibold bg-primary/10 text-primary cursor-pointer" : "cursor-pointer focus:bg-primary/10 focus:text-primary hover:bg-primary/10 hover:text-primary"}
                     >
                         {getLocaleDisplayName(loc)}
                     </DropdownMenuItem>

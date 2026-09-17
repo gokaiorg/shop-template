@@ -45,7 +45,10 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             en: brand.identity.description?.en || '',
             fr: brand.identity.description?.fr || '',
         },
-        footerRightMenuTitle: 'Legal',
+        footerRightMenuTitle: {
+            en: 'Legal',
+            fr: 'Légal',
+        },
         socialLinks: (brand.navigation?.socials || []).map((s: { platform?: string; url?: string }) => ({
             platform: s.platform || '',
             url: s.url || '',
@@ -54,6 +57,14 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
         defaultCurrency: 'THB',
         primaryColor: defaultPrimaryColor,
         vendors: [],
+        aboutSection: {
+            enabled: false,
+            title: { en: '', fr: '' },
+            description: { en: '', fr: '' },
+            ctaLabel: { en: '', fr: '' },
+            ctaUrl: '',
+            images: [],
+        },
     };
 
     try {
@@ -77,12 +88,20 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                         : fallbackSettings.catalogSlug,
                 catalogBannerUrl: typeof data?.catalogBannerUrl === 'string' ? data.catalogBannerUrl : fallbackSettings.catalogBannerUrl,
                 footerDescription: (data?.footerDescription && typeof data.footerDescription === 'object') ? data.footerDescription : fallbackSettings.footerDescription,
-                footerRightMenuTitle: typeof data?.footerRightMenuTitle === 'string' && data.footerRightMenuTitle.trim() ? data.footerRightMenuTitle : fallbackSettings.footerRightMenuTitle,
+                footerRightMenuTitle: (data?.footerRightMenuTitle && typeof data.footerRightMenuTitle === 'object') ? data.footerRightMenuTitle : fallbackSettings.footerRightMenuTitle,
                 socialLinks: Array.isArray(data?.socialLinks) ? data.socialLinks : fallbackSettings.socialLinks,
                 defaultTheme: data?.defaultTheme ?? fallbackSettings.defaultTheme,
                 defaultCurrency: data?.defaultCurrency ?? fallbackSettings.defaultCurrency,
                 primaryColor: (typeof data?.primaryColor === 'string' && data.primaryColor.trim().length > 0) ? data.primaryColor : fallbackSettings.primaryColor,
                 vendors: Array.isArray(data?.vendors) ? data.vendors : fallbackSettings.vendors,
+                aboutSection: data?.aboutSection ? {
+                    enabled: Boolean(data.aboutSection.enabled),
+                    title: (data.aboutSection.title && typeof data.aboutSection.title === 'object') ? data.aboutSection.title : {},
+                    description: (data.aboutSection.description && typeof data.aboutSection.description === 'object') ? data.aboutSection.description : {},
+                    ctaLabel: (data.aboutSection.ctaLabel && typeof data.aboutSection.ctaLabel === 'object') ? data.aboutSection.ctaLabel : {},
+                    ctaUrl: typeof data.aboutSection.ctaUrl === 'string' ? data.aboutSection.ctaUrl : '',
+                    images: Array.isArray(data.aboutSection.images) ? data.aboutSection.images : [],
+                } : fallbackSettings.aboutSection,
                 updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data?.updatedAt,
             };
         }
