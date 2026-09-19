@@ -43,9 +43,9 @@ export async function Footer({
         || 'shop';
     const activeFooterDesc = footerDescription || settings?.footerDescription;
     const activeSocialLinks = socialLinks || settings?.socialLinks || brandConfig.navigation?.socials || [];
+    const isFr = lang === 'fr';
     const activeFooterRightTitle = getLocalizedField(footerRightMenuTitle, lang) || getLocalizedField(settings?.footerRightMenuTitle, lang) || (isFr ? 'Légal' : 'Legal');
 
-    const isFr = lang === 'fr';
     const legalDict = dict.legal || {};
     const headerDict = dict.header || {};
     const { navigation } = brandConfig;
