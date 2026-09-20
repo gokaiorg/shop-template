@@ -25,13 +25,13 @@ When I trigger these keywords, execute the following sequences:
 5. **Push**: `git push origin [Current Branch Name]`
 6. **Output**: "🚀 Build passed and changes pushed for [Brand] to [Current Branch Name]."
 
-### "ST-Sync"
-1. `git checkout main`
-2. `git pull origin main`
-3. `git checkout dev`
-4. `git merge main`
-5. `git push origin dev`
-6. **Output**: "✅ Template synchronization complete. Main and Dev are aligned."
+### "ST-Sync" (Post-Squash Alignment)
+Use this workflow immediately after a "Squash and Merge" on GitHub to realign the local branch without duplicating commit history.
+1. `git fetch origin`
+2. `git checkout dev`
+3. `git rebase origin/main`
+4. `git push -f origin dev`
+5. **Output**: "✅ Local branch successfully rebased on origin/main and force-pushed."
 
 ### "ST-Upgrade"
 1. Verify the current repo is a client project (not the template).
