@@ -44,6 +44,6 @@ next-env.d.ts
 /src/generated/prisma
 *-firebase-adminsdk-*.json
 cors.json
-
+.firebase/
 
 /art-fate-images

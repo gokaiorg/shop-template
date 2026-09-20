@@ -1,0 +1,20 @@
+{
+  "projects": {},
+  "targets": {
+    "gokai-labs": {
+      "hosting": {
+        "gokai-labs": [
+          "gokai-labs"
+        ]
+      }
+    },
+    "art-fate-database": {
+      "hosting": {
+        "art-fate": [
+          "art-fate-database"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
