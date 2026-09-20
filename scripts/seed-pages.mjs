@@ -24,7 +24,8 @@ const app = initializeApp({
   }),
 });
 
-const db = getFirestore(app, "shop-template-database");
+const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "shop-template-database";
+const db = getFirestore(app, databaseId);
 
 const pages = [
   {

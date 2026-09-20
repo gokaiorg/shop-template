@@ -1,10 +1,15 @@
-"use server"
+"use server";
 
 import { adminDb } from "@/lib/firebase-admin";
 import { Order } from "@/types/database";
 import { auth } from "@/auth";
+import { getIsCartEnabled } from "@/config/brand.config";
 
 export async function getRecentOrders(): Promise<Order[]> {
+    if (!getIsCartEnabled()) {
+        return [];
+    }
+
     const session = await auth();
     const userRole = (session?.user?.role || "").toLowerCase();
     
@@ -12,7 +17,6 @@ export async function getRecentOrders(): Promise<Order[]> {
         return [];
     }
     
-    // Real implementation:
     const snapshot = await adminDb.collection("orders")
         .orderBy("createdAt", "desc")
         .limit(5)
@@ -30,6 +34,10 @@ export async function getRecentOrders(): Promise<Order[]> {
 }
 
 export async function getPendingOrdersCount(): Promise<number> {
+    if (!getIsCartEnabled()) {
+        return 0;
+    }
+
     const session = await auth();
     const userRole = (session?.user?.role || "").toLowerCase();
 
@@ -37,7 +45,6 @@ export async function getPendingOrdersCount(): Promise<number> {
         return 0;
     }
 
-    // Real implementation:
     const snapshot = await adminDb.collection("orders")
         .where("status", "==", "PENDING")
         .count()

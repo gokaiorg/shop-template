@@ -3,20 +3,35 @@ import { Locale } from "@/app/i18n-config";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { adminDb } from "@/lib/firebase-admin";
-import { Category, Product } from "@/types/database";
-import { Pencil } from "lucide-react";
 import { protectAdminRoute } from "@/lib/auth-utils";
+import { getStoreSettings } from "@/lib/services/settings";
+import { ProductTable } from "@/components/admin/ProductTable";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
+import { Package, Plus } from "lucide-react";
+import { getLocalizedField } from "@/lib/i18n";
 
 export default async function AdminProductsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
     await protectAdminRoute(lang);
 
-    // Fetch dictionary, categories, and products in parallel to reduce TTFB
-    const [dict, categoriesSnapshot, productsSnapshot] = await Promise.all([
+    // Safe fetch for products with graceful fallback while composite index is building on Google Cloud
+    const fetchProducts = async () => {
+        try {
+            return await adminDb.collection("products").orderBy("order", "asc").get();
+        } catch (e: any) {
+            console.warn("Index fallback for products table query:", e?.message);
+            return await adminDb.collection("products").get();
+        }
+    };
+
+    // Fetch dictionary, settings, categories, and products in parallel to reduce TTFB
+    const [dict, storeSettings, categoriesSnapshot, productsSnapshot] = await Promise.all([
         getDictionary(lang as Locale),
+        getStoreSettings(),
         adminDb.collection("categories").get(),
-        adminDb.collection("products").orderBy("createdAt", "desc").get()
+        fetchProducts()
     ]);
+    const currency = storeSettings?.defaultCurrency || "THB";
 
     const categoriesList = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
@@ -35,81 +50,43 @@ export default async function AdminProductsPage({ params }: { params: Promise<{ 
             const prod: any = {
                 id: doc.id,
                 ...data,
+                order: typeof data.order === 'number' ? data.order : 0,
                 createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
                 updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : null,
             };
-            const category = categoryMap.get(prod.categoryId);
-            if (!category) {
-                console.warn(`Product with id ${prod.id} has an invalid categoryId ${prod.categoryId}`);
-                return null;
-            }
-            return { ...prod, category };
+            const catIds = prod.categoryIds || (prod.categoryId ? [prod.categoryId] : []);
+            const categories = catIds.map((id: string) => categoryMap.get(id)).filter(Boolean);
+            return { ...prod, categoryIds: catIds, categories };
         })
-        .filter(Boolean);
+        .sort((a: any, b: any) => {
+            const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+            if (orderDiff !== 0) return orderDiff;
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+        });
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-                    <p className="text-muted-foreground">Manage your store products.</p>
-                </div>
-                <Button asChild>
-                    <Link href={`/${lang}/admin/products/new`}>Create Product</Link>
+        <AdminPageLayout
+            title={dict.admin?.products || "Products"}
+            description={lang === 'fr' ? 'Gestion du catalogue, des stocks et de la visibilité.' : 'Manage catalog, inventory, and visibility.'}
+            icon={Package}
+            actions={
+                <Button asChild className="gap-2">
+                    <Link href={`/${lang}/admin/products/new`}>
+                        <Plus className="w-4 h-4" />
+                        {dict.admin?.products_create || "Create Product"}
+                    </Link>
                 </Button>
-            </div>
-
-            <div className="bg-background border rounded-lg p-0 overflow-hidden">
-                <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
-                        <tr>
-                            <th className="px-6 py-3">Name</th>
-                            <th className="px-6 py-3">Category</th>
-                            <th className="px-6 py-3">Status</th>
-                            <th className="px-6 py-3">Price</th>
-                            <th className="px-6 py-3">Stock</th>
-                            <th className="px-6 py-3 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.length === 0 ? (
-                            <tr>
-                                <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                                    No products found. Generate demo data or create a new product.
-                                </td>
-                            </tr>
-                        ) : (
-                            products.map((product) => (
-                                <tr key={product.id} className="border-b last:border-0 hover:bg-muted/20">
-                                    <td className="px-6 py-4 font-medium">
-                                        {lang === 'fr' ? product.nameFr : product.nameEn}
-                                    </td>
-                                    <td className="px-6 py-4 text-muted-foreground">
-                                        {lang === 'fr' ? product.category.nameFr : product.category.nameEn}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${(product.statusEn === 'published' || product.statusFr === 'publié')
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                            }`}>
-                                            {lang === 'fr' ? product.statusFr : product.statusEn}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">${product.price.toFixed(2)}</td>
-                                    <td className="px-6 py-4">{product.stock}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <Button variant="ghost" size="icon" asChild>
-                                            <Link href={`/${lang}/admin/products/${product.id}/edit`}>
-                                                <Pencil className="w-4 h-4" />
-                                            </Link>
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            }
+        >
+            <ProductTable
+                products={products}
+                categories={categoriesList}
+                currency={currency}
+                lang={lang}
+                catalogSlug={getLocalizedField(storeSettings?.catalogSlug, lang) || (typeof storeSettings?.catalogSlug === 'string' ? storeSettings.catalogSlug : 'shop')}
+            />
+        </AdminPageLayout>
     );
 }

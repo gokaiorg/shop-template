@@ -4,12 +4,19 @@ import { adminDb } from "@/lib/firebase-admin";
 import { Category } from "@/types/database";
 import { notFound } from "next/navigation";
 import { CategoryForm } from "@/components/admin/CategoryForm";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
+import { Pencil } from "lucide-react";
+
+import { getStoreSettings } from "@/lib/services/settings";
 
 export default async function EditCategoryPage({ params }: { params: Promise<{ lang: string, id: string }> }) {
     const { lang, id } = await params;
-    const dict = await getDictionary(lang as Locale);
+    const [dict, doc, storeSettings] = await Promise.all([
+        getDictionary(lang as Locale),
+        adminDb.collection("categories").doc(id).get(),
+        getStoreSettings(),
+    ]);
 
-    const doc = await adminDb.collection("categories").doc(id).get();
     if (!doc.exists) {
         notFound();
     }
@@ -22,13 +29,18 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ l
     } as Category;
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">{dict.admin.categories_edit || "Edit Category"}</h1>
-            </div>
-            <div className="bg-background border rounded-lg p-6">
-                <CategoryForm dict={dict.admin.forms} lang={lang} initialData={category} />
-            </div>
-        </div>
+        <AdminPageLayout
+            title={dict.admin.categories_edit || "Edit Category"}
+            description={lang === 'fr' ? 'Modifier le nom, le slug ou les paramètres de la catégorie.' : 'Edit category name, slug, and settings.'}
+            icon={Pencil}
+            hasStickyFooter={true}
+        >
+            <CategoryForm
+                dict={dict.admin.forms}
+                lang={lang}
+                initialData={category}
+                catalogSlugs={typeof storeSettings.catalogSlug === 'object' ? storeSettings.catalogSlug : { en: 'shop', fr: 'boutique' }}
+            />
+        </AdminPageLayout>
     );
 }

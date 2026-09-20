@@ -1,29 +1,87 @@
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import { getStorage } from 'firebase-admin/storage';
+import fs from 'fs';
+import path from 'path';
 
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+let projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+let clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+if (privateKey && (privateKey.includes('...') || privateKey.trim() === '')) {
+  privateKey = undefined;
+}
+
+// Local service account fallback for local development
+if (!clientEmail || !privateKey || !projectId) {
+  try {
+    const cwd = process.cwd();
+    const files = fs.readdirSync(cwd);
+    const saFiles = files.filter(f => f.includes('firebase-adminsdk') && f.endsWith('.json'));
+
+    let targetSaFile = saFiles.find(f => projectId && f.startsWith(projectId));
+    if (!targetSaFile && saFiles.length > 0) {
+      targetSaFile = saFiles[0];
+    }
+
+    if (targetSaFile) {
+      const saPath = path.join(cwd, targetSaFile);
+      const sa = JSON.parse(fs.readFileSync(saPath, 'utf8'));
+      projectId = projectId || sa.project_id || sa.projectId;
+      clientEmail = clientEmail || sa.client_email || sa.clientEmail;
+      if (!privateKey && (sa.private_key || sa.privateKey)) {
+        privateKey = (sa.private_key || sa.privateKey)?.replace(/\\n/g, '\n');
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
 
 let app: App;
 
 if (getApps().length === 0) {
-  if (!projectId || !clientEmail || !privateKey) {
-    console.warn("Firebase Admin environment variables are missing.");
-    app = initializeApp(); 
-  } else {
+  const hasCompleteCredentials = Boolean(
+    projectId &&
+    clientEmail &&
+    privateKey &&
+    projectId.trim() !== '' &&
+    clientEmail.trim() !== '' &&
+    privateKey.trim() !== ''
+  );
+
+  if (hasCompleteCredentials) {
     app = initializeApp({
+      projectId,
       credential: cert({
-        projectId,
-        clientEmail,
-        privateKey,
+        projectId: projectId!,
+        clientEmail: clientEmail!,
+        privateKey: privateKey!,
       }),
     });
+  } else if (projectId && projectId.trim() !== '') {
+    app = initializeApp({
+      projectId,
+    });
+  } else {
+    app = initializeApp();
   }
 } else {
   app = getApps()[0];
 }
 
-export const adminDb = getFirestore(app, "shop-template-database");
+const rawDbId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
+const defaultDbForProject = 
+  projectId === "shop-gcp" ? "shop-template-database" :
+  projectId === "green-ghost-gcp" ? "green-ghost-database" :
+  projectId === "gokai-labs-gcp" ? "gokai-labs-database" :
+  undefined;
+
+const targetDbId = rawDbId || defaultDbForProject;
+export const adminApp = app;
+export const adminDb = !targetDbId || targetDbId === "(default)" || targetDbId.trim() === ""
+  ? getFirestore(app)
+  : getFirestore(app, targetDbId);
+
 export const adminAuth = getAuth(app);
+export const adminStorage = getStorage(app);

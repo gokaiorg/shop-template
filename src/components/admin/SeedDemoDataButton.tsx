@@ -30,7 +30,7 @@ export function SeedDemoDataButton({ dict }: {
     };
 
     return (
-        <Button variant="destructive" onClick={handleSeed} disabled={isPending}>
+        <Button type="button" variant="destructive" onClick={handleSeed} disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {dict.dashboard_seedButton}
         </Button>

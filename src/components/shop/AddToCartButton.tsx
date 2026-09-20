@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/types/database";
 import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 interface AddToCartButtonProps {
     product: Product;
@@ -15,7 +16,27 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ product, lang, label, title, className, size = "default" }: AddToCartButtonProps) {
+    const { isCartEnabled } = useBrand();
     const addItem = useCart(state => state.addItem);
+
+    if (!isCartEnabled) {
+        return null;
+    }
+
+    const isOutOfStock = (product.stock ?? 0) <= 0;
+
+    if (isOutOfStock) {
+        return (
+            <Button
+                size={size}
+                disabled
+                className={`rounded-full shadow-xs cursor-not-allowed opacity-50 ${className || ""}`}
+                aria-label={`Sold - ${title}`}
+            >
+                Sold
+            </Button>
+        );
+    }
 
     const handleAddToCart = () => {
         addItem(product);

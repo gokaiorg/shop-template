@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { adminDb } from "@/lib/firebase-admin";
+import { getIsCartEnabled } from "@/config/brand.config";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
+    if (!getIsCartEnabled()) {
+        return new NextResponse("E-commerce cart is disabled on this instance", { status: 404 });
+    }
+
+    const stripe = getStripe();
+    if (!stripe) {
+        return new NextResponse("Stripe service is not configured", { status: 503 });
+    }
+
     const body = await req.text();
     const signature = (await headers()).get("Stripe-Signature") as string;
 
