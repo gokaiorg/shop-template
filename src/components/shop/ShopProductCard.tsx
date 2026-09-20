@@ -100,7 +100,7 @@ export function ShopProductCard({ product, lang, dict, categorySlug }: ShopProdu
                                 >
                                     <Badge
                                         variant="secondary"
-                                        className="hover:bg-primary/20 transition-colors text-[11px] font-normal px-2 py-0.5 cursor-pointer"
+                                        className="hover:bg-primary/85 hover:text-primary-foreground transition-colors text-[11px] font-normal px-2 py-0.5 cursor-pointer"
                                     >
                                         {catName}
                                     </Badge>

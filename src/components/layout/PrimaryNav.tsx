@@ -36,7 +36,13 @@ export function PrimaryNav({
     const isColumn = className?.includes("flex-col");
 
     return (
-        <nav aria-label="Primary Navigation" className={cn(className?.includes("hidden") ? "hidden md:flex" : "flex", isColumn && "w-full")}>
+        <nav
+            aria-label="Primary Navigation"
+            className={cn(
+                className?.includes("hidden") ? "hidden md:flex items-center" : "flex items-center",
+                isColumn && "w-full"
+            )}
+        >
             <ul
                 role="list"
                 className={cn(
@@ -45,13 +51,13 @@ export function PrimaryNav({
                         : "flex items-center gap-6"
                 )}
             >
-                <li>
+                <li className="flex items-center">
                     <Link
                         href={catalogHref}
                         onClick={onNavClick}
                         aria-current={isCatalogActive ? "page" : undefined}
                         className={cn(
-                            "flex items-center text-sm font-medium transition-colors hover:text-primary",
+                            "flex items-center text-sm font-medium transition-colors hover:text-primary leading-none",
                             isColumn && "text-lg",
                             isCatalogActive ? "text-primary font-semibold" : "text-muted-foreground"
                         )}
@@ -65,7 +71,7 @@ export function PrimaryNav({
                     const rawCatSlug =
                         (typeof category.slug === "object" && category.slug?.[lang])
                             ? category.slug[lang]
-                            : (lang === "fr" ? category.slugFr : category.slugEn) ||
+                            : (lang === "fr" ? category.nameFr : category.nameEn) ||
                               getLocalizedField(category.slug, lang) ||
                               (typeof category.slug === "string" ? category.slug : category.id);
                     const catSlug = rawCatSlug ? rawCatSlug.replace(/^\/+/, "") : "";
@@ -77,13 +83,13 @@ export function PrimaryNav({
                         catSlug;
 
                     return (
-                        <li key={category.id || catSlug}>
+                        <li key={category.id || catSlug} className="flex items-center">
                             <Link
                                 href={href}
                                 onClick={onNavClick}
                                 aria-current={isActive ? "page" : undefined}
                                 className={cn(
-                                    "flex items-center text-sm font-medium transition-colors hover:text-primary",
+                                    "flex items-center text-sm font-medium transition-colors hover:text-primary leading-none",
                                     isColumn && "text-lg",
                                     isActive ? "text-primary font-semibold" : "text-muted-foreground"
                                 )}
@@ -102,13 +108,13 @@ export function PrimaryNav({
                     const label = getLocalizedField(page.title, lang) || (lang === 'fr' ? page.title_fr : page.title_en) || pageSlug;
 
                     return (
-                        <li key={page.id || pageSlug}>
+                        <li key={page.id || pageSlug} className="flex items-center">
                             <Link
                                 href={href}
                                 onClick={onNavClick}
                                 aria-current={isActive ? "page" : undefined}
                                 className={cn(
-                                    "flex items-center text-sm font-medium transition-colors hover:text-primary",
+                                    "flex items-center text-sm font-medium transition-colors hover:text-primary leading-none",
                                     isColumn && "text-lg",
                                     isActive ? "text-primary font-semibold" : "text-muted-foreground"
                                 )}

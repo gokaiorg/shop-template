@@ -41,12 +41,23 @@ export default auth((req) => {
         }
     }
 
+    const requestHeaders = new Headers(req.headers);
+    const matchedLocale = locales.find(
+        (loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`)
+    ) || defaultLocale;
+    requestHeaders.set('x-locale', matchedLocale);
+    requestHeaders.set('x-pathname', pathname);
+
     if (!isMulti || locales.length <= 1) {
         // Single-locale mode:
         // If the path already has the default locale prefix (e.g. /en or /en/shop),
         // let it pass through directly without redirecting to prevent circular redirect loops.
         if (pathname === `/${defaultLocale}` || pathname.startsWith(`/${defaultLocale}/`)) {
-            return NextResponse.next();
+            return NextResponse.next({
+                request: {
+                    headers: requestHeaders,
+                },
+            });
         }
 
         // Check if path starts with a non-default locale prefix
@@ -62,7 +73,11 @@ export default auth((req) => {
             `/${defaultLocale}${targetPath === '/' ? '' : targetPath}${nextUrl.search}`,
             req.url
         );
-        return NextResponse.rewrite(rewriteUrl);
+        return NextResponse.rewrite(rewriteUrl, {
+            request: {
+                headers: requestHeaders,
+            },
+        });
     } else {
         // Multi-locale mode: ensure a valid locale prefix is present in the URL
         const pathnameIsMissingLocale = locales.every(
@@ -79,7 +94,11 @@ export default auth((req) => {
         }
     }
 
-    return NextResponse.next();
+    return NextResponse.next({
+        request: {
+            headers: requestHeaders,
+        },
+    });
 });
 
 export const config = {

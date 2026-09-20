@@ -272,6 +272,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
     const bannerImageUrl = category.imageUrl || catalogBanner;
     const bannerTitle = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
     const bannerSubtitle = getLocalizedField(category.intro, lang) || (lang === "fr" ? category.introFr : category.introEn) || "";
+    const enableProductZoom = category.enableProductZoom !== false;
 
     // Build multilingual category slug map for LanguageSwitcher
     const categorySlugMap: Record<string, string> = {};

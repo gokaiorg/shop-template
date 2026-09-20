@@ -59,6 +59,7 @@ export interface Category {
   id: string;
   order?: number;
   showInHeader?: boolean;
+  enableProductZoom?: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
   name: Record<string, string>;

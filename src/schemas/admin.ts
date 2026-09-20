@@ -9,6 +9,7 @@ export const categorySchema = z.object({
     imageUrl: z.string().optional().nullable(),
     order: z.coerce.number().int().default(0),
     showInHeader: z.boolean().default(false),
+    enableProductZoom: z.boolean().default(true).optional(),
 });
 
 export const productSchema = z.object({

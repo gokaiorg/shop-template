@@ -67,7 +67,7 @@ export function AboutSection({
     return (
         <section
             aria-labelledby="homepage-about-heading"
-            className={cn("w-full py-16 sm:py-24 bg-muted/20 border-t border-border/40", className)}
+            className={cn("w-full py-12 sm:py-16 bg-muted/20 border-t border-border/40", className)}
         >
             <div className="w-full max-w-7xl mx-auto px-6 md:px-16">
                 <div

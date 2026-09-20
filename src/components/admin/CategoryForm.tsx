@@ -15,6 +15,7 @@ import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 import { uploadProductImage } from "@/lib/firebase-storage";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 import {
@@ -104,6 +105,7 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
             imageUrl: initialData?.imageUrl || "",
             order: initialData?.order !== undefined ? initialData.order : Date.now(),
             showInHeader: initialData?.showInHeader ?? false,
+            enableProductZoom: initialData?.enableProductZoom !== undefined ? Boolean(initialData.enableProductZoom) : true,
         },
     });
 
@@ -697,6 +699,50 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                                                         : "Show link in main top navigation bar."}
                                                 </p>
                                             </div>
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        {/* Display Settings Card */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <LayoutTemplate className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang?.startsWith("fr") ? "Paramètres d'affichage" : "Display Settings"}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr") 
+                                        ? "Options d'affichage et d'interaction des produits sur la page." 
+                                        : "Product display and interaction options on this page."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="enableProductZoom"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-xs">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-base font-semibold cursor-pointer">
+                                                    {lang?.startsWith("fr") ? "Activer le zoom sur les images produits" : "Enable Product Image Zoom"}
+                                                </FormLabel>
+                                                <FormDescription>
+                                                    {lang?.startsWith("fr")
+                                                        ? "Permet aux utilisateurs de cliquer pour agrandir en haute définition (lightbox) les photos sur la fiche produit."
+                                                        : "Allows users to click and enlarge product photos in high definition (lightbox) on the product page."}
+                                                </FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    checked={Boolean(field.value)}
+                                                    onCheckedChange={field.onChange}
+                                                    disabled={isLoading}
+                                                />
+                                            </FormControl>
                                         </FormItem>
                                     )}
                                 />

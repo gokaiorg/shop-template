@@ -422,7 +422,12 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
                 {/* Left column: Gallery */}
                 <div className="w-full">
-                    <ProductGallery images={images} title={title} isOutOfStock={isOutOfStock} />
+                    <ProductGallery
+                        images={images}
+                        title={title}
+                        isOutOfStock={isOutOfStock}
+                        enableZoom={activeCategory?.enableProductZoom !== false}
+                    />
                 </div>
 
                 {/* Right column: Content */}
@@ -441,7 +446,7 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                                                   (typeof cat.slug === "string" ? cat.slug : cat.id);
                                         return (
                                             <Link key={cat.id} href={`/${lang}/${localizedCatalogSlug}/${catSlug}`}>
-                                                <Badge variant="secondary" className="hover:bg-primary/20 transition-colors text-xs font-normal cursor-pointer">
+                                                <Badge variant="secondary" className="hover:bg-primary/85 hover:text-primary-foreground transition-colors text-xs font-normal cursor-pointer">
                                                     {catName}
                                                 </Badge>
                                             </Link>

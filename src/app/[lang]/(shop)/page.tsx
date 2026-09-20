@@ -252,7 +252,7 @@ export default async function Home({
       )}
 
       {/* Unified Shop Section */}
-      <section className="w-full max-w-7xl mx-auto py-16 px-6 md:px-16 mb-16">
+      <section className="w-full max-w-7xl mx-auto pt-16 pb-6 px-6 md:px-16">
         <div className="flex justify-between items-end mb-8">
           <h2 className="text-3xl font-bold tracking-tight">{shopByCategoryTitle}</h2>
         </div>
@@ -290,7 +290,7 @@ export default async function Home({
                     )}
                   </ul>
                   {categoryProducts.length > 0 && (
-                    <div className="mt-12 flex justify-center">
+                    <div className="mt-8 flex justify-center">
                       <Link href={categoryHref}>
                         <Button variant="outline" size="lg" className="rounded-full px-8 shadow-xs hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer group">
                           <span>{homeDict.view_all || (isFr ? "Voir tout" : "View All")}</span>

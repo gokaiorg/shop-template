@@ -31,15 +31,15 @@ function HeaderContent({
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="w-full max-w-7xl mx-auto flex h-16 items-center justify-between px-6 md:px-16">
                 {/* Brand Logo & Mobile Nav */}
-                <div className="flex items-center gap-4 md:gap-10">
+                <div className="flex items-center gap-6 md:gap-10 h-full">
                     <MobileNav lang={lang} dict={dict.header} pages={pages} categories={categories} />
-                    <Link href={`/${lang}`} className="flex items-center space-x-2 gap-2">
+                    <Link href={`/${lang}`} className="flex items-center gap-2.5 shrink-0 group">
                         <Image src={logo.src} alt={logo.alt || `${brandName} Logo`} width={logo.width || 32} height={logo.height || 32} className="object-contain" />
-                        <span className="inline-block font-bold sm:text-lg">{brandName}</span>
+                        <span className="font-bold sm:text-lg tracking-tight leading-none flex items-center">{brandName}</span>
                     </Link>
 
                     {/* Primary Navigation */}
-                    <PrimaryNav lang={lang} dict={dict.header} pages={pages} categories={categories} className="hidden md:flex" />
+                    <PrimaryNav lang={lang} dict={dict.header} pages={pages} categories={categories} className="hidden md:flex items-center" />
                 </div>
 
                 {/* Right Actions */}
