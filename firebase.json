@@ -10,5 +10,43 @@
       "rules": "firestore.rules",
       "indexes": "firestore.indexes.json"
     }
+  ],
+  "hosting": [
+    {
+      "target": "gokai-labs",
+      "public": "public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "gokai-labs-main",
+            "region": "europe-west1"
+          }
+        }
+      ]
+    },
+    {
+      "target": "art-fate",
+      "public": "public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "art-fate-main",
+            "region": "europe-west1"
+          }
+        }
+      ]
+    }
   ]
 }

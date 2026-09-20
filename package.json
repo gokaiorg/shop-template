@@ -17,7 +17,9 @@
     "lint": "eslint",
     "firebase:login": "npx firebase-tools login",
     "db:index:st": "npx firebase-tools deploy --only firestore:shop-template-database --project shop-gcp",
-    "db:index:af": "npx firebase-tools deploy --only \"firestore:(default)\" --project art-fate-database"
+    "db:index:af": "npx firebase-tools deploy --only \"firestore:(default)\" --project art-fate-database",
+    "deploy:proxy:gl": "firebase deploy --only hosting:gokai-labs --project gokai-labs",
+    "deploy:proxy:af": "firebase deploy --only hosting:art-fate --project art-fate-database"
   },
   "dependencies": {
     "@auth/firebase-adapter": "^2.11.1",

@@ -102,7 +102,41 @@ The deployment relies on the code hosted on GitHub and is managed by Google Clou
 
 ---
 
-## 4. Administration Features
+## 4. Multi-Brand Reverse Proxy & CDN (Firebase Hosting to Cloud Run)
+
+Firebase Hosting acts as a global CDN and managed SSL reverse proxy in front of Google Cloud Run services (`gokai-labs-main` and `art-fate-main` in `europe-west1`).
+
+### Step A: Initial Target Setup (`target:apply`)
+
+Before deploying the hosting proxy for the first time, link each logical target defined in `firebase.json` (`gokai-labs`, `art-fate`) to its actual Firebase Hosting site:
+
+```bash
+# Authenticate CLI (if not already logged in)
+npx firebase-tools login
+
+# 1. Link Gokai Labs target
+npx firebase-tools target:apply hosting gokai-labs [GOKAI_LABS_SITE_ID] --project gokai-labs
+
+# 2. Link Art Fate target
+npx firebase-tools target:apply hosting art-fate [ART_FATE_SITE_ID] --project art-fate-database
+```
+> **Tip:** `[SITE_ID]` is your Firebase Hosting site name as shown in the Firebase Console (often identical to the project ID, e.g. `gokai-labs` or `art-fate-database`).
+
+### Step B: Deploying the Hosting Proxy Layer
+
+Once the targets are linked, deploy the reverse proxy layer independently using the package scripts:
+
+```bash
+# Deploy Gokai Labs CDN/Proxy:
+npm run deploy:proxy:gl
+
+# Deploy Art Fate CDN/Proxy:
+npm run deploy:proxy:af
+```
+
+---
+
+## 5. Administration Features
 
 The back-office includes a secure workflow for full data lifecycle management.
 
