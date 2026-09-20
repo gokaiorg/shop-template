@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Save, BookOpen, Mail } from "lucide-react";
+import { Loader2, Save, BookOpen, ArrowLeft } from "lucide-react";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 
 import { Button } from "@/components/ui/button";
@@ -25,20 +26,19 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { StoreSettings } from "@/types/database";
-import { blocksSchema, BlocksFormData } from "@/schemas/settings";
-import { updateBlocksSettings } from "@/actions/settings";
+import { aboutSectionSchema, AboutSectionFormData } from "@/schemas/settings";
+import { updateAboutBlockSettings } from "@/actions/settings";
 import { uploadBrandAsset } from "@/lib/firebase-storage";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { getLocaleDisplayName } from "@/lib/i18n";
 
-interface AdminBlocksFormProps {
+interface AdminAboutBlockFormProps {
     initialData: StoreSettings;
     lang: string;
     dict?: Record<string, string>;
-    children?: React.ReactNode;
 }
 
-export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBlocksFormProps) {
+export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlockFormProps) {
     const router = useRouter();
     const { supportedLocales, defaultLocale, isMultiLocale } = useBrand();
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
@@ -48,48 +48,32 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
     const defaultAboutDesc: Record<string, string> = {};
     const defaultAboutCtaLabel: Record<string, string> = {};
 
-    const defaultContactTitle: Record<string, string> = {};
-    const defaultContactDesc: Record<string, string> = {};
-
     supportedLocales.forEach((loc) => {
         defaultAboutTitle[loc] = initialData.aboutSection?.title?.[loc] || initialData.aboutSection?.title?.en || "";
         defaultAboutDesc[loc] = initialData.aboutSection?.description?.[loc] || initialData.aboutSection?.description?.en || "";
         defaultAboutCtaLabel[loc] = initialData.aboutSection?.ctaLabel?.[loc] || initialData.aboutSection?.ctaLabel?.en || "";
-
-        defaultContactTitle[loc] = initialData.contactSection?.title?.[loc] || initialData.contactSection?.title?.en || "";
-        defaultContactDesc[loc] = initialData.contactSection?.description?.[loc] || initialData.contactSection?.description?.en || "";
     });
 
-    const form = useForm<BlocksFormData>({
-        resolver: zodResolver(blocksSchema) as any,
+    const form = useForm<AboutSectionFormData>({
+        resolver: zodResolver(aboutSectionSchema) as any,
         defaultValues: {
-            aboutSection: {
-                enabled: initialData.aboutSection?.enabled ?? false,
-                title: defaultAboutTitle,
-                description: defaultAboutDesc,
-                ctaLabel: defaultAboutCtaLabel,
-                ctaUrl: initialData.aboutSection?.ctaUrl || "",
-                images: initialData.aboutSection?.images || [],
-            },
-            contactSection: {
-                enabled: initialData.contactSection?.enabled ?? false,
-                title: defaultContactTitle,
-                description: defaultContactDesc,
-            },
+            enabled: initialData.aboutSection?.enabled ?? false,
+            title: defaultAboutTitle,
+            description: defaultAboutDesc,
+            ctaLabel: defaultAboutCtaLabel,
+            ctaUrl: initialData.aboutSection?.ctaUrl || "",
+            images: initialData.aboutSection?.images || [],
         },
     });
 
-    const aboutSectionEnabled = form.watch("aboutSection.enabled");
-    const contactSectionEnabled = form.watch("contactSection.enabled");
-
-    const onSubmit = (values: BlocksFormData) => {
+    const onSubmit = (values: AboutSectionFormData) => {
         startTransition(async () => {
-            const res = await updateBlocksSettings(values);
+            const res = await updateAboutBlockSettings(values);
             if (res.success) {
                 toast.success(
                     lang === "fr"
-                        ? "Blocs éditoriaux mis à jour avec succès !"
-                        : "Editorial blocks updated successfully!"
+                        ? "Bloc À propos mis à jour avec succès !"
+                        : "About block updated successfully!"
                 );
                 router.refresh();
             } else {
@@ -101,6 +85,17 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-5xl pb-24">
+                {/* Back to Blocks Link */}
+                <div className="flex items-center justify-between">
+                    <Link
+                        href={`/${lang}/admin/blocks`}
+                        className="flex items-center gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors px-3 py-1.5 rounded-md w-fit"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        <span>{lang === "fr" ? "Retour aux blocs" : "Back to blocks"}</span>
+                    </Link>
+                </div>
+
                 {/* About Section Card */}
                 <Card>
                     <CardHeader>
@@ -120,7 +115,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                         {/* Enable/Disable Toggle */}
                         <FormField
                             control={form.control}
-                            name="aboutSection.enabled"
+                            name="enabled"
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-xs">
                                     <div className="space-y-0.5">
@@ -163,7 +158,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                                 <TabsContent key={loc} value={loc} className="space-y-4">
                                                     <FormField
                                                         control={form.control}
-                                                        name={`aboutSection.title.${loc}`}
+                                                        name={`title.${loc}`}
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
@@ -185,7 +180,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                                     />
                                                     <FormField
                                                         control={form.control}
-                                                        name={`aboutSection.description.${loc}`}
+                                                        name={`description.${loc}`}
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
@@ -208,7 +203,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                                     />
                                                     <FormField
                                                         control={form.control}
-                                                        name={`aboutSection.ctaLabel.${loc}`}
+                                                        name={`ctaLabel.${loc}`}
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
@@ -233,7 +228,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                         <div className="space-y-4">
                                             <FormField
                                                 control={form.control}
-                                                name={`aboutSection.title.${defaultLocale}`}
+                                                name={`title.${defaultLocale}`}
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>
@@ -248,7 +243,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                             />
                                             <FormField
                                                 control={form.control}
-                                                name={`aboutSection.description.${defaultLocale}`}
+                                                name={`description.${defaultLocale}`}
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>
@@ -263,7 +258,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                             />
                                             <FormField
                                                 control={form.control}
-                                                name={`aboutSection.ctaLabel.${defaultLocale}`}
+                                                name={`ctaLabel.${defaultLocale}`}
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>
@@ -284,7 +279,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                 <div className="border-t pt-4">
                                     <FormField
                                         control={form.control}
-                                        name="aboutSection.ctaUrl"
+                                        name="ctaUrl"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
@@ -311,7 +306,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                 <div className="border-t pt-4">
                                     <FormField
                                         control={form.control}
-                                        name="aboutSection.images"
+                                        name="images"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="flex items-center justify-between">
@@ -352,160 +347,6 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                     />
                                 </div>
                             </div>
-                    </CardContent>
-                </Card>
-
-                {/* Contact Section Card */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Mail className="w-5 h-5 text-muted-foreground" />
-                            <h2 className="text-lg font-medium tracking-tight">
-                                {lang === "fr" ? "Section Contact" : "Contact Section"}
-                            </h2>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            {lang === "fr"
-                                ? "Configurez les textes d'introduction du bloc de contact et du formulaire de message."
-                                : "Configure the introductory heading and description for the contact inquiry block."}
-                        </p>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        {/* Enable/Disable Toggle */}
-                        <FormField
-                            control={form.control}
-                            name="contactSection.enabled"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-xs">
-                                    <div className="space-y-0.5">
-                                        <FormLabel className="text-base font-semibold">
-                                            {lang === "fr" ? "Activer la section Contact sur la page d'accueil" : "Enable Contact Section on Homepage"}
-                                        </FormLabel>
-                                        <FormDescription>
-                                            {lang === "fr"
-                                                ? "Affiche ce bloc avec le formulaire de contact sur la page d'accueil au-dessus du pied de page."
-                                                : "Displays this block with the contact form on the homepage above the footer."}
-                                        </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                        <Switch
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            disabled={isPending}
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Text Fields */}
-                        <div className="space-y-6 pt-2">
-                            {isMultiLocale ? (
-                                <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {supportedLocales.map((loc) => (
-                                            <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {loc.toUpperCase()}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
-                                    {supportedLocales.map((loc) => (
-                                        <TabsContent key={loc} value={loc} className="space-y-4">
-                                            {/* Section Title */}
-                                            <FormField
-                                                control={form.control}
-                                                name={`contactSection.title.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {lang === "fr" ? "Titre" : "Title"}{" "}
-                                                            <span className="text-xs text-muted-foreground">({getLocaleDisplayName(loc)})</span>
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder={loc === "fr" ? "Contactez-nous..." : "Get in touch..."}
-                                                                {...field}
-                                                                disabled={isPending}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            {/* Section Description */}
-                                            <FormField
-                                                control={form.control}
-                                                name={`contactSection.description.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {lang === "fr" ? "Description" : "Description"}{" "}
-                                                            <span className="text-xs text-muted-foreground">({getLocaleDisplayName(loc)})</span>
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Textarea
-                                                                rows={3}
-                                                                placeholder={
-                                                                    loc === "fr"
-                                                                        ? "Une question ? Envoyez-nous un message et nous vous répondrons sous 24h."
-                                                                        : "Have a question? Send us a message and we will respond within 24 hours."
-                                                                }
-                                                                {...field}
-                                                                disabled={isPending}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </TabsContent>
-                                    ))}
-                                </Tabs>
-                            ) : (
-                                <div className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name={`contactSection.title.${defaultLocale}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{lang === "fr" ? "Titre" : "Title"}</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        placeholder={defaultLocale === "fr" ? "Contactez-nous..." : "Get in touch..."}
-                                                        {...field}
-                                                        disabled={isPending}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name={`contactSection.description.${defaultLocale}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{lang === "fr" ? "Description" : "Description"}</FormLabel>
-                                                <FormControl>
-                                                    <Textarea
-                                                        rows={3}
-                                                        placeholder={
-                                                            defaultLocale === "fr"
-                                                                ? "Une question ? Envoyez-nous un message et nous vous répondrons sous 24h."
-                                                                : "Have a question? Send us a message and we will respond within 24 hours."
-                                                        }
-                                                        {...field}
-                                                        disabled={isPending}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            )}
-                        </div>
                     </CardContent>
                 </Card>
 

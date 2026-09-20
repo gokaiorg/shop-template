@@ -2,12 +2,12 @@ import { auth } from "@/auth";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { getStoreSettings } from "@/lib/services/settings";
-import { BlocksTable } from "@/components/admin/BlocksTable";
+import { AdminContactBlockForm } from "@/components/admin/AdminContactBlockForm";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
-import { Blocks } from "lucide-react";
+import { Mail } from "lucide-react";
 import { protectAdminRoute } from "@/lib/auth-utils";
 
-export default async function AdminBlocksPage({
+export default async function AdminContactBlockPage({
     params,
 }: {
     params: Promise<{ lang: string }>;
@@ -30,16 +30,16 @@ export default async function AdminBlocksPage({
 
     return (
         <AdminPageLayout
-            title={adminDict.blocks || (isFr ? "Blocs éditoriaux" : "Editorial Blocks")}
+            title={isFr ? "Modifier la section Contact" : "Edit Contact Section"}
             description={
                 isFr
-                    ? "Gérez les blocs de contenu personnalisés et modulaires de votre boutique."
-                    : "Manage custom modular content blocks for your storefront."
+                    ? "Configurez les titres, descriptions et le formulaire de contact de votre boutique."
+                    : "Configure headings, descriptions, and the contact inquiry form for your storefront."
             }
-            icon={Blocks}
-            hasStickyFooter={false}
+            icon={Mail}
+            hasStickyFooter={true}
         >
-            <BlocksTable settings={storeSettings} lang={lang} />
+            <AdminContactBlockForm initialData={storeSettings} lang={lang} dict={adminDict} />
         </AdminPageLayout>
     );
 }

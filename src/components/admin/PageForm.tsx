@@ -361,6 +361,89 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                 )}
                             </CardContent>
                         </Card>
+
+                        {/* Modular Page Blocks */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Blocks className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang === 'fr' ? 'Blocs de page' : 'Page Blocks'}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang === 'fr' 
+                                        ? 'Sélectionnez les blocs éditoriaux à afficher en bas de cette page.' 
+                                        : 'Select editorial blocks to display at the bottom of this page.'}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="activeBlocks"
+                                    render={({ field }) => {
+                                        const currentBlocks: string[] = field.value || [];
+                                        const toggleBlock = (blockId: string) => {
+                                            if (currentBlocks.includes(blockId)) {
+                                                field.onChange(currentBlocks.filter((b) => b !== blockId));
+                                            } else {
+                                                field.onChange([...currentBlocks, blockId]);
+                                            }
+                                        };
+
+                                        return (
+                                            <div className="grid sm:grid-cols-2 gap-4">
+                                                {/* About Section Checkbox */}
+                                                <div className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-2xs hover:bg-muted/10 transition-colors">
+                                                    <Checkbox
+                                                        id="block-about"
+                                                        checked={currentBlocks.includes("about")}
+                                                        onCheckedChange={() => toggleBlock("about")}
+                                                        disabled={isLoading}
+                                                    />
+                                                    <div className="space-y-1 leading-none">
+                                                        <label
+                                                            htmlFor="block-about"
+                                                            className="text-sm font-medium cursor-pointer"
+                                                        >
+                                                            {lang === 'fr' ? 'Section À propos' : 'About Section'}
+                                                        </label>
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {lang === 'fr'
+                                                                ? 'Affiche le bloc histoire et carrousel photos configuré dans Blocs.'
+                                                                : 'Display the brand story and photo carousel configured in Blocks.'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Contact Section Checkbox */}
+                                                <div className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-2xs hover:bg-muted/10 transition-colors">
+                                                    <Checkbox
+                                                        id="block-contact"
+                                                        checked={currentBlocks.includes("contact")}
+                                                        onCheckedChange={() => toggleBlock("contact")}
+                                                        disabled={isLoading}
+                                                    />
+                                                    <div className="space-y-1 leading-none">
+                                                        <label
+                                                            htmlFor="block-contact"
+                                                            className="text-sm font-medium cursor-pointer"
+                                                        >
+                                                            {lang === 'fr' ? 'Section Contact' : 'Contact Section'}
+                                                        </label>
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {lang === 'fr'
+                                                                ? 'Affiche le bloc formulaire de contact et message.'
+                                                                : 'Display the contact inquiry form and intro text.'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    }}
+                                />
+                            </CardContent>
+                        </Card>
                     </div>
 
                     {/* Right Column: Settings & Navigation Placement */}
@@ -600,90 +683,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                 />
                             </CardContent>
                         </Card>
-
-                        {/* Modular Page Blocks */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Blocks className="w-5 h-5 text-muted-foreground" />
-                                    <h2 className="text-lg font-medium tracking-tight">
-                                        {lang === 'fr' ? 'Blocs de page' : 'Page Blocks'}
-                                    </h2>
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    {lang === 'fr' 
-                                        ? 'Sélectionnez les blocs éditoriaux à afficher en bas de cette page.' 
-                                        : 'Select editorial blocks to display at the bottom of this page.'}
-                                </p>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <FormField
-                                    control={form.control}
-                                    name="activeBlocks"
-                                    render={({ field }) => {
-                                        const currentBlocks: string[] = field.value || [];
-                                        const toggleBlock = (blockId: string) => {
-                                            if (currentBlocks.includes(blockId)) {
-                                                field.onChange(currentBlocks.filter((b) => b !== blockId));
-                                            } else {
-                                                field.onChange([...currentBlocks, blockId]);
-                                            }
-                                        };
-
-                                        return (
-                                            <div className="space-y-3">
-                                                {/* About Section Checkbox */}
-                                                <div className="flex flex-row items-start space-x-3 rounded-md border p-3 shadow-2xs">
-                                                    <Checkbox
-                                                        id="block-about"
-                                                        checked={currentBlocks.includes("about")}
-                                                        onCheckedChange={() => toggleBlock("about")}
-                                                        disabled={isLoading}
-                                                    />
-                                                    <div className="space-y-1 leading-none">
-                                                        <label
-                                                            htmlFor="block-about"
-                                                            className="text-sm font-medium cursor-pointer"
-                                                        >
-                                                            {lang === 'fr' ? 'Section À propos' : 'About Section'}
-                                                        </label>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {lang === 'fr'
-                                                                ? 'Affiche le bloc histoire et carrousel photos configuré dans Blocs.'
-                                                                : 'Display the brand story and photo carousel configured in Blocks.'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Contact Section Checkbox */}
-                                                <div className="flex flex-row items-start space-x-3 rounded-md border p-3 shadow-2xs">
-                                                    <Checkbox
-                                                        id="block-contact"
-                                                        checked={currentBlocks.includes("contact")}
-                                                        onCheckedChange={() => toggleBlock("contact")}
-                                                        disabled={isLoading}
-                                                    />
-                                                    <div className="space-y-1 leading-none">
-                                                        <label
-                                                            htmlFor="block-contact"
-                                                            className="text-sm font-medium cursor-pointer"
-                                                        >
-                                                            {lang === 'fr' ? 'Section Contact' : 'Contact Section'}
-                                                        </label>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {lang === 'fr'
-                                                                ? 'Affiche le bloc formulaire de contact et message.'
-                                                                : 'Display the contact inquiry form and intro text.'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    }}
-                                />
-                            </CardContent>
-                        </Card>
-
                     </div>
                 </div>
 

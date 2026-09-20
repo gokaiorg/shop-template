@@ -12,6 +12,10 @@ import {
     GlobalSettingsFormData,
     blocksSchema,
     BlocksFormData,
+    aboutSectionSchema,
+    AboutSectionFormData,
+    contactSectionSchema,
+    ContactSectionFormData,
 } from "@/schemas/settings";
 
 export async function updateCatalogSettings(data: CatalogSettingsFormData) {
@@ -117,6 +121,66 @@ export async function updateBlocksSettings(data: BlocksFormData) {
     } catch (error: any) {
         console.error("[UPDATE_BLOCKS_SETTINGS_ACTION_ERROR]", error);
         return { success: false, error: error?.message || "Failed to update blocks settings" };
+    }
+}
+
+export async function updateAboutBlockSettings(data: AboutSectionFormData) {
+    const session = await auth();
+
+    if (!session || !session.user) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const role = (session.user.role || "").toLowerCase();
+    if (role !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
+    }
+
+    const parsed = aboutSectionSchema.safeParse(data);
+    if (!parsed.success) {
+        return {
+            success: false,
+            error: "Validation failed: " + parsed.error.issues.map((i) => i.message).join(", "),
+        };
+    }
+
+    try {
+        await saveStoreSettings({ aboutSection: parsed.data });
+        revalidatePath("/", "layout");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[UPDATE_ABOUT_BLOCK_ACTION_ERROR]", error);
+        return { success: false, error: error?.message || "Failed to update about section" };
+    }
+}
+
+export async function updateContactBlockSettings(data: ContactSectionFormData) {
+    const session = await auth();
+
+    if (!session || !session.user) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const role = (session.user.role || "").toLowerCase();
+    if (role !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
+    }
+
+    const parsed = contactSectionSchema.safeParse(data);
+    if (!parsed.success) {
+        return {
+            success: false,
+            error: "Validation failed: " + parsed.error.issues.map((i) => i.message).join(", "),
+        };
+    }
+
+    try {
+        await saveStoreSettings({ contactSection: parsed.data });
+        revalidatePath("/", "layout");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[UPDATE_CONTACT_BLOCK_ACTION_ERROR]", error);
+        return { success: false, error: error?.message || "Failed to update contact section" };
     }
 }
 
