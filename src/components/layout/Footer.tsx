@@ -1,5 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
+import parse from 'html-react-parser';
+import DOMPurify from 'isomorphic-dompurify';
 import { brandConfig } from '@/config/brand.config';
 import { Page, Category, SocialLink } from '@/types/database';
 import { getLocalizedField } from '@/lib/i18n';
@@ -80,11 +82,11 @@ export async function Footer({
             <div className="w-full max-w-7xl mx-auto px-6 md:px-16 grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
                 <div className="col-span-1 md:col-span-2">
                     <h3 className="font-bold text-lg mb-4">{activeBrandName}</h3>
-                    {description && (
-                        <p className="text-muted-foreground text-sm max-w-sm leading-relaxed whitespace-pre-line">
-                            {description}
-                        </p>
-                    )}
+                    {description ? (
+                        <div className="text-muted-foreground text-sm max-w-sm leading-relaxed whitespace-pre-line [&_a]:underline [&_a]:hover:text-primary">
+                            {parse(DOMPurify.sanitize(description, { ADD_ATTR: ['target'] }))}
+                        </div>
+                    ) : null}
                     {activeSocialLinks && activeSocialLinks.length > 0 && (
                         <div className="flex items-center gap-4 mt-4">
                             {activeSocialLinks.map((social, idx) => (

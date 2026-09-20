@@ -50,6 +50,7 @@ export function formatPageDoc(doc: FirebaseFirestore.DocumentSnapshot): Page {
         showInHeader: Boolean(data.showInHeader),
         showInFooter: Boolean(data.showInFooter),
         order: typeof data.order === 'number' ? data.order : 0,
+        activeBlocks: Array.isArray(data.activeBlocks) ? data.activeBlocks : [],
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
         slug_en: data.slug_en || slug.en,

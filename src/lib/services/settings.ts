@@ -65,6 +65,11 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             ctaUrl: '',
             images: [],
         },
+        contactSection: {
+            enabled: false,
+            title: { en: '', fr: '' },
+            description: { en: '', fr: '' },
+        },
     };
 
     try {
@@ -102,6 +107,11 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                     ctaUrl: typeof data.aboutSection.ctaUrl === 'string' ? data.aboutSection.ctaUrl : '',
                     images: Array.isArray(data.aboutSection.images) ? data.aboutSection.images : [],
                 } : fallbackSettings.aboutSection,
+                contactSection: data?.contactSection ? {
+                    enabled: Boolean(data.contactSection.enabled),
+                    title: (data.contactSection.title && typeof data.contactSection.title === 'object') ? data.contactSection.title : {},
+                    description: (data.contactSection.description && typeof data.contactSection.description === 'object') ? data.contactSection.description : {},
+                } : fallbackSettings.contactSection,
                 updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data?.updatedAt,
             };
         }

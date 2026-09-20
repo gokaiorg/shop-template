@@ -7,6 +7,7 @@ import { getPublishedPages } from "@/lib/services/pages";
 import { getHeaderCategories } from "@/lib/services/categories";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
+import { SessionProvider } from "next-auth/react";
 
 export default async function ShopLayout({
     children,
@@ -32,22 +33,24 @@ export default async function ShopLayout({
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     return (
-        <div className="flex min-h-screen flex-col">
-            <Header lang={lang} dict={dict} session={session} pages={headerPages} categories={headerCategories} />
-            <main className="flex-1">
-                {children}
-            </main>
-            <Footer
-                lang={lang}
-                dict={dict}
-                pages={footerPages}
-                catalogTitle={storeSettings.catalogTitle}
-                catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
-                brandName={storeSettings.brandName}
-                footerDescription={storeSettings.footerDescription}
-                footerRightMenuTitle={storeSettings.footerRightMenuTitle}
-                socialLinks={storeSettings.socialLinks}
-            />
-        </div>
+        <SessionProvider session={session}>
+            <div className="flex min-h-screen flex-col">
+                <Header lang={lang} dict={dict} session={session} pages={headerPages} categories={headerCategories} />
+                <main className="flex-1">
+                    {children}
+                </main>
+                <Footer
+                    lang={lang}
+                    dict={dict}
+                    pages={footerPages}
+                    catalogTitle={storeSettings.catalogTitle}
+                    catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
+                    brandName={storeSettings.brandName}
+                    footerDescription={storeSettings.footerDescription}
+                    footerRightMenuTitle={storeSettings.footerRightMenuTitle}
+                    socialLinks={storeSettings.socialLinks}
+                />
+            </div>
+        </SessionProvider>
     );
 }

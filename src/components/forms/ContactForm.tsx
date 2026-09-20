@@ -33,7 +33,6 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
     return z.object({
       name: z.string().min(2, dict?.validation?.name_min || (lang === "fr" ? "Le nom doit comporter au moins 2 caractères" : "Name must be at least 2 characters")),
       email: z.string().email(dict?.validation?.email_invalid || (lang === "fr" ? "Adresse email invalide" : "Invalid email address")),
-      subject: z.string().min(5, dict?.validation?.subject_min || (lang === "fr" ? "Le sujet doit comporter au moins 5 caractères" : "Subject must be at least 5 characters")),
       message: z.string().min(10, dict?.validation?.message_min || (lang === "fr" ? "Le message doit comporter au moins 10 caractères" : "Message must be at least 10 characters")),
     });
   }, [dict, lang]);
@@ -43,7 +42,6 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
     defaultValues: {
       name: "",
       email: "",
-      subject: "",
       message: "",
     },
   });
@@ -132,19 +130,6 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="subject"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{dict?.subject_label || (lang === "fr" ? "Sujet" : "Subject")}</FormLabel>
-                <FormControl>
-                  <Input placeholder={dict?.subject_placeholder || (lang === "fr" ? "De quoi s'agit-il ?" : "What is this about?")} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           <FormField
             control={form.control}

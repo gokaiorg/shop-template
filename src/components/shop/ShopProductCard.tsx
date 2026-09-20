@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { getLocalizedField } from "@/lib/i18n";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { formatPrice } from "@/lib/currency";
+import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 
 interface ShopProductCardProps {
     product: Product;
@@ -56,6 +57,11 @@ export function ShopProductCard({ product, lang, dict, categorySlug }: ShopProdu
 
     return (
         <article className="group relative flex flex-col overflow-hidden rounded-lg border bg-background h-full">
+            {/* Admin Quick Edit Shortcut */}
+            <div className="absolute top-2 left-2 z-20">
+                <AdminQuickEdit entityType="product" id={product.id} locale={lang} variant="badge" />
+            </div>
+
             {/* Image Container */}
             <Link href={productHref} className="relative aspect-square overflow-hidden bg-muted block">
                 <Image

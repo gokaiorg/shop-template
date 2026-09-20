@@ -11,6 +11,7 @@ import {
     Folders, 
     Package, 
     FileText, 
+    Blocks,
     ShoppingCart,
     Mail,
     Settings,
@@ -31,6 +32,7 @@ export function Aside({ lang, dict, session }: { lang: string, dict: any, sessio
     const isCategoriesActive = pathname.startsWith(`/${lang}/admin/categories`);
     const isProductsActive = pathname.startsWith(`/${lang}/admin/products`);
     const isPagesActive = pathname.startsWith(`/${lang}/admin/pages`);
+    const isBlocksActive = pathname.startsWith(`/${lang}/admin/blocks`);
     const isOrdersActive = pathname.startsWith(`/${lang}/admin/orders`);
     const isMessagesActive = pathname.startsWith(`/${lang}/admin/messages`);
     const isSettingsActive = pathname.startsWith(`/${lang}/admin/settings`);
@@ -120,6 +122,20 @@ export function Aside({ lang, dict, session }: { lang: string, dict: any, sessio
                     >
                         <FileText className="h-4 w-4" />
                         {adminDict.pages || "Pages"}
+                    </Link>
+
+                    {/* 6. Blocks */}
+                    <Link
+                        href={`/${lang}/admin/blocks`}
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            isBlocksActive
+                                ? "bg-primary/10 text-primary font-semibold"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
+                        )}
+                    >
+                        <Blocks className="h-4 w-4" />
+                        {adminDict.blocks || (lang === "fr" ? "Blocs" : "Blocks")}
                     </Link>
 
                     {/* Orders (if Cart Enabled) */}

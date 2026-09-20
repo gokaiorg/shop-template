@@ -151,8 +151,8 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
     });
   };
 
-  const getMailtoUrl = (email: string, subject: string) => {
-    const cleanSubject = subject?.startsWith("Re:") ? subject : `Re: ${subject || ""}`;
+  const getMailtoUrl = (email: string, subject?: string) => {
+    const cleanSubject = subject ? (subject.startsWith("Re:") ? subject : `Re: ${subject}`) : (lang === "fr" ? "Re: Prise de contact" : "Re: Contact inquiry");
     return `mailto:${email}?subject=${encodeURIComponent(cleanSubject)}`;
   };
 
@@ -362,7 +362,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                               : "text-muted-foreground"
                           )}
                         >
-                          {msg.subject}
+                          {msg.subject || (lang === "fr" ? "Sans sujet" : "No subject")}
                         </span>
                         {msg.brandKey && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border shrink-0">
@@ -478,7 +478,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                   </span>
                 </div>
                 <SheetTitle className="text-xl font-bold tracking-tight text-foreground">
-                  {selectedMessage.subject}
+                  {selectedMessage.subject || (lang === "fr" ? "Sans sujet" : "No subject")}
                 </SheetTitle>
                 <SheetDescription className="sr-only">
                   {lang === "fr" ? "Détail du message reçu" : "Received contact message detail"}

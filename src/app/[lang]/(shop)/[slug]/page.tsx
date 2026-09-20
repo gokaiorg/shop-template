@@ -14,8 +14,10 @@ import { brandConfig } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getPageBySlug } from "@/lib/services/pages";
-import { ContactForm } from "@/components/forms/ContactForm";
+import { AboutSection } from "@/components/shop/AboutSection";
+import { ContactSection } from "@/components/shop/ContactSection";
 import { PageTranslationSync } from "@/components/shop/PageTranslationSync";
+import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 
 interface SlugPageProps {
     params: Promise<{ lang: string; slug: string }>;
@@ -263,6 +265,10 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                                 <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-900" />
                                             )}
 
+                                            <div className="absolute top-3 right-3 z-20">
+                                                <AdminQuickEdit entityType="category" id={category.id} locale={lang} />
+                                            </div>
+
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:from-black/90 transition-colors duration-300" />
 
                                             <div className="absolute inset-0 p-6 flex flex-col justify-end text-white">
@@ -320,12 +326,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
     const displaySlug = expectedPageSlug;
     const title = getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || displaySlug;
     const content = getLocalizedField(page.content, lang) || (lang === "fr" ? page.content_fr : page.content_en) || "";
-
-    const isContactPage =
-        slug === "contact" ||
-        (typeof page.slug === "string" && page.slug === "contact") ||
-        (typeof page.slug === "object" && Object.values(page.slug).includes("contact")) ||
-        page.id === "contact";
+    const activeBlocks: string[] = Array.isArray(page.activeBlocks) ? page.activeBlocks : [];
 
     // Extract multilingual page slugs for language switcher
     const pageSlugMap: Record<string, string> = {};
@@ -342,29 +343,64 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
     const sanitizedContent = DOMPurify.sanitize(content || "<p></p>", {
         ALLOWED_TAGS: [
             "h1", "h2", "h3", "h4", "h5", "h6",
-            "p", "span", "strong", "em", "b", "i", "u", "s", "strike",
+            "p", "div", "span", "strong", "em", "b", "i", "u", "s", "strike",
             "ul", "ol", "li", "blockquote", "a", "img",
             "table", "thead", "tbody", "tr", "th", "td",
-            "br", "hr", "code", "pre"
+            "br", "hr", "code", "pre",
+            "iframe", "figure", "figcaption", "section",
         ],
-        ALLOWED_ATTR: ["href", "src", "alt", "title", "class", "target", "rel", "width", "height"],
+        ALLOWED_ATTR: [
+            "href", "src", "alt", "title", "class", "className", "style",
+            "target", "rel", "width", "height",
+            "allowfullscreen", "allowFullScreen", "loading", "referrerpolicy", "referrerPolicy",
+            "aria-hidden", "role",
+        ],
+        ADD_TAGS: ["iframe"],
+        ADD_ATTR: ["allowfullscreen", "allowFullScreen", "loading", "referrerpolicy", "referrerPolicy", "style"],
     });
 
     return (
         <div className="flex-1 bg-zinc-50 dark:bg-black">
             <PageTranslationSync pageSlugs={Object.keys(pageSlugMap).length > 0 ? pageSlugMap : null} />
             <div className="w-full max-w-7xl mx-auto py-16 px-6 md:px-16">
-                <h1 className="text-4xl font-bold tracking-tight mb-8">{title}</h1>
+                <div className="flex items-center justify-between gap-4 mb-8">
+                    <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
+                    <AdminQuickEdit entityType="page" id={page.id} locale={lang} />
+                </div>
                 <article className="prose prose-zinc dark:prose-invert max-w-none">
                     {parse(sanitizedContent)}
                 </article>
-
-                {isContactPage && (
-                    <div className="mt-12">
-                        <ContactForm lang={lang} dict={dict.contact} />
-                    </div>
-                )}
             </div>
+
+            {/* Modular Page Blocks */}
+            {activeBlocks.length > 0 && (
+                <div className="space-y-0">
+                    {activeBlocks.map((blockKey) => {
+                        if (blockKey === "about" && storeSettings.aboutSection) {
+                            return (
+                                <AboutSection
+                                    key="about"
+                                    aboutSection={storeSettings.aboutSection}
+                                    lang={lang}
+                                    forceDisplay={true}
+                                />
+                            );
+                        }
+                        if (blockKey === "contact") {
+                            return (
+                                <ContactSection
+                                    key="contact"
+                                    contactSection={storeSettings.contactSection}
+                                    lang={lang}
+                                    dict={dict}
+                                    forceDisplay={true}
+                                />
+                            );
+                        }
+                        return null;
+                    })}
+                </div>
+            )}
         </div>
     );
 }

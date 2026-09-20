@@ -18,7 +18,6 @@ import {
     Share2,
     ExternalLink,
     ArrowLeft,
-    BookOpen,
 } from "lucide-react";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 
@@ -69,18 +68,12 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
     const defaultHeroTitle: Record<string, string> = {};
     const defaultHeroDesc: Record<string, string> = {};
     const defaultFooterDesc: Record<string, string> = {};
-    const defaultAboutTitle: Record<string, string> = {};
-    const defaultAboutDesc: Record<string, string> = {};
-    const defaultAboutCtaLabel: Record<string, string> = {};
     const defaultFooterRightMenuTitle: Record<string, string> = {};
 
     supportedLocales.forEach((loc) => {
         defaultHeroTitle[loc] = initialData.heroTitle?.[loc] || initialData.heroTitle?.en || "";
         defaultHeroDesc[loc] = initialData.heroDescription?.[loc] || initialData.heroDescription?.en || "";
         defaultFooterDesc[loc] = initialData.footerDescription?.[loc] || initialData.footerDescription?.en || "";
-        defaultAboutTitle[loc] = initialData.aboutSection?.title?.[loc] || initialData.aboutSection?.title?.en || "";
-        defaultAboutDesc[loc] = initialData.aboutSection?.description?.[loc] || initialData.aboutSection?.description?.en || "";
-        defaultAboutCtaLabel[loc] = initialData.aboutSection?.ctaLabel?.[loc] || initialData.aboutSection?.ctaLabel?.en || "";
         defaultFooterRightMenuTitle[loc] = initialData.footerRightMenuTitle?.[loc] || initialData.footerRightMenuTitle?.en || (loc === "fr" ? "Légal" : "Legal");
     });
 
@@ -99,14 +92,6 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
             socialLinks: initialData.socialLinks || [],
             defaultTheme: initialData.defaultTheme || "system",
             defaultCurrency: initialData.defaultCurrency || "THB",
-            aboutSection: {
-                enabled: initialData.aboutSection?.enabled ?? false,
-                title: defaultAboutTitle,
-                description: defaultAboutDesc,
-                ctaLabel: defaultAboutCtaLabel,
-                ctaUrl: initialData.aboutSection?.ctaUrl || "",
-                images: initialData.aboutSection?.images || [],
-            },
         },
     });
 
@@ -114,8 +99,6 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
         control: form.control,
         name: "socialLinks",
     });
-
-    const aboutSectionEnabled = form.watch("aboutSection.enabled");
 
     const onSubmit = (values: GlobalSettingsFormData) => {
         startTransition(async () => {
@@ -555,250 +538,6 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                     </CardContent>
                 </Card>
 
-                {/* Homepage About Section */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2 mb-1">
-                            <BookOpen className="w-5 h-5 text-muted-foreground" />
-                            <h2 className="text-lg font-medium tracking-tight">
-                                {lang === "fr" ? "Section À propos (Page d'accueil)" : "Homepage About Section"}
-                            </h2>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            {lang === "fr"
-                                ? "Mettez en avant l'histoire, les valeurs ou le savoir-faire de votre marque avec un carrousel d'images."
-                                : "Highlight your brand story, craft, and values on the homepage with an interactive photo carousel."}
-                        </p>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        {/* Enable/Disable Toggle */}
-                        <FormField
-                            control={form.control}
-                            name="aboutSection.enabled"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-xs">
-                                    <div className="space-y-0.5">
-                                        <FormLabel className="text-base font-semibold">
-                                            {lang === "fr" ? "Activer la section À propos" : "Enable About Section"}
-                                        </FormLabel>
-                                        <FormDescription>
-                                            {lang === "fr"
-                                                ? "Affiche ce bloc sur la page d'accueil juste au-dessus du pied de page."
-                                                : "Displays this block on the homepage right above the footer."}
-                                        </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                        <Switch
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            disabled={isPending}
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Multilingual Text Fields (Title, Description, CTA Label) */}
-                        {aboutSectionEnabled && (
-                            <div className="space-y-6">
-                                <div className="border-t pt-4">
-                            <h4 className="text-sm font-semibold mb-3">
-                                {lang === "fr" ? "Contenu rédactionnel" : "Editorial Content"}
-                            </h4>
-                            {isMultiLocale ? (
-                                <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {supportedLocales.map((loc) => (
-                                            <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {loc.toUpperCase()}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
-                                    {supportedLocales.map((loc) => (
-                                        <TabsContent key={loc} value={loc} className="space-y-4">
-                                            <FormField
-                                                control={form.control}
-                                                name={`aboutSection.title.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {lang === "fr" ? "Titre de la section" : "Section Title"}
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder={lang === "fr" ? `Titre en ${getLocaleDisplayName(loc)}` : `Title in ${getLocaleDisplayName(loc)}`}
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name={`aboutSection.description.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {lang === "fr" ? "Description / Histoire" : "Description / Story"}
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Textarea
-                                                                rows={4}
-                                                                placeholder={lang === "fr" ? `Description en ${getLocaleDisplayName(loc)}` : `Description in ${getLocaleDisplayName(loc)}`}
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name={`aboutSection.ctaLabel.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {lang === "fr" ? "Texte du bouton d'action (CTA)" : "Button Label (CTA)"}
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder={lang === "fr" ? "Ex: En savoir plus" : "e.g. Discover More"}
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </TabsContent>
-                                    ))}
-                                </Tabs>
-                            ) : (
-                                <div className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name={`aboutSection.title.${defaultLocale}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {lang === "fr" ? "Titre de la section" : "Section Title"}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Section Title" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name={`aboutSection.description.${defaultLocale}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {lang === "fr" ? "Description / Histoire" : "Description / Story"}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Textarea rows={4} placeholder="Story or description..." {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name={`aboutSection.ctaLabel.${defaultLocale}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {lang === "fr" ? "Texte du bouton d'action (CTA)" : "Button Label (CTA)"}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="e.g. Learn More" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* CTA URL */}
-                        <div className="border-t pt-4">
-                            <FormField
-                                control={form.control}
-                                name="aboutSection.ctaUrl"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            {lang === "fr" ? "Lien de destination du bouton (URL)" : "CTA Button Link (URL)"}
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder={lang === "fr" ? "/a-propos ou https://..." : "/about or https://..."}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormDescription className="text-xs">
-                                            {lang === "fr"
-                                                ? "Chemin interne (ex: /fr/notre-histoire) ou URL externe complète."
-                                                : "Internal path (e.g. /en/about-us) or complete external URL."}
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {/* Image Carousel Upload */}
-                        <div className="border-t pt-4">
-                            <FormField
-                                control={form.control}
-                                name="aboutSection.images"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="flex items-center justify-between">
-                                            <span>{lang === "fr" ? "Galerie d'images (Carrousel)" : "Image Gallery (Carousel)"}</span>
-                                            {Array.isArray(field.value) && field.value.length > 0 && (
-                                                <Badge variant="outline" className="text-[10px]">
-                                                    {field.value.length} {field.value.length === 1 ? "image" : "images"}
-                                                </Badge>
-                                            )}
-                                        </FormLabel>
-                                        <FormControl>
-                                            <AdminImageDropzone
-                                                value={field.value || []}
-                                                onChange={(urls) => field.onChange(urls)}
-                                                multiple={true}
-                                                maxFiles={5}
-                                                aspectRatio="video"
-                                                recommendedText={
-                                                    lang === "fr"
-                                                        ? "Jusqu'à 5 photos (4:3 ou 16:9, WebP/JPEG)"
-                                                        : "Up to 5 photos (4:3 or 16:9, WebP/JPEG)"
-                                                }
-                                                onUpload={(file) => uploadBrandAsset(file, "about")}
-                                                lang={lang}
-                                                disabled={isPending}
-                                            />
-                                        </FormControl>
-                                        <FormDescription className="text-xs">
-                                            {lang === "fr"
-                                                ? "Si une seule photo est téléchargée, elle est affichée en visuel fixe. Si plusieurs photos sont présentes (jusqu'à 5), un carrousel interactif est généré automatiquement."
-                                                : "If 1 image is uploaded, it renders as a static visual. If multiple images are provided (up to 5), an interactive carousel is automatically generated."}
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
                 {/* Footer & Socials Section */}
                 <Card>
                     <CardHeader>
@@ -844,6 +583,9 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                                 {...field}
                                                             />
                                                         </FormControl>
+                                                        <FormDescription className="text-xs text-muted-foreground">
+                                                            HTML is supported (e.g., &lt;a href="..."&gt;, &lt;br&gt;, &lt;strong&gt;).
+                                                        </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -860,6 +602,9 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                             <FormControl>
                                                 <Textarea rows={3} placeholder="Brand description for the footer" {...field} />
                                             </FormControl>
+                                            <FormDescription className="text-xs text-muted-foreground">
+                                                HTML is supported (e.g., &lt;a href="..."&gt;, &lt;br&gt;, &lt;strong&gt;).
+                                            </FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}

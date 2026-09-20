@@ -30,6 +30,21 @@ export const aboutSectionSchema = z.object({
 
 export type AboutSectionFormData = z.infer<typeof aboutSectionSchema>;
 
+export const contactSectionSchema = z.object({
+    enabled: z.boolean().default(false),
+    title: z.record(z.string(), z.string()).default({}),
+    description: z.record(z.string(), z.string()).default({}),
+});
+
+export type ContactSectionFormData = z.infer<typeof contactSectionSchema>;
+
+export const blocksSchema = z.object({
+    aboutSection: aboutSectionSchema,
+    contactSection: contactSectionSchema.optional(),
+});
+
+export type BlocksFormData = z.infer<typeof blocksSchema>;
+
 export const globalSettingsSchema = z.object({
     brandName: z.string().min(1, 'Brand name is required'),
     logoUrl: z.string().min(1, 'Logo URL is required'),
@@ -47,6 +62,7 @@ export const globalSettingsSchema = z.object({
     primaryColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color code (e.g. #14B3F6)').optional().or(z.literal('')),
     vendors: z.array(z.string()).default([]),
     aboutSection: aboutSectionSchema.optional(),
+    contactSection: contactSectionSchema.optional(),
 });
 
 export type GlobalSettingsFormData = z.infer<typeof globalSettingsSchema>;

@@ -15,6 +15,7 @@ import { getStoreSettings } from "@/lib/services/settings";
 import { formatPrice } from "@/lib/currency";
 import { ProductTranslationSync } from "@/components/shop/ProductTranslationSync";
 import { CategoryTranslationSync } from "@/components/shop/CategoryTranslationSync";
+import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 
 interface ProductPageProps {
     params: Promise<{
@@ -427,26 +428,29 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                 {/* Right column: Content */}
                 <div className="flex flex-col space-y-6">
                     <div>
-                        {assignedCategories.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-3">
-                                {assignedCategories.map((cat) => {
-                                    const catName = getLocalizedField(cat.name, lang) || (lang === "fr" ? cat.nameFr : cat.nameEn);
-                                    const catSlug =
-                                        (typeof cat.slug === "object" && cat.slug?.[lang])
-                                            ? cat.slug[lang]
-                                            : (lang === "fr" ? cat.slugFr : cat.slugEn) ||
-                                              getLocalizedField(cat.slug, lang) ||
-                                              (typeof cat.slug === "string" ? cat.slug : cat.id);
-                                    return (
-                                        <Link key={cat.id} href={`/${lang}/${localizedCatalogSlug}/${catSlug}`}>
-                                            <Badge variant="secondary" className="hover:bg-primary/20 transition-colors text-xs font-normal cursor-pointer">
-                                                {catName}
-                                            </Badge>
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        )}
+                        <div className="flex items-center justify-between gap-4 mb-3">
+                            {assignedCategories.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {assignedCategories.map((cat) => {
+                                        const catName = getLocalizedField(cat.name, lang) || (lang === "fr" ? cat.nameFr : cat.nameEn);
+                                        const catSlug =
+                                            (typeof cat.slug === "object" && cat.slug?.[lang])
+                                                ? cat.slug[lang]
+                                                : (lang === "fr" ? cat.slugFr : cat.slugEn) ||
+                                                  getLocalizedField(cat.slug, lang) ||
+                                                  (typeof cat.slug === "string" ? cat.slug : cat.id);
+                                        return (
+                                            <Link key={cat.id} href={`/${lang}/${localizedCatalogSlug}/${catSlug}`}>
+                                                <Badge variant="secondary" className="hover:bg-primary/20 transition-colors text-xs font-normal cursor-pointer">
+                                                    {catName}
+                                                </Badge>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            ) : <div />}
+                            <AdminQuickEdit entityType="product" id={product.id} locale={lang} />
+                        </div>
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">{title}</h1>
                         {!product.hidePrice && (
                             <p className="mt-4 text-3xl font-semibold text-foreground">

@@ -18,6 +18,7 @@ interface AboutSectionProps {
     locale?: string;
     lang?: string;
     className?: string;
+    forceDisplay?: boolean;
 }
 
 export function AboutSection({
@@ -25,10 +26,11 @@ export function AboutSection({
     locale,
     lang,
     className = "",
+    forceDisplay = false,
 }: AboutSectionProps) {
     const activeLocale = locale || lang || "en";
 
-    if (!aboutSection || !aboutSection.enabled) {
+    if (!aboutSection || (!aboutSection.enabled && !forceDisplay)) {
         return null;
     }
 

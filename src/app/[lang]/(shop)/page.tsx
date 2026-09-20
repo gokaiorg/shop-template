@@ -11,6 +11,7 @@ import { CategoryPillsNav } from "@/components/shop/CategoryPillsNav";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { FeaturedCategories } from "@/components/shop/FeaturedCategories";
 import { AboutSection } from "@/components/shop/AboutSection";
+import { ContactSection } from "@/components/shop/ContactSection";
 import { ArrowRight } from "lucide-react";
 import { brandConfig, getActiveBrand } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
@@ -310,6 +311,15 @@ export default async function Home({
         <AboutSection
           aboutSection={storeSettings.aboutSection}
           lang={lang}
+        />
+      )}
+
+      {/* Homepage Contact Section */}
+      {storeSettings.contactSection?.enabled && (
+        <ContactSection
+          contactSection={storeSettings.contactSection}
+          lang={lang}
+          dict={dict}
         />
       )}
     </div>

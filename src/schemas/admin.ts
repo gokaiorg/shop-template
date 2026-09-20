@@ -43,6 +43,7 @@ export const pageSchema = z.object({
     showInHeader: z.boolean(),
     showInFooter: z.boolean(),
     order: z.coerce.number().int().optional(),
+    activeBlocks: z.array(z.string()).default([]),
     // Optional legacy fields for backward compatibility
     slug_en: z.string().optional(),
     slug_fr: z.string().optional(),

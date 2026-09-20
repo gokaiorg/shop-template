@@ -137,6 +137,7 @@ export interface Page {
   showInHeader: boolean;
   showInFooter: boolean;
   order?: number;
+  activeBlocks?: string[];
   metaTitle?: Record<string, string>;
   metaDescription?: Record<string, string>;
   createdAt?: Date | string;
@@ -158,7 +159,7 @@ export interface ContactMessage {
   id: string;
   name: string;
   email: string;
-  subject: string;
+  subject?: string;
   message: string;
   status: 'unread' | 'read' | 'archived';
   createdAt: string;
@@ -181,6 +182,12 @@ export interface AboutSectionSettings {
   images: string[];
 }
 
+export interface ContactSectionSettings {
+  enabled: boolean;
+  title: Record<string, string>;
+  description: Record<string, string>;
+}
+
 export interface StoreSettings {
   id?: string;
   brandName: string;
@@ -201,5 +208,6 @@ export interface StoreSettings {
   primaryColor?: string;
   vendors?: string[];
   aboutSection?: AboutSectionSettings;
+  contactSection?: ContactSectionSettings;
   updatedAt?: Date | string;
 }
