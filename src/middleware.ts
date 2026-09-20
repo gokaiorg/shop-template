@@ -48,6 +48,30 @@ export default auth((req) => {
     requestHeaders.set('x-locale', matchedLocale);
     requestHeaders.set('x-pathname', pathname);
 
+    // =========================================================================
+    // 🔀 Shopify Historical SEO: Pass dynamic legacy routes to Route Handlers
+    // (Static redirects are handled with 301 in next.config.mjs)
+    // =========================================================================
+    const isLegacyShopifyRoute =
+        pathname.startsWith('/products/') ||
+        pathname.startsWith('/policies/') ||
+        pathname.startsWith('/en/products/') ||
+        pathname.startsWith('/fr/products/') ||
+        pathname.startsWith('/en/policies/') ||
+        pathname.startsWith('/fr/policies/') ||
+        locales.some((loc) => 
+            pathname.startsWith(`/${loc}/products/`) || 
+            pathname.startsWith(`/${loc}/policies/`)
+        );
+
+    if (isLegacyShopifyRoute) {
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
+    }
+
     if (!isMulti || locales.length <= 1) {
         // Single-locale mode:
         // If the path already has the default locale prefix (e.g. /en or /en/shop),

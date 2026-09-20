@@ -88,14 +88,14 @@ export async function Footer({
                         </div>
                     ) : null}
                     {activeSocialLinks && activeSocialLinks.length > 0 && (
-                        <div className="flex items-center gap-4 mt-4">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 mt-4 max-w-full">
                             {activeSocialLinks.map((social, idx) => (
                                 <a
                                     key={`${social.platform}-${idx}`}
                                     href={social.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
+                                    className="text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-0.5 whitespace-nowrap"
                                 >
                                     {social.platform}
                                 </a>
