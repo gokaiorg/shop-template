@@ -164,9 +164,9 @@ export function MobileNav({
                     variant="ghost"
                     size="icon"
                     aria-label={menuLabel}
-                    className="md:hidden cursor-pointer bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground transition-colors"
+                    className="md:hidden cursor-pointer bg-transparent text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors"
                 >
-                    <Menu className="h-6 w-6" />
+                    <Menu className="h-6 w-6 transition-colors" />
                     <span className="sr-only">{menuLabel}</span>
                 </Button>
             </SheetTrigger>

@@ -266,7 +266,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 </section>
 
                 {/* Categories Grid (Clean Silo Links) */}
-                <div className="container mx-auto px-4 md:px-8 mb-16">
+                <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-16">
                     <div className="flex items-center justify-between border-b pb-4 mb-8">
                         <h2 className="text-2xl font-bold tracking-tight">
                             {lang === "fr" ? "Catégories" : "Categories"}

@@ -35,7 +35,7 @@ export default async function AccountLayout({
     const displayName = session.user?.name || session.user?.email?.split("@")[0] || "Client";
 
     return (
-        <div className="w-full max-w-7xl mx-auto py-8 md:py-12 px-4 sm:px-6 md:px-16">
+        <div className="w-full max-w-7xl mx-auto py-8 md:py-12 px-6 md:px-16">
             {/* Header / Greeting */}
             <div className="mb-8 border-b border-border pb-6">
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">

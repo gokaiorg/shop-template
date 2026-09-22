@@ -391,7 +391,7 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
     ];
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full max-w-7xl mx-auto px-6 md:px-16 py-8">
             <ProductJsonLd
                 name={title}
                 description={productDescription}
