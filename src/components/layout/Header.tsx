@@ -12,6 +12,8 @@ import { MobileNav } from "./MobileNav";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { Page, Category, SocialLink } from "@/types/database";
 
+import { CurrencySwitcher } from "./CurrencySwitcher";
+
 function HeaderContent({
     lang,
     dict,
@@ -61,6 +63,7 @@ function HeaderContent({
                         <ThemeToggle dict={dict.header} />
                         <LangToggle lang={lang} dict={dict.header} />
                     </div>
+                    <CurrencySwitcher />
                     {isCartEnabled && <CartSheet dict={dict.header} />}
                     <AccountToggle lang={lang} dict={dict} />
                 </div>

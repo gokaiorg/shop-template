@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, ChevronDown, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
+import { CurrencySwitcher } from "./CurrencySwitcher";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -342,12 +343,13 @@ export function MobileNav({
 
                 {/* 3. Zone Basse (Sticky Bottom / Footer du menu) */}
                 <div className="mt-auto shrink-0 pt-4 border-t border-border/60 flex flex-col gap-3">
-                    {/* Aligned Language & Theme Toggles */}
+                    {/* Aligned Currency, Language & Theme Toggles */}
                     <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground font-medium">
-                            {isFr ? "Langue & Thème" : "Language & Theme"}
+                            {isFr ? "Devise, Langue & Thème" : "Currency & Preferences"}
                         </span>
                         <div className="flex items-center gap-1.5">
+                            <CurrencySwitcher />
                             <ThemeToggle dict={headerDict} />
                             <LangToggle lang={lang} dict={headerDict} />
                         </div>

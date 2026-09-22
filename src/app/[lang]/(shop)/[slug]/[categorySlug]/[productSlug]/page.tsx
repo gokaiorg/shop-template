@@ -13,6 +13,7 @@ import { getLocalizedField } from "@/lib/i18n";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { getStoreSettings } from "@/lib/services/settings";
 import { formatPrice } from "@/lib/currency";
+import { ProductPrice } from "@/components/shop/ProductPrice";
 import { ProductTranslationSync } from "@/components/shop/ProductTranslationSync";
 import { CategoryTranslationSync } from "@/components/shop/CategoryTranslationSync";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
@@ -447,9 +448,9 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                         </div>
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">{title}</h1>
                         {!product.hidePrice && (
-                            <p className="mt-4 text-3xl font-semibold text-foreground">
-                                {formatPrice(product.price, currency, lang)}
-                            </p>
+                            <div className="mt-4">
+                                <ProductPrice price={product.price} locale={lang} className="text-3xl font-semibold text-foreground" />
+                            </div>
                         )}
                     </div>
 

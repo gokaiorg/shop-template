@@ -9,18 +9,19 @@ import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
 import { getLocalizedField } from "@/lib/i18n";
 import { useBrand } from "@/components/providers/BrandProvider";
-import { formatPrice } from "@/lib/currency";
+import { useCurrency } from "@/hooks/useCurrency";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 
 interface ShopProductCardProps {
     product: Product;
     lang: string;
-    dict: Record<string, string>;
+    dict?: any;
     categorySlug?: string;
 }
 
-export function ShopProductCard({ product, lang, dict, categorySlug }: ShopProductCardProps) {
+export function ShopProductCard({ product, lang, dict = {}, categorySlug }: ShopProductCardProps) {
     const { brand, isCartEnabled, currency, catalogSlug } = useBrand();
+    const { formattedPrice } = useCurrency(product.price, lang);
     const activeCatalogSlug = catalogSlug || "shop";
     const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "";
     const description = getLocalizedField(product.description, lang) || (lang === 'fr' ? product.descriptionFr : product.descriptionEn) || "";
@@ -125,7 +126,7 @@ export function ShopProductCard({ product, lang, dict, categorySlug }: ShopProdu
                 {!product.hidePrice && (
                     <div className="mt-auto flex items-center justify-between pt-4">
                         <p className="text-lg font-bold">
-                            {formatPrice(product.price, currency, lang)}
+                            {formattedPrice}
                         </p>
                         {isCartEnabled && (
                             <Button
