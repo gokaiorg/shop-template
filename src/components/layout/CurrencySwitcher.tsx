@@ -73,10 +73,7 @@ export function CurrencySwitcher({ className }: CurrencySwitcherProps) {
                     variant="ghost"
                     size="icon"
                     aria-label={`Devise active : ${currentItem.code}`}
-                    className={cn(
-                        "cursor-pointer text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors",
-                        className
-                    )}
+                    className={className}
                 >
                     <CurrencyIcon code={activeCurrency} />
                     <span className="sr-only">Devise : {currentItem.code}</span>
