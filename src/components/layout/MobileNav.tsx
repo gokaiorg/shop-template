@@ -1,10 +1,11 @@
 "use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, ChevronDown } from "lucide-react";
+import { Menu, ChevronDown, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
+import { CurrencySwitcher } from "./CurrencySwitcher";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -139,14 +140,14 @@ export function MobileNav({
     // 3. Footer Legal Links (Discreet text links)
     const legalItems = footerPages.length > 0
         ? footerPages.map((p) => {
-              const pageSlug = getLocalizedField(p.slug, lang) || (typeof p.slug === "string" ? p.slug : p.id);
-              const label = getLocalizedField(p.title, lang) || (isFr ? p.title_fr : p.title_en) || pageSlug;
-              return { label, href: `/${lang}/${pageSlug}` };
-          })
+            const pageSlug = getLocalizedField(p.slug, lang) || (typeof p.slug === "string" ? p.slug : p.id);
+            const label = getLocalizedField(p.title, lang) || (isFr ? p.title_fr : p.title_en) || pageSlug;
+            return { label, href: `/${lang}/${pageSlug}` };
+        })
         : (brand.navigation?.footerSections?.legal || []).map((item) => ({
-              label: legalDict[item.key] || item.key.replace(/_/g, " "),
-              href: item.href.startsWith("http") ? item.href : `/${lang}${item.href}`,
-          }));
+            label: legalDict[item.key] || item.key.replace(/_/g, " "),
+            href: item.href.startsWith("http") ? item.href : `/${lang}${item.href}`,
+        }));
 
     const legalTitle = legalDict.title || (isFr ? "Légal" : "Legal");
 
@@ -164,9 +165,9 @@ export function MobileNav({
                     variant="ghost"
                     size="icon"
                     aria-label={menuLabel}
-                    className="md:hidden cursor-pointer bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground transition-colors"
+                    className="md:hidden cursor-pointer bg-transparent text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors"
                 >
-                    <Menu className="h-6 w-6" />
+                    <Menu className="h-6 w-6 transition-colors" />
                     <span className="sr-only">{menuLabel}</span>
                 </Button>
             </SheetTrigger>
@@ -174,26 +175,43 @@ export function MobileNav({
             {/* 1. Structure Principale: Full height (h-screen / h-dvh), flex, flex-col, justify-between */}
             <SheetContent
                 side="left"
+                showCloseButton={false}
                 className="h-screen max-h-screen w-[310px] sm:w-[360px] p-6 flex flex-col justify-between overflow-hidden bg-background"
             >
-                {/* Brand Header */}
+                {/* Brand Header & Centered Close Button */}
                 <SheetHeader className="text-left shrink-0 pb-4 border-b border-border/40">
-                    <SheetTitle asChild>
-                        <Link
-                            href={`/${lang}`}
-                            onClick={() => setOpen(false)}
-                            className="flex items-center gap-2.5 font-bold text-lg tracking-tight group"
-                        >
-                            <Image
-                                src={logo.src}
-                                alt={logo.alt || `${brandName} Logo`}
-                                width={logo.width || 32}
-                                height={logo.height || 32}
-                                className="object-contain transition-transform group-hover:scale-105"
-                            />
-                            <span>{brandName}</span>
-                        </Link>
-                    </SheetTitle>
+                    <div className="flex items-center justify-between w-full">
+                        <SheetTitle asChild>
+                            <Link
+                                href={`/${lang}`}
+                                onClick={() => setOpen(false)}
+                                className="flex items-center gap-2.5 font-bold text-lg tracking-tight group"
+                            >
+                                <Image
+                                    src={logo.src}
+                                    alt={logo.alt || `${brandName} Logo`}
+                                    width={logo.width || 32}
+                                    height={logo.height || 32}
+                                    className="object-contain transition-transform group-hover:scale-105"
+                                />
+                                <span>{brandName}</span>
+                            </Link>
+                        </SheetTitle>
+
+                        <SheetClose asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={dict?.header?.close_menu || (isFr ? "Fermer le menu" : "Close menu")}
+                                className="cursor-pointer bg-transparent text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors"
+                            >
+                                <X className="h-6 w-6 transition-colors" />
+                                <span className="sr-only">
+                                    {dict?.header?.close_menu || (isFr ? "Fermer le menu" : "Close menu")}
+                                </span>
+                            </Button>
+                        </SheetClose>
+                    </div>
                 </SheetHeader>
 
                 {/* 2. Navigation Haute & Corps Déroulant */}
@@ -237,8 +255,8 @@ export function MobileNav({
                                             (typeof category.slug === "object" && category.slug?.[lang])
                                                 ? category.slug[lang]
                                                 : (isFr ? category.nameFr : category.nameEn) ||
-                                                  getLocalizedField(category.slug, lang) ||
-                                                  (typeof category.slug === "string" ? category.slug : category.id);
+                                                getLocalizedField(category.slug, lang) ||
+                                                (typeof category.slug === "string" ? category.slug : category.id);
                                         const catSlug = rawCatSlug ? rawCatSlug.replace(/^\/+/, "") : "";
                                         const href = `/${lang}/${activeCatalogSlug}/${catSlug}`;
                                         const isActive = pathname === href || pathname.startsWith(`${href}/`);
@@ -325,12 +343,13 @@ export function MobileNav({
 
                 {/* 3. Zone Basse (Sticky Bottom / Footer du menu) */}
                 <div className="mt-auto shrink-0 pt-4 border-t border-border/60 flex flex-col gap-3">
-                    {/* Aligned Language & Theme Toggles */}
+                    {/* Aligned Currency, Language & Theme Toggles */}
                     <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground font-medium">
-                            {isFr ? "Langue & Thème" : "Language & Theme"}
+                            {isFr ? "Options" : "Options"}
                         </span>
                         <div className="flex items-center gap-1.5">
+                            <CurrencySwitcher />
                             <ThemeToggle dict={headerDict} />
                             <LangToggle lang={lang} dict={headerDict} />
                         </div>

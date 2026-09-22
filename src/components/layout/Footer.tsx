@@ -167,7 +167,7 @@ export async function Footer({
                 </div>
             </div>
             
-            <div className="max-w-7xl mx-auto mt-12 pt-8 px-6 md:px-16 border-t flex flex-col sm:flex-row items-center justify-between text-sm text-muted-foreground gap-4">
+            <div className="w-full max-w-7xl mx-auto mt-12 pt-8 px-6 md:px-16 border-t flex flex-col sm:flex-row items-center justify-between text-sm text-muted-foreground gap-4">
                 <div>
                     &copy; {new Date().getFullYear()} {activeBrandName}. All rights reserved.
                 </div>

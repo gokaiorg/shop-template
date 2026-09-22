@@ -376,7 +376,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
             </section>
 
             {/* Filter Pills & Products Grid */}
-            <div className="container mx-auto px-4 md:px-8 mb-16">
+            <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-16">
                 <ShopCategoryFilter
                     categories={categories}
                     currentCategorySlug={categorySlug}
