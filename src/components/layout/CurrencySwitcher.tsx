@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown } from "lucide-react";
+import { DollarSign, Euro, PoundSterling, JapaneseYen, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -16,6 +16,27 @@ import { cn } from "@/lib/utils";
 
 interface CurrencySwitcherProps {
     className?: string;
+}
+
+function CurrencyIcon({ code }: { code: string }) {
+    switch (code) {
+        case "EUR":
+            return <Euro className="h-[1.2rem] w-[1.2rem]" />;
+        case "USD":
+        case "CAD":
+        case "AUD":
+            return <DollarSign className="h-[1.2rem] w-[1.2rem]" />;
+        case "GBP":
+            return <PoundSterling className="h-[1.2rem] w-[1.2rem]" />;
+        case "JPY":
+            return <JapaneseYen className="h-[1.2rem] w-[1.2rem]" />;
+        case "THB":
+            return <span className="font-bold text-base leading-none select-none">฿</span>;
+        case "CHF":
+            return <span className="font-bold text-xs leading-none select-none tracking-tight">CHF</span>;
+        default:
+            return <Coins className="h-[1.2rem] w-[1.2rem]" />;
+    }
 }
 
 export function CurrencySwitcher({ className }: CurrencySwitcherProps) {
@@ -50,23 +71,20 @@ export function CurrencySwitcher({ className }: CurrencySwitcherProps) {
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
-                    size="sm"
-                    aria-label={`Current currency: ${currentItem.code}. Click to change currency.`}
+                    size="icon"
+                    aria-label={`Devise active : ${currentItem.code}`}
                     className={cn(
-                        "h-9 px-2 sm:px-2.5 gap-1 font-semibold text-xs sm:text-sm text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors cursor-pointer",
+                        "cursor-pointer text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors",
                         className
                     )}
                 >
-                    <span className="tracking-tight">{currentItem.code}</span>
-                    <span className="hidden sm:inline text-xs text-muted-foreground font-normal">
-                        ({currentItem.symbol})
-                    </span>
-                    <ChevronDown className="h-3 w-3 opacity-60 transition-transform duration-200" />
+                    <CurrencyIcon code={activeCurrency} />
+                    <span className="sr-only">Devise : {currentItem.code}</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52 max-h-72 overflow-y-auto p-1">
                 <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 border-b mb-1">
-                    Select Currency
+                    Sélectionner la devise
                 </div>
                 {SUPPORTED_CURRENCIES.map((item) => {
                     const isSelected = activeCurrency === item.code;

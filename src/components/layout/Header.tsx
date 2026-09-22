@@ -62,8 +62,8 @@ function HeaderContent({
                     <div className="hidden md:flex items-center space-x-2 md:space-x-4">
                         <ThemeToggle dict={dict.header} />
                         <LangToggle lang={lang} dict={dict.header} />
+                        <CurrencySwitcher />
                     </div>
-                    <CurrencySwitcher />
                     {isCartEnabled && <CartSheet dict={dict.header} />}
                     <AccountToggle lang={lang} dict={dict} />
                 </div>
