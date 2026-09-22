@@ -16,6 +16,7 @@ import { formatPrice } from "@/lib/currency";
 import { ProductTranslationSync } from "@/components/shop/ProductTranslationSync";
 import { CategoryTranslationSync } from "@/components/shop/CategoryTranslationSync";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
+import { ProductJsonLd } from "@/components/seo/JsonLd";
 
 interface ProductPageProps {
     params: Promise<{
@@ -146,11 +147,12 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
     const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
     const productName = getLocalizedField(product.name, lang) || (lang === "fr" ? product.nameFr : product.nameEn) || "Product";
+    const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
 
     const rawIntro = getLocalizedField(product.intro, lang) || (lang === "fr" ? product.introFr : product.introEn);
     const rawDescription = getLocalizedField(product.description, lang) || (lang === "fr" ? product.descriptionFr : product.descriptionEn) || "";
     const chosenDescriptionText = (rawIntro && rawIntro.trim().length > 0) ? rawIntro : rawDescription;
-    const cleanedDescription = cleanDescription(chosenDescriptionText, 160);
+    const formattedDescription = cleanDescription(chosenDescriptionText, 160);
 
     const catIds = product.categoryIds || (product.categoryId ? [product.categoryId] : []);
     let categoryData: Category | null = product.category || null;
@@ -164,14 +166,26 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
             console.error("[GENERATE_METADATA_CATEGORY_FETCH_ERROR]", error);
         }
     }
+    if (!categoryData && categorySlug) {
+        try {
+            const snap = await adminDb.collection("categories")
+                .where(`slug.${lang}`, "==", categorySlug)
+                .limit(1)
+                .get();
+            if (!snap.empty) {
+                categoryData = snap.docs[0].data() as Category;
+            }
+        } catch (error) {
+            console.error("[GENERATE_METADATA_CATEGORY_LOOKUP_ERROR]", error);
+        }
+    }
     const categoryName = categoryData
         ? (getLocalizedField(categoryData.name, lang) || (lang === "fr" ? categoryData.nameFr : categoryData.nameEn) || "")
         : "";
 
-    const rawKeywords = categoryName
-        ? [categoryName, brandName, productName]
-        : [brandName, productName];
-    const keywords = rawKeywords.filter((k): k is string => Boolean(k && k.trim().length > 0));
+    // Dynamic title: [Nom du Produit] [Nom de la Catégorie] [Nom du Catalogue] | [Nom de la Marque]
+    const titleParts = [productName, categoryName, catalogName].filter(Boolean).join(" ");
+    const formattedTitle = titleParts ? `${titleParts} | ${brandName}` : `${productName} | ${brandName}`;
 
     const firstImage = (product.images && product.images.length > 0)
         ? product.images[0]
@@ -208,9 +222,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     const authorName = artistOrVendor || brandName;
 
     return {
-        title: productName,
-        description: cleanedDescription,
-        keywords: keywords,
+        title: formattedTitle,
+        description: formattedDescription,
         authors: [{ name: authorName }],
         creator: authorName,
         alternates: {
@@ -218,16 +231,16 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
             languages: languagesAlternate,
         },
         openGraph: {
-            title: productName,
-            description: cleanedDescription,
+            title: formattedTitle,
+            description: formattedDescription,
             url: canonicalUrl,
             type: "website",
             ...(firstImage ? { images: [firstImage] } : {}),
         },
         twitter: {
             card: "summary_large_image",
-            title: productName,
-            description: cleanedDescription,
+            title: formattedTitle,
+            description: formattedDescription,
             ...(firstImage ? { images: [firstImage] } : {}),
         },
         other: {
@@ -356,65 +369,39 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
     const brandName = (product as unknown as { brand?: string }).brand || product.vendor || storeSettings.brandName || brandConfig.identity.name || "Store";
     const sku = (product as unknown as { sku?: string }).sku || product.id;
 
-    const productSchema = {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        name: title,
-        description: productDescription,
-        image: absoluteImages,
-        sku: sku,
-        brand: {
-            "@type": "Brand",
-            name: brandName,
+    const productBreadcrumbs = [
+        {
+            name: lang === "fr" ? "Accueil" : "Home",
+            url: `${baseUrl}/${lang}`,
         },
-        ...(!product.hidePrice ? {
-            offers: {
-                "@type": "Offer",
-                price: product.price ?? 0,
-                priceCurrency: currency,
-                availability: isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-                url: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}/${productSlug}`,
-                itemCondition: "https://schema.org/NewCondition",
-            },
-        } : {}),
-    };
-
-    const breadcrumbSchema = {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: [
-            {
-                "@type": "ListItem",
-                position: 1,
-                name: lang === "fr" ? "Accueil" : "Home",
-                item: `${baseUrl}/${lang}`,
-            },
-            {
-                "@type": "ListItem",
-                position: 2,
-                name: catalogName,
-                item: `${baseUrl}/${lang}/${localizedCatalogSlug}`,
-            },
-            {
-                "@type": "ListItem",
-                position: 3,
-                name: categoryName,
-                item: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}`,
-            },
-            {
-                "@type": "ListItem",
-                position: 4,
-                name: title,
-                item: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}/${productSlug}`,
-            },
-        ],
-    };
+        {
+            name: catalogName,
+            url: `${baseUrl}/${lang}/${localizedCatalogSlug}`,
+        },
+        {
+            name: categoryName,
+            url: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}`,
+        },
+        {
+            name: title,
+            url: `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}/${productSlug}`,
+        },
+    ];
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify([productSchema, breadcrumbSchema]) }}
+            <ProductJsonLd
+                name={title}
+                description={productDescription}
+                images={absoluteImages}
+                sku={sku}
+                brandName={brandName}
+                price={product.price ?? 0}
+                currency={currency}
+                isOutOfStock={isOutOfStock}
+                productUrl={`${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}/${productSlug}`}
+                hidePrice={Boolean(product.hidePrice)}
+                breadcrumbs={productBreadcrumbs}
             />
             <ProductTranslationSync productSlugs={productSlugMap} />
             <CategoryTranslationSync categorySlugs={categorySlugMap} />
