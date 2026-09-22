@@ -4,12 +4,10 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { auth } from "@/auth";
 import { getPublishedPages } from "@/lib/services/pages";
-import { getHeaderCategories } from "@/lib/services/categories";
+import { getHeaderCategories, getAllPublishedCategories } from "@/lib/services/categories";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
 import { SessionProvider } from "next-auth/react";
-import { adminDb } from "@/lib/firebase-admin";
-import { Category } from "@/types/database";
 
 export default async function ShopLayout({
     children,
@@ -19,18 +17,14 @@ export default async function ShopLayout({
     params: Promise<{ lang: string }>;
 }) {
     const { lang } = await params;
-    const [dict, session, publishedPages, storeSettings, headerCategories, allCategoriesSnap] = await Promise.all([
+    const [dict, session, publishedPages, storeSettings, headerCategories, allCategories] = await Promise.all([
         getDictionary(lang as Locale),
         auth(),
         getPublishedPages(),
         getStoreSettings(),
         getHeaderCategories(),
-        adminDb.collection("categories").orderBy("order", "asc").get(),
+        getAllPublishedCategories(),
     ]);
-
-    const allCategories: Category[] = allCategoriesSnap.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() } as Category))
-        .filter((c) => (c.status ?? 'published') === 'published');
 
     const headerPages = publishedPages
         .filter((p) => p.showInHeader)
