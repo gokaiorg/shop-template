@@ -25,7 +25,7 @@ export function JsonLd({ data }: JsonLdProps) {
 }
 
 // =============================================================================
-// 2. GLOBAL SCHEMA (WebSite & Organization)
+// 2. GLOBAL SCHEMA (WebSite & Organization with Sitelinks Searchbox)
 // =============================================================================
 
 export interface GlobalJsonLdProps {
@@ -45,7 +45,7 @@ export function GlobalJsonLd({
     logoUrl,
     lang = "en",
     socialLinks = [],
-    searchActionUrl,
+    searchActionUrl = "shop",
 }: GlobalJsonLdProps) {
     const brandName = name || process.env.NEXT_PUBLIC_BRAND || "Store";
     const rawBaseUrl = url || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -57,6 +57,8 @@ export function GlobalJsonLd({
             : `${baseUrl}${logoUrl.startsWith("/") ? "" : "/"}${logoUrl}`
         : undefined;
 
+    const cleanSearchPath = searchActionUrl.replace(/^\/+/, "");
+
     const websiteSchema: Record<string, any> = {
         "@context": "https://schema.org",
         "@type": "WebSite",
@@ -64,15 +66,14 @@ export function GlobalJsonLd({
         url: `${baseUrl}/${lang}`,
         inLanguage: lang,
         ...(description ? { description } : {}),
-        ...(searchActionUrl
-            ? {
-                  potentialAction: {
-                      "@type": "SearchAction",
-                      target: `${baseUrl}/${lang}/${searchActionUrl}?q={search_term_string}`,
-                      "query-input": "required name=search_term_string",
-                  },
-              }
-            : {}),
+        potentialAction: {
+            "@type": "SearchAction",
+            target: {
+                "@type": "EntryPoint",
+                urlTemplate: `${baseUrl}/${lang}/${cleanSearchPath}?q={search_term_string}`,
+            },
+            "query-input": "required name=search_term_string",
+        },
     };
 
     const organizationSchema: Record<string, any> = {
@@ -80,7 +81,8 @@ export function GlobalJsonLd({
         "@type": "Organization",
         name: brandName,
         url: baseUrl,
-        ...(absoluteLogoUrl ? { logo: absoluteLogoUrl } : {}),
+        ...(absoluteLogoUrl ? { logo: absoluteLogoUrl, image: absoluteLogoUrl } : {}),
+        ...(description ? { description } : {}),
         ...(socialLinks && socialLinks.length > 0
             ? { sameAs: socialLinks.filter(Boolean) }
             : {}),
@@ -90,7 +92,7 @@ export function GlobalJsonLd({
 }
 
 // =============================================================================
-// 3. CATEGORY / COLLECTION SCHEMA (ItemList & CollectionPage)
+// 3. CATEGORY / COLLECTION SCHEMA (ItemList, Breadcrumbs & Product Snippets)
 // =============================================================================
 
 export interface ItemListProduct {
@@ -100,6 +102,8 @@ export interface ItemListProduct {
     description?: string;
     price?: number;
     priceCurrency?: string;
+    sku?: string;
+    brandName?: string;
 }
 
 export interface BreadcrumbItem {
@@ -113,6 +117,7 @@ export interface CategoryJsonLdProps {
     categoryDescription?: string;
     products?: ItemListProduct[];
     breadcrumbs?: BreadcrumbItem[];
+    brandName?: string;
 }
 
 export function CategoryJsonLd({
@@ -121,7 +126,9 @@ export function CategoryJsonLd({
     categoryDescription,
     products = [],
     breadcrumbs = [],
+    brandName,
 }: CategoryJsonLdProps) {
+    const activeBrandName = brandName || process.env.NEXT_PUBLIC_BRAND || "Store";
     const schemas: Record<string, any>[] = [];
 
     // 1. Breadcrumbs Schema
@@ -138,43 +145,96 @@ export function CategoryJsonLd({
         });
     }
 
-    // 2. CollectionPage & ItemList Schema
-    const itemListElement = products.map((product, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        name: product.name,
-        url: product.url,
-        ...(product.image ? { image: product.image } : {}),
-        ...(product.description ? { description: product.description } : {}),
-    }));
+    // 2. Top-level ItemList Schema with nested Product items
+    const itemListElement = products.map((product, index) => {
+        const itemSku = product.sku || product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        return {
+            "@type": "ListItem",
+            position: index + 1,
+            name: product.name,
+            url: product.url,
+            item: {
+                "@type": "Product",
+                name: product.name,
+                url: product.url,
+                sku: itemSku,
+                mpn: itemSku,
+                brand: {
+                    "@type": "Brand",
+                    name: product.brandName || activeBrandName,
+                },
+                ...(product.image ? { image: [product.image] } : {}),
+                ...(product.description ? { description: product.description } : {}),
+                ...(product.price !== undefined
+                    ? {
+                          offers: {
+                              "@type": "Offer",
+                              price: product.price,
+                              priceCurrency: product.priceCurrency || "EUR",
+                              availability: "https://schema.org/InStock",
+                              url: product.url,
+                              itemCondition: "https://schema.org/NewCondition",
+                          },
+                      }
+                    : {}),
+            },
+        };
+    });
 
-    const collectionPageSchema: Record<string, any> = {
+    const itemListSchema: Record<string, any> = {
         "@context": "https://schema.org",
-        "@type": "CollectionPage",
+        "@type": "ItemList",
         name: categoryName,
         url: categoryUrl,
         ...(categoryDescription ? { description: categoryDescription } : {}),
-        mainEntity: {
-            "@type": "ItemList",
-            name: categoryName,
-            numberOfItems: products.length,
-            itemListElement,
-        },
+        numberOfItems: products.length,
+        itemListElement,
     };
 
-    schemas.push(collectionPageSchema);
+    schemas.push(itemListSchema);
+
+    // 3. Emit each product as an individual Product entity for Google's Product Snippet Rich Results
+    products.forEach((product) => {
+        const itemSku = product.sku || product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        schemas.push({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: product.name,
+            url: product.url,
+            sku: itemSku,
+            mpn: itemSku,
+            brand: {
+                "@type": "Brand",
+                name: product.brandName || activeBrandName,
+            },
+            ...(product.image ? { image: [product.image] } : {}),
+            ...(product.description ? { description: product.description } : {}),
+            ...(product.price !== undefined
+                ? {
+                      offers: {
+                          "@type": "Offer",
+                          price: product.price,
+                          priceCurrency: product.priceCurrency || "EUR",
+                          availability: "https://schema.org/InStock",
+                          url: product.url,
+                          itemCondition: "https://schema.org/NewCondition",
+                      },
+                  }
+                : {}),
+        });
+    });
 
     return <JsonLd data={schemas} />;
 }
 
 // =============================================================================
-// 4. PRODUCT SCHEMA (Google Merchant Listings Enriched)
+// 4. PRODUCT SCHEMA (Google Merchant Listings & Snippets Enriched)
 // =============================================================================
 
 export interface ProductShippingDetailsProps {
     shippingRate?: number;
     currency?: string;
-    addressCountry?: string;
+    addressCountry?: string | string[];
     handlingTimeMin?: number;
     handlingTimeMax?: number;
     transitTimeMin?: number;
@@ -182,7 +242,7 @@ export interface ProductShippingDetailsProps {
 }
 
 export interface ProductReturnPolicyProps {
-    applicableCountry?: string;
+    applicableCountry?: string | string[];
     returnDays?: number;
     returnMethod?: string;
     returnFees?: string;
@@ -220,19 +280,37 @@ export function ProductJsonLd({
     breadcrumbs = [],
 }: ProductJsonLdProps) {
     const activeBrandName = brandName || process.env.NEXT_PUBLIC_BRAND || "Store";
+    const rawBaseUrl = productUrl.startsWith("http")
+        ? new URL(productUrl).origin
+        : (process.env.NEXT_PUBLIC_APP_URL || "https://gokai.org");
+    const baseUrl = rawBaseUrl.replace(/\/+$/, "");
     const schemas: Record<string, any>[] = [];
 
     // Default Shipping Policy for Merchant Listings (Free Standard Shipping)
     const activeShippingRate = shippingDetails?.shippingRate ?? 0;
     const activeShippingCurrency = shippingDetails?.currency || currency;
-    const activeShippingCountry = shippingDetails?.addressCountry || "FR";
+    const defaultCountries = ["FR", "US", "GB", "DE", "BE", "CH", "CA", "ES", "IT"];
+
+    const rawShippingCountry = shippingDetails?.addressCountry;
+    const shippingCountries = Array.isArray(rawShippingCountry)
+        ? rawShippingCountry
+        : rawShippingCountry
+        ? [rawShippingCountry]
+        : defaultCountries;
+
     const handlingMin = shippingDetails?.handlingTimeMin ?? 0;
     const handlingMax = shippingDetails?.handlingTimeMax ?? 1;
     const transitMin = shippingDetails?.transitTimeMin ?? 1;
     const transitMax = shippingDetails?.transitTimeMax ?? 3;
 
     // Default Return Policy for Merchant Listings (30 days return by mail, free return)
-    const returnCountry = returnPolicy?.applicableCountry || "FR";
+    const rawReturnCountry = returnPolicy?.applicableCountry;
+    const returnCountries = Array.isArray(rawReturnCountry)
+        ? rawReturnCountry
+        : rawReturnCountry
+        ? [rawReturnCountry]
+        : defaultCountries;
+
     const returnDays = returnPolicy?.returnDays ?? 30;
     const returnMethod = returnPolicy?.returnMethod || "https://schema.org/ReturnByMail";
     const returnFees = returnPolicy?.returnFees || "https://schema.org/FreeReturn";
@@ -240,6 +318,8 @@ export function ProductJsonLd({
     const nextYear = new Date();
     nextYear.setFullYear(nextYear.getFullYear() + 1);
     const priceValidUntil = nextYear.toISOString().split("T")[0];
+
+    const effectiveSku = sku || name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
     const offerSchema: Record<string, any> = {
         "@type": "Offer",
@@ -249,6 +329,11 @@ export function ProductJsonLd({
         url: productUrl,
         itemCondition: "https://schema.org/NewCondition",
         priceValidUntil,
+        seller: {
+            "@type": "Organization",
+            name: activeBrandName,
+            url: baseUrl,
+        },
         shippingDetails: {
             "@type": "OfferShippingDetails",
             shippingRate: {
@@ -256,10 +341,10 @@ export function ProductJsonLd({
                 value: activeShippingRate,
                 currency: activeShippingCurrency,
             },
-            shippingDestination: {
+            shippingDestination: shippingCountries.map((countryCode) => ({
                 "@type": "DefinedRegion",
-                addressCountry: activeShippingCountry,
-            },
+                addressCountry: countryCode,
+            })),
             deliveryTime: {
                 "@type": "ShippingDeliveryTime",
                 handlingTime: {
@@ -278,7 +363,7 @@ export function ProductJsonLd({
         },
         hasMerchantReturnPolicy: {
             "@type": "MerchantReturnPolicy",
-            applicableCountry: returnCountry,
+            applicableCountry: returnCountries,
             returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
             merchantReturnDays: returnDays,
             returnMethod,
@@ -292,10 +377,12 @@ export function ProductJsonLd({
         name,
         ...(description ? { description } : {}),
         ...(images.length > 0 ? { image: images } : {}),
-        ...(sku ? { sku } : {}),
+        sku: effectiveSku,
+        mpn: effectiveSku,
         brand: {
             "@type": "Brand",
             name: activeBrandName,
+            url: baseUrl,
         },
         ...(!hidePrice ? { offers: offerSchema } : {}),
     };
@@ -312,6 +399,71 @@ export function ProductJsonLd({
                 position: index + 1,
                 name: b.name,
                 item: b.url,
+            })),
+        });
+    }
+
+    return <JsonLd data={schemas} />;
+}
+
+// =============================================================================
+// 5. CATALOG SCHEMA (BreadcrumbList & ItemList of Categories/Offerings)
+// =============================================================================
+
+export interface CatalogCategoryItem {
+    name: string;
+    url: string;
+    image?: string;
+    description?: string;
+}
+
+export interface CatalogJsonLdProps {
+    catalogTitle: string;
+    catalogUrl: string;
+    catalogDescription?: string;
+    categories?: CatalogCategoryItem[];
+    breadcrumbs?: BreadcrumbItem[];
+}
+
+export function CatalogJsonLd({
+    catalogTitle,
+    catalogUrl,
+    catalogDescription,
+    categories = [],
+    breadcrumbs = [],
+}: CatalogJsonLdProps) {
+    const schemas: Record<string, any>[] = [];
+
+    // 1. Breadcrumbs
+    if (breadcrumbs.length > 0) {
+        schemas.push({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: breadcrumbs.map((b, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: b.name,
+                item: b.url,
+            })),
+        });
+    }
+
+    // 2. ItemList of categories/services
+    if (categories.length > 0) {
+        schemas.push({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: catalogTitle,
+            url: catalogUrl,
+            ...(catalogDescription ? { description: catalogDescription } : {}),
+            numberOfItems: categories.length,
+            itemListElement: categories.map((cat, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: cat.name,
+                url: cat.url,
+                ...(cat.image ? { image: cat.image } : {}),
+                ...(cat.description ? { description: cat.description } : {}),
             })),
         });
     }

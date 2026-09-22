@@ -17,7 +17,7 @@ import { brandConfig, getActiveBrand } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
 
-import { GlobalJsonLd } from "@/components/seo/JsonLd";
+import { GlobalJsonLd, CategoryJsonLd } from "@/components/seo/JsonLd";
 
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
@@ -176,6 +176,29 @@ export default async function Home({
   const logoUrl = storeSettings.logoUrl || brandConfig.assets?.logo?.src || "";
   const absoluteLogoUrl = logoUrl ? (logoUrl.startsWith("http") ? logoUrl : `${baseUrl}${logoUrl.startsWith("/") ? "" : "/"}${logoUrl}`) : undefined;
 
+  const featuredProductsForJsonLd = allProducts.slice(0, 8).map((p) => {
+    const pName = getLocalizedField(p.name, lang) || (isFr ? p.nameFr : p.nameEn) || p.id;
+    const pSlug = (typeof p.slug === "object" && p.slug?.[lang]) ? p.slug[lang] : (isFr ? p.slugFr : p.slugEn) || p.id;
+    const assignedCat = p.categories?.[0] || p.category;
+    const catSlug = assignedCat ? (getLocalizedField(assignedCat.slug, lang) || (isFr ? assignedCat.slugFr : assignedCat.slugEn) || assignedCat.id) : "";
+    const pUrl = catSlug ? `${baseUrl}/${lang}/${catalogSlug}/${catSlug}/${pSlug}` : `${baseUrl}/${lang}/${catalogSlug}`;
+    const rawImg = (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || undefined);
+    const pImg = rawImg ? (rawImg.startsWith("http") ? rawImg : `${baseUrl}${rawImg.startsWith("/") ? "" : "/"}${rawImg}`) : undefined;
+    const pDesc = getLocalizedField(p.description, lang) || (isFr ? p.descriptionFr : p.descriptionEn) || undefined;
+    const pSku = (p as any).sku || p.id;
+
+    return {
+      name: pName,
+      url: pUrl,
+      image: pImg,
+      description: pDesc,
+      price: p.price,
+      priceCurrency: storeSettings.defaultCurrency || "EUR",
+      sku: pSku,
+      brandName,
+    };
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black w-full">
       <GlobalJsonLd
@@ -184,8 +207,18 @@ export default async function Home({
         description={heroSubtitle}
         logoUrl={absoluteLogoUrl}
         lang={lang}
+        searchActionUrl={catalogSlug}
         socialLinks={storeSettings.socialLinks?.map((s: any) => s.url).filter(Boolean)}
       />
+      {featuredProductsForJsonLd.length > 0 && (
+        <CategoryJsonLd
+          categoryName={shopByCategoryTitle}
+          categoryUrl={`${baseUrl}/${lang}`}
+          categoryDescription={heroSubtitle}
+          products={featuredProductsForJsonLd}
+          brandName={brandName}
+        />
+      )}
       {/* Hero Section with Optimized LCP Image & Glassmorphic Card */}
       <section className={`relative isolate flex w-full flex-col items-center justify-center min-h-[60vh] py-24 sm:py-32 px-6 md:px-16 text-center overflow-hidden ${
         heroBackgroundImageUrl ? "" : "bg-white dark:bg-black"

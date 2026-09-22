@@ -18,6 +18,7 @@ import { AboutSection } from "@/components/shop/AboutSection";
 import { ContactSection } from "@/components/shop/ContactSection";
 import { PageTranslationSync } from "@/components/shop/PageTranslationSync";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
+import { CatalogJsonLd, JsonLd } from "@/components/seo/JsonLd";
 
 interface SlugPageProps {
     params: Promise<{ lang: string; slug: string }>;
@@ -77,15 +78,19 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
             "x-default": `${baseUrl}/en/${enCatalogSlug}`,
         };
 
+        const formattedCatalogTitle = `${catalogDisplayTitle} | ${brandName}`;
+
         return {
-            title: catalogDisplayTitle,
+            title: {
+                absolute: formattedCatalogTitle,
+            },
             description: catalogDescription,
             alternates: {
                 canonical: canonicalUrl,
                 languages: languagesAlternate,
             },
             openGraph: {
-                title: catalogDisplayTitle,
+                title: formattedCatalogTitle,
                 description: catalogDescription,
                 url: canonicalUrl,
                 type: "website",
@@ -93,7 +98,7 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
             },
             twitter: {
                 card: "summary_large_image",
-                title: catalogDisplayTitle,
+                title: formattedCatalogTitle,
                 description: catalogDescription,
                 ...(catalogBannerUrl ? { images: [catalogBannerUrl] } : {}),
             },
@@ -103,8 +108,11 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
     // 2. Is it a Page?
     const page = await getPageBySlug(slug);
     if (page && page.status !== "draft") {
+        const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
         const displaySlug = getLocalizedField(page.slug, lang) || (typeof page.slug === "string" ? page.slug : page.id);
-        const title = page.metaTitle?.[lang] || page.meta_title_fr || page.meta_title_en || getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || displaySlug;
+        const rawTitle = page.metaTitle?.[lang] || page.meta_title_fr || page.meta_title_en || getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || displaySlug;
+        const cleanTitle = rawTitle.replace(new RegExp(`\\s*[|\\-]\\s*${brandName}$`, "i"), "").trim();
+        const formattedPageTitle = `${cleanTitle} | ${brandName}`;
         const description = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || getLocalizedField(page.content, lang)?.replace(/<[^>]*>?/gm, "").slice(0, 160) || "";
         const canonicalUrl = `${baseUrl}/${lang}/${slug}`;
 
@@ -122,21 +130,23 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
         };
 
         return {
-            title,
+            title: {
+                absolute: formattedPageTitle,
+            },
             description,
             alternates: {
                 canonical: canonicalUrl,
                 languages: languagesAlternate,
             },
             openGraph: {
-                title,
+                title: formattedPageTitle,
                 description,
                 url: canonicalUrl,
                 type: "website",
             },
             twitter: {
                 card: "summary_large_image",
-                title,
+                title: formattedPageTitle,
                 description,
             },
         };
@@ -182,12 +192,51 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
             return nameA.localeCompare(nameB, lang);
         });
 
+        const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
+        const baseUrl = rawBaseUrl.replace(/\/+$/, "");
         const catalogTitle = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
         const catalogBanner = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "";
         const catalogDescription = getLocalizedField(storeSettings.catalogDescription, lang) || "";
 
+        const catalogCategoriesList = categories.map((category) => {
+            const catSlug =
+                (typeof category.slug === "object" && category.slug?.[lang])
+                    ? category.slug[lang]
+                    : (lang === "fr" ? category.slugFr : category.slugEn) ||
+                      getLocalizedField(category.slug, lang) ||
+                      (typeof category.slug === "string" ? category.slug : category.id);
+            const catName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
+            const catIntro = getLocalizedField(category.intro, lang) || (lang === "fr" ? category.introFr : category.introEn) || "";
+            const catImg = category.imageUrl || brandConfig.assets?.placeholderImage || undefined;
+
+            return {
+                name: catName,
+                url: `${baseUrl}/${lang}/${localizedCatalogSlug}/${catSlug}`,
+                image: catImg,
+                description: catIntro,
+            };
+        });
+
+        const catalogBreadcrumbs = [
+            {
+                name: lang === "fr" ? "Accueil" : "Home",
+                url: `${baseUrl}/${lang}`,
+            },
+            {
+                name: catalogTitle,
+                url: `${baseUrl}/${lang}/${localizedCatalogSlug}`,
+            },
+        ];
+
         return (
             <div className="w-full flex flex-col">
+                <CatalogJsonLd
+                    catalogTitle={catalogTitle}
+                    catalogUrl={`${baseUrl}/${lang}/${localizedCatalogSlug}`}
+                    catalogDescription={catalogDescription}
+                    categories={catalogCategoriesList}
+                    breadcrumbs={catalogBreadcrumbs}
+                />
                 {/* Edge-to-Edge Illustrated Catalog Banner */}
                 <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
                     {catalogBanner ? (
@@ -359,8 +408,30 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
         ADD_ATTR: ["allowfullscreen", "allowFullScreen", "loading", "referrerpolicy", "referrerPolicy", "style"],
     });
 
+    const pageBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000").replace(/\/+$/, "");
+
     return (
         <div className="flex-1 bg-zinc-50 dark:bg-black">
+            <JsonLd
+                data={{
+                    "@context": "https://schema.org",
+                    "@type": "BreadcrumbList",
+                    itemListElement: [
+                        {
+                            "@type": "ListItem",
+                            position: 1,
+                            name: lang === "fr" ? "Accueil" : "Home",
+                            item: `${pageBaseUrl}/${lang}`,
+                        },
+                        {
+                            "@type": "ListItem",
+                            position: 2,
+                            name: title,
+                            item: `${pageBaseUrl}/${lang}/${displaySlug}`,
+                        },
+                    ],
+                }}
+            />
             <PageTranslationSync pageSlugs={Object.keys(pageSlugMap).length > 0 ? pageSlugMap : null} />
             <div className="w-full max-w-7xl mx-auto py-16 px-6 md:px-16">
                 <div className="flex items-center justify-between gap-4 mb-8">

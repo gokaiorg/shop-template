@@ -8,6 +8,8 @@ import { getHeaderCategories } from "@/lib/services/categories";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
 import { SessionProvider } from "next-auth/react";
+import { adminDb } from "@/lib/firebase-admin";
+import { Category } from "@/types/database";
 
 export default async function ShopLayout({
     children,
@@ -17,13 +19,18 @@ export default async function ShopLayout({
     params: Promise<{ lang: string }>;
 }) {
     const { lang } = await params;
-    const [dict, session, publishedPages, storeSettings, headerCategories] = await Promise.all([
+    const [dict, session, publishedPages, storeSettings, headerCategories, allCategoriesSnap] = await Promise.all([
         getDictionary(lang as Locale),
         auth(),
         getPublishedPages(),
         getStoreSettings(),
         getHeaderCategories(),
+        adminDb.collection("categories").orderBy("order", "asc").get(),
     ]);
+
+    const allCategories: Category[] = allCategoriesSnap.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() } as Category))
+        .filter((c) => (c.status ?? 'published') === 'published');
 
     const headerPages = publishedPages
         .filter((p) => p.showInHeader)
@@ -35,7 +42,16 @@ export default async function ShopLayout({
     return (
         <SessionProvider session={session}>
             <div className="flex min-h-screen flex-col">
-                <Header lang={lang} dict={dict} session={session} pages={headerPages} categories={headerCategories} />
+                <Header
+                    lang={lang}
+                    dict={dict}
+                    session={session}
+                    pages={headerPages}
+                    categories={headerCategories}
+                    mobileCategories={allCategories}
+                    footerPages={footerPages}
+                    socialLinks={storeSettings.socialLinks}
+                />
                 <main className="flex-1">
                     {children}
                 </main>
