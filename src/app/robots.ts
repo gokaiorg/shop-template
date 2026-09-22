@@ -1,26 +1,24 @@
 import { MetadataRoute } from 'next';
-import { brandConfig } from '@/config/brand.config';
+
+export const dynamic = 'force-dynamic';
 
 export default function robots(): MetadataRoute.Robots {
-    const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || 'http://localhost:3000';
-    const siteUrl = rawBaseUrl.replace(/\/+$/, '');
-    const allowRules = brandConfig.seo.robots?.allow || '/';
-    const configuredDisallows = brandConfig.seo.robots?.disallow || ['/private/', '/admin/'];
-    const disallowRules = Array.from(new Set([
-        ...configuredDisallows,
-        '/admin/',
-        '/*/admin/',
-        '/checkout/',
-        '/*/checkout/',
-        '/api/',
-    ]));
+    const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = rawBaseUrl.replace(/\/+$/, '');
 
     return {
         rules: {
             userAgent: '*',
-            allow: allowRules,
-            disallow: disallowRules,
+            allow: '/',
+            disallow: [
+                '/private/',
+                '/admin/',
+                '/*/admin/',
+                '/checkout/',
+                '/*/checkout/',
+                '/api/',
+            ],
         },
-        sitemap: `${siteUrl}/sitemap.xml`,
+        sitemap: `${baseUrl}/sitemap.xml`,
     };
 }

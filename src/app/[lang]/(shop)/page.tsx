@@ -17,6 +17,8 @@ import { brandConfig, getActiveBrand } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
 
+import { GlobalJsonLd } from "@/components/seo/JsonLd";
+
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
 }
@@ -174,33 +176,15 @@ export default async function Home({
   const logoUrl = storeSettings.logoUrl || brandConfig.assets?.logo?.src || "";
   const absoluteLogoUrl = logoUrl ? (logoUrl.startsWith("http") ? logoUrl : `${baseUrl}${logoUrl.startsWith("/") ? "" : "/"}${logoUrl}`) : undefined;
 
-  const websiteSchema = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: brandName,
-    url: `${baseUrl}/${lang}`,
-    inLanguage: lang,
-    description: heroSubtitle,
-  };
-
-  const organizationSchema = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: brandName,
-    url: baseUrl,
-    ...(absoluteLogoUrl ? { logo: absoluteLogoUrl } : {}),
-    ...(storeSettings.socialLinks && storeSettings.socialLinks.length > 0 ? {
-      sameAs: storeSettings.socialLinks.map((s: any) => s.url).filter(Boolean)
-    } : {}),
-  };
-
-  const jsonLd = [websiteSchema, organizationSchema];
-
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black w-full">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      <GlobalJsonLd
+        name={brandName}
+        url={baseUrl}
+        description={heroSubtitle}
+        logoUrl={absoluteLogoUrl}
+        lang={lang}
+        socialLinks={storeSettings.socialLinks?.map((s: any) => s.url).filter(Boolean)}
       />
       {/* Hero Section with Optimized LCP Image & Glassmorphic Card */}
       <section className={`relative isolate flex w-full flex-col items-center justify-center min-h-[60vh] py-24 sm:py-32 px-6 md:px-16 text-center overflow-hidden ${

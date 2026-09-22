@@ -13,6 +13,7 @@ import { brandConfig } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
 import { getStoreSettings } from "@/lib/services/settings";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
+import { CategoryJsonLd } from "@/components/seo/JsonLd";
 
 interface CategoryPageProps {
     params: Promise<{ lang: string; slug: string; categorySlug: string }>;
@@ -132,12 +133,16 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
     }
 
     const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
-    const catName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
+    const categoryName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
+    const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
+
+    // Dynamic title: [Nom de la Catégorie] [Nom du Catalogue] | [Nom de la Marque]
+    const titleParts = [categoryName, catalogName].filter(Boolean).join(" ");
+    const formattedTitle = titleParts ? `${titleParts} | ${brandName}` : brandName;
+
     const catIntro = getLocalizedField(category.intro, lang) || (lang === "fr" ? category.introFr : category.introEn) || "";
     const catDesc = getLocalizedField(category.description, lang) || (lang === "fr" ? category.descriptionFr : category.descriptionEn) || "";
-    const rawCatTitle = catIntro || catName;
-    const categoryTitle = rawCatTitle.replace(new RegExp(`\\s*[|\\-]\\s*${brandName}$`, "i"), "").trim();
-    const pageDescription = catDesc || `Explore our ${categoryTitle} products.`;
+    const formattedDescription = catDesc || catIntro || (lang === "fr" ? `Découvrez nos produits ${categoryName}.` : `Explore our ${categoryName} products.`);
     const catalogBannerUrl = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "";
     const categoryImage = category.imageUrl || catalogBannerUrl;
 
@@ -161,23 +166,23 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
     };
 
     return {
-        title: categoryTitle,
-        description: pageDescription,
+        title: formattedTitle,
+        description: formattedDescription,
         alternates: {
             canonical: categoryCanonical,
             languages: languagesAlternate,
         },
         openGraph: {
-            title: categoryTitle,
-            description: pageDescription,
+            title: formattedTitle,
+            description: formattedDescription,
             url: categoryCanonical,
             type: "website",
             ...(categoryImage ? { images: [categoryImage] } : {}),
         },
         twitter: {
             card: "summary_large_image",
-            title: categoryTitle,
-            description: pageDescription,
+            title: formattedTitle,
+            description: formattedDescription,
             ...(categoryImage ? { images: [categoryImage] } : {}),
         },
     };
@@ -289,36 +294,45 @@ export default async function CategoryPage(props: CategoryPageProps) {
     const baseUrl = rawBaseUrl.replace(/\/+$/, "");
     const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
 
-    const breadcrumbSchema = {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: [
-            {
-                "@type": "ListItem",
-                position: 1,
-                name: lang === "fr" ? "Accueil" : "Home",
-                item: `${baseUrl}/${lang}`,
-            },
-            {
-                "@type": "ListItem",
-                position: 2,
-                name: catalogName,
-                item: `${baseUrl}/${lang}/${localizedCatalogSlug}`,
-            },
-            {
-                "@type": "ListItem",
-                position: 3,
-                name: bannerTitle,
-                item: `${baseUrl}/${lang}/${localizedCatalogSlug}/${categorySlug}`,
-            },
-        ],
-    };
+    const categoryProductsList = products.map((p) => {
+        const pName = getLocalizedField(p.name, lang) || (lang === "fr" ? p.nameFr : p.nameEn) || p.id;
+        const pSlug = (typeof p.slug === "object" && p.slug?.[lang]) ? p.slug[lang] : (lang === "fr" ? p.slugFr : p.slugEn) || p.id;
+        const pUrl = `${baseUrl}/${lang}/${localizedCatalogSlug}/${categorySlug}/${pSlug}`;
+        const pImage = (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || undefined);
+        const pDesc = getLocalizedField(p.description, lang) || (lang === "fr" ? p.descriptionFr : p.descriptionEn) || undefined;
+        return {
+            name: pName,
+            url: pUrl,
+            image: pImage,
+            description: pDesc,
+            price: p.price,
+            priceCurrency: storeSettings.defaultCurrency || "EUR",
+        };
+    });
+
+    const categoryBreadcrumbs = [
+        {
+            name: lang === "fr" ? "Accueil" : "Home",
+            url: `${baseUrl}/${lang}`,
+        },
+        {
+            name: catalogName,
+            url: `${baseUrl}/${lang}/${localizedCatalogSlug}`,
+        },
+        {
+            name: bannerTitle,
+            url: `${baseUrl}/${lang}/${localizedCatalogSlug}/${categorySlug}`,
+        },
+    ];
 
     return (
         <div className="w-full flex flex-col">
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+            <CategoryJsonLd
+                categoryName={bannerTitle}
+                categoryUrl={`${baseUrl}/${lang}/${localizedCatalogSlug}/${categorySlug}`}
+                categoryDescription={bannerSubtitle}
+                products={categoryProductsList}
+                breadcrumbs={categoryBreadcrumbs}
             />
             <CategoryTranslationSync categorySlugs={Object.keys(categorySlugMap).length > 0 ? categorySlugMap : null} />
 
