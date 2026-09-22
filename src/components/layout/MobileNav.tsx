@@ -1,8 +1,8 @@
 "use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, ChevronDown } from "lucide-react";
+import { Menu, ChevronDown, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { useState } from "react";
@@ -174,26 +174,43 @@ export function MobileNav({
             {/* 1. Structure Principale: Full height (h-screen / h-dvh), flex, flex-col, justify-between */}
             <SheetContent
                 side="left"
+                showCloseButton={false}
                 className="h-screen max-h-screen w-[310px] sm:w-[360px] p-6 flex flex-col justify-between overflow-hidden bg-background"
             >
-                {/* Brand Header */}
+                {/* Brand Header & Centered Close Button */}
                 <SheetHeader className="text-left shrink-0 pb-4 border-b border-border/40">
-                    <SheetTitle asChild>
-                        <Link
-                            href={`/${lang}`}
-                            onClick={() => setOpen(false)}
-                            className="flex items-center gap-2.5 font-bold text-lg tracking-tight group"
-                        >
-                            <Image
-                                src={logo.src}
-                                alt={logo.alt || `${brandName} Logo`}
-                                width={logo.width || 32}
-                                height={logo.height || 32}
-                                className="object-contain transition-transform group-hover:scale-105"
-                            />
-                            <span>{brandName}</span>
-                        </Link>
-                    </SheetTitle>
+                    <div className="flex items-center justify-between w-full">
+                        <SheetTitle asChild>
+                            <Link
+                                href={`/${lang}`}
+                                onClick={() => setOpen(false)}
+                                className="flex items-center gap-2.5 font-bold text-lg tracking-tight group"
+                            >
+                                <Image
+                                    src={logo.src}
+                                    alt={logo.alt || `${brandName} Logo`}
+                                    width={logo.width || 32}
+                                    height={logo.height || 32}
+                                    className="object-contain transition-transform group-hover:scale-105"
+                                />
+                                <span>{brandName}</span>
+                            </Link>
+                        </SheetTitle>
+
+                        <SheetClose asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={dict?.header?.close_menu || (isFr ? "Fermer le menu" : "Close menu")}
+                                className="cursor-pointer bg-transparent text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors"
+                            >
+                                <X className="h-6 w-6 transition-colors" />
+                                <span className="sr-only">
+                                    {dict?.header?.close_menu || (isFr ? "Fermer le menu" : "Close menu")}
+                                </span>
+                            </Button>
+                        </SheetClose>
+                    </div>
                 </SheetHeader>
 
                 {/* 2. Navigation Haute & Corps Déroulant */}
