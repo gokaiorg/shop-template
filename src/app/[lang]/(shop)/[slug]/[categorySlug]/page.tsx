@@ -166,7 +166,9 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
     };
 
     return {
-        title: formattedTitle,
+        title: {
+            absolute: formattedTitle,
+        },
         description: formattedDescription,
         alternates: {
             canonical: categoryCanonical,
@@ -293,13 +295,16 @@ export default async function CategoryPage(props: CategoryPageProps) {
     const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
     const baseUrl = rawBaseUrl.replace(/\/+$/, "");
     const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
+    const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
 
     const categoryProductsList = products.map((p) => {
         const pName = getLocalizedField(p.name, lang) || (lang === "fr" ? p.nameFr : p.nameEn) || p.id;
         const pSlug = (typeof p.slug === "object" && p.slug?.[lang]) ? p.slug[lang] : (lang === "fr" ? p.slugFr : p.slugEn) || p.id;
         const pUrl = `${baseUrl}/${lang}/${localizedCatalogSlug}/${categorySlug}/${pSlug}`;
-        const pImage = (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || undefined);
+        const rawImage = (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || undefined);
+        const pImage = rawImage ? (rawImage.startsWith("http") ? rawImage : `${baseUrl}${rawImage.startsWith("/") ? "" : "/"}${rawImage}`) : undefined;
         const pDesc = getLocalizedField(p.description, lang) || (lang === "fr" ? p.descriptionFr : p.descriptionEn) || undefined;
+        const pSku = (p as any).sku || p.id;
         return {
             name: pName,
             url: pUrl,
@@ -307,6 +312,8 @@ export default async function CategoryPage(props: CategoryPageProps) {
             description: pDesc,
             price: p.price,
             priceCurrency: storeSettings.defaultCurrency || "EUR",
+            sku: pSku,
+            brandName,
         };
     });
 
@@ -333,6 +340,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
                 categoryDescription={bannerSubtitle}
                 products={categoryProductsList}
                 breadcrumbs={categoryBreadcrumbs}
+                brandName={brandName}
             />
             <CategoryTranslationSync categorySlugs={Object.keys(categorySlugMap).length > 0 ? categorySlugMap : null} />
 

@@ -4,7 +4,7 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { auth } from "@/auth";
 import { getPublishedPages } from "@/lib/services/pages";
-import { getHeaderCategories } from "@/lib/services/categories";
+import { getHeaderCategories, getAllPublishedCategories } from "@/lib/services/categories";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
 import { SessionProvider } from "next-auth/react";
@@ -17,12 +17,13 @@ export default async function ShopLayout({
     params: Promise<{ lang: string }>;
 }) {
     const { lang } = await params;
-    const [dict, session, publishedPages, storeSettings, headerCategories] = await Promise.all([
+    const [dict, session, publishedPages, storeSettings, headerCategories, allCategories] = await Promise.all([
         getDictionary(lang as Locale),
         auth(),
         getPublishedPages(),
         getStoreSettings(),
         getHeaderCategories(),
+        getAllPublishedCategories(),
     ]);
 
     const headerPages = publishedPages
@@ -35,7 +36,16 @@ export default async function ShopLayout({
     return (
         <SessionProvider session={session}>
             <div className="flex min-h-screen flex-col">
-                <Header lang={lang} dict={dict} session={session} pages={headerPages} categories={headerCategories} />
+                <Header
+                    lang={lang}
+                    dict={dict}
+                    session={session}
+                    pages={headerPages}
+                    categories={headerCategories}
+                    mobileCategories={allCategories}
+                    footerPages={footerPages}
+                    socialLinks={storeSettings.socialLinks}
+                />
                 <main className="flex-1">
                     {children}
                 </main>

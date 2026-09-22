@@ -222,7 +222,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     const authorName = artistOrVendor || brandName;
 
     return {
-        title: formattedTitle,
+        title: {
+            absolute: formattedTitle,
+        },
         description: formattedDescription,
         authors: [{ name: authorName }],
         creator: authorName,
