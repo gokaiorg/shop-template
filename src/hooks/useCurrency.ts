@@ -15,6 +15,8 @@ export const DEFAULT_EXCHANGE_RATES: Record<string, number> = {
     GBP: 0.85,
     THB: 39.50,
     JPY: 165.0,
+    CNY: 7.85,
+    RUB: 100.0,
     CAD: 1.48,
     AUD: 1.65,
     CHF: 0.96,

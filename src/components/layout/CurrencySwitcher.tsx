@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { DollarSign, Euro, PoundSterling, JapaneseYen, Coins } from "lucide-react";
+import { DollarSign, Euro, PoundSterling, JapaneseYen, RussianRuble, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -29,7 +29,10 @@ function CurrencyIcon({ code }: { code: string }) {
         case "GBP":
             return <PoundSterling className="h-[1.2rem] w-[1.2rem]" />;
         case "JPY":
+        case "CNY":
             return <JapaneseYen className="h-[1.2rem] w-[1.2rem]" />;
+        case "RUB":
+            return <RussianRuble className="h-[1.2rem] w-[1.2rem]" />;
         case "THB":
             return <span className="font-bold text-base leading-none select-none">฿</span>;
         case "CHF":
@@ -80,9 +83,6 @@ export function CurrencySwitcher({ className }: CurrencySwitcherProps) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52 max-h-72 overflow-y-auto p-1">
-                <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 border-b mb-1">
-                    Sélectionner la devise
-                </div>
                 {SUPPORTED_CURRENCIES.map((item) => {
                     const isSelected = activeCurrency === item.code;
                     return (

@@ -14,6 +14,8 @@ export const SUPPORTED_CURRENCIES: CurrencyItem[] = [
     { code: 'GBP', symbol: '£', name: 'British Pound' },
     { code: 'THB', symbol: '฿', name: 'Thai Baht' },
     { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'RUB', symbol: '₽', name: 'Russian Ruble' },
     { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar' },
     { code: 'AUD', symbol: 'AU$', name: 'Australian Dollar' },
     { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
