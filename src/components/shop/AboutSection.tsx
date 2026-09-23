@@ -12,6 +12,7 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
+import { AdminEditBadge } from "@/components/admin/AdminEditBadge";
 
 interface AboutSectionProps {
     aboutSection: AboutSectionSettings;
@@ -69,8 +70,9 @@ export function AboutSection({
     return (
         <Component
             aria-labelledby="homepage-about-heading"
-            className={cn("w-full m-0 py-0 bg-transparent", className)}
+            className={cn("relative w-full m-0 py-0 bg-transparent", className)}
         >
+            <AdminEditBadge href="/admin/blocks/about" locale={activeLocale} />
             <div className="w-full max-w-7xl mx-auto px-6 md:px-16">
                 <div
                     className={cn(
@@ -202,3 +204,5 @@ export function AboutSection({
         </Component>
     );
 }
+
+export { AboutSection as AboutBlock };

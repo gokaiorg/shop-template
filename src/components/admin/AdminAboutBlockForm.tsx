@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Save, BookOpen, ArrowLeft } from "lucide-react";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
+import { AdminBottomBar } from "@/components/admin/AdminBottomBar";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,9 +82,11 @@ export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlock
         });
     };
 
+    const errorCount = Object.keys(form.formState.errors).length;
+
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-5xl pb-24">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-5xl flex-1 flex flex-col">
                 {/* Back to Blocks Link */}
                 <div className="flex items-center justify-between">
                     <Link
@@ -365,22 +368,14 @@ export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlock
                     </CardContent>
                 </Card>
 
-                {/* Sticky / Fixed Bottom Action Bar */}
-                <div className="fixed bottom-0 right-0 left-0 md:left-64 z-30 border-t bg-background/95 backdrop-blur-md px-6 py-4 flex items-center justify-end shadow-md">
-                    <Button type="submit" disabled={isPending} className="cursor-pointer gap-2 min-w-[140px]">
-                        {isPending ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span>{lang === "fr" ? "Enregistrement..." : "Saving..."}</span>
-                            </>
-                        ) : (
-                            <>
-                                <Save className="w-4 h-4" />
-                                <span>{lang === "fr" ? "Enregistrer" : "Save Changes"}</span>
-                            </>
-                        )}
-                    </Button>
-                </div>
+                {/* Standardized Bottom Action Bar */}
+                <AdminBottomBar
+                    isPending={isPending}
+                    saveLabel="Save"
+                    savingLabel={isFr ? "Enregistrement..." : "Saving..."}
+                    errorsCount={errorCount}
+                    lang={lang}
+                />
             </form>
         </Form>
     );

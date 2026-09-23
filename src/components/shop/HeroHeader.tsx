@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
+import { AdminQuickEdit, AdminEditBadge } from "@/components/admin/AdminQuickEdit";
 
 export interface HeroHeaderProps {
   title: string;
@@ -42,9 +42,7 @@ export function HeroHeader({
       )}
     >
       {/* Admin Quick Edit Shortcut for Homepage Hero */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-        <AdminQuickEdit entityType="hero" locale={lang} />
-      </div>
+      <AdminEditBadge href="/admin/settings#homepage-hero" locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
 
       {/* Case 1: CMS Background Image Provided */}
       {hasImage && backgroundImageUrl && (

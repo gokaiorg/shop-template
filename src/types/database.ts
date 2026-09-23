@@ -213,6 +213,8 @@ export interface StoreSettings {
   heroBackgroundImageUrl?: string;
   categoriesTitle?: Record<string, string>;
   categoriesSubtitle?: Record<string, string>;
+  productsTitle?: Record<string, string>;
+  productsSubtitle?: Record<string, string>;
   catalogTitle?: Record<string, string>;
   catalogDescription?: Record<string, string>;
   catalogSlug?: Record<string, string> | string;

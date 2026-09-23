@@ -74,6 +74,8 @@ export const globalSettingsSchema = z.object({
     heroBackgroundImageUrl: z.string().optional(),
     categoriesTitle: z.record(z.string(), z.string()).optional(),
     categoriesSubtitle: z.record(z.string(), z.string()).optional(),
+    productsTitle: z.record(z.string(), z.string()).optional(),
+    productsSubtitle: z.record(z.string(), z.string()).optional(),
     footerDescription: z.record(z.string(), z.string()).optional(),
     footerRightMenuTitle: z.record(z.string(), z.string()).optional(),
     socialLinks: z.array(socialLinkSchema).optional(),

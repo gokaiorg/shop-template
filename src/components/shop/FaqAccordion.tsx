@@ -5,6 +5,7 @@ import { ChevronDown, HelpCircle } from "lucide-react";
 import { FaqSectionSettings } from "@/types/database";
 import { getLocalizedField } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { AdminEditBadge } from "@/components/admin/AdminEditBadge";
 
 interface FaqAccordionProps {
     faqSection?: FaqSectionSettings;
@@ -79,8 +80,9 @@ export function FaqAccordion({
     return (
         <Component
             aria-labelledby="faq-section-heading"
-            className={cn("w-full m-0 py-0 bg-transparent", className)}
+            className={cn("relative w-full m-0 py-0 bg-transparent", className)}
         >
+            <AdminEditBadge href="/admin/blocks/faq" locale={activeLocale} />
             {/* Inject dynamic JSON-LD FAQPage Schema */}
             {localizedItems.length > 0 && (
                 <script
@@ -173,3 +175,5 @@ export function FaqAccordion({
         </Component>
     );
 }
+
+export { FaqAccordion as FAQBlock, FaqAccordion as FaqBlock };
