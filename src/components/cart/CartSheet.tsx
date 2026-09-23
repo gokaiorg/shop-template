@@ -32,11 +32,16 @@ export function CartSheet({ dict }: { dict?: any }) {
     const params = useParams();
     const router = useRouter();
     const lang = (params?.lang as string) || "en";
-    const { brand, currency } = useBrand();
+    const { brand, currency, isCartEnabled } = useBrand();
     const [isLoading, setIsLoading] = useState(false);
 
     // useMounted hook to prevent hydration mismatch since we are using localStorage
     const mounted = useMounted();
+
+    // Early return if cart is disabled globally
+    if (!isCartEnabled) {
+        return null;
+    }
 
     const handleCheckout = async () => {
         try {

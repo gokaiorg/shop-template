@@ -227,5 +227,6 @@ export interface StoreSettings {
   aboutSection?: AboutSectionSettings;
   contactSection?: ContactSectionSettings;
   faqSection?: FaqSectionSettings;
+  cartEnabled?: boolean;
   updatedAt?: Date | string;
 }

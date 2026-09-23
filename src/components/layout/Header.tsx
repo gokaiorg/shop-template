@@ -58,8 +58,8 @@ function HeaderContent({
                 </div>
 
                 {/* Right Actions */}
-                <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
-                    <div className="hidden md:flex items-center space-x-2 md:space-x-4">
+                <div className="flex flex-1 items-center justify-end gap-2 md:gap-4">
+                    <div className="hidden md:flex items-center gap-2 md:gap-4">
                         <ThemeToggle dict={dict.header} />
                         <LangToggle lang={lang} dict={dict.header} />
                         <CurrencySwitcher />

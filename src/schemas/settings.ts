@@ -84,6 +84,7 @@ export const globalSettingsSchema = z.object({
     aboutSection: aboutSectionSchema.optional(),
     contactSection: contactSectionSchema.optional(),
     faqSection: faqSectionSchema.optional(),
+    cartEnabled: z.boolean().optional(),
 });
 
 export type GlobalSettingsFormData = z.infer<typeof globalSettingsSchema>;
