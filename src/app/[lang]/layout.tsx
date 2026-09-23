@@ -62,10 +62,12 @@ export default async function RootLayout({
   const { lang } = await params;
   const rawBrand = getActiveBrand();
   const brandKey = getActiveBrandKey();
-  const isCartEnabled = getIsCartEnabled();
   const supportedLocales = getSupportedLocales();
   const defaultLocale = getDefaultLocale();
   const storeSettings = await getStoreSettings();
+  const isCartEnabled = typeof storeSettings.cartEnabled === 'boolean'
+    ? storeSettings.cartEnabled
+    : getIsCartEnabled();
   const defaultTheme = storeSettings.defaultTheme || 'system';
   const forcedTheme = (defaultTheme === 'light' || defaultTheme === 'dark') ? defaultTheme : undefined;
   const defaultCurrency = storeSettings.defaultCurrency || 'THB';

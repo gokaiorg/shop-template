@@ -59,7 +59,11 @@ export function getActiveBrand(): BrandConfig {
  * Handles boolean string representations ("false", "0", "off", "no", "true", "1", "on", "yes").
  */
 export function getIsCartEnabled(): boolean {
-    const rawFlag = process.env.ENABLE_CART ?? process.env.NEXT_PUBLIC_ENABLE_CART;
+    const rawFlag =
+        process.env.ENABLE_CART ??
+        process.env.NEXT_PUBLIC_ENABLE_CART ??
+        process.env.NEXT_PUBLIC_CART_ENABLED ??
+        process.env.CART_ENABLED;
     if (rawFlag !== undefined && rawFlag !== "") {
         const normalized = String(rawFlag).trim().toLowerCase();
         if (normalized === "false" || normalized === "0" || normalized === "off" || normalized === "no") {

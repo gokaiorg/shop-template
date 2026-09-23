@@ -8,7 +8,7 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { Badge } from "@/components/ui/badge";
-import { brandConfig } from "@/config/brand.config";
+import { brandConfig, getIsCartEnabled } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { getStoreSettings } from "@/lib/services/settings";
@@ -356,7 +356,9 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
         ? product.images
         : (product.imageUrl ? [product.imageUrl] : []);
     const images = productImages.length > 0 ? productImages : [brandConfig.assets.placeholderImage];
-    const isCartEnabled = (process.env.ENABLE_CART || process.env.NEXT_PUBLIC_ENABLE_CART) !== "false";
+    const isCartEnabled = typeof storeSettings.cartEnabled === "boolean"
+        ? storeSettings.cartEnabled
+        : getIsCartEnabled();
     const isOutOfStock = (product.stock ?? 0) <= 0;
 
     const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";

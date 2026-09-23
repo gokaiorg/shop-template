@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 interface AccountNavProps {
     lang: string;
@@ -13,6 +14,7 @@ interface AccountNavProps {
 
 export function AccountNav({ lang, dict, className }: AccountNavProps) {
     const pathname = usePathname();
+    const { isCartEnabled } = useBrand();
 
     const ordersLabel = dict?.account?.orders || (lang === "fr" ? "Mes Commandes" : "My Orders");
     const profileLabel = dict?.account?.profile || (lang === "fr" ? "Mes Informations" : "My Information");
@@ -28,12 +30,12 @@ export function AccountNav({ lang, dict, className }: AccountNavProps) {
     const isProfileActive = pathname.startsWith(`/${lang}/account/profile`);
 
     const navItems = [
-        {
+        ...(isCartEnabled ? [{
             label: ordersLabel,
             href: ordersHref,
             icon: ShoppingBag,
             active: isOrdersActive,
-        },
+        }] : []),
         {
             label: profileLabel,
             href: profileHref,

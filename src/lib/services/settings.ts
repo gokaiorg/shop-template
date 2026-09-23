@@ -1,7 +1,7 @@
 import { cache } from 'react';
 import { adminDb } from '@/lib/firebase-admin';
 import { StoreSettings } from '@/types/database';
-import { getActiveBrand } from '@/config/brand.config';
+import { getActiveBrand, getIsCartEnabled } from '@/config/brand.config';
 
 export const SETTINGS_COLLECTION = 'settings';
 export const STORE_FRONT_DOC_ID = 'store_front';
@@ -85,6 +85,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             subtitle: { en: 'Find quick answers to common questions.', fr: 'Trouvez des réponses rapides à vos questions.' },
             items: [],
         },
+        cartEnabled: getIsCartEnabled(),
     };
 
     try {
@@ -144,6 +145,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                         : (fallbackSettings.faqSection?.subtitle || {}),
                     items: Array.isArray(data.faqSection.items) ? data.faqSection.items : [],
                 } : fallbackSettings.faqSection,
+                cartEnabled: typeof data?.cartEnabled === 'boolean' ? data.cartEnabled : fallbackSettings.cartEnabled,
                 updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data?.updatedAt,
             };
         }
