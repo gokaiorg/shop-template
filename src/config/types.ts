@@ -153,6 +153,8 @@ export interface BrandConfig {
     navigation: BrandNavigation;
     seo: BrandSEO;
     contact: BrandContact;
+    supportedLocales?: string[];
+    defaultLocale?: string;
     features?: {
         cart?: boolean;
         search?: boolean;

@@ -104,5 +104,7 @@ export const shopTemplateBrand: BrandConfig = {
             fr: 'Lundi - Vendredi, 9h - 18h CET'
         }
     },
+    supportedLocales: ['en', 'fr'],
+    defaultLocale: 'en',
     seedData: shopTemplateSeed
 };

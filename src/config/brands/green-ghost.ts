@@ -286,5 +286,7 @@ export const greenGhostBrand: BrandConfig = {
             fr: 'Lundi - Samedi, 10h - 20h CET'
         }
     },
+    supportedLocales: ['en', 'fr'],
+    defaultLocale: 'en',
     seedData: greenGhostSeed
 };

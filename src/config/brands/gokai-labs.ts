@@ -104,5 +104,7 @@ export const gokaiLabsBrand: BrandConfig = {
             fr: 'Lundi - Vendredi, 9h - 19h CET'
         }
     },
+    supportedLocales: ['en', 'fr'],
+    defaultLocale: 'en',
     seedData: shopTemplateSeed
 };
