@@ -1,13 +1,51 @@
+import { getActiveBrand } from '@/config/brand.config';
+
+function getRuntimeEnv(key: string): string | undefined {
+    if (typeof process === "undefined" || !process.env) return undefined;
+    return process.env[key];
+}
+
 export function getSupportedLocales(): string[] {
-    const raw = process.env.SUPPORTED_LOCALES || process.env.NEXT_PUBLIC_SUPPORTED_LOCALES;
-    if (!raw) return ['en', 'fr'];
-    const list = raw.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-    return list.length > 0 ? list : ['en'];
+    const raw =
+        getRuntimeEnv("SUPPORTED_LOCALES") ??
+        getRuntimeEnv("NEXT_PUBLIC_SUPPORTED_LOCALES") ??
+        process.env.SUPPORTED_LOCALES;
+
+    if (raw) {
+        const list = raw.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+        if (list.length > 0) return list;
+    }
+
+    try {
+        const brand = getActiveBrand();
+        if (brand?.supportedLocales && brand.supportedLocales.length > 0) {
+            return brand.supportedLocales;
+        }
+    } catch {
+        // Fallback if brand resolution fails
+    }
+
+    return ['en', 'fr'];
 }
 
 export function getDefaultLocale(): string {
-    const raw = process.env.DEFAULT_LOCALE || process.env.NEXT_PUBLIC_DEFAULT_LOCALE;
-    return (raw || getSupportedLocales()[0] || 'en').trim().toLowerCase();
+    const raw =
+        getRuntimeEnv("DEFAULT_LOCALE") ??
+        getRuntimeEnv("NEXT_PUBLIC_DEFAULT_LOCALE") ??
+        process.env.DEFAULT_LOCALE;
+
+    if (raw) return raw.trim().toLowerCase();
+
+    try {
+        const brand = getActiveBrand();
+        if (brand?.defaultLocale) {
+            return brand.defaultLocale.trim().toLowerCase();
+        }
+    } catch {
+        // Fallback
+    }
+
+    return getSupportedLocales()[0] || 'en';
 }
 
 export function isMultiLocale(): boolean {
@@ -24,3 +62,4 @@ export const i18n = {
 };
 
 export type Locale = string;
+

@@ -110,5 +110,7 @@ export const artFateBrand: BrandConfig = {
             fr: 'Mardi - Samedi, 10h - 19h CET'
         }
     },
+    supportedLocales: ['en'],
+    defaultLocale: 'en',
     seedData: artFateSeed
 };
