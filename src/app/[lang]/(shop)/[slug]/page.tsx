@@ -202,8 +202,8 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 (typeof category.slug === "object" && category.slug?.[lang])
                     ? category.slug[lang]
                     : (lang === "fr" ? category.slugFr : category.slugEn) ||
-                      getLocalizedField(category.slug, lang) ||
-                      (typeof category.slug === "string" ? category.slug : category.id);
+                    getLocalizedField(category.slug, lang) ||
+                    (typeof category.slug === "string" ? category.slug : category.id);
             const catName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
             const catIntro = getLocalizedField(category.intro, lang) || (lang === "fr" ? category.introFr : category.introEn) || "";
             const catImg = category.imageUrl || brandConfig.assets?.placeholderImage || undefined;
@@ -292,8 +292,8 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                     (typeof category.slug === "object" && category.slug?.[lang])
                                         ? category.slug[lang]
                                         : (lang === "fr" ? category.slugFr : category.slugEn) ||
-                                          getLocalizedField(category.slug, lang) ||
-                                          (typeof category.slug === "string" ? category.slug : category.id);
+                                        getLocalizedField(category.slug, lang) ||
+                                        (typeof category.slug === "string" ? category.slug : category.id);
                                 const catName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
                                 const catIntro = getLocalizedField(category.intro, lang) || (lang === "fr" ? category.introFr : category.introEn) || "";
                                 const catImg = category.imageUrl || brandConfig.assets?.placeholderImage || "";

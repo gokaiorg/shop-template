@@ -8,7 +8,38 @@ steps:
         docker pull $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:latest || exit 0
     id: 'Pull-Cache'
 
-  # 2. Build container with cache-from
+  # 2. Retrieve existing Cloud Run runtime NEXT_PUBLIC_* env vars into .env.production (failsafe bridge)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Retrieving NEXT_PUBLIC_* variables from Cloud Run ($_SERVICE_NAME)..."
+        gcloud run services describe $_SERVICE_NAME --region=$_DEPLOY_REGION --format="json" > /workspace/cr_service.json 2>/dev/null || true
+        python3 -c "
+        import json, os
+        try:
+            with open('/workspace/cr_service.json') as f:
+                data = json.load(f)
+            env_list = data.get('spec', {}).get('template', {}).get('spec', {}).get('containers', [{}])[0].get('env', [])
+            extracted = {}
+            for item in env_list:
+                name = item.get('name', '')
+                if name.startswith('NEXT_PUBLIC_') and 'value' in item and item['value']:
+                    extracted[name] = item['value']
+            if extracted:
+                print(f'Successfully synced {len(extracted)} NEXT_PUBLIC_* variables from Cloud Run to .env.production')
+                with open('/workspace/.env.production', 'w') as f:
+                    for k, v in extracted.items():
+                        f.write(f'{k}={v}\n')
+            else:
+                print('No existing NEXT_PUBLIC_* variables found on Cloud Run.')
+        except Exception as e:
+            print('Cloud Run env sync skipped (new service or error):', e)
+        " || true
+    id: 'Sync-CloudRun-Env'
+
+  # 3. Build container with cache-from and build-args for Next.js build-time inlining
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -18,26 +49,54 @@ steps:
       - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
       - '-t'
       - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:latest'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_BRAND=$_NEXT_PUBLIC_BRAND'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_APP_URL=$_NEXT_PUBLIC_APP_URL'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_PROJECT_ID=$_NEXT_PUBLIC_FIREBASE_PROJECT_ID'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_DATABASE_ID=$_NEXT_PUBLIC_FIREBASE_DATABASE_ID'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=$_NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_API_KEY=$_NEXT_PUBLIC_FIREBASE_API_KEY'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_APP_ID=$_NEXT_PUBLIC_FIREBASE_APP_ID'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_GTM_ID=$_NEXT_PUBLIC_GTM_ID'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_ENABLE_CART=$_NEXT_PUBLIC_ENABLE_CART'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_SUPPORTED_LOCALES=$_NEXT_PUBLIC_SUPPORTED_LOCALES'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_DEFAULT_LOCALE=$_NEXT_PUBLIC_DEFAULT_LOCALE'
       - '-f'
       - 'Dockerfile'
       - '.'
     id: 'Build'
 
-  # 3. Push commit-tagged image for deployment
+  # 4. Push commit-tagged image for deployment
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
     id: 'Push-Commit-Image'
 
-  # 4. Push latest image for next build cache
+  # 5. Push latest image for next build cache
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:latest'
     id: 'Push-Cache-Image'
 
-  # 5. Deploy directly to Cloud Run
+  # 6. Deploy directly to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     entrypoint: 'gcloud'
     args:
@@ -66,5 +125,19 @@ substitutions:
   _DEPLOY_REGION: 'europe-west1'
   _SERVICE_NAME: 'shop-template-dev'
   REPO_NAME: 'gokaiorg-shop-template'
+  _NEXT_PUBLIC_BRAND: 'shop-template'
+  _NEXT_PUBLIC_APP_URL: ''
+  _NEXT_PUBLIC_FIREBASE_PROJECT_ID: 'shop-gcp'
+  _NEXT_PUBLIC_FIREBASE_DATABASE_ID: 'shop-template-database'
+  _NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: 'shop-gcp.firebasestorage.app'
+  _NEXT_PUBLIC_FIREBASE_API_KEY: ''
+  _NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 'shop-gcp.firebaseapp.com'
+  _NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ''
+  _NEXT_PUBLIC_FIREBASE_APP_ID: ''
+  _NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ''
+  _NEXT_PUBLIC_GTM_ID: ''
+  _NEXT_PUBLIC_ENABLE_CART: 'false'
+  _NEXT_PUBLIC_SUPPORTED_LOCALES: 'en,fr'
+  _NEXT_PUBLIC_DEFAULT_LOCALE: 'en'
 
 timeout: '1200s'

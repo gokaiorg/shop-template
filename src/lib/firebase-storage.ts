@@ -13,6 +13,10 @@ export async function uploadProductImage(file: File, customPath?: string): Promi
         throw new Error('No file provided for upload.');
     }
 
+    if (!storage) {
+        throw new Error('Firebase Storage is not initialized. Please verify that NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_PROJECT_ID are configured.');
+    }
+
     // Clean filename and ensure uniqueness with timestamp & random token
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const timestamp = Date.now();
@@ -44,6 +48,10 @@ export async function uploadBrandAsset(file: File, assetType: 'logo' | 'favicon'
         throw new Error('No file provided for upload.');
     }
 
+    if (!storage) {
+        throw new Error('Firebase Storage is not initialized. Please verify that NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_PROJECT_ID are configured.');
+    }
+
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 8);
@@ -66,7 +74,7 @@ export async function uploadBrandAsset(file: File, assetType: 'logo' | 'favicon'
  * @param imageUri - The full download URL or storage path of the image to delete
  */
 export async function deleteProductImage(imageUri?: string | null): Promise<void> {
-    if (!imageUri) return;
+    if (!imageUri || !storage) return;
 
     try {
         let storagePath = imageUri;

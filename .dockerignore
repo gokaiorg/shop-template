@@ -15,6 +15,7 @@ coverage
 
 # Environment variables & secrets
 .env*
+!.env.production
 *-firebase-adminsdk-*.json
 
 # Assets & large local files
