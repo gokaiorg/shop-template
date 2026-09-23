@@ -9,7 +9,7 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { Trash2, Loader2, ImageIcon, Upload, Save, ExternalLink, RotateCcw, FileText, LayoutTemplate, ArrowLeft, Eye } from "lucide-react";
 import Link from "next/link";
-import { createCategory, updateCategory, deleteCategory } from "@/actions/admin";
+import { createCategory, updateCategory, deleteCategory, getSuggestedUniqueSlug } from "@/actions/admin";
 import { categorySchema } from "@/schemas/admin";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 import { uploadProductImage } from "@/lib/firebase-storage";
@@ -54,18 +54,7 @@ import {
 import { Category } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
 
-function generateSlug(text: string): string {
-    return text
-        .toString()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "");
-}
-
-const slugify = generateSlug;
+import { slugify, generateSlug } from "@/lib/slug";
 
 interface CategoryFormProps {
     dict: Record<string, string>;
@@ -111,24 +100,55 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
 
     const isNew = !initialData?.id;
     const slugTouchedRef = useRef<Record<string, boolean>>({});
+    const [regeneratingSlugs, setRegeneratingSlugs] = useState<Record<string, boolean>>({});
 
-    // Live auto-slug generation on name typing (both in creation and edit)
+    const handleRegenerateSlug = async (loc: string) => {
+        const currentName = form.getValues(`name.${loc}`) || form.getValues(`name.${defaultLocale}`) || "";
+        if (!currentName.trim()) {
+            toast.error(lang?.startsWith("fr") ? "Veuillez d'abord renseigner le nom de la catégorie." : "Please enter a category name first.");
+            return;
+        }
+        setRegeneratingSlugs((prev) => ({ ...prev, [loc]: true }));
+        try {
+            const res = await getSuggestedUniqueSlug(currentName, loc, initialData?.id, "categories");
+            if (res.success && res.slug) {
+                slugTouchedRef.current[loc] = false;
+                form.setValue(`slug.${loc}`, res.slug, { shouldDirty: true, shouldValidate: true });
+                toast.success(lang?.startsWith("fr") ? `Slug unique généré : ${res.slug}` : `Unique slug generated: ${res.slug}`);
+            } else {
+                const fallback = slugify(currentName);
+                form.setValue(`slug.${loc}`, fallback, { shouldDirty: true, shouldValidate: true });
+            }
+        } catch {
+            const fallback = slugify(currentName);
+            form.setValue(`slug.${loc}`, fallback, { shouldDirty: true, shouldValidate: true });
+        } finally {
+            setRegeneratingSlugs((prev) => ({ ...prev, [loc]: false }));
+        }
+    };
+
+    // Live auto-slug generation on name typing with debounced uniqueness lookup
     useEffect(() => {
         // 1. In creation mode, generate initial slug if name has value
         if (isNew) {
-            locales.forEach((loc) => {
+            locales.forEach(async (loc) => {
                 const currentSlug = form.getValues(`slug.${loc}`);
                 if (!slugTouchedRef.current[loc] || !currentSlug) {
                     const currentName = form.getValues(`name.${loc}`) || "";
                     if (currentName.trim()) {
-                        const generated = generateSlug(currentName);
-                        form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
+                        const res = await getSuggestedUniqueSlug(currentName, loc, undefined, "categories");
+                        if (res.success && res.slug) {
+                            form.setValue(`slug.${loc}`, res.slug, { shouldValidate: true });
+                        } else {
+                            form.setValue(`slug.${loc}`, generateSlug(currentName), { shouldValidate: true });
+                        }
                     }
                 }
             });
         }
 
         // 2. React Hook Form subscription: live keystroke listener on name per locale
+        let debounceTimer: NodeJS.Timeout | null = null;
         const subscription = form.watch((value, { name }) => {
             if (!name || !name.startsWith("name")) return;
 
@@ -138,15 +158,28 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                 if (!slugTouchedRef.current[targetLoc] || !currentSlug) {
                     const currentName = form.getValues(`name.${targetLoc}`) || "";
                     if (currentName.trim()) {
+                        // Instant preliminary slug
                         const generated = generateSlug(currentName);
                         form.setValue(`slug.${targetLoc}`, generated, { shouldValidate: true, shouldDirty: true });
+
+                        // Debounced server query for true database uniqueness
+                        if (debounceTimer) clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(async () => {
+                            const res = await getSuggestedUniqueSlug(currentName, targetLoc, initialData?.id, "categories");
+                            if (res.success && res.slug && !slugTouchedRef.current[targetLoc]) {
+                                form.setValue(`slug.${targetLoc}`, res.slug, { shouldValidate: true, shouldDirty: true });
+                            }
+                        }, 400);
                     }
                 }
             }
         });
 
-        return () => subscription.unsubscribe();
-    }, [isNew, locales, form]);
+        return () => {
+            subscription.unsubscribe();
+            if (debounceTimer) clearTimeout(debounceTimer);
+        };
+    }, [isNew, locales, defaultLocale, initialData?.id, form]);
 
     const handleSlugChange = (loc: string, rawValue: string, onChange: (val: string) => void) => {
         if (!rawValue.trim()) {
@@ -165,11 +198,7 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
         onBlur();
         const currentVal = form.getValues(`slug.${loc}`) || "";
         if (!currentVal.trim()) {
-            slugTouchedRef.current[loc] = false;
-            const currentName = form.getValues(`name.${loc}`) || "";
-            if (currentName.trim()) {
-                form.setValue(`slug.${loc}`, slugify(currentName), { shouldDirty: true, shouldValidate: true });
-            }
+            handleRegenerateSlug(loc);
         } else {
             const trimmed = currentVal.replace(/^-+|-+$/g, "");
             if (trimmed !== currentVal) {

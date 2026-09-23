@@ -119,6 +119,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
           archived: lang === "fr" ? "Message archivé" : "Message archived",
         };
         toast.success(labels[newStatus]);
+        window.dispatchEvent(new Event("messages-updated"));
       }
     });
   };
@@ -147,6 +148,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
         toast.error(result.error || (lang === "fr" ? "Erreur de suppression" : "Delete error"));
       } else {
         toast.success(lang === "fr" ? "Message supprimé" : "Message deleted");
+        window.dispatchEvent(new Event("messages-updated"));
       }
     });
   };
@@ -281,9 +283,8 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
         <Table className="min-w-[800px]">
           <TableHeader className="bg-muted/40">
             <TableRow>
-              <TableHead className="w-[180px] font-semibold">{colDict.name || (lang === "fr" ? "Nom" : "Name")}</TableHead>
-              <TableHead className="w-[220px] font-semibold">{colDict.email || (lang === "fr" ? "Email" : "Email")}</TableHead>
-              <TableHead className="font-semibold">{colDict.subject || (lang === "fr" ? "Sujet" : "Subject")}</TableHead>
+              <TableHead className="w-[200px] font-semibold">{colDict.name || (lang === "fr" ? "Nom" : "Name")}</TableHead>
+              <TableHead className="font-semibold">{colDict.email || (lang === "fr" ? "Email" : "Email")}</TableHead>
               <TableHead className="w-[170px] font-semibold">{colDict.date || (lang === "fr" ? "Date" : "Date")}</TableHead>
               <TableHead className="w-[120px] font-semibold">{colDict.status || (lang === "fr" ? "Statut" : "Status")}</TableHead>
               <TableHead className="w-[140px] text-right font-semibold">{colDict.actions || (lang === "fr" ? "Actions" : "Actions")}</TableHead>
@@ -292,7 +293,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
           <TableBody>
             {filteredMessages.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-44 text-center">
+                <TableCell colSpan={5} className="h-44 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                     <Inbox className="h-8 w-8 text-muted-foreground/60" />
                     <p className="font-medium text-sm">
@@ -335,6 +336,11 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                             {msg.name}
                           </span>
                         </div>
+                        {msg.brandKey && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border shrink-0">
+                            {msg.brandName || msg.brandKey}
+                          </span>
+                        )}
                       </div>
                     </TableCell>
 
@@ -343,33 +349,12 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                       <a
                         href={getMailtoUrl(msg.email, msg.subject)}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1 truncate max-w-[200px]"
+                        className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1 truncate"
                         title={msg.email}
                       >
                         <Mail className="h-3 w-3 shrink-0" />
                         <span className="truncate">{msg.email}</span>
                       </a>
-                    </TableCell>
-
-                    {/* Subject */}
-                    <TableCell>
-                      <div className="flex items-center gap-2 max-w-md">
-                        <span
-                          className={cn(
-                            "truncate text-sm",
-                            isUnread
-                              ? "font-semibold text-foreground"
-                              : "text-muted-foreground"
-                          )}
-                        >
-                          {msg.subject || (lang === "fr" ? "Sans sujet" : "No subject")}
-                        </span>
-                        {msg.brandKey && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border shrink-0">
-                            {msg.brandName || msg.brandKey}
-                          </span>
-                        )}
-                      </div>
                     </TableCell>
 
                     {/* Date */}
@@ -478,7 +463,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                   </span>
                 </div>
                 <SheetTitle className="text-xl font-bold tracking-tight text-foreground">
-                  {selectedMessage.subject || (lang === "fr" ? "Sans sujet" : "No subject")}
+                  {selectedMessage.subject || (lang === "fr" ? `Message de ${selectedMessage.name}` : `Message from ${selectedMessage.name}`)}
                 </SheetTitle>
                 <SheetDescription className="sr-only">
                   {lang === "fr" ? "Détail du message reçu" : "Received contact message detail"}

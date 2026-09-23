@@ -48,16 +48,7 @@ import { Page } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 
-function generateSlug(text: string): string {
-    return text
-        .toString()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "");
-}
+import { slugify, generateSlug } from "@/lib/slug";
 
 interface PageFormProps {
     dict: any;

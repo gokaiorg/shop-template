@@ -32,7 +32,7 @@ export default async function AdminDashboardPage({
         adminDb.collection("products").count().get(),
         adminDb.collection("categories").count().get(),
         adminDb.collection("pages").count().get(),
-        adminDb.collection("messages").count().get(),
+        adminDb.collection("contact_messages").count().get(),
         isCartEnabled ? getRecentOrders() : Promise.resolve([]),
         isCartEnabled ? getPendingOrdersCount() : Promise.resolve(0),
     ]);

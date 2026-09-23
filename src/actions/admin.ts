@@ -11,6 +11,31 @@ import { shopTemplateSeed } from "@/config/seed/shop-template.seed";
 import { getDefaultLocale, getSupportedLocales } from "@/app/i18n-config";
 import { FieldValue } from "firebase-admin/firestore";
 import { SETTINGS_COLLECTION, STORE_FRONT_DOC_ID } from "@/lib/services/settings";
+import { resolveUniqueSlugMap, resolveUniqueSlug } from "@/lib/services/slug";
+import { slugify } from "@/lib/slug";
+
+/**
+ * Server Action callable from client forms to preview/suggest a unique slug in real-time.
+ */
+export async function getSuggestedUniqueSlug(
+    name: string,
+    locale: string,
+    excludeId?: string,
+    collectionName: "products" | "categories" = "products"
+): Promise<{ success: boolean; slug: string }> {
+    try {
+        const uniqueSlug = await resolveUniqueSlug({
+            collectionName,
+            baseSlug: name,
+            locale,
+            excludeId,
+        });
+        return { success: true, slug: uniqueSlug };
+    } catch (error) {
+        console.error("GET_SUGGESTED_SLUG_ERROR:", error);
+        return { success: false, slug: slugify(name) };
+    }
+}
 
 export async function createCategory(data: z.infer<typeof categorySchema>) {
     const session = await auth();
@@ -26,20 +51,18 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
 
     try {
         const defaultLocale = getDefaultLocale();
-        const primarySlug = result.data.slug[defaultLocale] || Object.values(result.data.slug)[0];
-
-        // Slug uniqueness check on default locale
-        if (primarySlug) {
-            const existing = await adminDb.collection("categories")
-                .where(`slug.${defaultLocale}`, "==", primarySlug)
-                .get();
-            if (!existing.empty) {
-                return { success: false, error: `A category with slug "${primarySlug}" already exists.` };
-            }
-        }
+        const supportedLocales = getSupportedLocales();
+        const ref = adminDb.collection("categories").doc();
 
         const nameMap = { ...result.data.name };
-        const slugMap = { ...result.data.slug };
+        const slugMap = await resolveUniqueSlugMap({
+            collectionName: "categories",
+            slugMap: result.data.slug,
+            nameMap,
+            locales: supportedLocales,
+            defaultLocale,
+            excludeId: ref.id,
+        });
         const introMap = { ...(result.data.intro || {}) };
         const descMap = { ...result.data.description };
 
@@ -53,7 +76,6 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
         const descriptionEn = descMap.en || descMap[defaultLocale] || "";
         const descriptionFr = descMap.fr || descMap[defaultLocale] || "";
 
-        const ref = adminDb.collection("categories").doc();
         const categoryData = {
             id: ref.id,
             name: nameMap,
@@ -101,19 +123,18 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
 
     try {
         const defaultLocale = getDefaultLocale();
-        const primarySlug = result.data.slug[defaultLocale] || Object.values(result.data.slug)[0];
-
-        if (primarySlug) {
-            const existing = await adminDb.collection("categories")
-                .where(`slug.${defaultLocale}`, "==", primarySlug)
-                .get();
-            if (!existing.empty && existing.docs[0].id !== id) {
-                return { success: false, error: `A category with slug "${primarySlug}" already exists.` };
-            }
-        }
+        const supportedLocales = getSupportedLocales();
+        const ref = adminDb.collection("categories").doc(id);
 
         const nameMap = { ...result.data.name };
-        const slugMap = { ...result.data.slug };
+        const slugMap = await resolveUniqueSlugMap({
+            collectionName: "categories",
+            slugMap: result.data.slug,
+            nameMap,
+            locales: supportedLocales,
+            defaultLocale,
+            excludeId: id,
+        });
         const introMap = { ...(result.data.intro || {}) };
         const descMap = { ...result.data.description };
 
@@ -125,8 +146,6 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
         const introFr = introMap.fr || introMap[defaultLocale] || "";
         const descriptionEn = descMap.en || descMap[defaultLocale] || "";
         const descriptionFr = descMap.fr || descMap[defaultLocale] || "";
-
-        const ref = adminDb.collection("categories").doc(id);
         const categoryData = {
             name: nameMap,
             slug: slugMap,
@@ -207,13 +226,21 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
 
     try {
         const defaultLocale = getDefaultLocale();
+        const supportedLocales = getSupportedLocales();
         const ref = adminDb.collection("products").doc();
         const images = result.data.images && result.data.images.length > 0 
             ? result.data.images 
             : (result.data.imageUrl ? [result.data.imageUrl] : []);
 
         const nameMap = { ...result.data.name };
-        const slugMap = { ...result.data.slug };
+        const slugMap = await resolveUniqueSlugMap({
+            collectionName: "products",
+            slugMap: result.data.slug,
+            nameMap,
+            locales: supportedLocales,
+            defaultLocale,
+            excludeId: ref.id,
+        });
         const introMap = { ...(result.data.intro || {}) };
         const descMap = { ...(result.data.description || {}) };
         const statusMap = { ...(result.data.status || {}) };
@@ -305,13 +332,21 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
 
     try {
         const defaultLocale = getDefaultLocale();
+        const supportedLocales = getSupportedLocales();
         const ref = adminDb.collection("products").doc(id);
         const images = result.data.images && result.data.images.length > 0 
             ? result.data.images 
             : (result.data.imageUrl ? [result.data.imageUrl] : []);
 
         const nameMap = { ...result.data.name };
-        const slugMap = { ...result.data.slug };
+        const slugMap = await resolveUniqueSlugMap({
+            collectionName: "products",
+            slugMap: result.data.slug,
+            nameMap,
+            locales: supportedLocales,
+            defaultLocale,
+            excludeId: id,
+        });
         const introMap = { ...(result.data.intro || {}) };
         const descMap = { ...(result.data.description || {}) };
         const statusMap = { ...(result.data.status || {}) };

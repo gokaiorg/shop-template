@@ -118,7 +118,8 @@
         "invalid_creds": "Invalid email or password",
         "unexpected_err": "An unexpected error occurred.",
         "name": "Name",
-        "signup_btn": "Create Account"
+        "signup_btn": "Create Account",
+        "or_continue_with": "Or continue with"
     },
     "header": {
         "shop": "Shop",

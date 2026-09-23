@@ -118,7 +118,8 @@
         "invalid_creds": "E-mail ou mot de passe invalide",
         "unexpected_err": "Une erreur inattendue est survenue.",
         "name": "Nom",
-        "signup_btn": "Créer un compte"
+        "signup_btn": "Créer un compte",
+        "or_continue_with": "Ou continuer avec"
     },
     "header": {
         "shop": "Boutique",

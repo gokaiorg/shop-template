@@ -20,12 +20,14 @@ import {
 import { useBrand } from "@/components/providers/BrandProvider";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 
 export function Aside({ lang, dict, session }: { lang: string, dict: any, session: any }) {
     const pathname = usePathname();
     const { isCartEnabled } = useBrand();
     const adminDict = dict?.admin || {};
     const ordersTitle = adminDict.orders?.title || adminDict.orders || "Orders";
+    const unreadCount = useUnreadMessages(session);
 
     const isDashboardActive = pathname === `/${lang}/admin/dashboard` || pathname === `/${lang}/admin`;
     const isCatalogActive = pathname.startsWith(`/${lang}/admin/catalog`);
@@ -164,8 +166,13 @@ export function Aside({ lang, dict, session }: { lang: string, dict: any, sessio
                                 : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
                         )}
                     >
-                        <Mail className="h-4 w-4" />
-                        {adminDict.messages || "Messages"}
+                        <Mail className="h-4 w-4 shrink-0" />
+                        <span>{adminDict.messages || "Messages"}</span>
+                        {unreadCount > 0 && (
+                            <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                            </span>
+                        )}
                     </Link>
 
                     {/* Settings */}
