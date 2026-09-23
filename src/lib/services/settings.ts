@@ -28,6 +28,14 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             fr: brand.identity.description?.fr || '',
         },
         heroBackgroundImageUrl: brand.assets?.heroBanner || (brand.assets as any)?.banner || '',
+        categoriesTitle: {
+            en: '',
+            fr: '',
+        },
+        categoriesSubtitle: {
+            en: '',
+            fr: '',
+        },
         catalogTitle: {
             en: 'Shop',
             fr: 'Boutique',
@@ -70,6 +78,13 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             title: { en: '', fr: '' },
             description: { en: '', fr: '' },
         },
+        faqSection: {
+            enabled: false,
+            status: 'inactive',
+            title: { en: 'Frequently Asked Questions', fr: 'Questions fréquentes' },
+            subtitle: { en: 'Find quick answers to common questions.', fr: 'Trouvez des réponses rapides à vos questions.' },
+            items: [],
+        },
     };
 
     try {
@@ -84,6 +99,8 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 heroTitle: (data?.heroTitle && typeof data.heroTitle === 'object') ? data.heroTitle : fallbackSettings.heroTitle,
                 heroDescription: (data?.heroDescription && typeof data.heroDescription === 'object') ? data.heroDescription : fallbackSettings.heroDescription,
                 heroBackgroundImageUrl: typeof data?.heroBackgroundImageUrl === 'string' ? data.heroBackgroundImageUrl : fallbackSettings.heroBackgroundImageUrl,
+                categoriesTitle: (data?.categoriesTitle && typeof data.categoriesTitle === 'object') ? data.categoriesTitle : fallbackSettings.categoriesTitle,
+                categoriesSubtitle: (data?.categoriesSubtitle && typeof data.categoriesSubtitle === 'object') ? data.categoriesSubtitle : fallbackSettings.categoriesSubtitle,
                 catalogTitle: (data?.catalogTitle && typeof data.catalogTitle === 'object') ? data.catalogTitle : fallbackSettings.catalogTitle,
                 catalogDescription: (data?.catalogDescription && typeof data.catalogDescription === 'object') ? data.catalogDescription : fallbackSettings.catalogDescription,
                 catalogSlug: (data?.catalogSlug && typeof data.catalogSlug === 'object')
@@ -112,6 +129,21 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                     title: (data.contactSection.title && typeof data.contactSection.title === 'object') ? data.contactSection.title : {},
                     description: (data.contactSection.description && typeof data.contactSection.description === 'object') ? data.contactSection.description : {},
                 } : fallbackSettings.contactSection,
+                faqSection: data?.faqSection ? {
+                    enabled: Boolean(data.faqSection.enabled ?? (data.faqSection.status === 'active')),
+                    status: (data.faqSection.status === 'active' || data.faqSection.enabled) ? 'active' : 'inactive',
+                    title: (data.faqSection.title && typeof data.faqSection.title === 'object')
+                        ? data.faqSection.title
+                        : typeof data.faqSection.title === 'string'
+                        ? { en: data.faqSection.title, fr: data.faqSection.title }
+                        : (fallbackSettings.faqSection?.title || {}),
+                    subtitle: (data.faqSection.subtitle && typeof data.faqSection.subtitle === 'object')
+                        ? data.faqSection.subtitle
+                        : typeof data.faqSection.subtitle === 'string'
+                        ? { en: data.faqSection.subtitle, fr: data.faqSection.subtitle }
+                        : (fallbackSettings.faqSection?.subtitle || {}),
+                    items: Array.isArray(data.faqSection.items) ? data.faqSection.items : [],
+                } : fallbackSettings.faqSection,
                 updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data?.updatedAt,
             };
         }

@@ -16,6 +16,8 @@ import {
     AboutSectionFormData,
     contactSectionSchema,
     ContactSectionFormData,
+    faqSectionSchema,
+    FaqSectionFormData,
 } from "@/schemas/settings";
 
 export async function updateCatalogSettings(data: CatalogSettingsFormData) {
@@ -79,6 +81,9 @@ export async function updateGlobalSettings(data: GlobalSettingsFormData) {
         if (!('contactSection' in data) || (data as any).contactSection === undefined) {
             delete (updatePayload as any).contactSection;
         }
+        if (!('faqSection' in data) || (data as any).faqSection === undefined) {
+            delete (updatePayload as any).faqSection;
+        }
         await saveStoreSettings(updatePayload);
         revalidatePath("/", "layout");
         return { success: true };
@@ -114,6 +119,9 @@ export async function updateBlocksSettings(data: BlocksFormData) {
         };
         if (parsed.data.contactSection) {
             updatePayload.contactSection = parsed.data.contactSection;
+        }
+        if (parsed.data.faqSection) {
+            updatePayload.faqSection = parsed.data.faqSection;
         }
         await saveStoreSettings(updatePayload);
         revalidatePath("/", "layout");
@@ -184,6 +192,36 @@ export async function updateContactBlockSettings(data: ContactSectionFormData) {
     }
 }
 
+export async function updateFaqBlockSettings(data: FaqSectionFormData) {
+    const session = await auth();
+
+    if (!session || !session.user) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const role = (session.user.role || "").toLowerCase();
+    if (role !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
+    }
+
+    const parsed = faqSectionSchema.safeParse(data);
+    if (!parsed.success) {
+        return {
+            success: false,
+            error: "Validation failed: " + parsed.error.issues.map((i) => i.message).join(", "),
+        };
+    }
+
+    try {
+        await saveStoreSettings({ faqSection: parsed.data });
+        revalidatePath("/", "layout");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[UPDATE_FAQ_BLOCK_ACTION_ERROR]", error);
+        return { success: false, error: error?.message || "Failed to update FAQ section" };
+    }
+}
+
 export async function updateStoreSettings(data: GlobalSettingsFormData | StoreSettingsFormData) {
     const session = await auth();
 
@@ -227,6 +265,9 @@ export async function updateStoreSettings(data: GlobalSettingsFormData | StoreSe
         }
         if (!('contactSection' in data) || (data as any).contactSection === undefined) {
             delete (updatePayload as any).contactSection;
+        }
+        if (!('faqSection' in data) || (data as any).faqSection === undefined) {
+            delete (updatePayload as any).faqSection;
         }
         await saveStoreSettings(updatePayload);
         revalidatePath("/", "layout");

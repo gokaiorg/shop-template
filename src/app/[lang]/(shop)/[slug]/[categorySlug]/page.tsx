@@ -376,7 +376,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
             </section>
 
             {/* Filter Pills & Products Grid */}
-            <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-16">
+            <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-24 md:mb-36">
                 <ShopCategoryFilter
                     categories={categories}
                     currentCategorySlug={categorySlug}
@@ -395,7 +395,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
                         <h2 className="sr-only">
                             {dict.shop?.products_list || (lang === "fr" ? "Liste des produits" : "Products list")}
                         </h2>
-                        <ul role="list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <ul role="list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {products.map((product) => (
                                 <li key={product.id} className="flex flex-col">
                                     <ShopProductCard

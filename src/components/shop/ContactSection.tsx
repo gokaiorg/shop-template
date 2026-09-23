@@ -11,6 +11,7 @@ interface ContactSectionProps {
     dict?: any;
     className?: string;
     forceDisplay?: boolean;
+    as?: "section" | "div";
 }
 
 export function ContactSection({
@@ -20,6 +21,7 @@ export function ContactSection({
     dict,
     className = "",
     forceDisplay = false,
+    as: Component = "section",
 }: ContactSectionProps) {
     const activeLocale = locale || lang || "en";
 
@@ -37,9 +39,9 @@ export function ContactSection({
     const contactDict = dict?.contact || dict;
 
     return (
-        <section
+        <Component
             aria-labelledby="contact-section-heading"
-            className={cn("w-full py-16 sm:py-24 bg-muted/20 border-t border-border/40", className)}
+            className={cn("w-full m-0 py-0 bg-transparent", className)}
         >
             <div className="w-full max-w-7xl mx-auto px-6 md:px-16">
                 <div className="max-w-3xl mx-auto text-center mb-8">
@@ -62,6 +64,6 @@ export function ContactSection({
                     <ContactForm lang={activeLocale} dict={contactDict} />
                 </div>
             </div>
-        </section>
+        </Component>
     );
 }

@@ -4,12 +4,15 @@ import { Category } from "@/types/database";
 import { getLocalizedField } from "@/lib/i18n";
 import { brandConfig } from "@/config/brand.config";
 import { cn } from "@/lib/utils";
+import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 
 interface FeaturedCategoriesProps {
     categories: Category[];
     locale?: string;
     lang?: string;
     catalogSlug: string;
+    title?: string;
+    subtitle?: string;
     className?: string;
 }
 
@@ -18,6 +21,8 @@ export function FeaturedCategories({
     locale,
     lang,
     catalogSlug,
+    title,
+    subtitle,
     className = "",
 }: FeaturedCategoriesProps) {
     const activeLocale = locale || lang || "en";
@@ -39,8 +44,29 @@ export function FeaturedCategories({
 
     const defaultPlaceholder = brandConfig.assets?.placeholderImage || "/brand/shop-template/placeholder.webp";
 
+    const cleanTitle = title?.trim() || "";
+    const cleanSubtitle = subtitle?.trim() || "";
+    const hasHeader = Boolean(cleanTitle || cleanSubtitle);
+
     return (
         <div className={cn("w-full max-w-7xl mx-auto px-6 md:px-16 pt-12 sm:pt-16 pb-4", className)}>
+            {hasHeader && (
+                <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-8 sm:mb-12">
+                    {cleanTitle && (
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground drop-shadow-xs">
+                            {cleanTitle}
+                        </h2>
+                    )}
+                    {cleanSubtitle && (
+                        <p className={cn(
+                            "text-base sm:text-lg text-muted-foreground leading-relaxed",
+                            cleanTitle ? "mt-3 sm:mt-4" : ""
+                        )}>
+                            {cleanSubtitle}
+                        </p>
+                    )}
+                </div>
+            )}
             <ul role="list" className={cn("grid gap-6 sm:gap-8", gridColsClass)}>
                 {items.map((category) => {
                     const rawCatSlug =
@@ -63,10 +89,20 @@ export function FeaturedCategories({
                         defaultPlaceholder;
 
                     return (
-                        <li key={category.id || catSlug} className="w-full">
+                        <li key={category.id || catSlug} className="w-full relative group">
+                            {category.id && (
+                                <div className="absolute top-4 right-4 z-30">
+                                    <AdminQuickEdit
+                                        entityType="category"
+                                        id={category.id}
+                                        locale={activeLocale}
+                                        variant="badge"
+                                    />
+                                </div>
+                            )}
                             <Link
                                 href={href}
-                                className="group relative aspect-[16/9] w-full overflow-hidden rounded-xl block shadow-md hover:shadow-xl transition-all"
+                                className="group relative aspect-[16/9] w-full overflow-hidden rounded-2xl block shadow-md hover:shadow-xl transition-all"
                             >
                                 <Image
                                     src={imageSrc}

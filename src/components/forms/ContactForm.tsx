@@ -66,7 +66,7 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
 
   if (isSubmitted) {
     return (
-      <div className="max-w-2xl mx-auto p-8 sm:p-12 bg-card rounded-xl border shadow-sm mt-8 text-center space-y-5 animate-in fade-in zoom-in-95 duration-300">
+      <div className="max-w-2xl mx-auto p-8 sm:p-12 rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/60 backdrop-blur-md shadow-soft-xl mt-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-300">
         <div className="mx-auto w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-inner">
           <CheckCircle2 className="h-7 w-7" />
         </div>
@@ -84,11 +84,12 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
         <div className="pt-3">
           <Button
             variant="outline"
+            size="lg"
             onClick={() => {
               form.reset();
               setIsSubmitted(false);
             }}
-            className="cursor-pointer"
+            className="rounded-2xl px-8 cursor-pointer"
           >
             {dict?.send_another || (lang === "fr" ? "Envoyer un autre message" : "Send another message")}
           </Button>
@@ -98,16 +99,16 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-card rounded-lg border shadow-sm mt-8">
+    <div className="max-w-2xl mx-auto p-8 sm:p-10 rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/60 backdrop-blur-md shadow-soft-xl mt-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{dict?.name_label || (lang === "fr" ? "Nom" : "Name")}</FormLabel>
+                  <FormLabel className="text-sm font-semibold tracking-wide text-foreground">{dict?.name_label || (lang === "fr" ? "Nom" : "Name")}</FormLabel>
                   <FormControl>
                     <Input placeholder={dict?.name_placeholder || (lang === "fr" ? "Votre nom" : "Your name")} {...field} />
                   </FormControl>
@@ -120,7 +121,7 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{dict?.email_label || (lang === "fr" ? "Email" : "Email")}</FormLabel>
+                  <FormLabel className="text-sm font-semibold tracking-wide text-foreground">{dict?.email_label || (lang === "fr" ? "Email" : "Email")}</FormLabel>
                   <FormControl>
                     <Input placeholder={dict?.email_placeholder || "your@email.com"} {...field} />
                   </FormControl>
@@ -130,13 +131,12 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
             />
           </div>
 
-
           <FormField
             control={form.control}
             name="message"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{dict?.message_label || (lang === "fr" ? "Message" : "Message")}</FormLabel>
+                <FormLabel className="text-sm font-semibold tracking-wide text-foreground">{dict?.message_label || (lang === "fr" ? "Message" : "Message")}</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder={dict?.message_placeholder || (lang === "fr" ? "Dites-nous en plus..." : "Tell us more...")}
@@ -149,7 +149,7 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" size="lg" className="w-full rounded-2xl py-6 text-base font-semibold cursor-pointer" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

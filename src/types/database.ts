@@ -189,6 +189,20 @@ export interface ContactSectionSettings {
   description: Record<string, string>;
 }
 
+export interface FaqItem {
+  id?: string;
+  question: Record<string, string> | string;
+  answer: Record<string, string> | string;
+}
+
+export interface FaqSectionSettings {
+  enabled: boolean;
+  status?: 'active' | 'inactive';
+  title?: Record<string, string> | string;
+  subtitle?: Record<string, string> | string;
+  items: FaqItem[];
+}
+
 export interface StoreSettings {
   id?: string;
   brandName: string;
@@ -197,6 +211,8 @@ export interface StoreSettings {
   heroTitle: Record<string, string>;
   heroDescription: Record<string, string>;
   heroBackgroundImageUrl?: string;
+  categoriesTitle?: Record<string, string>;
+  categoriesSubtitle?: Record<string, string>;
   catalogTitle?: Record<string, string>;
   catalogDescription?: Record<string, string>;
   catalogSlug?: Record<string, string> | string;
@@ -210,5 +226,6 @@ export interface StoreSettings {
   vendors?: string[];
   aboutSection?: AboutSectionSettings;
   contactSection?: ContactSectionSettings;
+  faqSection?: FaqSectionSettings;
   updatedAt?: Date | string;
 }

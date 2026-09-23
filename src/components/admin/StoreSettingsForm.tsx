@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -16,6 +16,7 @@ import {
     Coins,
     Plus,
     Share2,
+    LayoutGrid,
     ExternalLink,
     ArrowLeft,
 } from "lucide-react";
@@ -67,12 +68,16 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
 
     const defaultHeroTitle: Record<string, string> = {};
     const defaultHeroDesc: Record<string, string> = {};
+    const defaultCategoriesTitle: Record<string, string> = {};
+    const defaultCategoriesSubtitle: Record<string, string> = {};
     const defaultFooterDesc: Record<string, string> = {};
     const defaultFooterRightMenuTitle: Record<string, string> = {};
 
     supportedLocales.forEach((loc) => {
         defaultHeroTitle[loc] = initialData.heroTitle?.[loc] || initialData.heroTitle?.en || "";
         defaultHeroDesc[loc] = initialData.heroDescription?.[loc] || initialData.heroDescription?.en || "";
+        defaultCategoriesTitle[loc] = initialData.categoriesTitle?.[loc] || initialData.categoriesTitle?.en || "";
+        defaultCategoriesSubtitle[loc] = initialData.categoriesSubtitle?.[loc] || initialData.categoriesSubtitle?.en || "";
         defaultFooterDesc[loc] = initialData.footerDescription?.[loc] || initialData.footerDescription?.en || "";
         defaultFooterRightMenuTitle[loc] = initialData.footerRightMenuTitle?.[loc] || initialData.footerRightMenuTitle?.en || (loc === "fr" ? "Légal" : "Legal");
     });
@@ -87,6 +92,8 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
             heroTitle: defaultHeroTitle,
             heroDescription: defaultHeroDesc,
             heroBackgroundImageUrl: initialData.heroBackgroundImageUrl || "",
+            categoriesTitle: defaultCategoriesTitle,
+            categoriesSubtitle: defaultCategoriesSubtitle,
             footerDescription: defaultFooterDesc,
             footerRightMenuTitle: defaultFooterRightMenuTitle,
             socialLinks: initialData.socialLinks || [],
@@ -112,6 +119,20 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
         });
     };
 
+    useEffect(() => {
+        if (typeof window !== "undefined" && window.location.hash) {
+            const rawHash = window.location.hash.replace("#", "");
+            if (rawHash === "hero" || rawHash === "homepage-hero") {
+                const target = document.getElementById(rawHash) || document.getElementById("homepage-hero") || document.getElementById("hero");
+                if (target) {
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 150);
+                }
+            }
+        }
+    }, []);
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 flex flex-col flex-1">
@@ -122,39 +143,22 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                         </Link>
                 </div>
 
-                {/* Brand Identity Section */}
+                {/* Theme, Color & Currency Section (Above Brand Identity) */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2 mb-1">
-                            <Sparkles className="w-5 h-5 text-muted-foreground" />
+                            <Palette className="w-5 h-5 text-muted-foreground" />
                             <h2 className="text-lg font-medium tracking-tight">
-                                {lang === "fr" ? "Identité de marque" : "Brand Identity"}
+                                {lang === "fr" ? "Thème, Couleur & Devise" : "Theme, Color & Currency"}
                             </h2>
                         </div>
                         <p className="text-sm text-muted-foreground mb-4">
-                            {lang === "fr" 
-                                ? "Nom de boutique, logos officiels et couleur du thème." 
-                                : "Store name, brand logos, and primary theme color."}
+                            {lang === "fr"
+                                ? "Couleur principale du thème, affichage visuel et devise de transaction."
+                                : "Primary brand color, visual theme, and store transaction currency."}
                         </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <FormField
-                            control={form.control}
-                            name="brandName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Brand Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. Art Fate" {...field} />
-                                    </FormControl>
-                                    <FormDescription>
-                                        The public brand name displayed in headers, footers, and metadata.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
                         {/* Dynamic Primary Theme Color */}
                         <FormField
                             control={form.control}
@@ -209,6 +213,111 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                         {lang === "fr"
                                             ? `Couleur utilisée pour les boutons, liens actifs, survols et badges de l'ensemble du site. Repli par défaut : ${defaultBrandPrimary}.`
                                             : `Color used across buttons, active navigation states, hover effects, and category pills. Default fallback: ${defaultBrandPrimary}.`}
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Theme & Currency Dropdowns */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                            {/* Default Theme */}
+                            <FormField
+                                control={form.control}
+                                name="defaultTheme"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2">
+                                            <Palette className="h-4 w-4 text-muted-foreground" />
+                                            {lang === "fr" ? "Thème par défaut" : "Default Theme"}
+                                        </FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="w-full cursor-pointer">
+                                                    <SelectValue placeholder="Select a default theme" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="system">System Preference (Allows User Toggle)</SelectItem>
+                                                <SelectItem value="light">Light Mode (Enforced Across Site)</SelectItem>
+                                                <SelectItem value="dark">Dark Mode (Enforced Across Site)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription className="text-xs">
+                                            {field.value === "system"
+                                                ? "Visitors can freely switch between light and dark modes via header toggle."
+                                                : `Site is locked to ${field.value} mode. The theme toggle is hidden.`}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Default Currency */}
+                            <FormField
+                                control={form.control}
+                                name="defaultCurrency"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2">
+                                            <Coins className="h-4 w-4 text-muted-foreground" />
+                                            {lang === "fr" ? "Devise par défaut" : "Default Currency"}
+                                        </FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="w-full cursor-pointer">
+                                                    <SelectValue placeholder="Select store currency" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="THB">THB - Thai Baht (฿)</SelectItem>
+                                                <SelectItem value="EUR">EUR - Euro (€)</SelectItem>
+                                                <SelectItem value="USD">USD - US Dollar ($)</SelectItem>
+                                                <SelectItem value="GBP">GBP - British Pound (£)</SelectItem>
+                                                <SelectItem value="JPY">JPY - Japanese Yen (¥)</SelectItem>
+                                                <SelectItem value="CAD">CAD - Canadian Dollar ($)</SelectItem>
+                                                <SelectItem value="AUD">AUD - Australian Dollar ($)</SelectItem>
+                                                <SelectItem value="CHF">CHF - Swiss Franc (CHF)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription className="text-xs">
+                                            Used for product price formatting and injected into Stripe payment sessions.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Brand Identity Section (Positioned Below Theme, Color & Currency) */}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang === "fr" ? "Identité de marque" : "Brand Identity"}
+                            </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang === "fr" 
+                                ? "Nom de boutique et logos officiels." 
+                                : "Store name and brand logos."}
+                        </p>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <FormField
+                            control={form.control}
+                            name="brandName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Brand Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g. Art Fate" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        The public brand name displayed in headers, footers, and metadata.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -310,93 +419,9 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                     </CardContent>
                 </Card>
 
-                {/* Localization Section */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Palette className="w-5 h-5 text-muted-foreground" />
-                            <h2 className="text-lg font-medium tracking-tight">
-                                {lang === "fr" ? "Thème & Devise" : "Theme & Currency"}
-                            </h2>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            {lang === "fr"
-                                ? "Thème visuel par défaut et devise de transaction."
-                                : "Default visual theme and store transaction currency."}
-                        </p>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Default Theme */}
-                        <FormField
-                            control={form.control}
-                            name="defaultTheme"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="flex items-center gap-2">
-                                        <Palette className="h-4 w-4 text-muted-foreground" />
-                                        Default Theme
-                                    </FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full cursor-pointer">
-                                                <SelectValue placeholder="Select a default theme" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="system">System Preference (Allows User Toggle)</SelectItem>
-                                            <SelectItem value="light">Light Mode (Enforced Across Site)</SelectItem>
-                                            <SelectItem value="dark">Dark Mode (Enforced Across Site)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormDescription className="text-xs">
-                                        {field.value === "system"
-                                            ? "Visitors can freely switch between light and dark modes via header toggle."
-                                            : `Site is locked to ${field.value} mode. The theme toggle is hidden.`}
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Default Currency */}
-                        <FormField
-                            control={form.control}
-                            name="defaultCurrency"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="flex items-center gap-2">
-                                        <Coins className="h-4 w-4 text-muted-foreground" />
-                                        Default Currency
-                                    </FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full cursor-pointer">
-                                                <SelectValue placeholder="Select store currency" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="THB">THB - Thai Baht (฿)</SelectItem>
-                                            <SelectItem value="EUR">EUR - Euro (€)</SelectItem>
-                                            <SelectItem value="USD">USD - US Dollar ($)</SelectItem>
-                                            <SelectItem value="GBP">GBP - British Pound (£)</SelectItem>
-                                            <SelectItem value="JPY">JPY - Japanese Yen (¥)</SelectItem>
-                                            <SelectItem value="CAD">CAD - Canadian Dollar ($)</SelectItem>
-                                            <SelectItem value="AUD">AUD - Australian Dollar ($)</SelectItem>
-                                            <SelectItem value="CHF">CHF - Swiss Franc (CHF)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormDescription className="text-xs">
-                                        Used for product price formatting and injected into Stripe payment sessions.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </CardContent>
-                </Card>
-
                 {/* Homepage Hero Section */}
-                <Card>
+                <Card id="homepage-hero" className="scroll-mt-8 relative">
+                    <span id="hero" className="sr-only scroll-mt-8" />
                     <CardHeader>
                         <div className="flex items-center gap-2 mb-1">
                             <Globe className="w-5 h-5 text-muted-foreground" />
@@ -535,6 +560,122 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                 </FormItem>
                             )}
                         />
+                    </CardContent>
+                </Card>
+
+                {/* Categories Section Title (Optional) */}
+                <Card id="categories-title" className="scroll-mt-8 relative">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 mb-1">
+                                <LayoutGrid className="w-5 h-5 text-muted-foreground" />
+                                <h2 className="text-lg font-medium tracking-tight">
+                                    {lang === "fr" ? "Titre des Catégories" : "Categories Title"}
+                                </h2>
+                            </div>
+                            <Badge variant="outline" className="text-xs text-muted-foreground font-normal">
+                                {lang === "fr" ? "Facultatif" : "Optional"}
+                            </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang === "fr"
+                                ? "Titre d'accroche et sous-titre facultatifs affichés entre le Hero et les cartes de catégories sur la page d'accueil."
+                                : "Optional headline title and subtitle displayed between the Hero and the category preview cards on the homepage."}
+                        </p>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {isMultiLocale ? (
+                            <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
+                                <TabsList className="mb-4">
+                                    {supportedLocales.map((loc) => (
+                                        <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                            {loc.toUpperCase()}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                                {supportedLocales.map((loc) => (
+                                    <TabsContent key={loc} value={loc} className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name={`categoriesTitle.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{lang === "fr" ? "Titre de la section" : "Section Title"}</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder={lang === "fr" ? "ex: Nos Univers" : `Categories title in ${getLocaleDisplayName(loc)}`}
+                                                            {...field}
+                                                            value={field.value || ""}
+                                                            disabled={isPending}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`categoriesSubtitle.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{lang === "fr" ? "Sous-titre / Description" : "Section Subtitle / Description"}</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            rows={2}
+                                                            placeholder={lang === "fr" ? "ex: Découvrez l'ensemble de nos collections artistiques" : `Categories subtitle in ${getLocaleDisplayName(loc)}`}
+                                                            {...field}
+                                                            value={field.value || ""}
+                                                            disabled={isPending}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </TabsContent>
+                                ))}
+                            </Tabs>
+                        ) : (
+                            <div className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name={`categoriesTitle.${defaultLocale}`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Titre de la section" : "Section Title"}</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder={lang === "fr" ? "ex: Nos Univers" : "Categories title"}
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    disabled={isPending}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name={`categoriesSubtitle.${defaultLocale}`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Sous-titre / Description" : "Section Subtitle / Description"}</FormLabel>
+                                            <FormControl>
+                                                <Textarea
+                                                    rows={2}
+                                                    placeholder={lang === "fr" ? "ex: Découvrez l'ensemble de nos collections artistiques" : "Categories subtitle"}
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    disabled={isPending}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

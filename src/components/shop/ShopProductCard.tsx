@@ -57,32 +57,32 @@ export function ShopProductCard({ product, lang, dict = {}, categorySlug }: Shop
     const isOutOfStock = (product.stock ?? 0) <= 0;
 
     return (
-        <article className="group relative flex flex-col overflow-hidden rounded-lg border bg-background h-full">
-            {/* Admin Quick Edit Shortcut */}
-            <div className="absolute top-2 left-2 z-20">
+        <article className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/60 backdrop-blur-md p-8 h-full shadow-soft hover:shadow-soft-xl dark:hover:border-white/25 transition-all duration-300 ease-out">
+            {/* Admin Quick Edit Shortcut - Positioned on the top-right of the card */}
+            <div className="absolute top-4 right-4 z-20">
                 <AdminQuickEdit entityType="product" id={product.id} locale={lang} variant="badge" />
             </div>
 
-            {/* Image Container */}
-            <Link href={productHref} className="relative aspect-square overflow-hidden bg-muted block">
+            {/* Image Container: Bento Box framed, max 40% card height */}
+            <Link href={productHref} className="relative w-full aspect-[16/10] max-h-52 overflow-hidden rounded-2xl bg-muted/40 block shrink-0">
                 <Image
                     src={imageUrl}
                     alt={title}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                 />
                 {isOutOfStock && (
-                    <span className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 uppercase font-bold tracking-wider z-10 shadow-sm rounded-xs">
-                        Sold
+                    <span className="absolute top-3 left-3 bg-black/80 dark:bg-black/90 text-white text-xs px-2.5 py-1 uppercase font-bold tracking-wider z-10 shadow-soft backdrop-blur-xs rounded-full">
+                        {dict.sold_out || "Sold"}
                     </span>
                 )}
             </Link>
 
-            {/* Content Container */}
-            <div className="flex flex-1 flex-col p-4">
+            {/* Content Container: Spacious, breathing room for text */}
+            <div className="flex flex-1 flex-col pt-6">
                 {product.categories && product.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-2">
+                    <div className="flex flex-wrap gap-2 mb-3">
                         {product.categories.map((cat) => {
                             const catName = getLocalizedField(cat.name, lang) || (lang === 'fr' ? cat.nameFr : cat.nameEn);
                             const catSlug = 
@@ -101,13 +101,13 @@ export function ShopProductCard({ product, lang, dict = {}, categorySlug }: Shop
                                 >
                                     <Badge
                                         variant="secondary"
-                                        className="hover:bg-primary/85 hover:text-primary-foreground transition-colors text-[11px] font-normal px-2 py-0.5 cursor-pointer"
+                                        className="bg-muted/60 hover:bg-primary/90 hover:text-primary-foreground transition-colors text-xs font-medium px-2.5 py-0.5 rounded-full cursor-pointer"
                                     >
                                         {catName}
                                     </Badge>
                                 </Link>
                             ) : (
-                                <Badge key={cat.id} variant="secondary" className="text-[11px] font-normal px-2 py-0.5">
+                                <Badge key={cat.id} variant="secondary" className="bg-muted/60 text-xs font-medium px-2.5 py-0.5 rounded-full">
                                     {catName}
                                 </Badge>
                             );
@@ -115,24 +115,35 @@ export function ShopProductCard({ product, lang, dict = {}, categorySlug }: Shop
                     </div>
                 )}
 
-                <Link href={productHref} className="hover:underline">
-                    <h3 className="text-lg font-semibold">{title}</h3>
+                <Link href={productHref} className="group-hover:text-primary transition-colors block">
+                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-snug line-clamp-2">
+                        {title}
+                    </h3>
                 </Link>
-                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {description}
-                </p>
+                {description && (
+                    <p className="mt-3 text-muted-foreground text-sm sm:text-base leading-relaxed line-clamp-3">
+                        {description}
+                    </p>
+                )}
 
-                {/* Bottom Row */}
+                {/* Bottom Row: Price & Action */}
                 {!product.hidePrice && (
-                    <div className="mt-auto flex items-center justify-between pt-4">
-                        <p className="text-lg font-bold">
-                            {formattedPrice}
-                        </p>
+                    <div className="mt-auto flex items-center justify-between pt-6 border-t border-border/40">
+                        <div>
+                            <span className="text-xs uppercase tracking-wider text-muted-foreground block font-medium mb-0.5">
+                                {lang === "fr" ? "Prix" : "Price"}
+                            </span>
+                            <p className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
+                                {formattedPrice}
+                            </p>
+                        </div>
                         {isCartEnabled && (
                             <Button
-                                size="sm"
+                                size="default"
                                 disabled={isOutOfStock}
-                                className={`rounded-full shadow-xs ${isOutOfStock ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                                className={`rounded-full px-5 py-2.5 font-medium shadow-soft hover:shadow-soft-md transition-all duration-200 cursor-pointer ${
+                                    isOutOfStock ? "cursor-not-allowed opacity-50" : ""
+                                }`}
                                 onClick={handleAddToCart}
                                 aria-label={`${isOutOfStock ? "Sold Out" : (dict.add_to_cart || "Add to cart")} ${title}`}
                             >
