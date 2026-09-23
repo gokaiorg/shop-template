@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Loader2, Save, HelpCircle, ArrowLeft, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { AdminBottomBar } from "@/components/admin/AdminBottomBar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -163,9 +164,11 @@ export function AdminFaqBlockForm({ initialData, lang }: AdminFaqBlockFormProps)
         );
     };
 
+    const errorCount = Object.keys(form.formState.errors).length;
+
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-6 pb-24">
+            <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-6 max-w-5xl flex-1 flex flex-col">
                 {/* Back navigation */}
                 <div className="flex items-center justify-between">
                     <Link
@@ -494,24 +497,14 @@ export function AdminFaqBlockForm({ initialData, lang }: AdminFaqBlockFormProps)
                     </CardContent>
                 </Card>
 
-                {/* Sticky Action Footer */}
-                <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border p-4 flex justify-end">
-                    <div className="max-w-5xl w-full mx-auto flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                            {isFr
-                                ? "N'oubliez pas d'enregistrer vos modifications."
-                                : "Don't forget to save your changes."}
-                        </span>
-                        <Button type="submit" disabled={isPending} className="gap-2 cursor-pointer shadow-md">
-                            {isPending ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <Save className="w-4 h-4" />
-                            )}
-                            <span>{isFr ? "Enregistrer les modifications" : "Save Changes"}</span>
-                        </Button>
-                    </div>
-                </div>
+                {/* Standardized Bottom Action Bar */}
+                <AdminBottomBar
+                    isPending={isPending}
+                    saveLabel="Save"
+                    savingLabel={isFr ? "Enregistrement..." : "Saving..."}
+                    errorsCount={errorCount}
+                    lang={lang}
+                />
             </form>
         </Form>
     );

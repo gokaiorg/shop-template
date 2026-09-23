@@ -17,6 +17,7 @@ import {
     Plus,
     Share2,
     LayoutGrid,
+    Package,
     ExternalLink,
     ArrowLeft,
 } from "lucide-react";
@@ -70,6 +71,8 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
     const defaultHeroDesc: Record<string, string> = {};
     const defaultCategoriesTitle: Record<string, string> = {};
     const defaultCategoriesSubtitle: Record<string, string> = {};
+    const defaultProductsTitle: Record<string, string> = {};
+    const defaultProductsSubtitle: Record<string, string> = {};
     const defaultFooterDesc: Record<string, string> = {};
     const defaultFooterRightMenuTitle: Record<string, string> = {};
 
@@ -78,6 +81,8 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
         defaultHeroDesc[loc] = initialData.heroDescription?.[loc] || initialData.heroDescription?.en || "";
         defaultCategoriesTitle[loc] = initialData.categoriesTitle?.[loc] || initialData.categoriesTitle?.en || "";
         defaultCategoriesSubtitle[loc] = initialData.categoriesSubtitle?.[loc] || initialData.categoriesSubtitle?.en || "";
+        defaultProductsTitle[loc] = initialData.productsTitle?.[loc] || initialData.productsTitle?.en || "";
+        defaultProductsSubtitle[loc] = initialData.productsSubtitle?.[loc] || initialData.productsSubtitle?.en || "";
         defaultFooterDesc[loc] = initialData.footerDescription?.[loc] || initialData.footerDescription?.en || "";
         defaultFooterRightMenuTitle[loc] = initialData.footerRightMenuTitle?.[loc] || initialData.footerRightMenuTitle?.en || (loc === "fr" ? "Légal" : "Legal");
     });
@@ -94,6 +99,8 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
             heroBackgroundImageUrl: initialData.heroBackgroundImageUrl || "",
             categoriesTitle: defaultCategoriesTitle,
             categoriesSubtitle: defaultCategoriesSubtitle,
+            productsTitle: defaultProductsTitle,
+            productsSubtitle: defaultProductsSubtitle,
             footerDescription: defaultFooterDesc,
             footerRightMenuTitle: defaultFooterRightMenuTitle,
             socialLinks: initialData.socialLinks || [],
@@ -122,8 +129,8 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
     useEffect(() => {
         if (typeof window !== "undefined" && window.location.hash) {
             const rawHash = window.location.hash.replace("#", "");
-            if (rawHash === "hero" || rawHash === "homepage-hero") {
-                const target = document.getElementById(rawHash) || document.getElementById("homepage-hero") || document.getElementById("hero");
+            if (rawHash) {
+                const target = document.getElementById(rawHash) || (rawHash === "hero" || rawHash === "homepage-hero" ? document.getElementById("homepage-hero") || document.getElementById("hero") : null);
                 if (target) {
                     setTimeout(() => {
                         target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -665,6 +672,122 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                 <Textarea
                                                     rows={2}
                                                     placeholder={lang === "fr" ? "ex: Découvrez l'ensemble de nos collections artistiques" : "Categories subtitle"}
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    disabled={isPending}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Products Section Title (Optional) */}
+                <Card id="products-title" className="scroll-mt-8 relative">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Package className="w-5 h-5 text-muted-foreground" />
+                                <h2 className="text-lg font-medium tracking-tight">
+                                    {lang === "fr" ? "Titre des Produits" : "Products Title"}
+                                </h2>
+                            </div>
+                            <Badge variant="outline" className="text-xs text-muted-foreground font-normal">
+                                {lang === "fr" ? "Facultatif" : "Optional"}
+                            </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang === "fr"
+                                ? "Titre d'accroche et sous-titre facultatifs affichés pour la section des produits sur la page d'accueil (valeur par défaut : 'Solutions')."
+                                : "Optional headline title and subtitle displayed for the products section on the homepage (defaults to 'Solutions')."}
+                        </p>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {isMultiLocale ? (
+                            <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
+                                <TabsList className="mb-4">
+                                    {supportedLocales.map((loc) => (
+                                        <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
+                                            {loc.toUpperCase()}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                                {supportedLocales.map((loc) => (
+                                    <TabsContent key={loc} value={loc} className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name={`productsTitle.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{lang === "fr" ? "Titre de la section" : "Section Title"}</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder={lang === "fr" ? "ex: Solutions" : `Products title in ${getLocaleDisplayName(loc)}`}
+                                                            {...field}
+                                                            value={field.value || ""}
+                                                            disabled={isPending}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`productsSubtitle.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{lang === "fr" ? "Sous-titre / Description" : "Section Subtitle / Description"}</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            rows={2}
+                                                            placeholder={lang === "fr" ? "ex: Découvrez l'ensemble de nos services et réalisations" : `Products subtitle in ${getLocaleDisplayName(loc)}`}
+                                                            {...field}
+                                                            value={field.value || ""}
+                                                            disabled={isPending}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </TabsContent>
+                                ))}
+                            </Tabs>
+                        ) : (
+                            <div className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name={`productsTitle.${defaultLocale}`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Titre de la section" : "Section Title"}</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder={lang === "fr" ? "ex: Solutions" : "Products title"}
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    disabled={isPending}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name={`productsSubtitle.${defaultLocale}`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Sous-titre / Description" : "Section Subtitle / Description"}</FormLabel>
+                                            <FormControl>
+                                                <Textarea
+                                                    rows={2}
+                                                    placeholder={lang === "fr" ? "ex: Découvrez l'ensemble de nos services et réalisations" : "Products subtitle"}
                                                     {...field}
                                                     value={field.value || ""}
                                                     disabled={isPending}

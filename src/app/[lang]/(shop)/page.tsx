@@ -12,6 +12,7 @@ import { FeaturedCategories } from "@/components/shop/FeaturedCategories";
 import { CmsBlockRenderer } from "@/components/shop/CmsBlockRenderer";
 import { HeroHeader } from "@/components/shop/HeroHeader";
 import { ArrowRight } from "lucide-react";
+import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 import { brandConfig, getActiveBrand } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
@@ -169,6 +170,8 @@ export default async function Home({
   const heroBackgroundImageUrl = storeSettings.heroBackgroundImageUrl;
   const categoriesTitle = getLocalizedField(storeSettings.categoriesTitle, lang);
   const categoriesSubtitle = getLocalizedField(storeSettings.categoriesSubtitle, lang);
+  const productsTitle = getLocalizedField(storeSettings.productsTitle, lang) || "Solutions";
+  const productsSubtitle = getLocalizedField(storeSettings.productsSubtitle, lang);
   const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (isFr ? "Boutique" : "Shop");
   const catalogSlug = getLocalizedField(storeSettings.catalogSlug, lang) || (typeof storeSettings.catalogSlug === 'string' ? storeSettings.catalogSlug : "shop");
   const shopByCategoryTitle = catalogName;
@@ -269,8 +272,21 @@ export default async function Home({
         "w-full max-w-7xl mx-auto pt-16 px-6 md:px-16",
         hasCmsBlocks ? "pb-8 md:pb-12" : "pb-28 md:pb-40"
       )}>
-        <div className="flex justify-between items-end mb-8">
-          <h2 className="text-3xl font-bold tracking-tight">{shopByCategoryTitle}</h2>
+        <div className="mb-8">
+          <div className="flex items-center gap-3">
+            <h2 className="text-3xl font-bold tracking-tight">{productsTitle}</h2>
+            <AdminQuickEdit
+              entityType="settings"
+              href={`/${lang}/admin/settings#products-title`}
+              locale={lang}
+              variant="badge"
+            />
+          </div>
+          {productsSubtitle && (
+            <p className="mt-2 text-base text-muted-foreground leading-relaxed">
+              {productsSubtitle}
+            </p>
+          )}
         </div>
 
         {categories.length === 0 ? (

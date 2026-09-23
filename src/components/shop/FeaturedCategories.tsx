@@ -5,6 +5,7 @@ import { getLocalizedField } from "@/lib/i18n";
 import { brandConfig } from "@/config/brand.config";
 import { cn } from "@/lib/utils";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
+import { AdminEditBadge } from "@/components/admin/AdminEditBadge";
 
 interface FeaturedCategoriesProps {
     categories: Category[];
@@ -53,9 +54,17 @@ export function FeaturedCategories({
             {hasHeader && (
                 <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-8 sm:mb-12">
                     {cleanTitle && (
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground drop-shadow-xs">
-                            {cleanTitle}
-                        </h2>
+                        <div className="flex items-center justify-center gap-3">
+                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground drop-shadow-xs">
+                                {cleanTitle}
+                            </h2>
+                            <AdminQuickEdit
+                                entityType="settings"
+                                href={`/${activeLocale}/admin/settings#categories-title`}
+                                locale={activeLocale}
+                                variant="badge"
+                            />
+                        </div>
                     )}
                     {cleanSubtitle && (
                         <p className={cn(
@@ -91,14 +100,10 @@ export function FeaturedCategories({
                     return (
                         <li key={category.id || catSlug} className="w-full relative group">
                             {category.id && (
-                                <div className="absolute top-4 right-4 z-30">
-                                    <AdminQuickEdit
-                                        entityType="category"
-                                        id={category.id}
-                                        locale={activeLocale}
-                                        variant="badge"
-                                    />
-                                </div>
+                                <AdminEditBadge
+                                    href={`/admin/categories/${category.id}/edit`}
+                                    locale={activeLocale}
+                                />
                             )}
                             <Link
                                 href={href}

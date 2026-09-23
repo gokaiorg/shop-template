@@ -17,6 +17,7 @@ import { getPageBySlug } from "@/lib/services/pages";
 import { CmsBlockRenderer } from "@/components/shop/CmsBlockRenderer";
 import { PageTranslationSync } from "@/components/shop/PageTranslationSync";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
+import { AdminEditBadge } from "@/components/admin/AdminEditBadge";
 import { CatalogJsonLd, JsonLd } from "@/components/seo/JsonLd";
 
 interface SlugPageProps {
@@ -238,9 +239,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 />
                 {/* Edge-to-Edge Illustrated Catalog Banner */}
                 <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
-                    <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-                        <AdminQuickEdit entityType="catalog" locale={lang} />
-                    </div>
+                    <AdminEditBadge href="/admin/catalog" locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
                     {catalogBanner ? (
                         <Image
                             src={catalogBanner}
@@ -301,14 +300,10 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                 return (
                                     <li key={category.id} className="w-full relative group">
                                         {category.id && (
-                                            <div className="absolute top-4 right-4 z-30">
-                                                <AdminQuickEdit
-                                                    entityType="category"
-                                                    id={category.id}
-                                                    locale={lang}
-                                                    variant="badge"
-                                                />
-                                            </div>
+                                            <AdminEditBadge
+                                                href={`/admin/categories/${category.id}/edit`}
+                                                locale={lang}
+                                            />
                                         )}
                                         <Link
                                             href={`/${lang}/${localizedCatalogSlug}/${catSlug}`}

@@ -520,7 +520,7 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                         ) : (
                             <>
                                 <Save className="w-4 h-4" />
-                                <span>{lang === "fr" ? "Enregistrer" : "Save Changes"}</span>
+                                <span>{lang === "fr" ? "Enregistrer" : "Save"}</span>
                             </>
                         )}
                     </Button>

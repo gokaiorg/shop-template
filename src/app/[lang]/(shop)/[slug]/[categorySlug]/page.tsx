@@ -12,7 +12,7 @@ import { CategoryTranslationSync } from "@/components/shop/CategoryTranslationSy
 import { brandConfig } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
 import { getStoreSettings } from "@/lib/services/settings";
-import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
+import { AdminQuickEdit, AdminEditBadge } from "@/components/admin/AdminQuickEdit";
 import { CategoryJsonLd } from "@/components/seo/JsonLd";
 
 interface CategoryPageProps {
@@ -346,9 +346,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
 
             {/* Edge-to-Edge Category Banner */}
             <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
-                <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-                    <AdminQuickEdit entityType="category" id={category.id} locale={lang} />
-                </div>
+                <AdminEditBadge href={`/admin/categories/${category.id}/edit`} locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
                 {bannerImageUrl ? (
                     <Image
                         src={bannerImageUrl}
