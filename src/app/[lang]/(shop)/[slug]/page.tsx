@@ -202,8 +202,8 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 (typeof category.slug === "object" && category.slug?.[lang])
                     ? category.slug[lang]
                     : (lang === "fr" ? category.slugFr : category.slugEn) ||
-                      getLocalizedField(category.slug, lang) ||
-                      (typeof category.slug === "string" ? category.slug : category.id);
+                    getLocalizedField(category.slug, lang) ||
+                    (typeof category.slug === "string" ? category.slug : category.id);
             const catName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
             const catIntro = getLocalizedField(category.intro, lang) || (lang === "fr" ? category.introFr : category.introEn) || "";
             const catImg = category.imageUrl || brandConfig.assets?.placeholderImage || undefined;
@@ -268,7 +268,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 </section>
 
                 {/* Categories Grid (Clean Silo Links) */}
-                <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-16">
+                <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-24 md:mb-36">
                     <div className="flex items-center justify-between border-b pb-4 mb-8">
                         <h2 className="text-2xl font-bold tracking-tight">
                             {lang === "fr" ? "Catégories" : "Categories"}
@@ -292,8 +292,8 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                     (typeof category.slug === "object" && category.slug?.[lang])
                                         ? category.slug[lang]
                                         : (lang === "fr" ? category.slugFr : category.slugEn) ||
-                                          getLocalizedField(category.slug, lang) ||
-                                          (typeof category.slug === "string" ? category.slug : category.id);
+                                        getLocalizedField(category.slug, lang) ||
+                                        (typeof category.slug === "string" ? category.slug : category.id);
                                 const catName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
                                 const catIntro = getLocalizedField(category.intro, lang) || (lang === "fr" ? category.introFr : category.introEn) || "";
                                 const catImg = category.imageUrl || brandConfig.assets?.placeholderImage || "";
