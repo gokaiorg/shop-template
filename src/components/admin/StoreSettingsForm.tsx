@@ -803,7 +803,8 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                 </Card>
 
                 {/* Footer & Socials Section */}
-                <Card>
+                <Card id="footer-social-links" className="scroll-mt-8 relative">
+                    <span id="footer" className="sr-only scroll-mt-8" />
                     <CardHeader>
                         <div className="flex items-center gap-2 mb-1">
                             <Share2 className="w-5 h-5 text-muted-foreground" />
