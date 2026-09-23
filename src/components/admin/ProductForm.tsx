@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, LayoutTemplate, RotateCcw, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-import { createProduct, updateProduct, deleteProduct } from "@/actions/admin";
+import { createProduct, updateProduct, deleteProduct, getSuggestedUniqueSlug } from "@/actions/admin";
 import { productSchema } from "@/schemas/admin";
 import { uploadProductImage, deleteProductImage } from "@/lib/firebase-storage";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
@@ -49,18 +49,7 @@ import { Category, Product } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { CreatableVendorCombobox } from "@/components/admin/CreatableVendorCombobox";
 
-function generateSlug(text: string): string {
-    return text
-        .toString()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "");
-}
-
-const slugify = generateSlug;
+import { slugify, generateSlug } from "@/lib/slug";
 
 function getCategorySlugForLocale(cat: Category | undefined, loc: string): string {
     if (!cat) return "category";
@@ -141,6 +130,10 @@ export function ProductForm({
         },
     });
 
+    const watchedCategoryIds = form.watch("categoryIds") || (form.watch("categoryId") ? [form.watch("categoryId")] : []);
+    const parentCategory = categories.find((c) => (watchedCategoryIds || []).includes(c.id));
+    const [regeneratingSlugs, setRegeneratingSlugs] = useState<Record<string, boolean>>({});
+
     const isNew = !initialData?.id;
     const slugTouchedRef = useRef<Record<string, boolean>>(
         initialData?.id
@@ -148,23 +141,53 @@ export function ProductForm({
             : {}
     );
 
+    const handleRegenerateSlug = async (loc: string) => {
+        const currentName = form.getValues(`name.${loc}`) || form.getValues(`name.${defaultLocale}`) || "";
+        if (!currentName.trim()) {
+            toast.error(lang?.startsWith("fr") ? "Veuillez d'abord renseigner le nom du produit." : "Please enter a product name first.");
+            return;
+        }
+        setRegeneratingSlugs((prev) => ({ ...prev, [loc]: true }));
+        try {
+            const res = await getSuggestedUniqueSlug(currentName, loc, initialData?.id, "products");
+            if (res.success && res.slug) {
+                slugTouchedRef.current[loc] = false;
+                form.setValue(`slug.${loc}`, res.slug, { shouldDirty: true, shouldValidate: true });
+                toast.success(lang?.startsWith("fr") ? `Slug unique généré : ${res.slug}` : `Unique slug generated: ${res.slug}`);
+            } else {
+                const fallback = slugify(currentName);
+                form.setValue(`slug.${loc}`, fallback, { shouldDirty: true, shouldValidate: true });
+            }
+        } catch {
+            const fallback = slugify(currentName);
+            form.setValue(`slug.${loc}`, fallback, { shouldDirty: true, shouldValidate: true });
+        } finally {
+            setRegeneratingSlugs((prev) => ({ ...prev, [loc]: false }));
+        }
+    };
+
     // Auto-generate slug from name specifically on creation (or if slug was cleared)
     useEffect(() => {
         if (!isNew) return;
 
         // 1. Check on initial render/mount
-        locales.forEach((loc) => {
+        locales.forEach(async (loc) => {
             const currentSlug = form.getValues(`slug.${loc}`);
             if (!slugTouchedRef.current[loc] || !currentSlug) {
                 const currentName = form.getValues(`name.${loc}`) || "";
                 if (currentName.trim()) {
-                    const generated = generateSlug(currentName);
-                    form.setValue(`slug.${loc}`, generated, { shouldValidate: true });
+                    const res = await getSuggestedUniqueSlug(currentName, loc, undefined, "products");
+                    if (res.success && res.slug) {
+                        form.setValue(`slug.${loc}`, res.slug, { shouldValidate: true });
+                    } else {
+                        form.setValue(`slug.${loc}`, generateSlug(currentName), { shouldValidate: true });
+                    }
                 }
             }
         });
 
-        // 2. React Hook Form subscription: live keystroke listener on name per locale
+        // 2. React Hook Form subscription: live keystroke listener on name per locale with debounced uniqueness lookup
+        let debounceTimer: NodeJS.Timeout | null = null;
         const subscription = form.watch((value, { name }) => {
             if (!name || !name.startsWith("name")) return;
 
@@ -174,15 +197,28 @@ export function ProductForm({
                 if (!slugTouchedRef.current[targetLoc] || !currentSlug) {
                     const currentName = form.getValues(`name.${targetLoc}`) || "";
                     if (currentName.trim()) {
+                        // Instant preliminary slug
                         const generated = generateSlug(currentName);
                         form.setValue(`slug.${targetLoc}`, generated, { shouldValidate: true, shouldDirty: true });
+
+                        // Debounced server query for true database uniqueness
+                        if (debounceTimer) clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(async () => {
+                            const res = await getSuggestedUniqueSlug(currentName, targetLoc, initialData?.id, "products");
+                            if (res.success && res.slug && !slugTouchedRef.current[targetLoc]) {
+                                form.setValue(`slug.${targetLoc}`, res.slug, { shouldValidate: true, shouldDirty: true });
+                            }
+                        }, 400);
                     }
                 }
             }
         });
 
-        return () => subscription.unsubscribe();
-    }, [isNew, locales, form]);
+        return () => {
+            subscription.unsubscribe();
+            if (debounceTimer) clearTimeout(debounceTimer);
+        };
+    }, [isNew, locales, defaultLocale, initialData?.id, form]);
 
     const handleSlugChange = (loc: string, rawValue: string, onChange: (val: string) => void) => {
         if (!rawValue.trim()) {
@@ -201,11 +237,7 @@ export function ProductForm({
         onBlur();
         const currentVal = form.getValues(`slug.${loc}`) || "";
         if (!currentVal.trim()) {
-            slugTouchedRef.current[loc] = false;
-            const currentName = form.getValues(`name.${loc}`) || "";
-            if (currentName.trim()) {
-                form.setValue(`slug.${loc}`, slugify(currentName), { shouldDirty: true, shouldValidate: true });
-            }
+            handleRegenerateSlug(loc);
         } else {
             const trimmed = currentVal.replace(/^-+|-+$/g, "");
             if (trimmed !== currentVal) {
@@ -611,93 +643,6 @@ export function ProductForm({
                             />
                         </CardContent>
                     </Card>
-
-                    {/* Bloc 4 : Organisation */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-2 mb-1">
-                                <FolderTree className="w-5 h-5 text-muted-foreground" />
-                                <h2 className="text-lg font-medium tracking-tight">
-                                    {lang?.startsWith("fr") ? "Organisation" : "Organization"}
-                                </h2>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {lang?.startsWith("fr") ? "Catégories associées et artiste ou vendeur." : "Associated categories and artist or vendor."}
-                            </p>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <FormField
-                                control={form.control}
-                                name="categoryIds"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <FormLabel className="text-sm font-medium">
-                                                {dict.categories || dict.categoryId || "Categories"} <span className="text-destructive ml-1">*</span>
-                                            </FormLabel>
-                                            <span className="text-xs text-muted-foreground">
-                                                {field.value?.length || 0} {lang?.startsWith("fr") ? "sélectionnée(s)" : "selected"}
-                                            </span>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-3 border rounded-lg bg-background">
-                                            {categories.map((c) => {
-                                                const isChecked = (field.value || []).includes(c.id);
-                                                return (
-                                                    <label
-                                                        key={c.id}
-                                                        className={`flex items-center gap-3 p-2.5 rounded-md border cursor-pointer transition-colors ${
-                                                            isChecked 
-                                                                ? "bg-primary/10 border-primary shadow-xs" 
-                                                                : "bg-card hover:bg-muted/50 border-input"
-                                                        }`}
-                                                    >
-                                                        <Checkbox
-                                                            checked={isChecked}
-                                                            onCheckedChange={(checked) => {
-                                                                const current = field.value || [];
-                                                                if (checked) {
-                                                                    field.onChange([...current, c.id]);
-                                                                } else {
-                                                                    field.onChange(current.filter((id: string) => id !== c.id));
-                                                                }
-                                                            }}
-                                                        />
-                                                        <span className="text-sm font-medium leading-none select-none">
-                                                            {getLocalizedField(c.name, lang, defaultLocale)}
-                                                        </span>
-                                                    </label>
-                                                );
-                                            })}
-                                        </div>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="artist"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{dict.artist || "Artist / Vendor"}</FormLabel>
-                                        <FormControl>
-                                            <CreatableVendorCombobox
-                                                options={vendors}
-                                                value={field.value || ""}
-                                                onChange={(val) => {
-                                                    field.onChange(val);
-                                                    form.setValue("vendor", val);
-                                                }}
-                                                placeholder={dict.artistPlaceholder || "e.g. Amann Inkspiration"}
-                                                lang={lang}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                    </Card>
                     </div>
 
                     {/* Colonne secondaire (Droite) */}
@@ -723,9 +668,7 @@ export function ProductForm({
                                         {locales.map((loc) => {
                                             const currentSlugVal = form.watch(`slug.${loc}`) || "";
                                             const currentCatalogSlug = catalogSlugs?.[loc] || (loc === 'fr' ? 'boutique' : 'shop');
-                                            const selectedCatIds = form.watch("categoryIds") || (form.watch("categoryId") ? [form.watch("categoryId")] : []);
-                                            const parentCat = categories.find((c) => selectedCatIds.includes(c.id));
-                                            const parentCatSlug = getCategorySlugForLocale(parentCat, loc);
+                                            const parentCatSlug = getCategorySlugForLocale(parentCategory, loc);
                                             const previewUrl = `/${loc}/${currentCatalogSlug}/${parentCatSlug}/${currentSlugVal || "slug"}`;
 
                                             return (
@@ -741,19 +684,16 @@ export function ProductForm({
                                                                         type="button"
                                                                         variant="ghost"
                                                                         size="sm"
+                                                                        disabled={regeneratingSlugs[loc]}
                                                                         className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
                                                                         title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
-                                                                        onClick={() => {
-                                                                            const currentName = form.getValues(`name.${loc}`) || "";
-                                                                            if (currentName.trim()) {
-                                                                                const regenerated = slugify(currentName);
-                                                                                slugTouchedRef.current[loc] = false;
-                                                                                form.setValue(`slug.${loc}`, regenerated, { shouldDirty: true, shouldValidate: true });
-                                                                                toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
-                                                                            }
-                                                                        }}
+                                                                        onClick={() => handleRegenerateSlug(loc)}
                                                                     >
-                                                                        <RotateCcw className="h-3 w-3" />
+                                                                        {regeneratingSlugs[loc] ? (
+                                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                                        ) : (
+                                                                            <RotateCcw className="h-3 w-3" />
+                                                                        )}
                                                                         <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
                                                                     </Button>
                                                                 </div>
@@ -821,9 +761,7 @@ export function ProductForm({
                                             render={({ field }) => {
                                                 const singleLoc = locales[0] || defaultLocale;
                                                 const currentCatalogSlug = catalogSlugs?.[singleLoc] || (singleLoc === 'fr' ? 'boutique' : 'shop');
-                                                const selectedCatIds = form.watch("categoryIds") || (form.watch("categoryId") ? [form.watch("categoryId")] : []);
-                                                const parentCat = categories.find((c) => selectedCatIds.includes(c.id));
-                                                const parentCatSlug = getCategorySlugForLocale(parentCat, singleLoc);
+                                                const parentCatSlug = getCategorySlugForLocale(parentCategory, singleLoc);
                                                 const previewUrl = `/${singleLoc}/${currentCatalogSlug}/${parentCatSlug}/${field.value || "slug"}`;
 
                                                 return (
@@ -834,19 +772,16 @@ export function ProductForm({
                                                                 type="button"
                                                                 variant="ghost"
                                                                 size="sm"
+                                                                disabled={regeneratingSlugs[locales[0]]}
                                                                 className="h-6 px-1.5 text-xs text-muted-foreground hover:text-primary cursor-pointer gap-1 shrink-0"
                                                                 title={lang?.startsWith("fr") ? "Regénérer depuis le nom" : "Regenerate from name"}
-                                                                onClick={() => {
-                                                                    const currentName = form.getValues(`name.${locales[0]}`) || "";
-                                                                    if (currentName.trim()) {
-                                                                        const regenerated = slugify(currentName);
-                                                                        slugTouchedRef.current[locales[0]] = false;
-                                                                        form.setValue(`slug.${locales[0]}`, regenerated, { shouldDirty: true, shouldValidate: true });
-                                                                        toast.success(lang?.startsWith("fr") ? "Slug regénéré !" : "Slug regenerated!");
-                                                                    }
-                                                                }}
+                                                                onClick={() => handleRegenerateSlug(locales[0])}
                                                             >
-                                                                <RotateCcw className="h-3 w-3" />
+                                                                {regeneratingSlugs[locales[0]] ? (
+                                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                                ) : (
+                                                                    <RotateCcw className="h-3 w-3" />
+                                                                )}
                                                                 <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
                                                             </Button>
                                                         </div>
@@ -905,6 +840,93 @@ export function ProductForm({
                                         />
                                     </div>
                                 )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Bloc : Organisation */}
+                        <Card className="min-w-0 overflow-hidden">
+                            <CardHeader>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <FolderTree className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang?.startsWith("fr") ? "Organisation" : "Organization"}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr") ? "Catégories associées et artiste ou vendeur." : "Associated categories and artist or vendor."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <FormField
+                                    control={form.control}
+                                    name="categoryIds"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <FormLabel className="text-sm font-medium">
+                                                    {dict.categories || dict.categoryId || "Categories"} <span className="text-destructive ml-1">*</span>
+                                                </FormLabel>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {field.value?.length || 0} {lang?.startsWith("fr") ? "sélectionnée(s)" : "selected"}
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-2.5 max-h-64 overflow-y-auto p-2.5 border rounded-lg bg-background/50">
+                                                {categories.map((c) => {
+                                                    const isChecked = (field.value || []).includes(c.id);
+                                                    return (
+                                                        <label
+                                                            key={c.id}
+                                                            className={`flex items-center gap-2.5 px-3 py-2 rounded-md border cursor-pointer transition-colors text-sm ${
+                                                                isChecked 
+                                                                    ? "bg-primary/10 border-primary shadow-xs" 
+                                                                    : "bg-card hover:bg-muted/50 border-input"
+                                                            }`}
+                                                        >
+                                                            <Checkbox
+                                                                checked={isChecked}
+                                                                onCheckedChange={(checked) => {
+                                                                    const current = field.value || [];
+                                                                    if (checked) {
+                                                                        field.onChange([...current, c.id]);
+                                                                    } else {
+                                                                        field.onChange(current.filter((id: string) => id !== c.id));
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <span className="text-sm font-medium leading-none select-none truncate">
+                                                                {getLocalizedField(c.name, lang, defaultLocale)}
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="artist"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{dict.artist || "Artist / Vendor"}</FormLabel>
+                                            <FormControl>
+                                                <CreatableVendorCombobox
+                                                    options={vendors}
+                                                    value={field.value || ""}
+                                                    onChange={(val) => {
+                                                        field.onChange(val);
+                                                        form.setValue("vendor", val);
+                                                    }}
+                                                    placeholder={dict.artistPlaceholder || "e.g. Amann Inkspiration"}
+                                                    lang={lang}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </CardContent>
                         </Card>
                     </div>

@@ -78,3 +78,27 @@ export async function deleteContactMessage(id: string) {
     return { success: false, error: error?.message || "Failed to delete message." };
   }
 }
+
+/**
+ * Returns the total count of unread messages across contact_messages and messages.
+ * Restricted strictly to authenticated admin users.
+ */
+export async function getUnreadMessagesCount(): Promise<number> {
+  const session = await auth();
+  const userRole = (session?.user?.role || "").toLowerCase();
+  if (userRole !== "admin") {
+    return 0;
+  }
+
+  try {
+    const [cmSnap, mSnap] = await Promise.all([
+      adminDb.collection("contact_messages").where("status", "==", "unread").count().get(),
+      adminDb.collection("messages").where("status", "==", "unread").count().get(),
+    ]);
+    return (cmSnap.data().count || 0) + (mSnap.data().count || 0);
+  } catch (error) {
+    console.error("Error getting unread messages count:", error);
+    return 0;
+  }
+}
+

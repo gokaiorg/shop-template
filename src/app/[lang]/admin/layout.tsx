@@ -8,6 +8,7 @@ import { MobileAside } from "@/components/admin/MobileAside";
 import type { Metadata } from "next";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getActiveBrand } from "@/config/brand.config";
+import { SessionProvider } from "next-auth/react";
 
 export async function generateMetadata(): Promise<Metadata> {
     const storeSettings = await getStoreSettings();
@@ -48,21 +49,23 @@ export default async function AdminLayout({
     }
 
     return (
-        <div className="flex min-h-screen flex-col md:flex-row bg-background">
-            {/* Desktop Sidebar */}
-            <Aside lang={lang} dict={dict} session={session} />
+        <SessionProvider session={session}>
+            <div className="flex min-h-screen flex-col md:flex-row bg-background">
+                {/* Desktop Sidebar */}
+                <Aside lang={lang} dict={dict} session={session} />
 
-            <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-                {/* Mobile Header containing Hamburger Menu */}
-                <header className="md:hidden flex items-center gap-4 border-b border-border bg-background p-4 sticky top-0 z-10 shrink-0">
-                    <MobileAside lang={lang} dict={dict} session={session} />
-                    <h1 className="text-lg font-bold">{dict.admin.title}</h1>
-                </header>
+                <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+                    {/* Mobile Header containing Hamburger Menu */}
+                    <header className="md:hidden flex items-center gap-4 border-b border-border bg-background p-4 sticky top-0 z-10 shrink-0">
+                        <MobileAside lang={lang} dict={dict} session={session} />
+                        <h1 className="text-lg font-bold">{dict.admin.title}</h1>
+                    </header>
 
-                {/* Main Content Area */}
-                {children}
+                    {/* Main Content Area */}
+                    {children}
+                </div>
+                <Toaster />
             </div>
-            <Toaster />
-        </div>
+        </SessionProvider>
     );
 }
