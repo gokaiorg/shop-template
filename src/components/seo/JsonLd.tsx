@@ -145,14 +145,12 @@ export function CategoryJsonLd({
         });
     }
 
-    // 2. Top-level ItemList Schema with nested Product items
+    // 2. CollectionPage Schema with encapsulated ItemList (prevents Carousels validator misinterpretation)
     const itemListElement = products.map((product, index) => {
         const itemSku = product.sku || product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
         return {
             "@type": "ListItem",
             position: index + 1,
-            name: product.name,
-            url: product.url,
             item: {
                 "@type": "Product",
                 name: product.name,
@@ -181,48 +179,22 @@ export function CategoryJsonLd({
         };
     });
 
-    const itemListSchema: Record<string, any> = {
+    const collectionPageSchema: Record<string, any> = {
         "@context": "https://schema.org",
-        "@type": "ItemList",
+        "@type": "CollectionPage",
         name: categoryName,
         url: categoryUrl,
         ...(categoryDescription ? { description: categoryDescription } : {}),
-        numberOfItems: products.length,
-        itemListElement,
+        mainEntity: {
+            "@type": "ItemList",
+            name: categoryName,
+            ...(categoryDescription ? { description: categoryDescription } : {}),
+            numberOfItems: products.length,
+            itemListElement,
+        },
     };
 
-    schemas.push(itemListSchema);
-
-    // 3. Emit each product as an individual Product entity for Google's Product Snippet Rich Results
-    products.forEach((product) => {
-        const itemSku = product.sku || product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-        schemas.push({
-            "@context": "https://schema.org",
-            "@type": "Product",
-            name: product.name,
-            url: product.url,
-            sku: itemSku,
-            mpn: itemSku,
-            brand: {
-                "@type": "Brand",
-                name: product.brandName || activeBrandName,
-            },
-            ...(product.image ? { image: [product.image] } : {}),
-            ...(product.description ? { description: product.description } : {}),
-            ...(product.price !== undefined
-                ? {
-                      offers: {
-                          "@type": "Offer",
-                          price: product.price,
-                          priceCurrency: product.priceCurrency || "EUR",
-                          availability: "https://schema.org/InStock",
-                          url: product.url,
-                          itemCondition: "https://schema.org/NewCondition",
-                      },
-                  }
-                : {}),
-        });
-    });
+    schemas.push(collectionPageSchema);
 
     return <JsonLd data={schemas} />;
 }
@@ -448,23 +420,31 @@ export function CatalogJsonLd({
         });
     }
 
-    // 2. ItemList of categories/services
+    // 2. CollectionPage with mainEntity ItemList of categories/services
     if (categories.length > 0) {
         schemas.push({
             "@context": "https://schema.org",
-            "@type": "ItemList",
+            "@type": "CollectionPage",
             name: catalogTitle,
             url: catalogUrl,
             ...(catalogDescription ? { description: catalogDescription } : {}),
-            numberOfItems: categories.length,
-            itemListElement: categories.map((cat, index) => ({
-                "@type": "ListItem",
-                position: index + 1,
-                name: cat.name,
-                url: cat.url,
-                ...(cat.image ? { image: cat.image } : {}),
-                ...(cat.description ? { description: cat.description } : {}),
-            })),
+            mainEntity: {
+                "@type": "ItemList",
+                name: catalogTitle,
+                ...(catalogDescription ? { description: catalogDescription } : {}),
+                numberOfItems: categories.length,
+                itemListElement: categories.map((cat, index) => ({
+                    "@type": "ListItem",
+                    position: index + 1,
+                    item: {
+                        "@type": "Thing",
+                        name: cat.name,
+                        url: cat.url,
+                        ...(cat.image ? { image: cat.image } : {}),
+                        ...(cat.description ? { description: cat.description } : {}),
+                    },
+                })),
+            },
         });
     }
 

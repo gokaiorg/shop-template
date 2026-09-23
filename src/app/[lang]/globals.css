@@ -46,6 +46,37 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Soft colored shadows */
+  --shadow-soft-xs: var(--shadow-soft-xs);
+  --shadow-soft-sm: var(--shadow-soft-sm);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-soft-md: var(--shadow-soft-md);
+  --shadow-soft-lg: var(--shadow-soft-lg);
+  --shadow-soft-xl: var(--shadow-soft-xl);
+  --shadow-soft-2xl: var(--shadow-soft-2xl);
+  --shadow-glass: var(--glass-shadow);
+  --shadow-glass-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  --shadow-glass-inset-light: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+
+  /* Default shadow scale overrides with soft colored shadows */
+  --shadow-xs: var(--shadow-soft-xs);
+  --shadow-sm: var(--shadow-soft-sm);
+  --shadow-md: var(--shadow-soft-md);
+  --shadow-lg: var(--shadow-soft-lg);
+  --shadow-xl: var(--shadow-soft-xl);
+  --shadow-2xl: var(--shadow-soft-2xl);
+
+  /* Ambient Glow Backgrounds */
+  --background-image-glow-radial: radial-gradient(var(--tw-gradient-stops));
+  --background-image-glow-primary: var(--glow-primary);
+  --background-image-glow-accent: var(--glow-accent);
+  --background-image-glow-subtle: var(--glow-subtle);
+  --background-image-glow-ambient: var(--glow-ambient);
+
+  /* Backdrop blur tokens */
+  --backdrop-blur-2xl: 40px;
+  --backdrop-blur-3xl: 64px;
 }
 
 :root {
@@ -81,6 +112,26 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Ambient Glows (subtle radial background glows) */
+  --glow-primary: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.14) 0%, rgba(99, 102, 241, 0) 70%);
+  --glow-accent: radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.10) 0%, rgba(236, 72, 153, 0) 70%);
+  --glow-subtle: radial-gradient(circle at 50% 50%, rgba(80, 80, 120, 0.07) 0%, rgba(80, 80, 120, 0) 70%);
+  --glow-ambient: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.15), transparent);
+
+  /* Soft colored shadows (Light theme - replacing default harsh black shadows) */
+  --shadow-soft-xs: 0 2px 4px rgba(80, 80, 120, 0.04);
+  --shadow-soft-sm: 0 4px 8px -2px rgba(80, 80, 120, 0.05), 0 2px 4px -2px rgba(80, 80, 120, 0.03);
+  --shadow-soft: 0 12px 24px -6px rgba(80, 80, 120, 0.06), 0 4px 8px -4px rgba(80, 80, 120, 0.04);
+  --shadow-soft-md: 0 20px 32px -8px rgba(80, 80, 120, 0.07), 0 6px 12px -4px rgba(80, 80, 120, 0.04);
+  --shadow-soft-lg: 0 30px 60px -12px rgba(80, 80, 120, 0.08), 0 10px 20px -6px rgba(80, 80, 120, 0.04);
+  --shadow-soft-xl: 0 40px 100px -20px rgba(80, 80, 120, 0.08), 0 16px 32px -8px rgba(80, 80, 120, 0.05);
+  --shadow-soft-2xl: 0 50px 120px -24px rgba(80, 80, 120, 0.10), 0 20px 40px -10px rgba(80, 80, 120, 0.06);
+
+  /* Glassmorphism 2.0 Tokens (Light theme) */
+  --glass-bg: rgba(255, 255, 255, 0.40);
+  --glass-border-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.60);
+  --glass-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.60), 0 20px 40px -15px rgba(80, 80, 120, 0.07);
 }
 
 .dark {
@@ -115,6 +166,26 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Ambient Glows (Dark theme) */
+  --glow-primary: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.22) 0%, rgba(99, 102, 241, 0) 70%);
+  --glow-accent: radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.16) 0%, rgba(236, 72, 153, 0) 70%);
+  --glow-subtle: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+  --glow-ambient: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.25), transparent);
+
+  /* Soft shadows (Dark theme) */
+  --shadow-soft-xs: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-soft-sm: 0 4px 8px -2px rgba(0, 0, 0, 0.35), 0 2px 4px -2px rgba(0, 0, 0, 0.20);
+  --shadow-soft: 0 12px 24px -6px rgba(0, 0, 0, 0.40), 0 4px 8px -4px rgba(0, 0, 0, 0.25);
+  --shadow-soft-md: 0 20px 32px -8px rgba(0, 0, 0, 0.45), 0 6px 12px -4px rgba(0, 0, 0, 0.30);
+  --shadow-soft-lg: 0 30px 60px -12px rgba(0, 0, 0, 0.50), 0 10px 20px -6px rgba(0, 0, 0, 0.35);
+  --shadow-soft-xl: 0 40px 100px -20px rgba(0, 0, 0, 0.55), 0 16px 32px -8px rgba(0, 0, 0, 0.40);
+  --shadow-soft-2xl: 0 50px 120px -24px rgba(0, 0, 0, 0.65), 0 20px 40px -10px rgba(0, 0, 0, 0.45);
+
+  /* Glassmorphism 2.0 Tokens (Dark: bg-white/5, inset 0 0 0 1px rgba(255,255,255,0.1)) */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+  --glass-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10), 0 20px 40px -15px rgba(0, 0, 0, 0.50);
 }
 
 @layer base {
@@ -136,5 +207,75 @@
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* ==========================================================================
+     Glassmorphism 2.0 Utility Classes
+     - Ultra-transparent background (bg-white/40 light, bg-white/5 dark)
+     - High blur (backdrop-blur-2xl / 40px)
+     - 1px inner border (box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1) in dark, 0.60 in light)
+     ========================================================================== */
+  .glass-2,
+  .glassmorphism-2 {
+    background-color: rgba(255, 255, 255, 0.40);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.60), var(--shadow-soft, 0 20px 40px -15px rgba(80, 80, 120, 0.07));
+  }
+
+  :is(.dark .glass-2),
+  :is(.dark .glassmorphism-2),
+  .dark .glass-2,
+  .dark .glassmorphism-2 {
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10), 0 20px 40px -15px rgba(0, 0, 0, 0.50);
+  }
+
+  /* Glassmorphism 2.0 Card preset */
+  .glass-2-card {
+    background-color: rgba(255, 255, 255, 0.40);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.60), var(--shadow-soft-xl, 0 40px 100px -20px rgba(80, 80, 120, 0.08));
+    border-radius: var(--radius-xl, 0.875rem);
+  }
+
+  :is(.dark .glass-2-card),
+  .dark .glass-2-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10), 0 40px 100px -20px rgba(0, 0, 0, 0.55);
+  }
+
+  /* Glassmorphism 2.0 Inset 1px border */
+  .glass-border-inset {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.60);
+  }
+
+  :is(.dark .glass-border-inset),
+  .dark .glass-border-inset {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+  }
+
+  /* Ambient Glow Helpers */
+  .ambient-glow {
+    background-image: var(--glow-ambient);
+    background-repeat: no-repeat;
+  }
+
+  .ambient-glow-primary {
+    background-image: var(--glow-primary);
+    background-repeat: no-repeat;
+  }
+
+  .ambient-glow-accent {
+    background-image: var(--glow-accent);
+    background-repeat: no-repeat;
+  }
+
+  .ambient-glow-subtle {
+    background-image: var(--glow-subtle);
+    background-repeat: no-repeat;
   }
 }

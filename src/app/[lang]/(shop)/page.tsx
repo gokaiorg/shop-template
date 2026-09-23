@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { adminDb } from "@/lib/firebase-admin";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
@@ -10,14 +9,15 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { CategoryPillsNav } from "@/components/shop/CategoryPillsNav";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { FeaturedCategories } from "@/components/shop/FeaturedCategories";
-import { AboutSection } from "@/components/shop/AboutSection";
-import { ContactSection } from "@/components/shop/ContactSection";
+import { CmsBlockRenderer } from "@/components/shop/CmsBlockRenderer";
+import { HeroHeader } from "@/components/shop/HeroHeader";
 import { ArrowRight } from "lucide-react";
 import { brandConfig, getActiveBrand } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
 
 import { GlobalJsonLd, CategoryJsonLd } from "@/components/seo/JsonLd";
+import { cn } from "@/lib/utils";
 
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
@@ -167,6 +167,8 @@ export default async function Home({
     || homeDict.hero_subtitle;
 
   const heroBackgroundImageUrl = storeSettings.heroBackgroundImageUrl;
+  const categoriesTitle = getLocalizedField(storeSettings.categoriesTitle, lang);
+  const categoriesSubtitle = getLocalizedField(storeSettings.categoriesSubtitle, lang);
   const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (isFr ? "Boutique" : "Shop");
   const catalogSlug = getLocalizedField(storeSettings.catalogSlug, lang) || (typeof storeSettings.catalogSlug === 'string' ? storeSettings.catalogSlug : "shop");
   const shopByCategoryTitle = catalogName;
@@ -199,6 +201,21 @@ export default async function Home({
     };
   });
 
+  // Determine if any CMS block has content and is active
+  const hasAbout = Boolean(
+    storeSettings.aboutSection?.enabled &&
+    (storeSettings.aboutSection?.title ||
+     storeSettings.aboutSection?.description ||
+     (storeSettings.aboutSection?.images && storeSettings.aboutSection.images.length > 0))
+  );
+  const hasFaq = Boolean(
+    (storeSettings.faqSection?.enabled || storeSettings.faqSection?.status === "active") &&
+    Array.isArray(storeSettings.faqSection?.items) &&
+    storeSettings.faqSection.items.length > 0
+  );
+  const hasContact = Boolean(storeSettings.contactSection?.enabled);
+  const hasCmsBlocks = hasAbout || hasFaq || hasContact;
+
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black w-full">
       <GlobalJsonLd
@@ -219,57 +236,39 @@ export default async function Home({
           brandName={brandName}
         />
       )}
-      {/* Hero Section with Optimized LCP Image & Glassmorphic Card */}
-      <section className={`relative isolate flex w-full flex-col items-center justify-center min-h-[60vh] py-24 sm:py-32 px-6 md:px-16 text-center overflow-hidden ${
-        heroBackgroundImageUrl ? "" : "bg-white dark:bg-black"
-      }`}>
-        {heroBackgroundImageUrl && (
-          <Image
-            src={heroBackgroundImageUrl}
-            alt={stripHtml(heroTitle) || "Hero Banner"}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover pointer-events-none"
-          />
-        )}
-        {/* Subtle contrast overlay when background image is present */}
-        {heroBackgroundImageUrl && (
-          <div className="absolute inset-0 bg-black/20 dark:bg-black/40 pointer-events-none z-[1]" />
-        )}
-
-        {/* Glassmorphic Central Wrapper for optimal text contrast and readability */}
-        <div className="relative z-10 bg-white/70 dark:bg-black/70 backdrop-blur-md p-8 sm:p-12 rounded-2xl max-w-3xl mx-auto shadow-xl border border-white/20 dark:border-white/10 flex flex-col items-center">
-          <h1 className="max-w-2xl text-4xl md:text-5xl font-bold tracking-tight text-black dark:text-zinc-50 mb-6">
-            {heroTitle}
-          </h1>
-          <p className="max-w-2xl text-lg md:text-xl text-zinc-700 dark:text-zinc-300 mb-10">
-            {heroSubtitle}
-          </p>
-          <Link href={`/${lang}/${catalogSlug}`}>
-            <Button size="lg" className="rounded-full px-8 shadow-md">
-              {homeDict.explore_all || "Explore All"}
-            </Button>
-          </Link>
-        </div>
-      </section>
+      {/* Spatial UI Hero Header */}
+      <HeroHeader
+        title={heroTitle}
+        subtitle={heroSubtitle}
+        backgroundImageUrl={heroBackgroundImageUrl}
+        ctaLabel={homeDict.explore_all || (isFr ? "Découvrir tout" : "Explore All")}
+        ctaHref={`/${lang}/${catalogSlug}`}
+        lang={lang}
+      />
 
       {/* Featured Categories Section */}
       {featuredCategories.length >= 2 && (
         <section aria-labelledby="featured-categories-heading" className="w-full">
-          <h2 id="featured-categories-heading" className="sr-only">
-            {lang === "fr" ? "Nos Univers" : "Explore Collections"}
-          </h2>
+          {!categoriesTitle && (
+            <h2 id="featured-categories-heading" className="sr-only">
+              {lang === "fr" ? "Nos Univers" : "Explore Collections"}
+            </h2>
+          )}
           <FeaturedCategories
             categories={featuredCategories}
             locale={lang}
             catalogSlug={catalogSlug}
+            title={categoriesTitle}
+            subtitle={categoriesSubtitle}
           />
         </section>
       )}
 
       {/* Unified Shop Section */}
-      <section className="w-full max-w-7xl mx-auto pt-16 pb-6 px-6 md:px-16">
+      <section className={cn(
+        "w-full max-w-7xl mx-auto pt-16 px-6 md:px-16",
+        hasCmsBlocks ? "pb-8 md:pb-12" : "pb-28 md:pb-40"
+      )}>
         <div className="flex justify-between items-end mb-8">
           <h2 className="text-3xl font-bold tracking-tight">{shopByCategoryTitle}</h2>
         </div>
@@ -293,13 +292,13 @@ export default async function Home({
 
               return (
                 <TabsContent key={category.id} value={category.id} className="mt-0 outline-none focus-visible:ring-0">
-                  <ul role="list" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  <ul role="list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {categoryProducts.length === 0 ? (
                       <li className="col-span-full text-center py-12 text-muted-foreground list-none">
                         {shopDict.empty_state || "No products in this category"}
                       </li>
                     ) : (
-                      categoryProducts.slice(0, 4).map((product) => (
+                      categoryProducts.slice(0, 6).map((product) => (
                         <li key={product.id} className="flex flex-col">
                           <ShopProductCard product={product} lang={lang} dict={shopDict} categorySlug={catSlug} />
                         </li>
@@ -307,9 +306,9 @@ export default async function Home({
                     )}
                   </ul>
                   {categoryProducts.length > 0 && (
-                    <div className="mt-8 flex justify-center">
+                    <div className="mt-12 flex justify-center">
                       <Link href={categoryHref}>
-                        <Button variant="outline" size="lg" className="rounded-full px-8 shadow-xs hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer group">
+                        <Button variant="outline" size="lg" className="rounded-2xl px-8 shadow-soft hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer group">
                           <span>{homeDict.view_all || (isFr ? "Voir tout" : "View All")}</span>
                           <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Button>
@@ -323,22 +322,13 @@ export default async function Home({
         )}
       </section>
 
-      {/* Homepage About Section */}
-      {storeSettings.aboutSection?.enabled && (
-        <AboutSection
-          aboutSection={storeSettings.aboutSection}
-          lang={lang}
-        />
-      )}
-
-      {/* Homepage Contact Section */}
-      {storeSettings.contactSection?.enabled && (
-        <ContactSection
-          contactSection={storeSettings.contactSection}
-          lang={lang}
-          dict={dict}
-        />
-      )}
+      {/* Dynamic CMS Page Blocks */}
+      <CmsBlockRenderer
+        storeSettings={storeSettings}
+        lang={lang}
+        dict={dict}
+        className="mt-20 md:mt-32"
+      />
     </div>
   );
 }

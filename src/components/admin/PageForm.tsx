@@ -392,7 +392,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                         };
 
                                         return (
-                                            <div className="grid sm:grid-cols-2 gap-4">
+                                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 {/* About Section Checkbox */}
                                                 <div className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-2xs hover:bg-muted/10 transition-colors">
                                                     <Checkbox
@@ -435,6 +435,29 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                             {lang === 'fr'
                                                                 ? 'Affiche le bloc formulaire de contact et message.'
                                                                 : 'Display the contact inquiry form and intro text.'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* FAQ Section Checkbox */}
+                                                <div className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-2xs hover:bg-muted/10 transition-colors">
+                                                    <Checkbox
+                                                        id="block-faq"
+                                                        checked={currentBlocks.includes("faq")}
+                                                        onCheckedChange={() => toggleBlock("faq")}
+                                                        disabled={isLoading}
+                                                    />
+                                                    <div className="space-y-1 leading-none">
+                                                        <label
+                                                            htmlFor="block-faq"
+                                                            className="text-sm font-medium cursor-pointer"
+                                                        >
+                                                            {lang === 'fr' ? 'Section FAQ' : 'FAQ Section'}
+                                                        </label>
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {lang === 'fr'
+                                                                ? 'Affiche la foire aux questions animée et le schéma JSON-LD FAQPage.'
+                                                                : 'Display the animated FAQ accordion and FAQPage JSON-LD schema.'}
                                                         </p>
                                                     </div>
                                                 </div>

@@ -22,7 +22,7 @@ import {
     FormDescription,
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StoreSettings } from "@/types/database";
 import { contactSectionSchema, ContactSectionFormData } from "@/schemas/settings";
 import { updateContactBlockSettings } from "@/actions/settings";
@@ -40,6 +40,8 @@ export function AdminContactBlockForm({ initialData, lang, dict }: AdminContactB
     const { supportedLocales, defaultLocale, isMultiLocale } = useBrand();
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
     const [isPending, startTransition] = useTransition();
+
+    const isFr = lang === "fr";
 
     const defaultContactTitle: Record<string, string> = {};
     const defaultContactDesc: Record<string, string> = {};
@@ -63,13 +65,14 @@ export function AdminContactBlockForm({ initialData, lang, dict }: AdminContactB
             const res = await updateContactBlockSettings(values);
             if (res.success) {
                 toast.success(
-                    lang === "fr"
-                        ? "Bloc Contact mis à jour avec succès !"
-                        : "Contact block updated successfully!"
+                    isFr
+                        ? "Section Contact mise à jour !"
+                        : "Contact section updated successfully!"
                 );
+                form.reset(values);
                 router.refresh();
             } else {
-                toast.error(res.error || (lang === "fr" ? "Une erreur est survenue." : "An error occurred."));
+                toast.error(res.error || (isFr ? "Une erreur est survenue." : "An error occurred."));
             }
         });
     };
@@ -84,117 +87,128 @@ export function AdminContactBlockForm({ initialData, lang, dict }: AdminContactB
                         className="flex items-center gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors px-3 py-1.5 rounded-md w-fit"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        <span>{lang === "fr" ? "Retour aux blocs" : "Back to blocks"}</span>
+                        <span>{isFr ? "Retour aux blocs" : "Back to blocks"}</span>
                     </Link>
                 </div>
 
                 {/* Contact Section Card */}
                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Mail className="w-5 h-5 text-muted-foreground" />
-                            <h2 className="text-lg font-medium tracking-tight">
-                                {lang === "fr" ? "Section Contact" : "Contact Section"}
-                            </h2>
+                    <CardHeader className="border-b pb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <Mail className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-semibold tracking-tight">
+                                        {isFr ? "Section Contact" : "Contact Section"}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    {isFr
+                                        ? "Configurez les textes d'introduction du bloc de contact et du formulaire de message."
+                                        : "Configure the introductory heading and description for the contact inquiry block."}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+                                {/* Language Switcher */}
+                                {isMultiLocale && (
+                                    <Tabs value={activeLang} onValueChange={setActiveLang}>
+                                        <TabsList className="h-8 p-0.5 bg-muted/60">
+                                            {supportedLocales.map((loc) => (
+                                                <TabsTrigger
+                                                    key={loc}
+                                                    value={loc}
+                                                    className="uppercase text-xs font-semibold px-2.5 h-7 data-[state=active]:shadow-xs cursor-pointer"
+                                                >
+                                                    {loc.toUpperCase()}
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+                                    </Tabs>
+                                )}
+
+                                {/* Activation Switch */}
+                                <FormField
+                                    control={form.control}
+                                    name="enabled"
+                                    render={({ field }) => (
+                                        <div className="flex items-center gap-2 border border-border/80 rounded-lg px-2.5 py-1 bg-muted/30 h-8">
+                                            <span className="text-xs font-medium select-none">
+                                                {field.value
+                                                    ? (isFr ? "Activé" : "Active")
+                                                    : (isFr ? "Désactivé" : "Inactive")}
+                                            </span>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                disabled={isPending}
+                                                className="scale-75 origin-right cursor-pointer"
+                                            />
+                                        </div>
+                                    )}
+                                />
+                            </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            {lang === "fr"
-                                ? "Configurez les textes d'introduction du bloc de contact et du formulaire de message."
-                                : "Configure the introductory heading and description for the contact inquiry block."}
-                        </p>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                        {/* Enable/Disable Toggle */}
-                        <FormField
-                            control={form.control}
-                            name="enabled"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-xs">
-                                    <div className="space-y-0.5">
-                                        <FormLabel className="text-base font-semibold">
-                                            {lang === "fr" ? "Activer la section Contact sur la page d'accueil" : "Enable Contact Section on Homepage"}
-                                        </FormLabel>
-                                        <FormDescription>
-                                            {lang === "fr"
-                                                ? "Affiche ce bloc avec le formulaire de contact sur la page d'accueil au-dessus du pied de page."
-                                                : "Displays this block with the contact form on the homepage above the footer."}
-                                        </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                        <Switch
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            disabled={isPending}
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            )}
-                        />
-
+                    <CardContent className="space-y-6 pt-6">
                         {/* Text Fields */}
-                        <div className="space-y-6 pt-2">
+                        <div className="space-y-4">
                             {isMultiLocale ? (
-                                <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {supportedLocales.map((loc) => (
-                                            <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {loc.toUpperCase()}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
-                                    {supportedLocales.map((loc) => (
-                                        <TabsContent key={loc} value={loc} className="space-y-4">
-                                            {/* Section Title */}
-                                            <FormField
-                                                control={form.control}
-                                                name={`title.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {lang === "fr" ? "Titre" : "Title"}{" "}
-                                                            <span className="text-xs text-muted-foreground">({getLocaleDisplayName(loc)})</span>
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder={loc === "fr" ? "Contactez-nous..." : "Get in touch..."}
-                                                                {...field}
-                                                                disabled={isPending}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                supportedLocales.map((loc) => (
+                                    <div
+                                        key={loc}
+                                        className={loc === activeLang ? "space-y-4" : "hidden"}
+                                    >
+                                        {/* Section Title */}
+                                        <FormField
+                                            control={form.control}
+                                            name={`title.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        {isFr ? "Titre" : "Title"}{" "}
+                                                        <span className="text-xs text-muted-foreground">({getLocaleDisplayName(loc)})</span>
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder={loc === "fr" ? "Contactez-nous..." : "Get in touch..."}
+                                                            {...field}
+                                                            disabled={isPending}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
 
-                                            {/* Section Description */}
-                                            <FormField
-                                                control={form.control}
-                                                name={`description.${loc}`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {lang === "fr" ? "Description" : "Description"}{" "}
-                                                            <span className="text-xs text-muted-foreground">({getLocaleDisplayName(loc)})</span>
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Textarea
-                                                                rows={3}
-                                                                placeholder={
-                                                                    loc === "fr"
-                                                                        ? "Une question ? Envoyez-nous un message et nous vous répondrons sous 24h."
-                                                                        : "Have a question? Send us a message and we will respond within 24 hours."
-                                                                }
-                                                                {...field}
-                                                                disabled={isPending}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </TabsContent>
-                                    ))}
-                                </Tabs>
+                                        {/* Section Description */}
+                                        <FormField
+                                            control={form.control}
+                                            name={`description.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        {isFr ? "Description" : "Description"}{" "}
+                                                        <span className="text-xs text-muted-foreground">({getLocaleDisplayName(loc)})</span>
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            rows={3}
+                                                            placeholder={
+                                                                loc === "fr"
+                                                                    ? "Une question ? Envoyez-nous un message et nous vous répondrons sous 24h."
+                                                                    : "Have a question? Send us a message and we will respond within 24 hours."
+                                                            }
+                                                            {...field}
+                                                            disabled={isPending}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                ))
                             ) : (
                                 <div className="space-y-4">
                                     <FormField
@@ -202,7 +216,7 @@ export function AdminContactBlockForm({ initialData, lang, dict }: AdminContactB
                                         name={`title.${defaultLocale}`}
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{lang === "fr" ? "Titre" : "Title"}</FormLabel>
+                                                <FormLabel>{isFr ? "Titre" : "Title"}</FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         placeholder={defaultLocale === "fr" ? "Contactez-nous..." : "Get in touch..."}
@@ -219,7 +233,7 @@ export function AdminContactBlockForm({ initialData, lang, dict }: AdminContactB
                                         name={`description.${defaultLocale}`}
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{lang === "fr" ? "Description" : "Description"}</FormLabel>
+                                                <FormLabel>{isFr ? "Description" : "Description"}</FormLabel>
                                                 <FormControl>
                                                     <Textarea
                                                         rows={3}

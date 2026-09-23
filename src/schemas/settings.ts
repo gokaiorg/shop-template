@@ -38,9 +38,27 @@ export const contactSectionSchema = z.object({
 
 export type ContactSectionFormData = z.infer<typeof contactSectionSchema>;
 
+export const faqItemSchema = z.object({
+    id: z.string().optional(),
+    question: z.union([z.record(z.string(), z.string()), z.string()]).default({}),
+    answer: z.union([z.record(z.string(), z.string()), z.string()]).default({}),
+});
+
+export const faqSectionSchema = z.object({
+    enabled: z.boolean().default(false),
+    status: z.enum(['active', 'inactive']).default('inactive'),
+    title: z.union([z.record(z.string(), z.string()), z.string()]).optional(),
+    subtitle: z.union([z.record(z.string(), z.string()), z.string()]).optional(),
+    items: z.array(faqItemSchema).default([]),
+});
+
+export type FaqItemFormData = z.infer<typeof faqItemSchema>;
+export type FaqSectionFormData = z.infer<typeof faqSectionSchema>;
+
 export const blocksSchema = z.object({
     aboutSection: aboutSectionSchema,
     contactSection: contactSectionSchema.optional(),
+    faqSection: faqSectionSchema.optional(),
 });
 
 export type BlocksFormData = z.infer<typeof blocksSchema>;
@@ -54,6 +72,8 @@ export const globalSettingsSchema = z.object({
     }),
     heroDescription: z.record(z.string(), z.string()),
     heroBackgroundImageUrl: z.string().optional(),
+    categoriesTitle: z.record(z.string(), z.string()).optional(),
+    categoriesSubtitle: z.record(z.string(), z.string()).optional(),
     footerDescription: z.record(z.string(), z.string()).optional(),
     footerRightMenuTitle: z.record(z.string(), z.string()).optional(),
     socialLinks: z.array(socialLinkSchema).optional(),
@@ -63,6 +83,7 @@ export const globalSettingsSchema = z.object({
     vendors: z.array(z.string()).default([]),
     aboutSection: aboutSectionSchema.optional(),
     contactSection: contactSectionSchema.optional(),
+    faqSection: faqSectionSchema.optional(),
 });
 
 export type GlobalSettingsFormData = z.infer<typeof globalSettingsSchema>;

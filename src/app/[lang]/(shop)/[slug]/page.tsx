@@ -14,8 +14,7 @@ import { brandConfig } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getPageBySlug } from "@/lib/services/pages";
-import { AboutSection } from "@/components/shop/AboutSection";
-import { ContactSection } from "@/components/shop/ContactSection";
+import { CmsBlockRenderer } from "@/components/shop/CmsBlockRenderer";
 import { PageTranslationSync } from "@/components/shop/PageTranslationSync";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 import { CatalogJsonLd, JsonLd } from "@/components/seo/JsonLd";
@@ -239,6 +238,9 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 />
                 {/* Edge-to-Edge Illustrated Catalog Banner */}
                 <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
+                    <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+                        <AdminQuickEdit entityType="catalog" locale={lang} />
+                    </div>
                     {catalogBanner ? (
                         <Image
                             src={catalogBanner}
@@ -266,7 +268,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 </section>
 
                 {/* Categories Grid (Clean Silo Links) */}
-                <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-16">
+                <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-24 md:mb-36">
                     <div className="flex items-center justify-between border-b pb-4 mb-8">
                         <h2 className="text-2xl font-bold tracking-tight">
                             {lang === "fr" ? "Catégories" : "Categories"}
@@ -297,7 +299,17 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                 const catImg = category.imageUrl || brandConfig.assets?.placeholderImage || "";
 
                                 return (
-                                    <li key={category.id}>
+                                    <li key={category.id} className="w-full relative group">
+                                        {category.id && (
+                                            <div className="absolute top-4 right-4 z-30">
+                                                <AdminQuickEdit
+                                                    entityType="category"
+                                                    id={category.id}
+                                                    locale={lang}
+                                                    variant="badge"
+                                                />
+                                            </div>
+                                        )}
                                         <Link
                                             href={`/${lang}/${localizedCatalogSlug}/${catSlug}`}
                                             className="group relative block aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden border bg-muted shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer"
@@ -313,10 +325,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                             ) : (
                                                 <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-900" />
                                             )}
-
-                                            <div className="absolute top-3 right-3 z-20">
-                                                <AdminQuickEdit entityType="category" id={category.id} locale={lang} />
-                                            </div>
 
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:from-black/90 transition-colors duration-300" />
 
@@ -444,34 +452,14 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
             </div>
 
             {/* Modular Page Blocks */}
-            {activeBlocks.length > 0 && (
-                <div className="space-y-0">
-                    {activeBlocks.map((blockKey) => {
-                        if (blockKey === "about" && storeSettings.aboutSection) {
-                            return (
-                                <AboutSection
-                                    key="about"
-                                    aboutSection={storeSettings.aboutSection}
-                                    lang={lang}
-                                    forceDisplay={true}
-                                />
-                            );
-                        }
-                        if (blockKey === "contact") {
-                            return (
-                                <ContactSection
-                                    key="contact"
-                                    contactSection={storeSettings.contactSection}
-                                    lang={lang}
-                                    dict={dict}
-                                    forceDisplay={true}
-                                />
-                            );
-                        }
-                        return null;
-                    })}
-                </div>
-            )}
+            <CmsBlockRenderer
+                blocks={activeBlocks}
+                storeSettings={storeSettings}
+                lang={lang}
+                dict={dict}
+                forceDisplay={true}
+                className="mt-8 md:mt-16"
+            />
         </div>
     );
 }

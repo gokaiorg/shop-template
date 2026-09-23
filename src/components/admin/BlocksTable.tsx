@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { StoreSettings } from "@/types/database";
-import { BookOpen, Mail, Pencil } from "lucide-react";
+import { BookOpen, Mail, Pencil, HelpCircle } from "lucide-react";
 
 interface BlocksTableProps {
     settings: StoreSettings;
@@ -36,6 +36,17 @@ export function BlocksTable({ settings, lang }: BlocksTableProps) {
             icon: Mail,
             enabled: Boolean(settings.contactSection?.enabled),
             editUrl: `/${lang}/admin/blocks/contact`,
+        },
+        {
+            id: "faq",
+            name: isFr ? "Section FAQ" : "FAQ Section",
+            slug: "faq",
+            description: isFr
+                ? "Foire aux questions interactive avec accordéon animé et données structurées SEO (FAQPage)."
+                : "Interactive FAQ accordion with smooth animations and SEO structured data (FAQPage).",
+            icon: HelpCircle,
+            enabled: Boolean(settings.faqSection?.enabled || settings.faqSection?.status === "active"),
+            editUrl: `/${lang}/admin/blocks/faq`,
         },
     ];
 
