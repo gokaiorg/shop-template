@@ -54,15 +54,24 @@ export function getActiveBrand(): BrandConfig {
     return BRANDS[brandKey] || shopTemplateBrand;
 }
 
+function getRuntimeEnv(key: string): string | undefined {
+    if (typeof process === "undefined" || !process.env) return undefined;
+    return process.env[key];
+}
+
 /**
  * Resolves whether the cart feature flag is enabled dynamically at server runtime.
  * Handles boolean string representations ("false", "0", "off", "no", "true", "1", "on", "yes").
+ * Uses dynamic bracket access to prevent Next.js from inlining NEXT_PUBLIC_* variables at build time
+ * in containerized environments (Cloud Run).
  */
 export function getIsCartEnabled(): boolean {
     const rawFlag =
+        getRuntimeEnv("ENABLE_CART") ??
+        getRuntimeEnv("CART_ENABLED") ??
+        getRuntimeEnv("NEXT_PUBLIC_ENABLE_CART") ??
+        getRuntimeEnv("NEXT_PUBLIC_CART_ENABLED") ??
         process.env.ENABLE_CART ??
-        process.env.NEXT_PUBLIC_ENABLE_CART ??
-        process.env.NEXT_PUBLIC_CART_ENABLED ??
         process.env.CART_ENABLED;
     if (rawFlag !== undefined && rawFlag !== "") {
         const normalized = String(rawFlag).trim().toLowerCase();
