@@ -20,8 +20,8 @@ When I trigger these keywords, execute the following sequences:
    - *If build fails*: STOP, display the error, and do NOT proceed with commit or push.
    - *If build succeeds*: Proceed to Step 4.
 4. **Commit**: 
-   - Prompt: "Build successful for [Brand]!"
-   - Execute: `git add .` and `git commit -m "[User Input]"`
+   - Automatically generate a concise conventional commit message based on the diff.
+   - Execute: `git add .` and `git commit -m "[Generated Message]"`
 5. **Push**: `git push origin [Current Branch Name]`
 6. **Output**: "🚀 Build passed and changes pushed for [Brand] to [Current Branch Name]."
 
