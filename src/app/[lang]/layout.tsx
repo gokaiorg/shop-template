@@ -116,6 +116,13 @@ export default async function RootLayout({
     }
   `;
 
+  const fallbackGtmId = brandKey === "art-fate"
+    ? "GTM-PJLLHFPX"
+    : brandKey === "gokai-labs"
+    ? "GTM-52G2C5XV"
+    : "GTM-MZ8XFFHJ";
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID || fallbackGtmId;
+
   return (
     <html lang={lang} suppressHydrationWarning>
       <head>
@@ -147,9 +154,7 @@ export default async function RootLayout({
             {children}
           </BrandProvider>
         </ThemeProvider>
-        {process.env.NEXT_PUBLIC_GTM_ID && (
-          <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID as string} />
-        )}
+        <GoogleTagManager gtmId={gtmId} />
       </body>
     </html>
   );

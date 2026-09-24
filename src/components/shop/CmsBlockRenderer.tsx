@@ -28,25 +28,36 @@ export function CmsBlockRenderer({
         return null;
     }
 
-    const targetBlocks = blocks && blocks.length > 0 ? blocks : DEFAULT_BLOCK_ORDER;
+    // If blocks is explicitly provided (e.g. activeBlocks from a page), respect it strictly.
+    // If it is an empty array, no blocks should be rendered.
+    if (blocks !== undefined && blocks.length === 0) {
+        return null;
+    }
+
+    // Modular pages display their explicitly selected blocks regardless of the global/homepage toggle.
+    // The global activation in /admin/blocks controls display on the home page.
+    const isModularPage = blocks !== undefined;
+    const shouldForce = forceDisplay || isModularPage;
+
+    const targetBlocks = blocks !== undefined ? blocks : DEFAULT_BLOCK_ORDER;
     const renderedBlocks: { key: string; component: React.ReactNode }[] = [];
 
     targetBlocks.forEach((blockKey) => {
         if (blockKey === "about") {
-            const isEnabled = forceDisplay || Boolean(storeSettings.aboutSection?.enabled);
+            const isEnabled = shouldForce || Boolean(storeSettings.aboutSection?.enabled);
             const hasContent = Boolean(
                 storeSettings.aboutSection?.title ||
                 storeSettings.aboutSection?.description ||
                 (storeSettings.aboutSection?.images && storeSettings.aboutSection.images.length > 0)
             );
-            if (isEnabled && storeSettings.aboutSection && (forceDisplay || hasContent)) {
+            if (isEnabled && storeSettings.aboutSection && hasContent) {
                 renderedBlocks.push({
                     key: "about",
                     component: (
                         <AboutSection
                             aboutSection={storeSettings.aboutSection}
                             lang={lang}
-                            forceDisplay={forceDisplay}
+                            forceDisplay={shouldForce}
                             as="div"
                         />
                     ),
@@ -54,26 +65,26 @@ export function CmsBlockRenderer({
             }
         } else if (blockKey === "faq") {
             const isEnabled =
-                forceDisplay ||
+                shouldForce ||
                 Boolean(storeSettings.faqSection?.enabled || storeSettings.faqSection?.status === "active");
             const hasItems =
                 Array.isArray(storeSettings.faqSection?.items) &&
                 storeSettings.faqSection.items.length > 0;
-            if (isEnabled && storeSettings.faqSection && (forceDisplay || hasItems)) {
+            if (isEnabled && storeSettings.faqSection && hasItems) {
                 renderedBlocks.push({
                     key: "faq",
                     component: (
                         <FaqAccordion
                             faqSection={storeSettings.faqSection}
                             lang={lang}
-                            forceDisplay={forceDisplay}
+                            forceDisplay={shouldForce}
                             as="div"
                         />
                     ),
                 });
             }
         } else if (blockKey === "contact") {
-            const isEnabled = forceDisplay || Boolean(storeSettings.contactSection?.enabled);
+            const isEnabled = shouldForce || Boolean(storeSettings.contactSection?.enabled);
             if (isEnabled && storeSettings.contactSection) {
                 renderedBlocks.push({
                     key: "contact",
@@ -82,7 +93,7 @@ export function CmsBlockRenderer({
                             contactSection={storeSettings.contactSection}
                             lang={lang}
                             dict={dict}
-                            forceDisplay={forceDisplay}
+                            forceDisplay={shouldForce}
                             as="div"
                         />
                     ),
