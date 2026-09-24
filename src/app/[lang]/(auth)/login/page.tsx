@@ -1,9 +1,10 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { checkUserRole } from "@/actions/auth";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -34,8 +35,19 @@ export default function LoginPage() {
             if (res?.error) {
                 setError("Invalid email or password");
             } else {
-                router.push(`/${lang}`);
-                router.refresh();
+                const session = await getSession();
+                let role = (session?.user?.role || "").toLowerCase();
+                if (!role || role === "user") {
+                    const fetchedRole = await checkUserRole(email);
+                    if (fetchedRole) role = fetchedRole.toLowerCase();
+                }
+                const targetUrl = role === "admin" ? `/${lang}/admin` : `/${lang}/account/profile`;
+                if (typeof window !== "undefined") {
+                    window.location.href = targetUrl;
+                } else {
+                    router.push(targetUrl);
+                    router.refresh();
+                }
             }
         } catch (err) {
             setError("An unexpected error occurred");

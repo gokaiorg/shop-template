@@ -321,7 +321,7 @@ export function MobileNav({
                     {/* Discreet Legal Section */}
                     {legalItems.length > 0 && (
                         <div className="flex flex-col gap-2 pt-4 border-t border-border/40">
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                                 {legalTitle}
                             </span>
                             <ul className="flex flex-col gap-1.5">

@@ -333,7 +333,7 @@ export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlock
                                                         {lang === "fr" ? "Galerie d'images (Carrousel)" : "Image Gallery (Carousel)"}
                                                     </span>
                                                     {Array.isArray(field.value) && field.value.length > 0 && (
-                                                        <Badge variant="outline" className="text-[10px]">
+                                                        <Badge variant="outline" className="text-xs">
                                                             {field.value.length} {field.value.length === 1 ? "image" : "images"}
                                                         </Badge>
                                                     )}

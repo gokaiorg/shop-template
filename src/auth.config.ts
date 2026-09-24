@@ -10,6 +10,9 @@ export const authConfig = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
+                if (user.name) {
+                    token.name = user.name;
+                }
 
                 // RBAC Logic: Check if user email is in ADMIN_EMAILS
                 const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
@@ -26,6 +29,9 @@ export const authConfig = {
             if (token && session.user) {
                 session.user.id = token.id as string;
                 session.user.role = token.role as string;
+                if (token.name) {
+                    session.user.name = token.name as string;
+                }
             }
             return session;
         },

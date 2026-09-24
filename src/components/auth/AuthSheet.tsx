@@ -1,16 +1,26 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { LoginForm } from "@/components/LoginForm";
 
 interface AuthSheetProps {
     children: React.ReactNode;
     dict: Record<string, string>;
+    lang?: string;
 }
 
-export function AuthSheet({ children, dict }: AuthSheetProps) {
+export function AuthSheet({ children, dict, lang }: AuthSheetProps) {
+    const [open, setOpen] = useState(false);
+    const pathname = usePathname();
+
+    useEffect(() => {
+        setOpen(false);
+    }, [pathname]);
+
     return (
-        <Sheet>
+        <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
                 {children}
             </SheetTrigger>
@@ -21,7 +31,7 @@ export function AuthSheet({ children, dict }: AuthSheetProps) {
                         {dict.login_desc || "Sign in to your account to continue."}
                     </SheetDescription>
                 </SheetHeader>
-                <LoginForm dict={dict} />
+                <LoginForm dict={dict} lang={lang} onSuccess={() => setOpen(false)} />
             </SheetContent>
         </Sheet>
     );

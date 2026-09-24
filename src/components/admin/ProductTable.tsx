@@ -124,7 +124,7 @@ function SortableProductRow({ product, currency, lang, catalogSlug = "shop" }: S
                 {product.hidePrice ? (
                     <div className="flex items-center gap-1.5">
                         <span className="text-muted-foreground line-through text-xs">{formatPrice(product.price, currency, lang)}</span>
-                        <Badge variant="outline" className="text-[10px] py-0 px-1 font-normal border-amber-500/40 text-amber-600 dark:text-amber-400">
+                        <Badge variant="outline" className="text-xs py-0 px-1 font-normal border-amber-500/40 text-amber-600 dark:text-amber-400">
                             {lang === "fr" ? "Non à la vente" : "Not for sale"}
                         </Badge>
                     </div>

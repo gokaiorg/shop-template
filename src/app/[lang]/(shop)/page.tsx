@@ -216,8 +216,12 @@ export default async function Home({
     Array.isArray(storeSettings.faqSection?.items) &&
     storeSettings.faqSection.items.length > 0
   );
+  const hasReviews = Boolean(
+    (storeSettings.reviewSection?.enabled || storeSettings.reviewSection?.status === "active") &&
+    storeSettings.reviewSection?.placeId?.trim()
+  );
   const hasContact = Boolean(storeSettings.contactSection?.enabled);
-  const hasCmsBlocks = hasAbout || hasFaq || hasContact;
+  const hasCmsBlocks = hasAbout || hasReviews || hasFaq || hasContact;
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black w-full">
@@ -274,7 +278,7 @@ export default async function Home({
       )}>
         <div className="mb-8">
           <div className="flex items-center gap-3">
-            <h2 className="text-3xl font-bold tracking-tight">{productsTitle}</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">{productsTitle}</h2>
             <AdminQuickEdit
               entityType="settings"
               href={`/${lang}/admin/settings#products-title`}

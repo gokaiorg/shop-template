@@ -55,7 +55,7 @@ export function FeaturedCategories({
                 <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-8 sm:mb-12">
                     {cleanTitle && (
                         <div className="flex items-center justify-center gap-3">
-                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground drop-shadow-xs">
+                            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground drop-shadow-xs">
                                 {cleanTitle}
                             </h2>
                             <AdminQuickEdit
@@ -68,7 +68,7 @@ export function FeaturedCategories({
                     )}
                     {cleanSubtitle && (
                         <p className={cn(
-                            "text-base sm:text-lg text-muted-foreground leading-relaxed",
+                            "text-base text-muted-foreground leading-relaxed",
                             cleanTitle ? "mt-3 sm:mt-4" : ""
                         )}>
                             {cleanSubtitle}
@@ -118,7 +118,7 @@ export function FeaturedCategories({
                                 />
                                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300" />
                                 <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-                                    <h3 className="text-2xl sm:text-3xl font-bold text-white relative z-10 tracking-tight drop-shadow-md group-hover:scale-105 transition-transform duration-300">
+                                    <h3 className="text-2xl md:text-3xl font-medium text-white relative z-10 tracking-tight drop-shadow-md group-hover:scale-105 transition-transform duration-300">
                                         {catName}
                                     </h3>
                                 </div>

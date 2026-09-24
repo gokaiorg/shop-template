@@ -17,6 +17,7 @@ import { CurrencySwitcher } from "./CurrencySwitcher";
 function HeaderContent({
     lang,
     dict,
+    session,
     pages = [],
     categories = [],
     mobileCategories,
@@ -25,6 +26,7 @@ function HeaderContent({
 }: {
     lang: string;
     dict: any;
+    session?: any;
     pages?: Page[];
     categories?: Category[];
     mobileCategories?: Category[];
@@ -65,7 +67,7 @@ function HeaderContent({
                         <CurrencySwitcher />
                     </div>
                     {isCartEnabled && <CartSheet dict={dict.header} />}
-                    <AccountToggle lang={lang} dict={dict} />
+                    <AccountToggle lang={lang} dict={dict} session={session} />
                 </div>
             </div>
         </header>
@@ -92,17 +94,16 @@ export function Header({
     socialLinks?: SocialLink[];
 }) {
     return (
-        <SessionProvider session={session}>
-            <HeaderContent
-                lang={lang}
-                dict={dict}
-                pages={pages}
-                categories={categories}
-                mobileCategories={mobileCategories}
-                footerPages={footerPages}
-                socialLinks={socialLinks}
-            />
-        </SessionProvider>
+        <HeaderContent
+            lang={lang}
+            dict={dict}
+            session={session}
+            pages={pages}
+            categories={categories}
+            mobileCategories={mobileCategories}
+            footerPages={footerPages}
+            socialLinks={socialLinks}
+        />
     );
 }
 

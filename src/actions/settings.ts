@@ -18,6 +18,8 @@ import {
     ContactSectionFormData,
     faqSectionSchema,
     FaqSectionFormData,
+    reviewSectionSchema,
+    ReviewSectionFormData,
 } from "@/schemas/settings";
 
 export async function updateCatalogSettings(data: CatalogSettingsFormData) {
@@ -84,6 +86,9 @@ export async function updateGlobalSettings(data: GlobalSettingsFormData) {
         if (!('faqSection' in data) || (data as any).faqSection === undefined) {
             delete (updatePayload as any).faqSection;
         }
+        if (!('reviewSection' in data) || (data as any).reviewSection === undefined) {
+            delete (updatePayload as any).reviewSection;
+        }
         await saveStoreSettings(updatePayload);
         revalidatePath("/", "layout");
         return { success: true };
@@ -122,6 +127,9 @@ export async function updateBlocksSettings(data: BlocksFormData) {
         }
         if (parsed.data.faqSection) {
             updatePayload.faqSection = parsed.data.faqSection;
+        }
+        if (parsed.data.reviewSection) {
+            updatePayload.reviewSection = parsed.data.reviewSection;
         }
         await saveStoreSettings(updatePayload);
         revalidatePath("/", "layout");
@@ -222,6 +230,36 @@ export async function updateFaqBlockSettings(data: FaqSectionFormData) {
     }
 }
 
+export async function updateReviewBlockSettings(data: ReviewSectionFormData) {
+    const session = await auth();
+
+    if (!session || !session.user) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const role = (session.user.role || "").toLowerCase();
+    if (role !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
+    }
+
+    const parsed = reviewSectionSchema.safeParse(data);
+    if (!parsed.success) {
+        return {
+            success: false,
+            error: "Validation failed: " + parsed.error.issues.map((i) => i.message).join(", "),
+        };
+    }
+
+    try {
+        await saveStoreSettings({ reviewSection: parsed.data });
+        revalidatePath("/", "layout");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[UPDATE_REVIEW_BLOCK_ACTION_ERROR]", error);
+        return { success: false, error: error?.message || "Failed to update review section" };
+    }
+}
+
 export async function updateStoreSettings(data: GlobalSettingsFormData | StoreSettingsFormData) {
     const session = await auth();
 
@@ -268,6 +306,9 @@ export async function updateStoreSettings(data: GlobalSettingsFormData | StoreSe
         }
         if (!('faqSection' in data) || (data as any).faqSection === undefined) {
             delete (updatePayload as any).faqSection;
+        }
+        if (!('reviewSection' in data) || (data as any).reviewSection === undefined) {
+            delete (updatePayload as any).reviewSection;
         }
         await saveStoreSettings(updatePayload);
         revalidatePath("/", "layout");

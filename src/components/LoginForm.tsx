@@ -1,17 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { registerUser } from "@/actions/auth";
+import { registerUser, checkUserRole } from "@/actions/auth";
 
-export function LoginForm({ dict }: { dict: Record<string, string> }) {
+export function LoginForm({ 
+    dict,
+    lang,
+    onSuccess,
+}: { 
+    dict: Record<string, string>;
+    lang?: string;
+    onSuccess?: () => void;
+}) {
     const router = useRouter();
     const params = useParams<{ lang: string }>();
+    const currentLang = lang || params?.lang || "en";
     const [isSignUp, setIsSignUp] = useState(false);
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -19,6 +28,30 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    const redirectAfterLogin = async (userEmail: string) => {
+        if (onSuccess) {
+            onSuccess();
+        }
+
+        const session = await getSession();
+        let role = (session?.user?.role || "").toLowerCase();
+        if (!role || role === "user") {
+            const fetchedRole = await checkUserRole(userEmail);
+            if (fetchedRole) role = fetchedRole.toLowerCase();
+        }
+
+        const targetUrl = role === "admin" 
+            ? `/${currentLang}/admin` 
+            : `/${currentLang}/account/profile`;
+
+        if (typeof window !== "undefined") {
+            window.location.href = targetUrl;
+        } else {
+            router.push(targetUrl);
+            router.refresh();
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -53,9 +86,7 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                 if (res?.error) {
                     setError(dict.invalid_creds);
                 } else {
-                    const currentLang = params.lang || "en";
-                    router.push(`/${currentLang}/admin/dashboard`);
-                    router.refresh();
+                    await redirectAfterLogin(email);
                 }
             } else {
                 const res = await signIn("credentials", {
@@ -67,9 +98,7 @@ export function LoginForm({ dict }: { dict: Record<string, string> }) {
                 if (res?.error) {
                     setError(dict.invalid_creds);
                 } else {
-                    const currentLang = params.lang || "en";
-                    router.push(`/${currentLang}/admin/dashboard`);
-                    router.refresh();
+                    await redirectAfterLogin(email);
                 }
             }
         } catch (err) {

@@ -5,7 +5,7 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -124,20 +124,20 @@ export default async function CustomerOrdersPage({ params }: OrdersPageProps) {
     };
 
     return (
-        <Card className="rounded-xl border border-border shadow-xs overflow-hidden">
-            <CardHeader className="border-b border-border bg-card px-6 py-5">
-                <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-primary" />
-                    <CardTitle className="text-xl font-bold tracking-tight">
-                        {accountDict.orders || (lang === "fr" ? "Mes Commandes" : "My Orders")}
-                    </CardTitle>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                    <ShoppingBag className="h-6 w-6 text-primary" />
+                    <span>{accountDict.orders || (lang === "fr" ? "Mes Commandes" : "My Orders")}</span>
+                </h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
                     {accountDict.orders_subtitle || (lang === "fr" ? "Historique et statut de vos achats." : "History and status of your purchases.")}
                 </p>
-            </CardHeader>
+            </div>
 
-            <CardContent className="p-0">
+            <Card className="rounded-xl border border-border shadow-xs overflow-hidden">
+                <CardContent className="p-0">
                 {orders.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
                         <div className="w-16 h-16 rounded-full bg-muted/60 flex items-center justify-center mb-4 text-muted-foreground">
@@ -196,5 +196,6 @@ export default async function CustomerOrdersPage({ params }: OrdersPageProps) {
                 )}
             </CardContent>
         </Card>
+        </div>
     );
 }

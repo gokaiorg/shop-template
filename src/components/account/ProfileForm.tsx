@@ -6,7 +6,7 @@ import { updateProfile } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { User, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -90,20 +90,20 @@ export function ProfileForm({ initialName, initialEmail, lang, dict }: ProfileFo
     };
 
     return (
-        <Card className="rounded-xl border border-border shadow-xs overflow-hidden">
-            <CardHeader className="border-b border-border bg-card px-6 py-5">
-                <div className="flex items-center gap-2">
-                    <User className="w-5 h-5 text-primary" />
-                    <CardTitle className="text-xl font-bold tracking-tight">
-                        {accountDict.profile_title || (lang === "fr" ? "Informations Personnelles" : "Personal Information")}
-                    </CardTitle>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                    <User className="h-6 w-6 text-primary" />
+                    <span>{accountDict.profile_title || (lang === "fr" ? "Informations Personnelles" : "Personal Information")}</span>
+                </h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
                     {accountDict.profile_subtitle || (lang === "fr" ? "Consultez et mettez à jour vos coordonnées." : "View and update your personal details.")}
                 </p>
-            </CardHeader>
+            </div>
 
-            <form onSubmit={handleSubmit}>
+            <Card className="rounded-xl border border-border shadow-xs overflow-hidden">
+                <form onSubmit={handleSubmit}>
                 <CardContent className="p-6 space-y-5">
                     {feedback && (
                         <div
@@ -189,5 +189,6 @@ export function ProfileForm({ initialName, initialEmail, lang, dict }: ProfileFo
                 </CardFooter>
             </form>
         </Card>
+        </div>
     );
 }

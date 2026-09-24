@@ -93,6 +93,13 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             subtitle: { en: 'Find quick answers to common questions.', fr: 'Trouvez des réponses rapides à vos questions.' },
             items: [],
         },
+        reviewSection: {
+            enabled: false,
+            status: 'inactive',
+            title: { en: 'What Our Customers Say', fr: 'Ce que disent nos clients' },
+            subtitle: { en: '', fr: '' },
+            placeId: '',
+        },
         cartEnabled: getIsCartEnabled(),
     };
 
@@ -155,6 +162,21 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                         : (fallbackSettings.faqSection?.subtitle || {}),
                     items: Array.isArray(data.faqSection.items) ? data.faqSection.items : [],
                 } : fallbackSettings.faqSection,
+                reviewSection: data?.reviewSection ? {
+                    enabled: Boolean(data.reviewSection.enabled ?? (data.reviewSection.status === 'active')),
+                    status: (data.reviewSection.status === 'active' || data.reviewSection.enabled) ? 'active' : 'inactive',
+                    title: (data.reviewSection.title && typeof data.reviewSection.title === 'object')
+                        ? data.reviewSection.title
+                        : typeof data.reviewSection.title === 'string'
+                        ? { en: data.reviewSection.title, fr: data.reviewSection.title }
+                        : (fallbackSettings.reviewSection?.title || {}),
+                    subtitle: (data.reviewSection.subtitle && typeof data.reviewSection.subtitle === 'object')
+                        ? data.reviewSection.subtitle
+                        : typeof data.reviewSection.subtitle === 'string'
+                        ? { en: data.reviewSection.subtitle, fr: data.reviewSection.subtitle }
+                        : (fallbackSettings.reviewSection?.subtitle || {}),
+                    placeId: typeof data.reviewSection.placeId === 'string' ? data.reviewSection.placeId : '',
+                } : fallbackSettings.reviewSection,
                 cartEnabled: typeof data?.cartEnabled === 'boolean' ? data.cartEnabled : fallbackSettings.cartEnabled,
                 updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data?.updatedAt,
             };

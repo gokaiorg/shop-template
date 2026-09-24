@@ -452,6 +452,29 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                         </p>
                                                     </div>
                                                 </div>
+
+                                                {/* Review Section Checkbox */}
+                                                <div className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-2xs hover:bg-muted/10 transition-colors">
+                                                    <Checkbox
+                                                        id="block-reviews"
+                                                        checked={currentBlocks.includes("reviews")}
+                                                        onCheckedChange={() => toggleBlock("reviews")}
+                                                        disabled={isLoading}
+                                                    />
+                                                    <div className="space-y-1 leading-none">
+                                                        <label
+                                                            htmlFor="block-reviews"
+                                                            className="text-sm font-medium cursor-pointer"
+                                                        >
+                                                            {lang === 'fr' ? 'Section Avis Google' : 'Google Reviews'}
+                                                        </label>
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {lang === 'fr'
+                                                                ? 'Affiche les avis vérifiés Google My Business avec notation par étoiles.'
+                                                                : 'Display verified Google Business customer reviews with star ratings.'}
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         );
                                     }}
@@ -506,14 +529,14 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                                         }}
                                                                     >
                                                                         <RotateCcw className="h-3 w-3" />
-                                                                        <span className="text-[11px]">{lang === "fr" ? "Regénérer" : "Regenerate"}</span>
+                                                                        <span className="text-xs">{lang === "fr" ? "Regénérer" : "Regenerate"}</span>
                                                                     </Button>
                                                                 </div>
 
                                                                 <div className="min-w-0 overflow-hidden">
                                                                     <Badge
                                                                         variant="secondary"
-                                                                        className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                                        className="font-mono text-xs px-2 py-0.5 max-w-full truncate block"
                                                                         title={previewUrl}
                                                                     >
                                                                         {previewUrl}
@@ -572,14 +595,14 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                             }}
                                                         >
                                                             <RotateCcw className="h-3 w-3" />
-                                                            <span className="text-[11px]">{lang === "fr" ? "Regénérer" : "Regenerate"}</span>
+                                                            <span className="text-xs">{lang === "fr" ? "Regénérer" : "Regenerate"}</span>
                                                         </Button>
                                                     </div>
 
                                                     <div className="min-w-0 overflow-hidden">
                                                         <Badge
                                                             variant="secondary"
-                                                            className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                            className="font-mono text-xs px-2 py-0.5 max-w-full truncate block"
                                                             title={previewUrl}
                                                         >
                                                             {previewUrl}

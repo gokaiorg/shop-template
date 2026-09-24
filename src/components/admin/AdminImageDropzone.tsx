@@ -240,7 +240,7 @@ export function AdminImageDropzone({
 
                             {/* Affichage de l'URL source */}
                             <div
-                                className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-[10px] font-mono p-1.5 truncate text-center backdrop-blur-sm z-10"
+                                className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-xs font-mono p-1.5 truncate text-center backdrop-blur-sm z-10"
                                 title={images[0]}
                             >
                                 {images[0]}
@@ -268,7 +268,7 @@ export function AdminImageDropzone({
 
                                         {/* Badge Couverture sur la 1ère image */}
                                         {isCover ? (
-                                            <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground font-semibold shadow-xs z-10">
+                                            <Badge className="absolute top-2 left-2 text-xs px-1.5 py-0.5 bg-primary text-primary-foreground font-semibold shadow-xs z-10">
                                                 {lang?.startsWith("fr") ? "Couverture" : "Cover"}
                                             </Badge>
                                         ) : (
@@ -276,7 +276,7 @@ export function AdminImageDropzone({
                                                 type="button"
                                                 onClick={() => handleSetPrimary(idx)}
                                                 disabled={disabled}
-                                                className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-xs border shadow-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
+                                                className="absolute top-2 left-2 text-xs px-1.5 py-0.5 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-xs border shadow-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
                                                 title={lang?.startsWith("fr") ? "Définir comme couverture" : "Set as cover image"}
                                             >
                                                 {lang?.startsWith("fr") ? "Couverture" : "Set cover"}
@@ -297,13 +297,13 @@ export function AdminImageDropzone({
                                         </Button>
 
                                         {/* Numéro d'ordre */}
-                                        <span className="absolute bottom-6 right-1.5 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
+                                        <span className="absolute bottom-6 right-1.5 text-xs px-1.5 py-0.5 rounded bg-black/60 text-white font-mono pointer-events-none z-10">
                                             #{idx + 1}
                                         </span>
 
                                         {/* Affichage de l'URL */}
                                         <div
-                                            className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-[9px] font-mono p-1 truncate text-center backdrop-blur-sm z-10"
+                                            className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-xs font-mono p-1 truncate text-center backdrop-blur-sm z-10"
                                             title={imgUrl}
                                         >
                                             {imgUrl}

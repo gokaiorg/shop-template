@@ -99,7 +99,12 @@
                 "read": "Lu",
                 "archived": "Archivé"
             },
+            "origin": "Origine",
             "reply": "Répondre",
+            "send_reply": "Envoyer la réponse",
+            "reply_placeholder": "Rédigez votre réponse...",
+            "reply_success": "Réponse envoyée avec succès !",
+            "conversation_history": "Historique de la conversation",
             "mark_read": "Marquer comme lu",
             "mark_unread": "Marquer comme non lu",
             "archive": "Archiver",
@@ -205,6 +210,23 @@
         "save": "Enregistrer les modifications",
         "saving": "Enregistrement en cours...",
         "profile_updated": "Votre profil a été mis à jour avec succès !",
-        "update_error": "Échec de la mise à jour du profil."
+        "update_error": "Échec de la mise à jour du profil.",
+        "messages": "Messages",
+        "messages_subtitle": "Consultez vos échanges avec notre équipe et envoyez un nouveau message.",
+        "new_message": "Nouveau message",
+        "send_message": "Envoyer le message",
+        "sending_message": "Envoi en cours...",
+        "no_messages": "Vous n'avez aucun message pour le moment.",
+        "no_messages_subtitle": "Vous pouvez nous écrire directement en utilisant le formulaire ci-dessous.",
+        "subject": "Sujet",
+        "subject_placeholder": "Objet de votre message...",
+        "message": "Message",
+        "message_placeholder": "Écrivez votre message ici...",
+        "replies": "Réponses",
+        "admin_reply": "Équipe Support",
+        "reply_placeholder": "Rédigez votre réponse...",
+        "reply_button": "Répondre",
+        "message_sent_success": "Votre message a été envoyé avec succès !",
+        "reply_sent_success": "Votre réponse a été envoyée avec succès !"
     }
 }

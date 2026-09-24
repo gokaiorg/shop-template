@@ -81,13 +81,13 @@ export function HeroHeader({
 
       {/* Spatial UI Glassmorphism 2.0 Central Card */}
       <div className="relative z-10 glass-2-card p-8 sm:p-12 md:p-14 rounded-3xl max-w-3xl mx-auto shadow-soft-xl border border-white/40 dark:border-white/10 flex flex-col items-center">
-        {/* Title: High Contrast, Extra-bold, Tight Tracking */}
-        <h1 className="max-w-2xl text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50 mb-6 drop-shadow-xs">
+        {/* Title: Typescale Standardized H1 */}
+        <h1 className="max-w-3xl text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50 mb-6 drop-shadow-xs">
           {title}
         </h1>
 
-        {/* Subtitle: High Contrast, leading-relaxed */}
-        <p className="max-w-2xl text-lg sm:text-xl text-zinc-700 dark:text-zinc-200 leading-relaxed font-normal mb-10">
+        {/* Subtitle: Typescale Standardized Body Large */}
+        <p className="max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed font-normal mb-10">
           {subtitle}
         </p>
 

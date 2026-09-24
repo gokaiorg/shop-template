@@ -56,7 +56,7 @@ export function AdminEditBadge({
             aria-label={tooltipTitle}
             className={cn(
                 // Structure & Positioning
-                "absolute top-4 right-4 z-50",
+                "absolute top-4 right-4 z-20",
                 "group inline-flex items-center gap-1.5 rounded-full px-3 py-1.5",
                 "text-xs font-semibold tracking-wider uppercase leading-none",
                 // Spatial UI Glassmorphism Base - High-contrast frosted dark glass with brand accent outline

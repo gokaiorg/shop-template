@@ -99,7 +99,12 @@
                 "read": "Read",
                 "archived": "Archived"
             },
+            "origin": "Source",
             "reply": "Reply",
+            "send_reply": "Send reply",
+            "reply_placeholder": "Write your reply...",
+            "reply_success": "Reply sent successfully!",
+            "conversation_history": "Conversation history",
             "mark_read": "Mark as read",
             "mark_unread": "Mark as unread",
             "archive": "Archive",
@@ -205,6 +210,23 @@
         "save": "Save Changes",
         "saving": "Saving...",
         "profile_updated": "Your profile has been updated successfully!",
-        "update_error": "Failed to update profile."
+        "update_error": "Failed to update profile.",
+        "messages": "Messages",
+        "messages_subtitle": "View conversations with our team and send us a new message.",
+        "new_message": "New message",
+        "send_message": "Send message",
+        "sending_message": "Sending...",
+        "no_messages": "You have no messages yet.",
+        "no_messages_subtitle": "You can reach out to our team directly using the form below.",
+        "subject": "Subject",
+        "subject_placeholder": "What is this about?",
+        "message": "Message",
+        "message_placeholder": "Write your message here...",
+        "replies": "Replies",
+        "admin_reply": "Support Team",
+        "reply_placeholder": "Write your reply...",
+        "reply_button": "Reply",
+        "message_sent_success": "Your message has been sent successfully!",
+        "reply_sent_success": "Your reply has been sent successfully!"
     }
 }
