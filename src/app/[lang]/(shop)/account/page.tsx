@@ -6,5 +6,5 @@ export default async function AccountRootPage({
     params: Promise<{ lang: string }>;
 }) {
     const { lang } = await params;
-    redirect(`/${lang}/account/orders`);
+    redirect(`/${lang}/account/profile`);
 }

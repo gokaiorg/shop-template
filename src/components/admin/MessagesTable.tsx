@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { ContactMessage } from "@/types/database";
-import { updateMessageStatus, deleteContactMessage } from "@/actions/contact";
+import { updateMessageStatus, deleteContactMessage, replyToMessage } from "@/actions/contact";
 import { 
   Table, 
   TableBody, 
@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +58,8 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
   const [statusFilter, setStatusFilter] = useState<"all" | "unread" | "read" | "archived">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const secDict = dict?.admin?.messages_section || {};
@@ -189,6 +192,50 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
     );
   };
 
+  const renderOriginBadge = (source?: string) => {
+    if (source === "User") {
+      return (
+        <Badge className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs border-0 px-2 py-0.5">
+          User
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="text-muted-foreground text-xs font-normal px-2 py-0.5">
+        Contact
+      </Badge>
+    );
+  };
+
+  const handleSendReply = async () => {
+    if (!selectedMessage || !replyText.trim()) return;
+    setIsReplying(true);
+    try {
+      const res = await replyToMessage(selectedMessage.id, replyText.trim());
+      if (res.success && res.reply) {
+        toast.success(secDict.reply_success || (lang === "fr" ? "Réponse envoyée avec succès !" : "Reply sent successfully!"));
+        const updatedReplies = [...(selectedMessage.replies || []), res.reply];
+        const updatedMsg: ContactMessage = {
+          ...selectedMessage,
+          status: "read",
+          replies: updatedReplies,
+        };
+        setSelectedMessage(updatedMsg);
+        setMessages((prev) =>
+          prev.map((m) => (m.id === selectedMessage.id ? updatedMsg : m))
+        );
+        setReplyText("");
+        window.dispatchEvent(new Event("messages-updated"));
+      } else {
+        toast.error(res.error || (lang === "fr" ? "Erreur lors de l'envoi" : "Error sending reply"));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send reply");
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Filters and Search Bar */}
@@ -283,7 +330,8 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
         <Table className="min-w-[800px]">
           <TableHeader className="bg-muted/40">
             <TableRow>
-              <TableHead className="w-[200px] font-semibold">{colDict.name || (lang === "fr" ? "Nom" : "Name")}</TableHead>
+              <TableHead className="w-[180px] font-semibold">{colDict.name || (lang === "fr" ? "Nom" : "Name")}</TableHead>
+              <TableHead className="w-[100px] font-semibold">{secDict.origin || (lang === "fr" ? "Origine" : "Source")}</TableHead>
               <TableHead className="font-semibold">{colDict.email || (lang === "fr" ? "Email" : "Email")}</TableHead>
               <TableHead className="w-[170px] font-semibold">{colDict.date || (lang === "fr" ? "Date" : "Date")}</TableHead>
               <TableHead className="w-[120px] font-semibold">{colDict.status || (lang === "fr" ? "Statut" : "Status")}</TableHead>
@@ -293,7 +341,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
           <TableBody>
             {filteredMessages.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-44 text-center">
+                <TableCell colSpan={6} className="h-44 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                     <Inbox className="h-8 w-8 text-muted-foreground/60" />
                     <p className="font-medium text-sm">
@@ -336,12 +384,12 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                             {msg.name}
                           </span>
                         </div>
-                        {msg.brandKey && (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground border shrink-0">
-                            {msg.brandName || msg.brandKey}
-                          </span>
-                        )}
                       </div>
+                    </TableCell>
+
+                    {/* Origin / Source Badge */}
+                    <TableCell className="whitespace-nowrap">
+                      {renderOriginBadge(msg.source)}
                     </TableCell>
 
                     {/* Email */}
@@ -368,20 +416,18 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                     {/* Actions */}
                     <TableCell className="text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1 whitespace-nowrap">
-                        {/* Reply Native Mailto Button */}
+                        {/* Reply Button */}
                         <Button
-                          asChild
                           size="sm"
                           variant="outline"
-                          className="h-8 px-2.5 gap-1.5 text-xs hover:bg-primary hover:text-primary-foreground transition-colors"
+                          onClick={() => setSelectedMessage(msg)}
+                          className="h-8 px-2.5 gap-1.5 text-xs hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
                           title={secDict.reply || (lang === "fr" ? "Répondre" : "Reply")}
                         >
-                          <a href={getMailtoUrl(msg.email, msg.subject)}>
-                            <Reply className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline">
-                              {secDict.reply || (lang === "fr" ? "Répondre" : "Reply")}
-                            </span>
-                          </a>
+                          <Reply className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">
+                            {secDict.reply || (lang === "fr" ? "Répondre" : "Reply")}
+                          </span>
                         </Button>
 
                         {/* View & Dropdown Options */}
@@ -456,7 +502,10 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
             <div className="space-y-6">
               <SheetHeader className="text-left space-y-2 border-b pb-4">
                 <div className="flex items-center justify-between gap-2">
-                  {renderStatusBadge(selectedMessage.status)}
+                  <div className="flex items-center gap-2">
+                    {renderStatusBadge(selectedMessage.status)}
+                    {renderOriginBadge(selectedMessage.source)}
+                  </div>
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
                     {formatDate(selectedMessage.createdAt)}
@@ -472,9 +521,12 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
 
               {/* Sender Details */}
               <div className="rounded-lg border bg-muted/30 p-4 space-y-2.5 text-sm">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="font-semibold text-foreground">{selectedMessage.name}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="font-semibold text-foreground">{selectedMessage.name}</span>
+                  </div>
+                  {renderOriginBadge(selectedMessage.source)}
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -501,23 +553,109 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
               {/* Message Content Body */}
               <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {lang === "fr" ? "Message" : "Message"}
+                  {lang === "fr" ? "Message initial" : "Initial message"}
                 </h4>
-                <div className="rounded-lg border bg-background p-4 text-sm whitespace-pre-wrap leading-relaxed min-h-[160px] text-foreground">
+                <div className="rounded-lg border bg-background p-4 text-sm whitespace-pre-wrap leading-relaxed min-h-[120px] text-foreground">
                   {selectedMessage.message}
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-3 pt-4 border-t">
-                {/* Mailto Reply button */}
-                <Button asChild className="w-full gap-2 font-semibold" size="lg">
-                  <a href={getMailtoUrl(selectedMessage.email, selectedMessage.subject)}>
-                    <Reply className="h-4 w-4" />
-                    {secDict.reply || (lang === "fr" ? "Répondre par email" : "Reply via email")}
-                  </a>
-                </Button>
+              {/* Conversation / Replies History (Only for User messages) */}
+              {selectedMessage.source === "User" && selectedMessage.replies && selectedMessage.replies.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {secDict.conversation_history || (lang === "fr" ? "Historique des réponses" : "Conversation history")} ({selectedMessage.replies.length})
+                  </h4>
+                  <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                    {selectedMessage.replies.map((reply) => {
+                      const isAdminReply = reply.senderRole === "admin";
+                      return (
+                        <div
+                          key={reply.id}
+                          className={cn(
+                            "rounded-lg p-3 text-sm space-y-1.5 border",
+                            isAdminReply
+                              ? "bg-primary/5 border-primary/20 ml-3"
+                              : "bg-muted/40 border-border mr-3"
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <span className="font-semibold text-foreground flex items-center gap-1.5">
+                              {reply.senderName}
+                              <Badge
+                                variant={isAdminReply ? "default" : "secondary"}
+                                className="text-[10px] px-1.5 py-0 h-4"
+                              >
+                                {isAdminReply ? "Admin" : "User"}
+                              </Badge>
+                            </span>
+                            <span className="text-muted-foreground text-[11px]">
+                              {formatDate(reply.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-foreground whitespace-pre-wrap leading-relaxed text-xs sm:text-sm">
+                            {reply.message}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
+              {/* Conditional Reply Section */}
+              <div className="space-y-2.5 pt-2 border-t">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {selectedMessage.source === "User"
+                    ? secDict.reply || (lang === "fr" ? "Répondre directement" : "Direct Reply")
+                    : (lang === "fr" ? "Réponse" : "Reply")}
+                </h4>
+
+                {selectedMessage.source === "User" ? (
+                  <>
+                    <Textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder={secDict.reply_placeholder || (lang === "fr" ? "Rédigez votre réponse ici..." : "Write your reply here...")}
+                      className="min-h-24 text-sm"
+                      rows={3}
+                    />
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1">
+                      <Button
+                        type="button"
+                        onClick={handleSendReply}
+                        disabled={!replyText.trim() || isReplying}
+                        className="gap-2 cursor-pointer font-semibold"
+                      >
+                        <Reply className="h-4 w-4" />
+                        {isReplying
+                          ? (lang === "fr" ? "Envoi..." : "Sending...")
+                          : (secDict.send_reply || (lang === "fr" ? "Envoyer la réponse" : "Send reply"))}
+                      </Button>
+
+                      <a
+                        href={getMailtoUrl(selectedMessage.email, selectedMessage.subject)}
+                        className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1 justify-center py-1"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        <span>{lang === "fr" ? "Ou répondre par email (mailto)" : "Or reply via email (mailto)"}</span>
+                      </a>
+                    </div>
+                  </>
+                ) : (
+                  <div className="pt-1">
+                    <Button asChild className="w-full gap-2 font-semibold" variant="outline" size="default">
+                      <a href={`mailto:${selectedMessage.email}?subject=Re:${encodeURIComponent(selectedMessage.subject || '')}`}>
+                        <Mail className="h-4 w-4" />
+                        <span>{lang === "fr" ? "Répondre par email" : "Reply by mail"}</span>
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Status & Deletion Buttons */}
+              <div className="space-y-3 pt-3 border-t">
                 {/* Status toggles */}
                 <div className="grid grid-cols-2 gap-2">
                   {selectedMessage.status !== "read" ? (
@@ -565,7 +703,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                   )}
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-1">
                   <Button
                     variant="ghost"
                     size="sm"

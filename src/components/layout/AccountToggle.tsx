@@ -29,8 +29,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AuthSheet } from "@/components/auth/AuthSheet"
 
-export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
-    const { data: session, status } = useSession()
+export function AccountToggle({ lang, dict, session: propSession }: { lang: string, dict: any, session?: any }) {
+    const { data: clientSession, status } = useSession()
+    const session = clientSession?.user ? clientSession : (propSession?.user ? propSession : clientSession);
     const { isCartEnabled } = useBrand()
     const unreadCount = useUnreadMessages(session)
     
@@ -65,6 +66,8 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
 
     const adminDict = dict?.admin || {};
     const ordersTitle = adminDict.orders?.title || adminDict.orders || (lang === "fr" ? "Commandes" : "Orders");
+    const userOrdersLabel = dict?.account?.orders || (lang === "fr" ? "Commandes" : "Orders");
+    const messagesLabel = dict?.account?.messages || dict?.admin?.messages || "Messages";
 
     const adminNavItems = [
         {
@@ -137,7 +140,7 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
                     <Button size="icon" aria-label={accountLabel} className="relative rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
                         <User className="h-[1.2rem] w-[1.2rem]" />
                         <span className="sr-only">{accountLabel}</span>
-                        {isAdmin && unreadCount > 0 && (
+                        {unreadCount > 0 && (
                             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white pointer-events-none">
                                 {unreadCount > 99 ? "99+" : unreadCount}
                             </span>
@@ -165,17 +168,48 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
                             );
                         })
                     ) : (
-                        <DropdownMenuItem 
-                            asChild
-                            className="cursor-pointer"
-                        >
-                            <Link href={`/${lang}/account`} className="flex items-center justify-between w-full">
-                                <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4" />
-                                    <span>{myAccountLabel}</span>
-                                </div>
-                            </Link>
-                        </DropdownMenuItem>
+                        <>
+                            <DropdownMenuItem 
+                                asChild
+                                className="cursor-pointer"
+                            >
+                                <Link href={`/${lang}/account/profile`} className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4" />
+                                        <span>{myAccountLabel}</span>
+                                    </div>
+                                </Link>
+                            </DropdownMenuItem>
+                            {isCartEnabled && (
+                                <DropdownMenuItem 
+                                    asChild
+                                    className="cursor-pointer"
+                                >
+                                    <Link href={`/${lang}/account/orders`} className="flex items-center justify-between w-full">
+                                        <div className="flex items-center gap-2">
+                                            <ShoppingCart className="h-4 w-4" />
+                                            <span>{userOrdersLabel}</span>
+                                        </div>
+                                    </Link>
+                                </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem 
+                                asChild
+                                className="cursor-pointer"
+                            >
+                                <Link href={`/${lang}/account/messages`} className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-2">
+                                        <Mail className="h-4 w-4" />
+                                        <span>{messagesLabel}</span>
+                                    </div>
+                                    {unreadCount > 0 && (
+                                        <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-bold text-white">
+                                            {unreadCount > 99 ? "99+" : unreadCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            </DropdownMenuItem>
+                        </>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
@@ -193,7 +227,7 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
     }
 
     return (
-        <AuthSheet dict={dict.auth || {}}>
+        <AuthSheet dict={dict.auth || {}} lang={lang}>
             <Button size="icon" aria-label={accountLabel} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
                 <User className="h-[1.2rem] w-[1.2rem]" />
                 <span className="sr-only">{accountLabel}</span>

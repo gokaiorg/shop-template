@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingBag, User } from "lucide-react";
+import { ShoppingBag, User, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/components/providers/BrandProvider";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 
 interface AccountNavProps {
     lang: string;
@@ -15,32 +16,49 @@ interface AccountNavProps {
 export function AccountNav({ lang, dict, className }: AccountNavProps) {
     const pathname = usePathname();
     const { isCartEnabled } = useBrand();
+    const unreadCount = useUnreadMessages();
 
-    const ordersLabel = dict?.account?.orders || (lang === "fr" ? "Mes Commandes" : "My Orders");
     const profileLabel = dict?.account?.profile || (lang === "fr" ? "Mes Informations" : "My Information");
+    const ordersLabel = dict?.account?.orders || (lang === "fr" ? "Mes Commandes" : "My Orders");
+    const messagesLabel = dict?.account?.messages || dict?.admin?.messages || "Messages";
 
-    const ordersHref = `/${lang}/account/orders`;
     const profileHref = `/${lang}/account/profile`;
+    const ordersHref = `/${lang}/account/orders`;
+    const messagesHref = `/${lang}/account/messages`;
 
-    const isOrdersActive =
+    const isProfileActive =
         pathname === `/${lang}/account` ||
         pathname === `/${lang}/account/` ||
-        pathname.startsWith(`/${lang}/account/orders`);
+        pathname.startsWith(`/${lang}/account/profile`);
 
-    const isProfileActive = pathname.startsWith(`/${lang}/account/profile`);
+    const isOrdersActive = pathname.startsWith(`/${lang}/account/orders`);
+    const isMessagesActive = pathname.startsWith(`/${lang}/account/messages`);
 
     const navItems = [
-        ...(isCartEnabled ? [{
-            label: ordersLabel,
-            href: ordersHref,
-            icon: ShoppingBag,
-            active: isOrdersActive,
-        }] : []),
         {
             label: profileLabel,
             href: profileHref,
             icon: User,
             active: isProfileActive,
+            badge: null,
+        },
+        ...(isCartEnabled ? [{
+            label: ordersLabel,
+            href: ordersHref,
+            icon: ShoppingBag,
+            active: isOrdersActive,
+            badge: null,
+        }] : []),
+        {
+            label: messagesLabel,
+            href: messagesHref,
+            icon: Mail,
+            active: isMessagesActive,
+            badge: unreadCount > 0 ? (
+                <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-bold text-white ml-auto">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+            ) : null,
         },
     ];
 
@@ -66,6 +84,7 @@ export function AccountNav({ lang, dict, className }: AccountNavProps) {
                             >
                                 <Icon className="w-4 h-4 shrink-0" />
                                 <span>{item.label}</span>
+                                {item.badge}
                             </Link>
                         </li>
                     );

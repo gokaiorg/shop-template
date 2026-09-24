@@ -99,3 +99,20 @@ export async function updateProfile(data: { name?: string, email?: string, passw
         return { error: error.message || "Failed to update profile." };
     }
 }
+
+export async function checkUserRole(email: string): Promise<string> {
+    try {
+        const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
+        if (adminEmails.includes(email.trim().toLowerCase())) {
+            return "admin";
+        }
+        const snapshot = await adminDb.collection("users").where("email", "==", email.trim()).limit(1).get();
+        if (!snapshot.empty) {
+            const role = (snapshot.docs[0].data()?.role || "user").toLowerCase();
+            return role;
+        }
+    } catch (e) {
+        console.error("Error checking user role:", e);
+    }
+    return "user";
+}

@@ -20,6 +20,34 @@ export default async function AdminMessagesPage({
     adminDb.collection("contact_messages").get(),
   ]);
 
+  // Dynamically resolve real names from users collection if userId exists
+  const userIds = Array.from(
+    new Set(
+      messagesSnapshot.docs
+        .map((d) => d.data().userId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    )
+  );
+
+  const userNamesMap = new Map<string, string>();
+  if (userIds.length > 0) {
+    await Promise.all(
+      userIds.map(async (uid) => {
+        try {
+          const uDoc = await adminDb.collection("users").doc(uid).get();
+          if (uDoc.exists) {
+            const uData = uDoc.data();
+            if (uData?.name && typeof uData.name === "string" && uData.name.trim()) {
+              userNamesMap.set(uid, uData.name.trim());
+            }
+          }
+        } catch {
+          // ignore
+        }
+      })
+    );
+  }
+
   const messages: ContactMessage[] = messagesSnapshot.docs
     .map((doc) => {
       const data = doc.data();
@@ -34,9 +62,16 @@ export default async function AdminMessagesPage({
         }
       }
 
+      const source = data.source || (data.userId ? "User" : "Contact");
+      const replies = Array.isArray(data.replies) ? data.replies : [];
+      const resolvedName =
+        (data.userId && userNamesMap.get(data.userId)) ||
+        data.name ||
+        "";
+
       return {
         id: doc.id,
-        name: data.name || "",
+        name: resolvedName,
         email: data.email || "",
         subject: data.subject || "",
         message: data.message || "",
@@ -45,6 +80,10 @@ export default async function AdminMessagesPage({
         brandKey: data.brandKey || "",
         brandName: data.brandName,
         updatedAt: data.updatedAt,
+        source: source as "Contact" | "User",
+        userId: data.userId || undefined,
+        userUnread: data.userUnread || false,
+        replies,
       };
     })
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

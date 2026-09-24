@@ -156,6 +156,15 @@ export interface Page {
   meta_description_fr?: string;
 }
 
+export interface MessageReply {
+  id: string;
+  senderRole: 'admin' | 'user';
+  senderName: string;
+  senderEmail?: string;
+  message: string;
+  createdAt: string;
+}
+
 export interface ContactMessage {
   id: string;
   name: string;
@@ -167,6 +176,10 @@ export interface ContactMessage {
   brandKey: string;
   brandName?: string;
   updatedAt?: string;
+  source?: 'Contact' | 'User';
+  userId?: string;
+  userUnread?: boolean;
+  replies?: MessageReply[];
 }
 
 export interface SocialLink {
