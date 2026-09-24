@@ -447,14 +447,15 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
             </div>
 
             {/* Modular Page Blocks */}
-            <CmsBlockRenderer
-                blocks={activeBlocks}
-                storeSettings={storeSettings}
-                lang={lang}
-                dict={dict}
-                forceDisplay={true}
-                className="mt-8 md:mt-16"
-            />
+            {activeBlocks.length > 0 && (
+                <CmsBlockRenderer
+                    blocks={activeBlocks}
+                    storeSettings={storeSettings}
+                    lang={lang}
+                    dict={dict}
+                    className="mt-8 md:mt-16"
+                />
+            )}
         </div>
     );
 }

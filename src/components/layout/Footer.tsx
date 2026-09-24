@@ -7,6 +7,7 @@ import { Page, Category, SocialLink } from '@/types/database';
 import { getLocalizedField } from '@/lib/i18n';
 import { adminDb } from '@/lib/firebase-admin';
 import { getStoreSettings } from '@/lib/services/settings';
+import { AdminEditBadge } from '@/components/admin/AdminEditBadge';
 
 interface FooterProps {
     lang: string;
@@ -78,7 +79,13 @@ export async function Footer({
     }
 
     return (
-        <footer className="border-t bg-zinc-50 dark:bg-black py-12 mt-auto">
+        <footer className="border-t bg-zinc-50 dark:bg-black py-12 mt-auto relative">
+            {/* Quick Edit shortcut for Footer & Social Links */}
+            <AdminEditBadge
+                href="/admin/settings#footer-social-links"
+                locale={lang}
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20"
+            />
             <div className="w-full max-w-7xl mx-auto px-6 md:px-16 grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
                 <div className="col-span-1 md:col-span-2">
                     <h3 className="font-bold text-lg mb-4">{activeBrandName}</h3>
