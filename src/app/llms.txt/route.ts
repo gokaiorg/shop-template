@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getActiveBrandKey } from '@/config/brand.config';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,8 +30,8 @@ We engineer data-driven pipelines for relentless acquisition.
 ## Contact & Location
 - Headquarters: 1 Square du Thimerais, 75017 Paris, France
 - Phone / WhatsApp: +33 6 51 36 81 96
-- Website: https://gokai.org
-- WhatsApp Direct: https://wa.me/33651368196
+- Website: [https://gokai.org](https://gokai.org)
+- WhatsApp Direct: [WhatsApp Chat](https://wa.me/33651368196)
 `;
 
 const ART_FATE_LLMS = `# Art Fate
@@ -62,7 +61,8 @@ Art Fate functions as a digital exhibition space and curated artist portfolio ra
 - Worldwide Shipping: Artworks are dispatched across Thailand and worldwide using museum-grade protective packaging and insured couriers. Shipping fees and any applicable customs duties are covered by the collector.
 - Sales Policy: All sales of original artworks and limited series are final (no returns, refunds, or exchanges).
 - Studio Location: Kathu, Phuket, Thailand.
-- Direct Contact Email: barstoeck@gmail.com
+- Direct Contact Email: [barstoeck@gmail.com](mailto:barstoeck@gmail.com)
+- Website: [https://art-fate.com](https://art-fate.com)
 `;
 
 const SHOP_TEMPLATE_LLMS = `# Shop Template
@@ -82,6 +82,9 @@ Shop Template is an advanced e-commerce boilerplate engineered for speed, scalab
 - Global state management for multi-currency UI modifiers.
 - Dynamic JSON-LD structured data generation (GEO optimized for Product & CollectionPage).
 - Headless CMS integration for custom modular content blocks.
+
+## Links
+- Developer: [Gokai Labs](https://gokai.org)
 `;
 
 const GREEN_GHOST_LLMS = `# Green Ghost
@@ -96,18 +99,50 @@ Green Ghost operates premium dispensaries located in the heart of Phuket. We pro
 
 ## Operations & Contact
 - Local SEO and digital architecture optimized for seamless customer experience.
-- Website: https://green.gd
+- Website: [https://green.gd](https://green.gd)
 `;
 
-export async function GET() {
-    const activeBrand = (
+export async function GET(request: Request) {
+    // 1. Resolve active brand from environment variables
+    let activeBrand = (
         process.env.NEXT_PUBLIC_BRAND ||
         process.env.BRAND ||
-        getActiveBrandKey() ||
         ''
     )
         .toLowerCase()
         .trim();
+
+    // 2. Resolve or verify brand from incoming request host
+    const host = (
+        request.headers.get('x-forwarded-host') ||
+        request.headers.get('host') ||
+        ''
+    ).toLowerCase();
+
+    if (host.includes('gokai')) {
+        activeBrand = 'gokai-labs';
+    } else if (host.includes('art-fate')) {
+        activeBrand = 'art-fate';
+    } else if (host.includes('green')) {
+        activeBrand = 'green-ghost';
+    }
+
+    // 3. Fallback to Cloud Run or Firebase service names if still undefined
+    if (!activeBrand) {
+        const kService = (process.env.K_SERVICE || '').toLowerCase();
+        const fbProject = (process.env.FIREBASE_PROJECT_ID || '').toLowerCase();
+
+        if (kService.includes('art-fate') || fbProject.includes('art-fate')) {
+            activeBrand = 'art-fate';
+        } else if (kService.includes('green-ghost') || fbProject.includes('green-ghost')) {
+            activeBrand = 'green-ghost';
+        } else if (kService.includes('gokai-labs') || fbProject.includes('gokai-labs')) {
+            activeBrand = 'gokai-labs';
+        }
+    }
+
+    // Server-side debugging log for Cloud Run
+    console.log('LLMS Route - Active Brand:', activeBrand);
 
     let content: string | null = null;
 
@@ -125,7 +160,7 @@ export async function GET() {
             content = GREEN_GHOST_LLMS;
             break;
         default:
-            return new NextResponse('Not found', { status: 404 });
+            return new NextResponse('Brand not configured or not found', { status: 404 });
     }
 
     return new NextResponse(content, {
