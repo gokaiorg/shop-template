@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { StoreSettings } from "@/types/database";
-import { BookOpen, Mail, Pencil, HelpCircle } from "lucide-react";
+import { BookOpen, Mail, Pencil, HelpCircle, Star } from "lucide-react";
 
 interface BlocksTableProps {
     settings: StoreSettings;
@@ -27,15 +27,15 @@ export function BlocksTable({ settings, lang }: BlocksTableProps) {
             editUrl: `/${lang}/admin/blocks/about`,
         },
         {
-            id: "contact",
-            name: isFr ? "Section Contact" : "Contact Section",
-            slug: "contact",
+            id: "reviews",
+            name: isFr ? "Section Avis Google" : "Reviews Section",
+            slug: "reviews",
             description: isFr
-                ? "Formulaire de contact et messages d'introduction pour vos visiteurs."
-                : "Contact inquiry form and introductory copy for your visitors.",
-            icon: Mail,
-            enabled: Boolean(settings.contactSection?.enabled),
-            editUrl: `/${lang}/admin/blocks/contact`,
+                ? "Affichez dynamiquement vos avis Google My Business / Google Places avec notation par étoiles."
+                : "Dynamically display your Google My Business / Google Places reviews with star ratings.",
+            icon: Star,
+            enabled: Boolean(settings.reviewSection?.enabled || settings.reviewSection?.status === "active"),
+            editUrl: `/${lang}/admin/blocks/reviews`,
         },
         {
             id: "faq",
@@ -47,6 +47,17 @@ export function BlocksTable({ settings, lang }: BlocksTableProps) {
             icon: HelpCircle,
             enabled: Boolean(settings.faqSection?.enabled || settings.faqSection?.status === "active"),
             editUrl: `/${lang}/admin/blocks/faq`,
+        },
+        {
+            id: "contact",
+            name: isFr ? "Section Contact" : "Contact Section",
+            slug: "contact",
+            description: isFr
+                ? "Formulaire de contact et messages d'introduction pour vos visiteurs."
+                : "Contact inquiry form and introductory copy for your visitors.",
+            icon: Mail,
+            enabled: Boolean(settings.contactSection?.enabled),
+            editUrl: `/${lang}/admin/blocks/contact`,
         },
     ];
 

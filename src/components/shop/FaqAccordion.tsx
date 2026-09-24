@@ -94,20 +94,20 @@ export function FaqAccordion({
             <div className="w-full max-w-7xl mx-auto px-6 md:px-16">
                 {/* Header with Title and Optional Subtitle */}
                 <div className="max-w-3xl mx-auto text-center mb-12">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
                         <HelpCircle className="w-3.5 h-3.5 text-primary" />
                         <span>FAQ</span>
                     </div>
                     {title && (
                         <h2
                             id="faq-section-heading"
-                            className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4"
+                            className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mb-4"
                         >
                             {title}
                         </h2>
                     )}
                     {subtitle && (
-                        <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
+                        <p className="text-base text-muted-foreground leading-relaxed max-w-2xl mx-auto">
                             {subtitle}
                         </p>
                     )}
@@ -162,7 +162,7 @@ export function FaqAccordion({
                                     )}
                                 >
                                     <div className="overflow-hidden">
-                                        <div className="pb-6 pt-1 text-muted-foreground text-sm sm:text-base leading-relaxed whitespace-pre-line">
+                                        <div className="pb-6 pt-1 text-base text-muted-foreground leading-relaxed whitespace-pre-line">
                                             {item.answer}
                                         </div>
                                     </div>

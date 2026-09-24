@@ -86,7 +86,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                 <Button variant="ghost" size="icon" aria-label={srOnlyLabel} className="relative cursor-pointer">
                     <ShoppingCart className="h-5 w-5" />
                     {totalItems > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white" aria-hidden="true">
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white" aria-hidden="true">
                             {totalItems}
                         </span>
                     )}

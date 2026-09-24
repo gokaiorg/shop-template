@@ -229,7 +229,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                 </h2>
                             </div>
                             {catalogBannerUrlValue && (
-                                <Badge variant="outline" className="text-[10px]">Active</Badge>
+                                <Badge variant="outline" className="text-xs">Active</Badge>
                             )}
                         </div>
                         <p className="text-sm text-muted-foreground mb-4">

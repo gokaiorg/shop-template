@@ -448,7 +448,7 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                             ) : <div />}
                             <AdminQuickEdit entityType="product" id={product.id} locale={lang} />
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">{title}</h1>
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">{title}</h1>
                         {!product.hidePrice && (
                             <div className="mt-4">
                                 <ProductPrice price={product.price} locale={lang} className="text-3xl font-semibold text-foreground" />

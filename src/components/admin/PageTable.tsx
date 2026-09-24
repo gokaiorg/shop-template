@@ -96,12 +96,12 @@ function SortablePageRow({ page, lang }: SortablePageRowProps) {
             <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex gap-1.5 whitespace-nowrap">
                     {page.showInHeader && (
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge variant="outline" className="text-xs">
                             Header
                         </Badge>
                     )}
                     {page.showInFooter && (
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge variant="outline" className="text-xs">
                             Footer
                         </Badge>
                     )}

@@ -255,7 +255,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                     <div className="absolute inset-0 bg-black/40 pointer-events-none z-[1]" />
 
                     <div className="relative z-10 px-6 max-w-4xl mx-auto flex flex-col items-center">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight drop-shadow-md">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight drop-shadow-md">
                             {catalogTitle}
                         </h1>
                         {catalogDescription && (

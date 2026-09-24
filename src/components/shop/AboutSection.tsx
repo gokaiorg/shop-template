@@ -92,7 +92,7 @@ export function AboutSection({
                     >
                         <div
                             className={cn(
-                                "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs font-semibold uppercase tracking-wider backdrop-blur-md shadow-xs",
+                                "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider backdrop-blur-md shadow-xs",
                                 hasImages ? "self-start" : "mx-auto"
                             )}
                         >
@@ -103,7 +103,7 @@ export function AboutSection({
                         {title && (
                             <h2
                                 id="homepage-about-heading"
-                                className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]"
+                                className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground leading-tight"
                             >
                                 {title}
                             </h2>
@@ -112,7 +112,7 @@ export function AboutSection({
                         {description && (
                             <p
                                 className={cn(
-                                    "text-muted-foreground text-base sm:text-lg leading-relaxed whitespace-pre-wrap",
+                                    "text-base text-muted-foreground leading-relaxed whitespace-pre-wrap",
                                     !hasImages && "max-w-2xl mx-auto"
                                 )}
                             >

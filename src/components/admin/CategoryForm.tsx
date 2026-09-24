@@ -558,14 +558,14 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                                                                         }}
                                                                     >
                                                                         <RotateCcw className="h-3 w-3" />
-                                                                        <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                                        <span className="text-xs">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
                                                                     </Button>
                                                                 </div>
 
                                                                 <div className="min-w-0 overflow-hidden">
                                                                     <Badge
                                                                         variant="secondary"
-                                                                        className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                                        className="font-mono text-xs px-2 py-0.5 max-w-full truncate block"
                                                                         title={previewUrl}
                                                                     >
                                                                         {previewUrl}
@@ -624,14 +624,14 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                                                             }}
                                                         >
                                                             <RotateCcw className="h-3 w-3" />
-                                                            <span className="text-[11px]">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
+                                                            <span className="text-xs">{lang?.startsWith("fr") ? "Regénérer" : "Regenerate"}</span>
                                                         </Button>
                                                     </div>
 
                                                     <div className="min-w-0 overflow-hidden">
                                                         <Badge
                                                             variant="secondary"
-                                                            className="font-mono text-[11px] px-2 py-0.5 max-w-full truncate block"
+                                                            className="font-mono text-xs px-2 py-0.5 max-w-full truncate block"
                                                             title={previewUrl}
                                                         >
                                                             {previewUrl}

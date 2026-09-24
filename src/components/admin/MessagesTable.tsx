@@ -337,7 +337,7 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
                           </span>
                         </div>
                         {msg.brandKey && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border shrink-0">
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground border shrink-0">
                             {msg.brandName || msg.brandKey}
                           </span>
                         )}

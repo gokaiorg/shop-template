@@ -55,10 +55,21 @@ export const faqSectionSchema = z.object({
 export type FaqItemFormData = z.infer<typeof faqItemSchema>;
 export type FaqSectionFormData = z.infer<typeof faqSectionSchema>;
 
+export const reviewSectionSchema = z.object({
+    enabled: z.boolean().default(false),
+    status: z.enum(['active', 'inactive']).default('inactive'),
+    title: z.union([z.record(z.string(), z.string()), z.string()]).default({}),
+    subtitle: z.union([z.record(z.string(), z.string()), z.string()]).optional().default({}),
+    placeId: z.string().default(''),
+});
+
+export type ReviewSectionFormData = z.infer<typeof reviewSectionSchema>;
+
 export const blocksSchema = z.object({
     aboutSection: aboutSectionSchema,
     contactSection: contactSectionSchema.optional(),
     faqSection: faqSectionSchema.optional(),
+    reviewSection: reviewSectionSchema.optional(),
 });
 
 export type BlocksFormData = z.infer<typeof blocksSchema>;
@@ -86,6 +97,7 @@ export const globalSettingsSchema = z.object({
     aboutSection: aboutSectionSchema.optional(),
     contactSection: contactSectionSchema.optional(),
     faqSection: faqSectionSchema.optional(),
+    reviewSection: reviewSectionSchema.optional(),
     cartEnabled: z.boolean().optional(),
 });
 

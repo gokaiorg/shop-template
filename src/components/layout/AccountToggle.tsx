@@ -107,7 +107,7 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
             label: adminDict.messages || "Messages",
             icon: Mail,
             badge: unreadCount > 0 ? (
-                <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-bold text-white">
                     {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
             ) : null,
@@ -138,7 +138,7 @@ export function AccountToggle({ lang, dict }: { lang: string, dict: any }) {
                         <User className="h-[1.2rem] w-[1.2rem]" />
                         <span className="sr-only">{accountLabel}</span>
                         {isAdmin && unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white pointer-events-none">
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white pointer-events-none">
                                 {unreadCount > 99 ? "99+" : unreadCount}
                             </span>
                         )}

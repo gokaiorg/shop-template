@@ -3,6 +3,7 @@ import { StoreSettings } from "@/types/database";
 import { AboutSection } from "@/components/shop/AboutSection";
 import { FaqAccordion } from "@/components/shop/FaqAccordion";
 import { ContactSection } from "@/components/shop/ContactSection";
+import { ReviewBlock } from "@/components/shop/ReviewBlock";
 import { cn } from "@/lib/utils";
 
 export interface CmsBlockRendererProps {
@@ -14,7 +15,7 @@ export interface CmsBlockRendererProps {
     className?: string;
 }
 
-const DEFAULT_BLOCK_ORDER = ["about", "faq", "contact"];
+const DEFAULT_BLOCK_ORDER = ["about", "reviews", "faq", "contact"];
 
 export function CmsBlockRenderer({
     blocks,
@@ -56,6 +57,24 @@ export function CmsBlockRenderer({
                     component: (
                         <AboutSection
                             aboutSection={storeSettings.aboutSection}
+                            lang={lang}
+                            forceDisplay={shouldForce}
+                            as="div"
+                        />
+                    ),
+                });
+            }
+        } else if (blockKey === "reviews") {
+            const isEnabled =
+                shouldForce ||
+                Boolean(storeSettings.reviewSection?.enabled || storeSettings.reviewSection?.status === "active");
+            const hasPlaceId = Boolean(storeSettings.reviewSection?.placeId?.trim());
+            if (isEnabled && storeSettings.reviewSection && (hasPlaceId || shouldForce)) {
+                renderedBlocks.push({
+                    key: "reviews",
+                    component: (
+                        <ReviewBlock
+                            reviewSection={storeSettings.reviewSection}
                             lang={lang}
                             forceDisplay={shouldForce}
                             as="div"

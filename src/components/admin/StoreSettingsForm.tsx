@@ -342,7 +342,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                         <FormLabel className="flex items-center justify-between">
                                             <span>{lang === "fr" ? "Logo de la boutique" : "Brand Logo"}</span>
                                             {field.value && (
-                                                <Badge variant="outline" className="text-[10px]">Active</Badge>
+                                                <Badge variant="outline" className="text-xs">Active</Badge>
                                             )}
                                         </FormLabel>
                                         <FormControl>
@@ -387,7 +387,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                         <FormLabel className="flex items-center justify-between">
                                             <span>{lang === "fr" ? "Icône Favicon" : "Favicon Icon"}</span>
                                             {field.value && (
-                                                <Badge variant="outline" className="text-[10px]">Active</Badge>
+                                                <Badge variant="outline" className="text-xs">Active</Badge>
                                             )}
                                         </FormLabel>
                                         <FormControl>
@@ -527,7 +527,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                     <FormLabel className="flex items-center justify-between">
                                         <span>{lang === "fr" ? "Image d'arrière-plan Hero (Parallaxe)" : "Hero Background Image (Parallax)"}</span>
                                         {field.value && (
-                                            <Badge variant="outline" className="text-[10px]">Active</Badge>
+                                            <Badge variant="outline" className="text-xs">Active</Badge>
                                         )}
                                     </FormLabel>
                                     <FormControl>

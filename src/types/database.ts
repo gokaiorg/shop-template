@@ -203,6 +203,22 @@ export interface FaqSectionSettings {
   items: FaqItem[];
 }
 
+export interface ReviewSectionSettings {
+  enabled?: boolean;
+  status: 'active' | 'inactive';
+  title?: Record<string, string> | string;
+  subtitle?: Record<string, string> | string;
+  placeId: string;
+}
+
+export interface GoogleReview {
+  author_name: string;
+  rating: number;
+  text: string;
+  profile_photo_url: string;
+  relative_time_description?: string;
+}
+
 export interface StoreSettings {
   id?: string;
   brandName: string;
@@ -229,6 +245,7 @@ export interface StoreSettings {
   aboutSection?: AboutSectionSettings;
   contactSection?: ContactSectionSettings;
   faqSection?: FaqSectionSettings;
+  reviewSection?: ReviewSectionSettings;
   cartEnabled?: boolean;
   updatedAt?: Date | string;
 }
