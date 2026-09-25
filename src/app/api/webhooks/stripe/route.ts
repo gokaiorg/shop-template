@@ -38,15 +38,23 @@ export async function POST(req: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
 
     if (event.type === "checkout.session.completed") {
-        const orderId = session.metadata?.orderId;
+        const orderId = session.metadata?.orderId || session.client_reference_id;
 
         if (!orderId) {
-            return new NextResponse("Order ID not found in session metadata", {
-                status: 400,
-            });
+            console.warn("[STRIPE_WEBHOOK] No orderId or client_reference_id found on checkout session:", session.id);
+            return new NextResponse("Order reference missing from session", { status: 400 });
         }
 
         try {
+            // =========================================================================
+            // TODO: [ORDER FULFILLMENT & DATABASE LOGIC]
+            // Insert your primary database creation / fulfillment logic here:
+            // 1. Mark order as PAID in your database (Firestore/Prisma/SQL).
+            // 2. Decrement product inventory quantities.
+            // 3. Trigger transactional confirmation emails to customer (e.g. Resend/Postmark).
+            // 4. Dispatch webhooks / notifications to fulfillment centers or Slack.
+            // =========================================================================
+
             const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
                 expand: ['data.price.product']
             });
