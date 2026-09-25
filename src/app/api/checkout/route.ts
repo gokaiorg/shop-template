@@ -111,21 +111,27 @@ export async function POST(req: Request) {
                 };
             });
 
-            const session = await stripe.checkout.sessions.create({
-                payment_method_types: ["card"],
-                line_items: line_items,
+            const checkoutSession = await stripe.checkout.sessions.create({
+                ui_mode: "hosted",
+                billing_address_collection: "auto",
                 mode: "payment",
+                line_items: line_items,
                 success_url: `${origin}/${lang}/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
                 cancel_url: `${origin}/${lang}`,
+                customer_email: session?.user?.email || undefined,
+                client_reference_id: orderId,
                 metadata: {
                     orderId: orderId,
+                    integration_identifier: "shop-template",
+                    origin_context: "hosted_checkout",
+                    userId: session?.user?.id || "",
                 },
             });
 
-            if (session.url) {
-                checkoutUrl = session.url;
+            if (checkoutSession.url) {
+                checkoutUrl = checkoutSession.url;
                 await orderRef.update({
-                    stripeSessionId: session.id,
+                    stripeSessionId: checkoutSession.id,
                 });
             }
         }
