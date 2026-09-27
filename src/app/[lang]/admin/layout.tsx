@@ -50,7 +50,12 @@ export default async function AdminLayout({
 
     return (
         <SessionProvider session={session}>
-            <div className="flex min-h-screen flex-col md:flex-row bg-background">
+            <script
+                dangerouslySetInnerHTML={{
+                    __html: `document.documentElement.setAttribute('data-admin', 'true'); document.documentElement.setAttribute('data-admin-root', 'true'); document.body.setAttribute('data-admin', 'true'); document.body.setAttribute('data-admin-root', 'true'); document.body.style.setProperty('--font-storefront', 'var(--font-geist-sans)'); document.body.style.setProperty('--font-sans', 'var(--font-geist-sans)'); document.body.style.setProperty('font-family', 'var(--font-geist-sans), sans-serif');`,
+                }}
+            />
+            <div data-admin-root className="flex min-h-screen flex-col md:flex-row bg-background">
                 {/* Desktop Sidebar */}
                 <Aside lang={lang} dict={dict} session={session} />
 

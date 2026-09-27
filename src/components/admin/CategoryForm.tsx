@@ -483,7 +483,7 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                                                     aspectRatio="video"
                                                     lang={lang}
                                                     title={lang?.startsWith("fr") ? "Cliquez ou glissez-déposez la bannière de catégorie" : "Click or drag category banner here"}
-                                                    recommendedText={lang?.startsWith("fr") ? "Recommandé : 1200×600px paysage (JPEG, PNG, WebP)" : "Recommended: 1200×600px landscape image (JPEG, PNG, WebP)"}
+                                                    recommendedText={lang?.startsWith("fr") ? "Recommandé : 1200×600px paysage (JPEG, PNG, WebP, AVIF)" : "Recommended: 1200×600px landscape image (JPEG, PNG, WebP, AVIF)"}
                                                     onUpload={(file) => uploadProductImage(file, `categories/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`)}
                                                     disabled={isLoading}
                                                 />

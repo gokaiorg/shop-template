@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { getUnreadMessagesCount } from "@/actions/contact";
 
 /**
- * Custom hook to listen to unread messages count in real-time.
- * - For Admin: listens to unread incoming messages across contact_messages and messages.
- * - For Authenticated User: listens to unread replies/messages intended for their userId.
+ * Custom hook to track unread messages count.
+ * Uses secure Server Actions (adminDb count queries) with event-driven updates,
+ * tab focus sync, and periodic polling, avoiding unstable client-side WebChannel connections.
+ * - For Admin: counts unread incoming messages across contact_messages and messages.
+ * - For Authenticated User: counts unread replies/messages intended for their userId.
  */
 export function useUnreadMessages(sessionProp?: any) {
   const { data: clientSession } = useSession();
@@ -19,133 +19,58 @@ export function useUnreadMessages(sessionProp?: any) {
   const isAdmin = (session?.user?.role || "").toLowerCase() === "admin";
   const userId = session?.user?.id;
 
-  useEffect(() => {
-    // If not authenticated, count is 0
+  const refreshCount = useCallback(async () => {
     if (!session?.user) {
       setUnreadCount(0);
       return;
     }
 
-    let unsubscribeMessages: (() => void) | null = null;
-    let unsubscribeContactMessages: (() => void) | null = null;
-
-    if (isAdmin) {
-      let countMessages = 0;
-      let countContact = 0;
-
-      const updateCombined = () => {
-        setUnreadCount(countMessages + countContact);
-      };
-
-      // 1. Initial count check via Server Action
-      getUnreadMessagesCount()
-        .then((count) => {
-          setUnreadCount(count);
-        })
-        .catch((err) => {
-          console.debug("Server count fetch error:", err);
-        });
-
-      // 2. Real-time Firestore onSnapshot listeners
-      if (db) {
-        try {
-          const qMessages = query(
-            collection(db, "messages"),
-            where("status", "==", "unread")
-          );
-          unsubscribeMessages = onSnapshot(
-            qMessages,
-            (snapshot) => {
-              countMessages = snapshot.size;
-              updateCombined();
-            },
-            (error) => {
-              console.debug("Messages onSnapshot listener notice:", error.message);
-            }
-          );
-        } catch (err) {
-          console.debug("Failed to attach messages listener:", err);
-        }
-
-        try {
-          const qContact = query(
-            collection(db, "contact_messages"),
-            where("status", "==", "unread")
-          );
-          unsubscribeContactMessages = onSnapshot(
-            qContact,
-            (snapshot) => {
-              countContact = snapshot.size;
-              updateCombined();
-            },
-            (error) => {
-              console.debug("Contact messages onSnapshot listener notice:", error.message);
-            }
-          );
-        } catch (err) {
-          console.debug("Failed to attach contact_messages listener:", err);
-        }
-      }
-
-      // 3. Listen to local event when messages are updated
-      const handleLocalUpdate = () => {
-        getUnreadMessagesCount().then((count) => {
-          setUnreadCount(count);
-        });
-      };
-      window.addEventListener("messages-updated", handleLocalUpdate);
-
-      return () => {
-        if (unsubscribeMessages) unsubscribeMessages();
-        if (unsubscribeContactMessages) unsubscribeContactMessages();
-        window.removeEventListener("messages-updated", handleLocalUpdate);
-      };
-    } else if (userId) {
-      // Regular user: fetch unread replies/messages
-      getUnreadMessagesCount(userId)
-        .then((count) => {
-          setUnreadCount(count);
-        })
-        .catch((err) => {
-          console.debug("Server user count fetch error:", err);
-        });
-
-      if (db) {
-        try {
-          const qUserMessages = query(
-            collection(db, "contact_messages"),
-            where("userId", "==", userId)
-          );
-          unsubscribeContactMessages = onSnapshot(
-            qUserMessages,
-            (snapshot) => {
-              const unreadUserCount = snapshot.docs.filter(
-                (d) => d.data()?.userUnread === true
-              ).length;
-              setUnreadCount(unreadUserCount);
-            },
-            (error) => {
-              console.debug("User messages onSnapshot listener notice:", error.message);
-            }
-          );
-        } catch (err) {
-          console.debug("Failed to attach user messages listener:", err);
-        }
-      }
-
-      const handleUserLocalUpdate = () => {
-        getUnreadMessagesCount(userId).then((count) => {
-          setUnreadCount(count);
-        });
-      };
-      window.addEventListener("messages-updated", handleUserLocalUpdate);
-
-      return () => {
-        if (unsubscribeContactMessages) unsubscribeContactMessages();
-        window.removeEventListener("messages-updated", handleUserLocalUpdate);
-      };
+    try {
+      const count = await getUnreadMessagesCount(isAdmin ? undefined : userId);
+      setUnreadCount(count);
+    } catch (err) {
+      console.debug("Failed to refresh unread messages count:", err);
     }
   }, [isAdmin, userId, session?.user]);
+
+  useEffect(() => {
+    if (!session?.user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    // 1. Initial count check
+    refreshCount();
+
+    // 2. Event-driven updates when messages are modified locally
+    const handleLocalUpdate = () => {
+      refreshCount();
+    };
+    window.addEventListener("messages-updated", handleLocalUpdate);
+
+    // 3. Tab focus / visibility change update
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshCount();
+      }
+    };
+    window.addEventListener("focus", handleLocalUpdate);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // 4. Periodic polling every 30 seconds when tab is active
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        refreshCount();
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener("messages-updated", handleLocalUpdate);
+      window.removeEventListener("focus", handleLocalUpdate);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, [refreshCount, session?.user]);
 
   return unreadCount;
 }

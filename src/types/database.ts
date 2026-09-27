@@ -254,6 +254,8 @@ export interface StoreSettings {
   defaultTheme?: 'light' | 'dark' | 'system';
   defaultCurrency?: string;
   primaryColor?: string;
+  borderStyle?: 'rounded' | 'squared';
+  fontFamily?: string;
   vendors?: string[];
   aboutSection?: AboutSectionSettings;
   contactSection?: ContactSectionSettings;

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
+import { ALL_FONT_CLASSES, GEIST_FONT_CLASSES, getStorefrontFontVariable } from "@/app/fonts";
+import { StorefrontThemeManager } from "@/components/providers/StorefrontThemeManager";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { BrandProvider } from "@/components/providers/BrandProvider";
 import { getActiveBrand, getActiveBrandKey, getIsCartEnabled } from "@/config/brand.config";
@@ -10,16 +12,6 @@ import { BrandConfig } from "@/config/types";
 import { getLocalizedField } from "@/lib/i18n";
 import { GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export async function generateMetadata({
   params,
@@ -93,12 +85,50 @@ export default async function RootLayout({
   const { theme } = brand;
   const colors = theme.colors;
 
+  const headersList = await headers();
+  const headerPathname = headersList.get("x-pathname") || "";
+  const isAdmin = headerPathname.includes("/admin");
+
+  const isSquared = storeSettings.borderStyle === "squared";
+  const brandRadius = (!isAdmin && isSquared) ? "0px" : (theme.radius || "0.625rem");
+
+  // Switch / case pour assigner la valeur de la base de données à la variable pivot --font-storefront
+  let storefrontFontVariable = "var(--font-geist-sans)";
+  switch (storeSettings.fontFamily) {
+    case "Space Grotesk":
+    case "space-grotesk":
+      storefrontFontVariable = "var(--font-space-grotesk)";
+      break;
+    case "Manrope":
+    case "manrope":
+      storefrontFontVariable = "var(--font-manrope)";
+      break;
+    case "Pixelify Sans":
+    case "pixelify-sans":
+    case "pixelify":
+      storefrontFontVariable = "var(--font-pixelify)";
+      break;
+    case "Inter":
+    case "inter":
+      storefrontFontVariable = "var(--font-inter)";
+      break;
+    case "Geist":
+    case "geist":
+      storefrontFontVariable = "var(--font-geist-sans)";
+      break;
+    default:
+      storefrontFontVariable = getStorefrontFontVariable(storeSettings.fontFamily);
+      break;
+  }
+
   const fallbackPrimaryColor = brandKey === "art-fate" ? "#14B3F6" : "#0f172a";
   const primaryColor = storeSettings.primaryColor || fallbackPrimaryColor;
 
   const brandStyles = `
     :root {
-      --radius: ${theme.radius || '0.625rem'};
+      --radius: ${brandRadius};
+      --font-storefront: ${isAdmin ? 'var(--font-geist-sans)' : storefrontFontVariable};
+      --font-sans: ${isAdmin ? 'var(--font-geist-sans)' : 'var(--font-storefront)'};
       --theme-primary: ${primaryColor};
       --primary: var(--theme-primary);
       --primary-foreground: #ffffff;
@@ -106,6 +136,18 @@ export default async function RootLayout({
       ${colors?.light?.background ? `--background: ${colors.light.background};` : ''}
       ${colors?.light?.foreground ? `--foreground: ${colors.light.foreground};` : ''}
     }
+    ${!isAdmin ? `
+    html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) {
+      --font-storefront: ${storefrontFontVariable};
+      font-family: var(--font-storefront);
+    }
+    html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) input,
+    html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) button,
+    html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) select,
+    html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) textarea {
+      font-family: var(--font-storefront);
+    }
+    ` : ''}
     .dark {
       --theme-primary: ${primaryColor};
       --primary: var(--theme-primary);
@@ -124,13 +166,30 @@ export default async function RootLayout({
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID || fallbackGtmId;
 
   return (
-    <html lang={lang} suppressHydrationWarning>
+    <html
+      lang={lang}
+      suppressHydrationWarning
+      data-admin={isAdmin ? "true" : undefined}
+      data-admin-root={isAdmin ? "true" : undefined}
+      className={`${ALL_FONT_CLASSES} ${!isAdmin && isSquared ? "theme-squared" : ""} ${forcedTheme === "dark" || defaultTheme === "dark" ? "dark" : ""}`.trim()}
+    >
       <head>
         {brand.assets.favicon && <link rel="icon" href={brand.assets.favicon} />}
         <style dangerouslySetInnerHTML={{ __html: brandStyles }} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
+        data-admin={isAdmin ? "true" : undefined}
+        data-admin-root={isAdmin ? "true" : undefined}
+        style={isAdmin ? {
+          ['--font-storefront' as any]: 'var(--font-geist-sans)',
+          ['--font-sans' as any]: 'var(--font-geist-sans)',
+          fontFamily: 'var(--font-geist-sans), sans-serif',
+        } : {
+          ['--font-storefront' as any]: storefrontFontVariable,
+          fontFamily: 'var(--font-storefront)',
+        }}
+        className={`${isAdmin ? GEIST_FONT_CLASSES : ALL_FONT_CLASSES} antialiased font-sans`}
       >
         <ThemeProvider
           attribute="class"
@@ -139,6 +198,12 @@ export default async function RootLayout({
           enableSystem={defaultTheme === 'system'}
           disableTransitionOnChange
         >
+          <StorefrontThemeManager
+            isSquared={isSquared}
+            storefrontFont={storefrontFontVariable}
+            defaultTheme={defaultTheme}
+            forcedTheme={forcedTheme}
+          />
           <BrandProvider
             brand={brand}
             brandKey={brandKey}

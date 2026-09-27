@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { SessionProvider } from "next-auth/react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { AccountToggle } from "./AccountToggle";

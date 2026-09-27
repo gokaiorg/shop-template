@@ -21,21 +21,28 @@ Setting up a new brand requires creating an isolated infrastructure to ensure da
 
 1. From the [Firebase Console](https://console.firebase.google.com/), create a new project (e.g., `gokai-labs`). This automatically generates an associated Google Cloud Platform (GCP) project.
 2. Add a **Web App** (`</>`) in the project settings to generate the `firebaseConfig` object.
-3. In the **Build** menu, navigate to **Firestore Database** and explicitly click **Create Database**. Choose your hosting region (e.g., `europe-west1`) and start in Production Mode. *(Note: Failing to explicitly create the database will result in a `5 NOT_FOUND` server error).*
+3. In the **Database and storage** menu, navigate to **Firestore** and explicitly click **Create Database**. Choose your hosting region (e.g., `europe-west1`) and start in Production Mode. *(Note: Failing to explicitly create the database will result in a `5 NOT_FOUND` server error).*
 4. In the **Build** menu, enable **Storage** for hosting product images.
 5. Go to **Project settings > Service accounts** and generate a new private key to obtain the server admin credentials (`client_email` and `private_key`).
 
 ### Step B: Local Environment Configuration
 
 1. Duplicate the `.env.example` file to `.env.[brand-identifier]`.
-2. Fill in the Firebase client variables (`NEXT_PUBLIC_FIREBASE_API_KEY`, `PROJECT_ID`, `STORAGE_BUCKET`, etc.) with the Web App keys.
-3. Fill in the admin variables (`FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY`) with the Service Account keys to allow the use of the Firebase Admin SDK (essential for SSR rendering).
+2. Fill in the client variables (`NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, and `NEXT_PUBLIC_FIREBASE_APP_ID`). You can find these keys in the Firebase Console under **Project settings > General > Your apps (Web App section)** inside the `firebaseConfig` object.
+3. Fill in the admin variables (`FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY`) to allow the use of the Firebase Admin SDK (essential for SSR rendering). These specific keys are located inside the **Service Account JSON file** downloaded in Step A.
    * ⚠️ **CRITICAL:** The `FIREBASE_PRIVATE_KEY` must be wrapped in **double quotes** to correctly parse the `\n` line breaks (e.g., `FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"`). If improperly formatted, the server will throw a `16 UNAUTHENTICATED` error.
 4. Generate a new NextAuth secret using the command `npx auth secret` and add it to `AUTH_SECRET`.
 
 ### Step C: Firestore Rules, Indexes & Cache Cleanup
 
 Because the application is strictly secured against client-side writes, you must deploy the security rules and indexes to your newly created Firestore database.
+
+> **⚠️ CRITICAL: Billing Required (Blaze Plan)**
+> Before deploying, your Firebase project **must** be upgraded to the **Blaze (Pay-as-you-go) plan**. Deploying database instances via the CLI (e.g., creating the `shop-template-database`) requires an active Google Cloud Billing account.
+> 
+> 1. Go to the Firebase Console > Project Overview (bottom left) > **Upgrade**.
+> 2. Select the Blaze plan and link a billing account.
+> *(Note: The generous free tier limits still apply, so standard development will incur no charges).*
 
 1. **Authenticate the CLI (without global install):**
    ```bash
@@ -56,6 +63,9 @@ Because the application is strictly secured against client-side writes, you must
 ### Step D: Storage Configuration (CORS & Security)
 
 By default, Firebase Storage blocks direct requests from a web browser (localhost) and secures read/write access.
+
+> **⚠️ IMPORTANT: Storage Bucket Initialization**
+> Before running the commands below, ensure you have explicitly initialized Firebase Storage. Go to the Firebase Console > **Build** > **Storage** and click **Get Started**. Failing to do this will result in a `404 Not Found` error when attempting to apply the CORS rules via the CLI.
 
 1. **CORS Rules:** Create a `cors.json` file at the root of the project:
 ```json
@@ -95,7 +105,7 @@ The deployment relies on the code hosted on GitHub and is managed by Google Clou
 
 1. **Enable APIs:** On the brand's GCP project, enable the **Cloud Build** and **Cloud Run** APIs.
 2. **Create Service:** In Cloud Run, create a new service and select the **Continuously deploy from a repository** option.
-3. **GitHub Connection:** Link the GitHub repository and target the appropriate production branch (e.g., `main` for Shop Template, `release/art-fate` for Art Fate).
+3. **GitHub Connection:** Link the GitHub repository and target the appropriate production branch (e.g., `main` for Shop Template).
 4. **Container Configuration:** In the *Variables & Secrets* tab, manually enter all the variables defined in the local `.env.[brand]` file. **This is a critical step for Next.js to compile with the correct context.**
 5. **Public Access:** Check the "Allow unauthenticated invocations" option to make the site accessible to customers.
 6. Pushing the final code to the targeted branch will automatically trigger the build and deployment via Google Cloud Build.

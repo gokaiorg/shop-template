@@ -552,7 +552,7 @@ export function ProductForm({
                                                 maxFiles={10}
                                                 lang={lang}
                                                 title={dict.uploadImage || (lang?.startsWith("fr") ? "Cliquez ou glissez-déposez des images ici" : "Click or drag images here")}
-                                                recommendedText={lang?.startsWith("fr") ? "PNG, JPG, WEBP • Plusieurs fichiers autorisés" : "PNG, JPG, WEBP • Multiple files allowed"}
+                                                recommendedText={lang?.startsWith("fr") ? "PNG, JPG, WEBP, AVIF • Plusieurs fichiers autorisés" : "PNG, JPG, WEBP, AVIF • Multiple files allowed"}
                                                 onUpload={uploadProductImage}
                                                 disabled={isLoading}
                                             />

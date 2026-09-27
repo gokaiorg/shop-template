@@ -26,6 +26,8 @@ export default async function ShopLayout({
         getAllPublishedCategories(),
     ]);
 
+    const serializedSession = session ? JSON.parse(JSON.stringify(session)) : null;
+
     const headerPages = publishedPages
         .filter((p) => p.showInHeader)
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -34,12 +36,12 @@ export default async function ShopLayout({
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     return (
-        <SessionProvider session={session}>
-            <div className="flex min-h-screen flex-col">
+        <SessionProvider session={serializedSession}>
+            <div className="flex min-h-screen flex-col" suppressHydrationWarning>
                 <Header
                     lang={lang}
                     dict={dict}
-                    session={session}
+                    session={serializedSession}
                     pages={headerPages}
                     categories={headerCategories}
                     mobileCategories={allCategories}

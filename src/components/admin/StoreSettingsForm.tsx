@@ -14,6 +14,8 @@ import {
     Sparkles,
     Palette,
     Coins,
+    Square,
+    Type,
     Plus,
     Share2,
     LayoutGrid,
@@ -21,6 +23,7 @@ import {
     ExternalLink,
     ArrowLeft,
 } from "lucide-react";
+import { FONT_OPTIONS_LIST } from "@/app/fonts";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 
 import { Button } from "@/components/ui/button";
@@ -105,6 +108,8 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
             footerRightMenuTitle: defaultFooterRightMenuTitle,
             socialLinks: initialData.socialLinks || [],
             defaultTheme: initialData.defaultTheme || "system",
+            borderStyle: initialData.borderStyle || "rounded",
+            fontFamily: initialData.fontFamily || "Geist",
             defaultCurrency: initialData.defaultCurrency || "THB",
         },
     });
@@ -227,7 +232,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                         />
 
                         {/* Theme & Currency Dropdowns */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t">
                             {/* Default Theme */}
                             <FormField
                                 control={form.control}
@@ -245,15 +250,95 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="system">System Preference (Allows User Toggle)</SelectItem>
-                                                <SelectItem value="light">Light Mode (Enforced Across Site)</SelectItem>
-                                                <SelectItem value="dark">Dark Mode (Enforced Across Site)</SelectItem>
+                                                <SelectItem value="system">{lang === "fr" ? "Préférence système" : "System Preference"}</SelectItem>
+                                                <SelectItem value="light">{lang === "fr" ? "Mode clair" : "Light Mode"}</SelectItem>
+                                                <SelectItem value="dark">{lang === "fr" ? "Mode sombre" : "Dark Mode"}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormDescription className="text-xs">
                                             {field.value === "system"
                                                 ? "Visitors can freely switch between light and dark modes via header toggle."
                                                 : `Site is locked to ${field.value} mode. The theme toggle is hidden.`}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Typography / Font Family */}
+                            <FormField
+                                control={form.control}
+                                name="fontFamily"
+                                render={({ field }) => {
+                                    const normalizedFontValue = (() => {
+                                        const val = (field.value || "").trim().toLowerCase();
+                                        if (val === "space grotesk" || val === "space-grotesk") return "Space Grotesk";
+                                        if (val === "manrope") return "Manrope";
+                                        if (val === "pixelify sans" || val === "pixelify-sans" || val === "pixelify") return "Pixelify Sans";
+                                        if (val === "inter") return "Inter";
+                                        return "Geist";
+                                    })();
+
+                                    return (
+                                        <FormItem>
+                                            <FormLabel className="flex items-center gap-2">
+                                                <Type className="h-4 w-4 text-muted-foreground" />
+                                                {lang === "fr" ? "Typographie" : "Typography"}
+                                            </FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={normalizedFontValue}
+                                                value={normalizedFontValue}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full cursor-pointer">
+                                                        <SelectValue placeholder="Select typography" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Geist">Geist</SelectItem>
+                                                    <SelectItem value="Inter">Inter</SelectItem>
+                                                    <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
+                                                    <SelectItem value="Manrope">Manrope</SelectItem>
+                                                    <SelectItem value="Pixelify Sans">Pixelify Sans</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormDescription className="text-xs">
+                                                {lang === "fr"
+                                                    ? "Police d'écriture globale appliquée à l'ensemble de la boutique."
+                                                    : "Global typography applied across the entire storefront."}
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    );
+                                }}
+                            />
+
+                            {/* Border Style */}
+                            <FormField
+                                control={form.control}
+                                name="borderStyle"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2">
+                                            <Square className="h-4 w-4 text-muted-foreground" />
+                                            {lang === "fr" ? "Style des bordures" : "Border Style"}
+                                        </FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value || "rounded"} value={field.value || "rounded"}>
+                                            <FormControl>
+                                                <SelectTrigger className="w-full cursor-pointer">
+                                                    <SelectValue placeholder="Select border style" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="rounded">{lang === "fr" ? "Arrondi" : "Rounded"}</SelectItem>
+                                                <SelectItem value="squared">{lang === "fr" ? "Carré" : "Squared"}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription className="text-xs">
+                                            {lang === "fr"
+                                                ? "Désactive tous les arrondis (0px) pour un look pixel art ou rétro."
+                                                : "Completely disables border-radius (0px) for pixel art or retro aesthetics."}
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -353,8 +438,8 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                 aspectRatio="square"
                                                 recommendedText={
                                                     lang === "fr"
-                                                        ? "PNG, SVG ou WebP recommandé"
-                                                        : "PNG, SVG, or WebP recommended"
+                                                        ? "PNG, SVG, WebP ou AVIF recommandé"
+                                                        : "PNG, SVG, WebP, or AVIF recommended"
                                                 }
                                                 onUpload={(file) => uploadBrandAsset(file, "logo")}
                                                 lang={lang}
@@ -538,8 +623,8 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                             aspectRatio="banner"
                                             recommendedText={
                                                 lang === "fr"
-                                                    ? "Paysage haute résolution (1920×1080px+, WebP/JPEG)"
-                                                    : "High resolution landscape (1920×1080px+, WebP/JPEG)"
+                                                    ? "Paysage haute résolution (1920×1080px+, WebP/JPEG/AVIF)"
+                                                    : "High resolution landscape (1920×1080px+, WebP/JPEG/AVIF)"
                                             }
                                             onUpload={(file) => uploadBrandAsset(file, "hero")}
                                             lang={lang}
