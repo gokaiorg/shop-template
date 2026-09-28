@@ -26,6 +26,7 @@ export const aboutSectionSchema = z.object({
     ctaLabel: z.record(z.string(), z.string()).default({}),
     ctaUrl: z.string().default(''),
     images: z.array(z.string()).default([]),
+    imageRatio: z.enum(['default', 'square', 'squared']).default('default'),
 });
 
 export type AboutSectionFormData = z.infer<typeof aboutSectionSchema>;
@@ -90,11 +91,23 @@ export const globalSettingsSchema = z.object({
     footerDescription: z.record(z.string(), z.string()).optional(),
     footerRightMenuTitle: z.record(z.string(), z.string()).optional(),
     socialLinks: z.array(socialLinkSchema).optional(),
+    // Contact & Location
+    contactEmail: z.string().optional().or(z.literal('')),
+    contactPhone: z.string().optional().or(z.literal('')),
+    supportHoursEn: z.string().optional().or(z.literal('')),
+    supportHoursFr: z.string().optional().or(z.literal('')),
+    // Schema.org Entity Type & LocalBusiness Address
+    seoEntityType: z.string().optional().or(z.literal('')),
+    seoAddressStreet: z.string().optional().or(z.literal('')),
+    seoAddressLocality: z.string().optional().or(z.literal('')),
+    seoPostalCode: z.string().optional().or(z.literal('')),
+    seoCountry: z.string().optional().or(z.literal('')),
     defaultTheme: z.enum(['light', 'dark', 'system']),
     defaultCurrency: z.string().min(1, 'Currency is required'),
     primaryColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color code (e.g. #14B3F6)').optional().or(z.literal('')),
     borderStyle: z.enum(['rounded', 'squared']).default('rounded'),
     fontFamily: z.string().default('Geist'),
+    productImageRatio: z.enum(['default', 'square', 'portrait']).default('default'),
     vendors: z.array(z.string()).default([]),
     aboutSection: aboutSectionSchema.optional(),
     contactSection: contactSectionSchema.optional(),

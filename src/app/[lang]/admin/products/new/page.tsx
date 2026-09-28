@@ -6,6 +6,8 @@ import { getStoreSettings } from "@/lib/services/settings";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { PlusCircle } from "lucide-react";
 
+import { serializeFirestore } from "@/lib/utils";
+
 export default async function NewProductPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
 
@@ -16,13 +18,13 @@ export default async function NewProductPage({ params }: { params: Promise<{ lan
         getStoreSettings(),
     ]);
     const categories = categoriesSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
+        const serializedCategory = serializeFirestore(doc.data()) || {};
+        return serializeFirestore({
+            ...serializedCategory,
             id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate().toISOString() || null,
-            updatedAt: data.updatedAt?.toDate().toISOString() || null,
-        } as any;
+            createdAt: serializedCategory.createdAt || new Date().toISOString(),
+            updatedAt: serializedCategory.updatedAt || new Date().toISOString(),
+        });
     });
 
     return (

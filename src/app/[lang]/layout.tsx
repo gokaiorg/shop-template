@@ -69,8 +69,8 @@ export default async function RootLayout({
     identity: {
       ...rawBrand.identity,
       name: storeSettings.brandName || rawBrand.identity.name,
-      tagline: storeSettings.heroTitle ? (storeSettings.heroTitle as any) : rawBrand.identity.tagline,
-      description: storeSettings.heroDescription ? (storeSettings.heroDescription as any) : rawBrand.identity.description,
+      tagline: storeSettings.heroTitle ? (storeSettings.heroTitle as any) : undefined,
+      description: storeSettings.heroDescription ? (storeSettings.heroDescription as any) : undefined,
     },
     assets: {
       ...rawBrand.assets,
@@ -78,7 +78,27 @@ export default async function RootLayout({
         ...rawBrand.assets.logo,
         src: storeSettings.logoUrl || rawBrand.assets.logo.src,
       },
-      favicon: storeSettings.faviconUrl || rawBrand.assets.favicon,
+      favicon: storeSettings.faviconUrl || rawBrand.assets.favicon || rawBrand.assets.icon || '/icon.png',
+    },
+    contact: {
+      email: storeSettings.contactEmail || rawBrand.contact?.email || '',
+      phone: storeSettings.contactPhone || rawBrand.contact?.phone || '',
+      supportHours: {
+        en: storeSettings.supportHoursEn || (rawBrand.contact?.supportHours as any)?.en || '',
+        fr: storeSettings.supportHoursFr || (rawBrand.contact?.supportHours as any)?.fr || '',
+      },
+      address: {
+        street: storeSettings.seoAddressStreet || rawBrand.contact?.address?.street || '',
+        city: storeSettings.seoAddressLocality || rawBrand.contact?.address?.city || '',
+        postalCode: storeSettings.seoPostalCode || rawBrand.contact?.address?.postalCode || '',
+        country: storeSettings.seoCountry || rawBrand.contact?.address?.country || '',
+      },
+    },
+    navigation: {
+      ...(rawBrand.navigation || {}),
+      socials: storeSettings.socialLinks && storeSettings.socialLinks.length > 0
+        ? (storeSettings.socialLinks as any)
+        : rawBrand.navigation?.socials || [],
     },
   };
 
@@ -103,10 +123,13 @@ export default async function RootLayout({
     case "manrope":
       storefrontFontVariable = "var(--font-manrope)";
       break;
+    case "Jersey 25":
+    case "jersey-25":
+    case "jersey":
     case "Pixelify Sans":
     case "pixelify-sans":
     case "pixelify":
-      storefrontFontVariable = "var(--font-pixelify)";
+      storefrontFontVariable = "var(--font-jersey-25)";
       break;
     case "Inter":
     case "inter":
@@ -215,6 +238,7 @@ export default async function RootLayout({
             catalogTitle={storeSettings.catalogTitle}
             catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
             catalogSlugs={typeof storeSettings.catalogSlug === 'object' ? storeSettings.catalogSlug : { [defaultLocale]: storeSettings.catalogSlug || 'shop' }}
+            productImageRatio={storeSettings.productImageRatio || brand.theme?.productImageRatio || (brandKey === 'green-ghost' ? 'square' : 'default')}
           >
             {children}
           </BrandProvider>

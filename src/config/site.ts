@@ -33,12 +33,10 @@ export function constructSiteMetadata({
     const isFr = lang === 'fr';
     const activeBrandName = brandName || brandConfig.identity.name;
     const siteTitle = title ? formatTitle(title, activeBrandName) : `${activeBrandName} - Store`;
-    const siteDescription =
-        description ||
-        (isFr ? brandConfig.seo.defaultDescription.fr : brandConfig.seo.defaultDescription.en);
+    const siteDescription = description || '';
     const ogImage = image || brandConfig.assets.ogImage || brandConfig.assets.logo.src;
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || 'http://localhost:3000';
-    const activeFavicon = faviconUrl || brandConfig.assets.favicon || '/favicon.ico';
+    const activeIcon = faviconUrl || brandConfig.assets.icon || '/icon.png';
 
     return {
         title: {
@@ -47,7 +45,6 @@ export function constructSiteMetadata({
         },
         description: siteDescription,
         metadataBase: new URL(siteUrl),
-        keywords: brandConfig.seo.keywords,
         authors: [
             {
                 name: activeBrandName,
@@ -57,8 +54,13 @@ export function constructSiteMetadata({
         creator: activeBrandName,
         generator: "Gokai Labs",
         icons: {
-            icon: activeFavicon,
-            apple: activeFavicon || '/icon.png',
+            icon: [
+                { url: activeIcon, sizes: 'any' },
+                { url: '/favicon.ico' },
+            ],
+            apple: [
+                { url: activeIcon },
+            ],
         },
         openGraph: {
             title: siteTitle,
@@ -80,7 +82,7 @@ export function constructSiteMetadata({
             card: 'summary_large_image',
             title: siteTitle,
             description: siteDescription,
-            creator: brandConfig.seo.twitterHandle,
+            creator: brandConfig.seo?.twitterHandle || activeBrandName,
             images: [ogImage],
         },
         robots: noIndex

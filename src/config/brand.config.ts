@@ -1,4 +1,4 @@
-import { BrandConfig } from './types';
+import { BrandConfig, DEFAULT_BRAND_ASSETS } from './types';
 import { shopTemplateBrand } from './brands/shop-template';
 import { artFateBrand } from './brands/art-fate';
 import { gokaiLabsBrand } from './brands/gokai-labs';
@@ -89,6 +89,9 @@ export function getIsCartEnabled(): boolean {
 export const brandConfig: BrandConfig = new Proxy({} as BrandConfig, {
     get(_target, prop: keyof BrandConfig) {
         const active = getActiveBrand();
+        if (prop === 'assets') {
+            return active.assets || DEFAULT_BRAND_ASSETS;
+        }
         return active[prop];
     },
 });

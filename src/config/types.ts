@@ -2,16 +2,16 @@ export interface BrandIdentity {
     id: string;
     name: string;
     shortName: string;
-    tagline: {
+    tagline?: {
         en: string;
         fr: string;
     };
-    description: {
+    description?: {
         en: string;
         fr: string;
     };
-    url: string;
-    companyName: string;
+    url?: string;
+    companyName?: string;
     copyrightYear?: number;
     creator?: {
         name: string;
@@ -39,10 +39,25 @@ export interface BrandAssets {
     heroBanner?: string;
 }
 
+export const DEFAULT_BRAND_ASSETS: BrandAssets = {
+    logo: {
+        src: '/brand/default/logo.webp',
+        alt: 'Store Logo',
+        width: 32,
+        height: 32,
+    },
+    icon: '/brand/default/icon.webp',
+    favicon: '/brand/default/icon.webp',
+    ogImage: '/brand/default/hero-banner.webp',
+    placeholderImage: '/brand/default/placeholder.webp',
+    heroBanner: '/brand/default/hero-banner.webp',
+};
+
 export interface BrandTheme {
     fontSans?: string;
     fontHeading?: string;
     radius?: string; // e.g. "0.625rem", "0.375rem"
+    productImageRatio?: 'default' | 'square' | 'portrait';
     colors?: {
         light?: {
             primary?: string;
@@ -87,17 +102,11 @@ export interface BrandNavigation {
         company: HeaderNavItem[];
         legal: HeaderNavItem[];
     };
-    socials: SocialLink[];
+    socials?: SocialLink[];
 }
 
 export interface BrandSEO {
     titleTemplate: string; // e.g. "%s | Art Fate"
-    defaultTitle: string;
-    defaultDescription: {
-        en: string;
-        fr: string;
-    };
-    keywords: string[];
     twitterHandle?: string;
     robots?: {
         allow?: string | string[];
@@ -150,9 +159,9 @@ export interface BrandConfig {
     identity: BrandIdentity;
     assets: BrandAssets;
     theme: BrandTheme;
-    navigation: BrandNavigation;
-    seo: BrandSEO;
-    contact: BrandContact;
+    navigation?: Partial<BrandNavigation>;
+    seo?: Partial<BrandSEO>;
+    contact?: Partial<BrandContact>;
     supportedLocales?: string[];
     defaultLocale?: string;
     features?: {

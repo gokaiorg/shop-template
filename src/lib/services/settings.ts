@@ -20,12 +20,12 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
         logoUrl: brand.assets.logo.src || '',
         faviconUrl: brand.assets.favicon || '',
         heroTitle: {
-            en: brand.identity.tagline?.en || brand.identity.name || '',
-            fr: brand.identity.tagline?.fr || brand.identity.name || '',
+            en: brand.identity.name || '',
+            fr: brand.identity.name || '',
         },
         heroDescription: {
-            en: brand.identity.description?.en || '',
-            fr: brand.identity.description?.fr || '',
+            en: '',
+            fr: '',
         },
         heroBackgroundImageUrl: brand.assets?.heroBanner || (brand.assets as any)?.banner || '',
         categoriesTitle: {
@@ -58,8 +58,8 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
         },
         catalogBannerUrl: brand.assets?.heroBanner || (brand.assets as any)?.banner || '',
         footerDescription: {
-            en: brand.identity.description?.en || '',
-            fr: brand.identity.description?.fr || '',
+            en: '',
+            fr: '',
         },
         footerRightMenuTitle: {
             en: 'Legal',
@@ -69,11 +69,21 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             platform: s.platform || '',
             url: s.url || '',
         })),
+        contactEmail: brand.contact?.email || '',
+        contactPhone: brand.contact?.phone || '',
+        supportHoursEn: brand.contact?.supportHours?.en || '',
+        supportHoursFr: brand.contact?.supportHours?.fr || '',
+        seoEntityType: brand.identity.id === 'green-ghost' ? 'Dispensary' : brand.identity.id === 'art-fate' ? 'ArtGallery' : 'Store',
+        seoAddressStreet: brand.contact?.address?.street || '',
+        seoAddressLocality: brand.contact?.address?.city || '',
+        seoPostalCode: brand.contact?.address?.postalCode || '',
+        seoCountry: brand.contact?.address?.country || '',
         defaultTheme: 'system',
         defaultCurrency: 'THB',
         primaryColor: defaultPrimaryColor,
         borderStyle: 'rounded',
         fontFamily: 'Geist',
+        productImageRatio: brand.theme?.productImageRatio || (brand.identity.id === 'green-ghost' ? 'square' : 'default'),
         vendors: [],
         aboutSection: {
             enabled: false,
@@ -82,6 +92,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             ctaLabel: { en: '', fr: '' },
             ctaUrl: '',
             images: [],
+            imageRatio: 'default',
         },
         contactSection: {
             enabled: false,
@@ -132,11 +143,23 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 footerDescription: (data?.footerDescription && typeof data.footerDescription === 'object') ? data.footerDescription : fallbackSettings.footerDescription,
                 footerRightMenuTitle: (data?.footerRightMenuTitle && typeof data.footerRightMenuTitle === 'object') ? data.footerRightMenuTitle : fallbackSettings.footerRightMenuTitle,
                 socialLinks: Array.isArray(data?.socialLinks) ? data.socialLinks : fallbackSettings.socialLinks,
+                contactEmail: typeof data?.contactEmail === 'string' ? data.contactEmail : (fallbackSettings.contactEmail || ''),
+                contactPhone: typeof data?.contactPhone === 'string' ? data.contactPhone : (fallbackSettings.contactPhone || ''),
+                supportHoursEn: typeof data?.supportHoursEn === 'string' ? data.supportHoursEn : (fallbackSettings.supportHoursEn || ''),
+                supportHoursFr: typeof data?.supportHoursFr === 'string' ? data.supportHoursFr : (fallbackSettings.supportHoursFr || ''),
+                seoEntityType: typeof data?.seoEntityType === 'string' ? data.seoEntityType : (fallbackSettings.seoEntityType || ''),
+                seoAddressStreet: typeof data?.seoAddressStreet === 'string' ? data.seoAddressStreet : (fallbackSettings.seoAddressStreet || ''),
+                seoAddressLocality: typeof data?.seoAddressLocality === 'string' ? data.seoAddressLocality : (fallbackSettings.seoAddressLocality || ''),
+                seoPostalCode: typeof data?.seoPostalCode === 'string' ? data.seoPostalCode : (fallbackSettings.seoPostalCode || ''),
+                seoCountry: typeof data?.seoCountry === 'string' ? data.seoCountry : (fallbackSettings.seoCountry || ''),
                 defaultTheme: data?.defaultTheme ?? fallbackSettings.defaultTheme,
                 defaultCurrency: data?.defaultCurrency ?? fallbackSettings.defaultCurrency,
                 primaryColor: (typeof data?.primaryColor === 'string' && data.primaryColor.trim().length > 0) ? data.primaryColor : fallbackSettings.primaryColor,
                 borderStyle: data?.borderStyle === 'squared' ? 'squared' : 'rounded',
                 fontFamily: (typeof data?.fontFamily === 'string' && data.fontFamily.trim().length > 0) ? data.fontFamily : fallbackSettings.fontFamily,
+                productImageRatio: (data?.productImageRatio === 'square' || data?.productImageRatio === 'portrait' || data?.productImageRatio === 'default')
+                    ? data.productImageRatio
+                    : fallbackSettings.productImageRatio,
                 vendors: Array.isArray(data?.vendors) ? data.vendors : fallbackSettings.vendors,
                 aboutSection: data?.aboutSection ? {
                     enabled: Boolean(data.aboutSection.enabled),
@@ -145,6 +168,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                     ctaLabel: (data.aboutSection.ctaLabel && typeof data.aboutSection.ctaLabel === 'object') ? data.aboutSection.ctaLabel : {},
                     ctaUrl: typeof data.aboutSection.ctaUrl === 'string' ? data.aboutSection.ctaUrl : '',
                     images: Array.isArray(data.aboutSection.images) ? data.aboutSection.images : [],
+                    imageRatio: (data.aboutSection.imageRatio === 'square' || data.aboutSection.imageRatio === 'squared') ? 'square' : 'default',
                 } : fallbackSettings.aboutSection,
                 contactSection: data?.contactSection ? {
                     enabled: Boolean(data.contactSection.enabled),
@@ -197,6 +221,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
  */
 export async function saveStoreSettings(settings: Partial<Omit<StoreSettings, 'id'>>): Promise<void> {
     const docRef = adminDb.collection(SETTINGS_COLLECTION).doc(STORE_FRONT_DOC_ID);
+
     await docRef.set({
         ...settings,
         updatedAt: new Date(),

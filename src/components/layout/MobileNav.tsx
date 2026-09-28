@@ -1,6 +1,6 @@
 "use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, ChevronDown, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
@@ -187,16 +187,21 @@ export function MobileNav({
                                 onClick={() => setOpen(false)}
                                 className="flex items-center gap-2.5 font-bold text-lg tracking-tight group"
                             >
-                                <Image
-                                    src={logo.src}
-                                    alt={logo.alt || `${brandName} Logo`}
-                                    width={logo.width || 32}
-                                    height={logo.height || 32}
-                                    className="object-contain transition-transform group-hover:scale-105"
-                                />
+                                <div className="relative h-8 w-8 shrink-0">
+                                    <Image
+                                        src={logo.src}
+                                        alt={logo.alt || `${brandName} Logo`}
+                                        fill
+                                        sizes="32px"
+                                        className="object-contain transition-transform group-hover:scale-105"
+                                    />
+                                </div>
                                 <span>{brandName}</span>
                             </Link>
                         </SheetTitle>
+                        <SheetDescription className="sr-only">
+                            {isFr ? "Menu de navigation principal" : "Main navigation menu"}
+                        </SheetDescription>
 
                         <SheetClose asChild>
                             <Button

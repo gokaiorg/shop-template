@@ -196,6 +196,7 @@ export interface AboutSectionSettings {
   ctaLabel: Record<string, string>;
   ctaUrl: string;
   images: string[];
+  imageRatio?: 'default' | 'square' | 'squared';
 }
 
 export interface ContactSectionSettings {
@@ -234,6 +235,8 @@ export interface GoogleReview {
   relative_time_description?: string;
 }
 
+export type ProductImageRatio = 'default' | 'square' | 'portrait';
+
 export interface StoreSettings {
   id?: string;
   brandName: string;
@@ -253,11 +256,23 @@ export interface StoreSettings {
   footerDescription?: Record<string, string>;
   footerRightMenuTitle?: Record<string, string>;
   socialLinks?: SocialLink[];
+  // Contact & Location
+  contactEmail?: string;
+  contactPhone?: string;
+  supportHoursEn?: string;
+  supportHoursFr?: string;
+  // LocalBusiness SEO
+  seoEntityType?: string;
+  seoAddressStreet?: string;
+  seoAddressLocality?: string;
+  seoPostalCode?: string;
+  seoCountry?: string;
   defaultTheme?: 'light' | 'dark' | 'system';
   defaultCurrency?: string;
   primaryColor?: string;
   borderStyle?: 'rounded' | 'squared';
   fontFamily?: string;
+  productImageRatio?: 'default' | 'square' | 'portrait';
   vendors?: string[];
   aboutSection?: AboutSectionSettings;
   contactSection?: ContactSectionSettings;
