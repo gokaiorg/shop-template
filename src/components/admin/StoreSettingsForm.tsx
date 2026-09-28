@@ -22,6 +22,12 @@ import {
     Package,
     ExternalLink,
     ArrowLeft,
+    Mail,
+    Phone,
+    MapPin,
+    Clock,
+    Search,
+    Building2,
 } from "lucide-react";
 import { FONT_OPTIONS_LIST } from "@/app/fonts";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
@@ -107,6 +113,15 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
             footerDescription: defaultFooterDesc,
             footerRightMenuTitle: defaultFooterRightMenuTitle,
             socialLinks: initialData.socialLinks || [],
+            contactEmail: initialData.contactEmail || "",
+            contactPhone: initialData.contactPhone || "",
+            supportHoursEn: initialData.supportHoursEn || "",
+            supportHoursFr: initialData.supportHoursFr || "",
+            seoEntityType: initialData.seoEntityType || "Store",
+            seoAddressStreet: initialData.seoAddressStreet || "",
+            seoAddressLocality: initialData.seoAddressLocality || "",
+            seoPostalCode: initialData.seoPostalCode || "",
+            seoCountry: initialData.seoCountry || "",
             defaultTheme: initialData.defaultTheme || "system",
             borderStyle: initialData.borderStyle || "rounded",
             fontFamily: initialData.fontFamily || "Geist",
@@ -399,22 +414,61 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                         </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <FormField
-                            control={form.control}
-                            name="brandName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Brand Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. Art Fate" {...field} />
-                                    </FormControl>
-                                    <FormDescription>
-                                        The public brand name displayed in headers, footers, and metadata.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                                control={form.control}
+                                name="brandName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>{lang === "fr" ? "Nom de la marque" : "Brand Name"}</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Green Ghost" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            {lang === "fr"
+                                                ? "Le nom public de la marque affiché dans les en-têtes, pieds de page et métadonnées."
+                                                : "The public brand name displayed in headers, footers, and metadata."}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Schema.org Entity Type */}
+                            <FormField
+                                control={form.control}
+                                name="seoEntityType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2">
+                                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                                            {lang === "fr" ? "Entité Schema.org" : "Schema.org Entity"}
+                                        </FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value || "Store"} value={field.value || "Store"}>
+                                            <FormControl>
+                                                <SelectTrigger className="w-full cursor-pointer">
+                                                    <SelectValue placeholder="Store" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Store">Store</SelectItem>
+                                                <SelectItem value="Dispensary">Dispensary</SelectItem>
+                                                <SelectItem value="ArtGallery">ArtGallery</SelectItem>
+                                                <SelectItem value="LocalBusiness">LocalBusiness</SelectItem>
+                                                <SelectItem value="Organization">Organization</SelectItem>
+                                                <SelectItem value="ShoppingCenter">ShoppingCenter</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription>
+                                            {lang === "fr"
+                                                ? "Type d'entreprise (@type) pour le Rich Snippet Google."
+                                                : "Business schema (@type) for Google Rich Snippets."}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
                         {/* Media Assets (Logo & Favicon) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t">
@@ -888,6 +942,186 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                 </Card>
 
                 {/* Footer & Socials Section */}
+                {/* Contact & Location Section */}
+                <Card id="contact-location" className="scroll-mt-8 relative">
+                    <CardHeader>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Building2 className="w-5 h-5 text-muted-foreground" />
+                            <h2 className="text-lg font-medium tracking-tight">
+                                {lang === "fr" ? "Contact & Localisation" : "Contact & Location"}
+                            </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {lang === "fr"
+                                ? "Coordonnées directes, horaires d'ouverture et adresse physique pour vos clients et le SEO local."
+                                : "Direct contact info, operating hours, and physical storefront address for customers and local SEO."}
+                        </p>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {/* Email & Phone */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="contactEmail"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-1.5">
+                                            <Mail className="w-4 h-4 text-muted-foreground" />
+                                            {lang === "fr" ? "Email de contact" : "Contact Email"}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="email"
+                                                placeholder="contact@brand.com"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormDescription className="text-xs">
+                                            {lang === "fr" ? "Email affiché ou utilisé pour le support." : "Email displayed for customer inquiries."}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="contactPhone"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-1.5">
+                                            <Phone className="w-4 h-4 text-muted-foreground" />
+                                            {lang === "fr" ? "Numéro de téléphone" : "Phone Number"}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="+33 1 23 45 67 89"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormDescription className="text-xs">
+                                            {lang === "fr" ? "Format international recommandé (+33...)." : "International format recommended (+33... / +66...)."}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        {/* Support Hours */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
+                            <FormField
+                                control={form.control}
+                                name="supportHoursEn"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-1.5">
+                                            <Clock className="w-4 h-4 text-muted-foreground" />
+                                            {lang === "fr" ? "Horaires de support (Anglais)" : "Support Hours (English)"}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Monday - Friday, 9am - 6pm CET"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="supportHoursFr"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-1.5">
+                                            <Clock className="w-4 h-4 text-muted-foreground" />
+                                            {lang === "fr" ? "Horaires de support (Français)" : "Support Hours (French)"}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Lundi - Vendredi, 9h - 18h CET"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        {/* Physical Address (LocalBusiness) */}
+                        <div className="space-y-4 pt-4 border-t">
+                            <div className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-primary" />
+                                <h4 className="text-sm font-semibold">
+                                    {lang === "fr" ? "Adresse physique de l'établissement" : "Physical Business Address"}
+                                </h4>
+                            </div>
+
+                            <FormField
+                                control={form.control}
+                                name="seoAddressStreet"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>{lang === "fr" ? "Numéro et nom de voie" : "Street Address"}</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="10 Place de la Madeleine" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <FormField
+                                    control={form.control}
+                                    name="seoAddressLocality"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Ville / Localité" : "City / Locality"}</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Paris" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="seoPostalCode"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Code Postal" : "Postal Code"}</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="75008" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="seoCountry"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Pays (ou Code ISO)" : "Country"}</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="France ou FR" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Footer & Social Links Section */}
                 <Card id="footer-social-links" className="scroll-mt-8 relative">
                     <span id="footer" className="sr-only scroll-mt-8" />
                     <CardHeader>
@@ -962,7 +1196,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                             )}
                         </div>
 
-                        {/* Social Links */}
+                        {/* Social Links (Custom) */}
                         <div className="space-y-4 pt-4 border-t">
                             <div className="flex items-center justify-between">
                                 <div>

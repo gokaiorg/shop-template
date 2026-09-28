@@ -158,7 +158,7 @@ export async function JsonLdLocalBusiness({
             : brand.identity.id === "art-fate"
             ? "ArtGallery"
             : "Store";
-    const entityType = type || defaultType;
+    const entityType = type || storeSettings?.seoEntityType || defaultType;
 
     // 2. Base Identity & URLs
     const brandName = name || storeSettings?.brandName || brand.identity.name || "Store";
@@ -187,17 +187,23 @@ export async function JsonLdLocalBusiness({
     // 4. Description
     const isFr = lang.startsWith("fr");
     const localizedDesc = isFr
-        ? storeSettings?.heroDescription?.fr || brand.identity.description?.fr
-        : storeSettings?.heroDescription?.en || brand.identity.description?.en;
-    const resolvedDescription = description || localizedDesc || brand.identity.tagline?.en;
+        ? storeSettings?.heroDescription?.fr || storeSettings?.footerDescription?.fr
+        : storeSettings?.heroDescription?.en || storeSettings?.footerDescription?.en;
+    const resolvedDescription = description || localizedDesc || undefined;
 
     // 5. Contact Information (Phone & Email)
-    const resolvedTelephone = telephone || brand.contact?.phone;
-    const resolvedEmail = email || brand.contact?.email;
+    const resolvedTelephone = telephone || storeSettings?.contactPhone || brand.contact?.phone;
+    const resolvedEmail = email || storeSettings?.contactEmail || brand.contact?.email;
 
     // 6. Address Resolution
+    const settingsAddress: LocalBusinessAddress | undefined = (storeSettings?.seoAddressStreet || storeSettings?.seoAddressLocality || storeSettings?.seoPostalCode || storeSettings?.seoCountry) ? {
+        streetAddress: storeSettings.seoAddressStreet || undefined,
+        addressLocality: storeSettings.seoAddressLocality || undefined,
+        postalCode: storeSettings.seoPostalCode || undefined,
+        addressCountry: storeSettings.seoCountry || undefined,
+    } : undefined;
     const brandAddress = brand.contact?.address;
-    const resolvedAddress = address || (brandAddress ? {
+    const resolvedAddress: LocalBusinessAddress | undefined = address || settingsAddress || (brandAddress ? {
         streetAddress: brandAddress.street,
         addressLocality: brandAddress.city,
         postalCode: brandAddress.postalCode,
@@ -208,7 +214,7 @@ export async function JsonLdLocalBusiness({
     const resolvedSocials =
         socialLinks ||
         storeSettings?.socialLinks?.map((s: any) => s.url).filter(Boolean) ||
-        brand.navigation.socials?.map((s) => s.url).filter(Boolean) ||
+        brand.navigation?.socials?.map((s) => s.url).filter(Boolean) ||
         [];
 
     // 8. Dynamic AggregateRating Resolution from Reviews Module
@@ -289,7 +295,7 @@ export async function JsonLdLocalBusiness({
     }
 
     // Add Opening Hours if available
-    const supportHours = brand.contact?.supportHours?.[isFr ? "fr" : "en"];
+    const supportHours = (isFr ? storeSettings?.supportHoursFr : storeSettings?.supportHoursEn) || brand.contact?.supportHours?.[isFr ? "fr" : "en"];
     const effectiveOpeningHours = openingHours || supportHours;
     if (effectiveOpeningHours) {
         schema.openingHours = effectiveOpeningHours;

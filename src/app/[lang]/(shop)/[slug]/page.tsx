@@ -65,7 +65,7 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
         const rawCatalogDesc = getLocalizedField(storeSettings.catalogDescription, lang);
         const catalogDescription = (rawCatalogDesc && rawCatalogDesc.trim().length > 0)
             ? rawCatalogDesc.trim()
-            : (lang === "fr" ? brandConfig.identity.description?.fr : brandConfig.identity.description?.en) || `Browse our complete collection of ${brandName} products.`;
+            : getLocalizedField(storeSettings.heroDescription, lang) || `Browse our complete collection of ${brandName} products.`;
         const catalogBannerUrl = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "";
         const canonicalUrl = `${baseUrl}/${lang}/${localizedCatalogSlug}`;
 

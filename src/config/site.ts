@@ -33,9 +33,7 @@ export function constructSiteMetadata({
     const isFr = lang === 'fr';
     const activeBrandName = brandName || brandConfig.identity.name;
     const siteTitle = title ? formatTitle(title, activeBrandName) : `${activeBrandName} - Store`;
-    const siteDescription =
-        description ||
-        (isFr ? brandConfig.seo.defaultDescription.fr : brandConfig.seo.defaultDescription.en);
+    const siteDescription = description || '';
     const ogImage = image || brandConfig.assets.ogImage || brandConfig.assets.logo.src;
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || 'http://localhost:3000';
     const activeIcon = faviconUrl || brandConfig.assets.icon || '/icon.png';
@@ -47,7 +45,6 @@ export function constructSiteMetadata({
         },
         description: siteDescription,
         metadataBase: new URL(siteUrl),
-        keywords: brandConfig.seo.keywords,
         authors: [
             {
                 name: activeBrandName,
@@ -85,7 +82,7 @@ export function constructSiteMetadata({
             card: 'summary_large_image',
             title: siteTitle,
             description: siteDescription,
-            creator: brandConfig.seo.twitterHandle,
+            creator: brandConfig.seo?.twitterHandle || activeBrandName,
             images: [ogImage],
         },
         robots: noIndex

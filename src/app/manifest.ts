@@ -14,7 +14,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     }
 
     const brandName = storeSettings?.brandName || brand.identity.name;
-    const description = storeSettings?.heroDescription?.en || brand.identity.description?.en || '';
+    const description = storeSettings?.heroDescription?.en || '';
     const activeIcon = storeSettings?.faviconUrl || brand.assets.icon || '/icon.png';
     const cleanUrl = activeIcon.split('?')[0].toLowerCase();
     const isWebp = cleanUrl.endsWith('.webp');

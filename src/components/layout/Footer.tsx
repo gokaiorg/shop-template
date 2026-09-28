@@ -53,7 +53,7 @@ export async function Footer({
     const headerDict = dict.header || {};
     const { navigation } = brandConfig;
     const description = getLocalizedField(activeFooterDesc, lang)
-        || (isFr ? brandConfig.identity.description?.fr : brandConfig.identity.description?.en)
+        || getLocalizedField(settings?.footerDescription, lang)
         || '';
 
     const footerPages = pages
@@ -158,7 +158,7 @@ export async function Footer({
                                 );
                             })
                         ) : (
-                            navigation.footerSections.legal.map((item) => {
+                            (navigation?.footerSections?.legal || []).map((item) => {
                                 const label = legalDict[item.key] || item.key;
                                 const href = item.href.startsWith('http') ? item.href : `/${lang}${item.href}`;
                                 return (

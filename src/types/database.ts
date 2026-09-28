@@ -253,6 +253,17 @@ export interface StoreSettings {
   footerDescription?: Record<string, string>;
   footerRightMenuTitle?: Record<string, string>;
   socialLinks?: SocialLink[];
+  // Contact & Location
+  contactEmail?: string;
+  contactPhone?: string;
+  supportHoursEn?: string;
+  supportHoursFr?: string;
+  // LocalBusiness SEO
+  seoEntityType?: string;
+  seoAddressStreet?: string;
+  seoAddressLocality?: string;
+  seoPostalCode?: string;
+  seoCountry?: string;
   defaultTheme?: 'light' | 'dark' | 'system';
   defaultCurrency?: string;
   primaryColor?: string;

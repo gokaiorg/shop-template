@@ -69,8 +69,8 @@ export default async function RootLayout({
     identity: {
       ...rawBrand.identity,
       name: storeSettings.brandName || rawBrand.identity.name,
-      tagline: storeSettings.heroTitle ? (storeSettings.heroTitle as any) : rawBrand.identity.tagline,
-      description: storeSettings.heroDescription ? (storeSettings.heroDescription as any) : rawBrand.identity.description,
+      tagline: storeSettings.heroTitle ? (storeSettings.heroTitle as any) : undefined,
+      description: storeSettings.heroDescription ? (storeSettings.heroDescription as any) : undefined,
     },
     assets: {
       ...rawBrand.assets,
@@ -79,6 +79,26 @@ export default async function RootLayout({
         src: storeSettings.logoUrl || rawBrand.assets.logo.src,
       },
       favicon: storeSettings.faviconUrl || rawBrand.assets.favicon || rawBrand.assets.icon || '/icon.png',
+    },
+    contact: {
+      email: storeSettings.contactEmail || rawBrand.contact?.email || '',
+      phone: storeSettings.contactPhone || rawBrand.contact?.phone || '',
+      supportHours: {
+        en: storeSettings.supportHoursEn || (rawBrand.contact?.supportHours as any)?.en || '',
+        fr: storeSettings.supportHoursFr || (rawBrand.contact?.supportHours as any)?.fr || '',
+      },
+      address: {
+        street: storeSettings.seoAddressStreet || rawBrand.contact?.address?.street || '',
+        city: storeSettings.seoAddressLocality || rawBrand.contact?.address?.city || '',
+        postalCode: storeSettings.seoPostalCode || rawBrand.contact?.address?.postalCode || '',
+        country: storeSettings.seoCountry || rawBrand.contact?.address?.country || '',
+      },
+    },
+    navigation: {
+      ...(rawBrand.navigation || {}),
+      socials: storeSettings.socialLinks && storeSettings.socialLinks.length > 0
+        ? (storeSettings.socialLinks as any)
+        : rawBrand.navigation?.socials || [],
     },
   };
 

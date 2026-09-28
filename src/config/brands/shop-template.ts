@@ -1,40 +1,12 @@
-import { BrandConfig } from '../types';
-import { shopTemplateSeed } from '../seed/shop-template.seed';
+import { BrandConfig, DEFAULT_BRAND_ASSETS } from '../types';
 
 export const shopTemplateBrand: BrandConfig = {
     identity: {
         id: 'shop-template',
         name: 'Shop Template',
-        shortName: 'Shop',
-        tagline: {
-            en: 'One Template. Infinite Possibilities.',
-            fr: 'Un modèle. Des possibilités infinies.'
-        },
-        description: {
-            en: 'The ultimate full-stack boilerplate for modern e-commerce and digital stores. Built with Next.js, Firebase, and Tailwind CSS.',
-            fr: 'Le boilerplate full-stack ultime pour le e-commerce moderne. Conçu avec Next.js, Firebase et Tailwind CSS.'
-        },
-        url: process.env.NEXT_PUBLIC_APP_URL || 'https://shop-template.demo',
-        companyName: 'Shop Template Inc.',
-        copyrightYear: new Date().getFullYear(),
-        creator: {
-            name: 'Gokai Labs',
-            url: 'https://gokai.org'
-        }
+        shortName: 'Shop'
     },
-    assets: {
-        logo: {
-            src: '/brand/shop-template/logo.webp',
-            alt: 'Shop Template Logo',
-            width: 32,
-            height: 32
-        },
-        icon: '/brand/shop-template/icon.webp',
-        favicon: '/brand/shop-template/icon.webp',
-        ogImage: '/brand/shop-template/og-image.jpg',
-        placeholderImage: '/brand/shop-template/placeholder.webp',
-        heroBanner: '/brand/shop-template/hero-banner.webp'
-    },
+    assets: DEFAULT_BRAND_ASSETS,
     theme: {
         fontSans: 'var(--font-geist-sans)',
         fontHeading: 'var(--font-geist-sans)',
@@ -54,63 +26,13 @@ export const shopTemplateBrand: BrandConfig = {
             }
         }
     },
-    navigation: {
-        headerNav: [
-            { key: 'shop', href: '/shop' },
-            { key: 'about', href: '/about' },
-            { key: 'contact', href: '/contact' }
-        ],
-        footerSections: {
-            shop: [
-                { key: 'shop', href: '/shop' },
-                { key: 'about', href: '/about' },
-                { key: 'contact', href: '/contact' }
-            ],
-            company: [
-                { key: 'about', href: '/about' },
-                { key: 'contact', href: '/contact' }
-            ],
-            legal: [
-                { key: 'mentions_legales', href: '/mentions-legales' },
-                { key: 'cgv', href: '/cgv' },
-                { key: 'privacy_policy', href: '/privacy-policy' },
-                { key: 'returns', href: '/returns' }
-            ]
-        },
-        socials: [
-            { platform: 'twitter', url: 'https://twitter.com' },
-            { platform: 'github', url: 'https://github.com' }
-        ]
-    },
     seo: {
         titleTemplate: '%s | Shop Template',
-        defaultTitle: 'Shop Template - Modern E-Commerce Platform',
-        defaultDescription: {
-            en: 'Discover high-performance full-stack templates and services.',
-            fr: 'Découvrez des templates et services full-stack ultra-performants.'
-        },
-        keywords: ['e-commerce', 'nextjs', 'tailwind', 'firebase', 'shop template'],
-        twitterHandle: '@shoptemplate',
         robots: {
             allow: '/',
             disallow: ['/private/', '/admin/']
         }
     },
-    contact: {
-        email: 'contact@shop-template.demo',
-        phone: '+33 1 00 00 00 00',
-        address: {
-            street: '10 Place de la Madeleine',
-            city: 'Paris',
-            postalCode: '75008',
-            country: 'FR'
-        },
-        supportHours: {
-            en: 'Monday - Friday, 9am - 6pm CET',
-            fr: 'Lundi - Vendredi, 9h - 18h CET'
-        }
-    },
     supportedLocales: ['en', 'fr'],
-    defaultLocale: 'en',
-    seedData: shopTemplateSeed
+    defaultLocale: 'en'
 };

@@ -43,7 +43,7 @@ export function FeaturedCategories({
             ? "grid-cols-1 sm:grid-cols-3"
             : "grid-cols-1 sm:grid-cols-2";
 
-    const defaultPlaceholder = brandConfig.assets?.placeholderImage || "/brand/shop-template/placeholder.webp";
+    const defaultPlaceholder = brandConfig.assets?.placeholderImage || "/brand/default/placeholder.webp";
 
     const cleanTitle = title?.trim() || "";
     const cleanSubtitle = subtitle?.trim() || "";

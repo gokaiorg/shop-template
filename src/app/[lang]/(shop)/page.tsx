@@ -35,15 +35,13 @@ export async function generateMetadata({
   const isFr = lang === "fr";
 
   const rawTitle = getLocalizedField(storeSettings.heroTitle, lang)
-    || getLocalizedField(rawBrand.identity.tagline as any, lang)
-    || (isFr ? rawBrand.seo.defaultDescription?.fr : rawBrand.seo.defaultDescription?.en)
+    || storeSettings.brandName
+    || rawBrand.identity.name
     || "Home";
   const title = stripHtml(rawTitle);
 
   const rawDescription = getLocalizedField(storeSettings.heroDescription, lang)
     || getLocalizedField(storeSettings.footerDescription, lang)
-    || getLocalizedField(rawBrand.identity.description as any, lang)
-    || (isFr ? rawBrand.seo.defaultDescription?.fr : rawBrand.seo.defaultDescription?.en)
     || "";
   const description = stripHtml(rawDescription);
 
@@ -161,10 +159,9 @@ export default async function Home({
   const shopDict = dict.shop || {};
 
   const heroTitle = getLocalizedField(storeSettings.heroTitle, lang)
-    || getLocalizedField(brandConfig.identity.tagline as any, lang)
+    || storeSettings.brandName
     || homeDict.hero_title;
   const heroSubtitle = getLocalizedField(storeSettings.heroDescription, lang)
-    || getLocalizedField(brandConfig.identity.description as any, lang)
     || homeDict.hero_subtitle;
 
   const heroBackgroundImageUrl = storeSettings.heroBackgroundImageUrl;
