@@ -47,3 +47,7 @@ cors.json
 .firebase/
 
 /art-fate-images
+
+old-service-account.json
+new-service-account.json
+migrate.js

@@ -42,6 +42,8 @@ export interface Product {
   description?: Record<string, string>;
   intro?: Record<string, string> | null;
   status: Record<string, string>;
+  metadata?: Record<string, any>;
+  _oldMetadata?: Record<string, any>;
   // Legacy optional fields for compatibility
   nameEn?: string;
   nameFr?: string;
