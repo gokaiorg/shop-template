@@ -2,13 +2,15 @@ import { MetadataRoute } from 'next';
 import { getActiveBrand } from '@/config/brand.config';
 import { getStoreSettings } from '@/lib/services/settings';
 
+export const dynamic = 'force-dynamic';
+
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
     const brand = getActiveBrand();
     let storeSettings = null;
     try {
         storeSettings = await getStoreSettings();
-    } catch {
-        // Fallback to static brand config if Firestore is not accessible during build
+    } catch (err) {
+        console.warn('[MANIFEST] Unable to fetch store settings from Firestore, using brand fallback:', err);
     }
 
     const brandName = storeSettings?.brandName || brand.identity.name;
