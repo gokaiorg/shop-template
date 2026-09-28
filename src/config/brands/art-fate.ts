@@ -30,7 +30,7 @@ export const artFateBrand: BrandConfig = {
             height: 36
         },
         icon: '/brand/art-fate/icon.webp',
-        favicon: '/favicon.ico',
+        favicon: '/brand/art-fate/icon.webp',
         ogImage: '/brand/art-fate/og-image.jpg',
         placeholderImage: '/brand/art-fate/placeholder.webp',
         heroBanner: '/brand/art-fate/hero-banner.webp'

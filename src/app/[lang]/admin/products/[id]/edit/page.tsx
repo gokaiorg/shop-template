@@ -7,6 +7,7 @@ import { ProductForm } from "@/components/admin/ProductForm";
 import { getStoreSettings } from "@/lib/services/settings";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { Pencil } from "lucide-react";
+import { serializeFirestore } from "@/lib/utils";
 
 export default async function EditProductPage({ params }: { params: Promise<{ lang: string, id: string }> }) {
     const { lang, id } = await params;
@@ -22,20 +23,24 @@ export default async function EditProductPage({ params }: { params: Promise<{ la
         notFound();
     }
 
-    const productData = productDoc.data();
-    const product = {
-        ...productData,
-        createdAt: productData?.createdAt?.toDate ? productData.createdAt.toDate().toISOString() : new Date().toISOString(),
-        updatedAt: productData?.updatedAt?.toDate ? productData.updatedAt.toDate().toISOString() : new Date().toISOString(),
-    } as Product;
+    const rawProductData = productDoc.data();
+    const serializedData = serializeFirestore(rawProductData) || {};
+
+    const product: Product = serializeFirestore({
+        ...serializedData,
+        id: productDoc.id,
+        createdAt: serializedData.createdAt || new Date().toISOString(),
+        updatedAt: serializedData.updatedAt || new Date().toISOString(),
+    });
     
-    const categories = categoriesSnap.docs.map(doc => {
-        const data = doc.data();
-        return {
-            ...data,
-            createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-            updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
-        } as Category;
+    const categories: Category[] = categoriesSnap.docs.map(doc => {
+        const serializedCategory = serializeFirestore(doc.data()) || {};
+        return serializeFirestore({
+            ...serializedCategory,
+            id: doc.id,
+            createdAt: serializedCategory.createdAt || new Date().toISOString(),
+            updatedAt: serializedCategory.updatedAt || new Date().toISOString(),
+        });
     });
 
     return (

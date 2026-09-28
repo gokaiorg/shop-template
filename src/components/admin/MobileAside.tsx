@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { 
     Menu, 
@@ -61,6 +61,9 @@ export function MobileAside({ lang, dict, session }: { lang: string, dict: any, 
                         <SheetTitle className="text-lg font-bold tracking-tight">
                             {adminDict.title || "Admin Panel"}
                         </SheetTitle>
+                        <SheetDescription className="sr-only">
+                            {lang?.startsWith("fr") ? "Menu d'administration" : "Admin navigation drawer"}
+                        </SheetDescription>
                     </SheetHeader>
                     <div className="mb-6 px-1">
                         <Button

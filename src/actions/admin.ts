@@ -13,6 +13,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { SETTINGS_COLLECTION, STORE_FRONT_DOC_ID } from "@/lib/services/settings";
 import { resolveUniqueSlugMap, resolveUniqueSlug } from "@/lib/services/slug";
 import { slugify } from "@/lib/slug";
+import { serializeFirestore } from "@/lib/utils";
 
 /**
  * Server Action callable from client forms to preview/suggest a unique slug in real-time.
@@ -312,7 +313,7 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
 
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/[lang]/[slug]', 'layout');
-        return { success: true, product: productData };
+        return { success: true, product: serializeFirestore(productData) };
     } catch (error) {
         console.error("CREATE_PRODUCT_ERROR:", error);
         return { success: false, error: "Failed to create product." };
@@ -395,17 +396,22 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
             updatedAt: new Date(),
         };
 
+        const updatePayload: Record<string, any> = { ...productData };
+
         if (result.data.order !== undefined) {
-            productData.order = Math.round(Number(result.data.order));
+            const parsedOrder = Math.round(Number(result.data.order));
+            productData.order = parsedOrder;
+            updatePayload.order = parsedOrder;
         }
 
         if (result.data.metadata !== undefined) {
             productData.metadata = result.data.metadata;
-            productData._oldMetadata = FieldValue.delete();
+            updatePayload.metadata = result.data.metadata;
+            updatePayload._oldMetadata = FieldValue.delete();
         }
 
         const batch = adminDb.batch();
-        batch.update(ref, productData);
+        batch.update(ref, updatePayload);
 
         if (artist) {
             const settingsRef = adminDb.collection(SETTINGS_COLLECTION).doc(STORE_FRONT_DOC_ID);
@@ -424,7 +430,7 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
 
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/[lang]/[slug]', 'layout');
-        return { success: true, product: { id, ...productData } };
+        return { success: true, product: serializeFirestore({ id, ...productData }) };
     } catch (error) {
         console.error("UPDATE_PRODUCT_ERROR:", error);
         return { success: false, error: "Failed to update product." };

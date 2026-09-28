@@ -50,7 +50,16 @@ function HeaderContent({
                         socialLinks={socialLinks}
                     />
                     <Link href={`/${lang}`} className="flex items-center gap-2.5 shrink-0 group">
-                        <Image src={logo.src} alt={logo.alt || `${brandName} Logo`} width={logo.width || 32} height={logo.height || 32} className="object-contain" />
+                        <div className="relative h-8 w-8 shrink-0">
+                            <Image
+                                src={logo.src}
+                                alt={logo.alt || `${brandName} Logo`}
+                                fill
+                                sizes="32px"
+                                className="object-contain"
+                                priority
+                            />
+                        </div>
                         <span className="font-bold sm:text-lg tracking-tight leading-none flex items-center">{brandName}</span>
                     </Link>
 

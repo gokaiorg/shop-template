@@ -38,7 +38,7 @@ export function constructSiteMetadata({
         (isFr ? brandConfig.seo.defaultDescription.fr : brandConfig.seo.defaultDescription.en);
     const ogImage = image || brandConfig.assets.ogImage || brandConfig.assets.logo.src;
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || 'http://localhost:3000';
-    const activeFavicon = faviconUrl || brandConfig.assets.favicon || '/favicon.ico';
+    const activeIcon = faviconUrl || brandConfig.assets.icon || '/icon.png';
 
     return {
         title: {
@@ -57,8 +57,13 @@ export function constructSiteMetadata({
         creator: activeBrandName,
         generator: "Gokai Labs",
         icons: {
-            icon: activeFavicon,
-            apple: activeFavicon || '/icon.png',
+            icon: [
+                { url: activeIcon, sizes: 'any' },
+                { url: '/favicon.ico' },
+            ],
+            apple: [
+                { url: activeIcon },
+            ],
         },
         openGraph: {
             title: siteTitle,

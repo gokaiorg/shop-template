@@ -30,7 +30,7 @@ export const shopTemplateBrand: BrandConfig = {
             height: 32
         },
         icon: '/brand/shop-template/icon.webp',
-        favicon: '/favicon.ico',
+        favicon: '/brand/shop-template/icon.webp',
         ogImage: '/brand/shop-template/og-image.jpg',
         placeholderImage: '/brand/shop-template/placeholder.webp',
         heroBanner: '/brand/shop-template/hero-banner.webp'
@@ -99,6 +99,12 @@ export const shopTemplateBrand: BrandConfig = {
     contact: {
         email: 'contact@shop-template.demo',
         phone: '+33 1 00 00 00 00',
+        address: {
+            street: '10 Place de la Madeleine',
+            city: 'Paris',
+            postalCode: '75008',
+            country: 'FR'
+        },
         supportHours: {
             en: 'Monday - Friday, 9am - 6pm CET',
             fr: 'Lundi - Vendredi, 9h - 18h CET'

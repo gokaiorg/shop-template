@@ -1,26 +1,50 @@
 import { MetadataRoute } from 'next';
-import { brandConfig } from '@/config/brand.config';
+import { getActiveBrand } from '@/config/brand.config';
+import { getStoreSettings } from '@/lib/services/settings';
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+    const brand = getActiveBrand();
+    let storeSettings = null;
+    try {
+        storeSettings = await getStoreSettings();
+    } catch {
+        // Fallback to static brand config if Firestore is not accessible during build
+    }
+
+    const brandName = storeSettings?.brandName || brand.identity.name;
+    const description = storeSettings?.heroDescription?.en || brand.identity.description?.en || '';
+    const activeIcon = storeSettings?.faviconUrl || brand.assets.icon || '/icon.png';
+    const cleanUrl = activeIcon.split('?')[0].toLowerCase();
+    const isWebp = cleanUrl.endsWith('.webp');
+    const isPng = cleanUrl.endsWith('.png');
+    const isSvg = cleanUrl.endsWith('.svg');
+    const iconType = isWebp ? 'image/webp' : isPng ? 'image/png' : isSvg ? 'image/svg+xml' : 'image/x-icon';
+
     return {
-        name: brandConfig.identity.name,
-        short_name: brandConfig.identity.shortName || brandConfig.identity.name,
-        description: brandConfig.identity.description.en,
+        name: brandName,
+        short_name: brand.identity.shortName || brandName,
+        description,
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#000000',
         icons: [
             {
-                src: brandConfig.assets.favicon || '/favicon.ico',
+                src: activeIcon,
                 sizes: 'any',
-                type: 'image/x-icon',
+                type: iconType,
             },
             {
-                src: brandConfig.assets.icon || '/icon.png',
+                src: activeIcon,
                 sizes: '192x192 512x512',
-                type: 'image/png',
+                type: iconType,
+            },
+            {
+                src: '/favicon.ico',
+                sizes: 'any',
+                type: 'image/x-icon',
             },
         ],
     };
 }
+

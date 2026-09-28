@@ -30,7 +30,7 @@ export const gokaiLabsBrand: BrandConfig = {
             height: 32
         },
         icon: '/brand/gokai-labs/icon.webp',
-        favicon: '/favicon.ico',
+        favicon: '/brand/gokai-labs/icon.webp',
         ogImage: '/brand/gokai-labs/og-image.jpg',
         placeholderImage: '/brand/gokai-labs/placeholder.webp',
         heroBanner: '/brand/gokai-labs/hero-banner.webp'
@@ -99,6 +99,12 @@ export const gokaiLabsBrand: BrandConfig = {
     contact: {
         email: 'contact@gokai.org',
         phone: '+33 1 89 00 00 00',
+        address: {
+            street: '128 Rue La Boétie',
+            city: 'Paris',
+            postalCode: '75008',
+            country: 'FR'
+        },
         supportHours: {
             en: 'Monday - Friday, 9am - 7pm CET',
             fr: 'Lundi - Vendredi, 9h - 19h CET'

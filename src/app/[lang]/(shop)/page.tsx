@@ -17,7 +17,7 @@ import { brandConfig, getActiveBrand } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
 import { getLocalizedField } from "@/lib/i18n";
 
-import { GlobalJsonLd, CategoryJsonLd } from "@/components/seo/JsonLd";
+import { GlobalJsonLd, CategoryJsonLd, JsonLdLocalBusiness } from "@/components/seo/JsonLd";
 import { cn } from "@/lib/utils";
 
 function stripHtml(text: string): string {
@@ -233,6 +233,13 @@ export default async function Home({
         lang={lang}
         searchActionUrl={catalogSlug}
         socialLinks={storeSettings.socialLinks?.map((s: any) => s.url).filter(Boolean)}
+      />
+      <JsonLdLocalBusiness
+        name={brandName}
+        url={`${baseUrl}/${lang}`}
+        description={heroSubtitle}
+        logo={absoluteLogoUrl}
+        lang={lang}
       />
       {featuredProductsForJsonLd.length > 0 && (
         <CategoryJsonLd

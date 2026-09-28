@@ -78,7 +78,7 @@ export default async function RootLayout({
         ...rawBrand.assets.logo,
         src: storeSettings.logoUrl || rawBrand.assets.logo.src,
       },
-      favicon: storeSettings.faviconUrl || rawBrand.assets.favicon,
+      favicon: storeSettings.faviconUrl || rawBrand.assets.favicon || rawBrand.assets.icon || '/icon.png',
     },
   };
 

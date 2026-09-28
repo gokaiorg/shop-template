@@ -6,6 +6,7 @@ import {
     SheetContent,
     SheetHeader,
     SheetTitle,
+    SheetDescription,
     SheetTrigger,
     SheetClose,
 } from "@/components/ui/sheet";
@@ -80,6 +81,10 @@ export function CartSheet({ dict }: { dict?: any }) {
         );
     }
 
+    const isFr = lang.startsWith("fr");
+    const cartTitle = dict?.shopping_cart || dict?.title || (isFr ? "Panier" : "Shopping Cart");
+    const cartDesc = isFr ? "Articles sélectionnés dans votre panier" : "Selected items in your shopping cart";
+
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -95,7 +100,10 @@ export function CartSheet({ dict }: { dict?: any }) {
             </SheetTrigger>
             <SheetContent className="flex w-full flex-col sm:max-w-lg overflow-y-auto p-6">
                 <SheetHeader className="mb-6">
-                    <SheetTitle>Shopping Cart</SheetTitle>
+                    <SheetTitle>{cartTitle}</SheetTitle>
+                    <SheetDescription className="sr-only">
+                        {cartDesc}
+                    </SheetDescription>
                 </SheetHeader>
 
                 <div className="flex flex-1 flex-col gap-4">

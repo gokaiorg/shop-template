@@ -212,7 +212,7 @@ export const greenGhostBrand: BrandConfig = {
             height: 32
         },
         icon: '/brand/green-ghost/icon.webp',
-        favicon: '/favicon.ico',
+        favicon: '/brand/green-ghost/icon.webp',
         ogImage: '/brand/green-ghost/og-image.jpg',
         placeholderImage: '/brand/green-ghost/placeholder.webp',
         heroBanner: '/brand/green-ghost/hero-banner.webp'
@@ -280,7 +280,13 @@ export const greenGhostBrand: BrandConfig = {
     },
     contact: {
         email: 'contact@greenghost.shop',
-        phone: '+33 1 70 00 00 00',
+        phone: '+66 82 555 0199',
+        address: {
+            street: 'Viset Road, Rawai',
+            city: 'Phuket',
+            postalCode: '83130',
+            country: 'TH'
+        },
         supportHours: {
             en: 'Monday - Saturday, 10am - 8pm CET',
             fr: 'Lundi - Samedi, 10h - 20h CET'

@@ -450,3 +450,7 @@ export function CatalogJsonLd({
 
     return <JsonLd data={schemas} />;
 }
+
+// Re-export LocalBusiness JSON-LD schema component
+export { JsonLdLocalBusiness } from "./JsonLdLocalBusiness";
+export type { JsonLdLocalBusinessProps, LocalBusinessAddress, LocalBusinessGeo } from "./JsonLdLocalBusiness";
