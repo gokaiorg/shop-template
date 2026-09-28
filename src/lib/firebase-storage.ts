@@ -1,6 +1,32 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from './firebase';
 
+function getFileContentType(file: File, fallback: string = 'image/jpeg'): string {
+    if (file.type && file.type !== 'application/octet-stream') {
+        return file.type;
+    }
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    switch (ext) {
+        case 'avif':
+            return 'image/avif';
+        case 'webp':
+            return 'image/webp';
+        case 'png':
+            return 'image/png';
+        case 'jpg':
+        case 'jpeg':
+            return 'image/jpeg';
+        case 'gif':
+            return 'image/gif';
+        case 'svg':
+            return 'image/svg+xml';
+        case 'ico':
+            return 'image/x-icon';
+        default:
+            return fallback;
+    }
+}
+
 /**
  * Uploads a product image file to Firebase Storage and returns its public download URL.
  *
@@ -27,7 +53,7 @@ export async function uploadProductImage(file: File, customPath?: string): Promi
 
     // Upload file with appropriate metadata
     const metadata = {
-        contentType: file.type || 'image/jpeg',
+        contentType: getFileContentType(file, 'image/jpeg'),
     };
 
     const snapshot = await uploadBytes(storageRef, file, metadata);
@@ -59,7 +85,7 @@ export async function uploadBrandAsset(file: File, assetType: 'logo' | 'favicon'
 
     const storageRef = ref(storage, storagePath);
     const metadata = {
-        contentType: file.type || (assetType === 'favicon' ? 'image/x-icon' : 'image/png'),
+        contentType: getFileContentType(file, assetType === 'favicon' ? 'image/x-icon' : 'image/png'),
     };
 
     const snapshot = await uploadBytes(storageRef, file, metadata);

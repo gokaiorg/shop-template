@@ -30,7 +30,7 @@ import {
 import { AuthSheet } from "@/components/auth/AuthSheet"
 
 export function AccountToggle({ lang, dict, session: propSession }: { lang: string, dict: any, session?: any }) {
-    const { data: clientSession, status } = useSession()
+    const { data: clientSession } = useSession()
     const session = clientSession?.user ? clientSession : (propSession?.user ? propSession : clientSession);
     const { isCartEnabled } = useBrand()
     const unreadCount = useUnreadMessages(session)
@@ -121,15 +121,6 @@ export function AccountToggle({ lang, dict, session: propSession }: { lang: stri
             icon: Settings,
         },
     ];
-
-    if (status === "loading") {
-        return (
-            <Button size="icon" disabled aria-label={accountLabel} className="rounded-full bg-primary text-primary-foreground opacity-50">
-                <User className="h-[1.2rem] w-[1.2rem]" />
-                <span className="sr-only">{accountLabel}</span>
-            </Button>
-        )
-    }
 
     if (session) {
         const isAdmin = session.user?.role === "admin";

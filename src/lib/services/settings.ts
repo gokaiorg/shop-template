@@ -72,6 +72,8 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
         defaultTheme: 'system',
         defaultCurrency: 'THB',
         primaryColor: defaultPrimaryColor,
+        borderStyle: 'rounded',
+        fontFamily: 'Geist',
         vendors: [],
         aboutSection: {
             enabled: false,
@@ -133,6 +135,8 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 defaultTheme: data?.defaultTheme ?? fallbackSettings.defaultTheme,
                 defaultCurrency: data?.defaultCurrency ?? fallbackSettings.defaultCurrency,
                 primaryColor: (typeof data?.primaryColor === 'string' && data.primaryColor.trim().length > 0) ? data.primaryColor : fallbackSettings.primaryColor,
+                borderStyle: data?.borderStyle === 'squared' ? 'squared' : 'rounded',
+                fontFamily: (typeof data?.fontFamily === 'string' && data.fontFamily.trim().length > 0) ? data.fontFamily : fallbackSettings.fontFamily,
                 vendors: Array.isArray(data?.vendors) ? data.vendors : fallbackSettings.vendors,
                 aboutSection: data?.aboutSection ? {
                     enabled: Boolean(data.aboutSection.enabled),

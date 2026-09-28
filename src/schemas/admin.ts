@@ -28,6 +28,7 @@ export const productSchema = z.object({
     imageUrl: z.string().optional().nullable(),
     images: z.array(z.string()).optional(),
     order: z.coerce.number().int().optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const pageSchema = z.object({

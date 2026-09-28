@@ -42,6 +42,8 @@ export interface Product {
   description?: Record<string, string>;
   intro?: Record<string, string> | null;
   status: Record<string, string>;
+  metadata?: Record<string, any>;
+  _oldMetadata?: Record<string, any>;
   // Legacy optional fields for compatibility
   nameEn?: string;
   nameFr?: string;
@@ -254,6 +256,8 @@ export interface StoreSettings {
   defaultTheme?: 'light' | 'dark' | 'system';
   defaultCurrency?: string;
   primaryColor?: string;
+  borderStyle?: 'rounded' | 'squared';
+  fontFamily?: string;
   vendors?: string[];
   aboutSection?: AboutSectionSettings;
   contactSection?: ContactSectionSettings;

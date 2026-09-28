@@ -287,6 +287,7 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
             statusFr,
             imageUrl: result.data.imageUrl || (images.length > 0 ? images[0] : null),
             images,
+            metadata: result.data.metadata || {},
             createdAt: new Date(),
             updatedAt: new Date(),
         };
@@ -396,6 +397,11 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
 
         if (result.data.order !== undefined) {
             productData.order = Math.round(Number(result.data.order));
+        }
+
+        if (result.data.metadata !== undefined) {
+            productData.metadata = result.data.metadata;
+            productData._oldMetadata = FieldValue.delete();
         }
 
         const batch = adminDb.batch();

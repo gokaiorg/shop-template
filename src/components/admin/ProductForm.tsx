@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, LayoutTemplate, RotateCcw, ArrowLeft } from "lucide-react";
+import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, LayoutTemplate, RotateCcw, ArrowLeft, Plus, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 
 import { createProduct, updateProduct, deleteProduct, getSuggestedUniqueSlug } from "@/actions/admin";
@@ -60,6 +60,23 @@ function getCategorySlugForLocale(cat: Category | undefined, loc: string): strin
     return getLocalizedField(cat.slug, loc) || cat.id || "category";
 }
 
+interface MetadataEntry {
+    id: string;
+    key: string;
+    value: string;
+}
+
+function parseInitialMetadata(raw: Record<string, any> | undefined): MetadataEntry[] {
+    if (!raw || typeof raw !== "object") return [];
+    return Object.entries(raw)
+        .filter(([k, v]) => k && v !== null && v !== undefined)
+        .map(([key, val], idx) => ({
+            id: `meta-${idx}-${key}`,
+            key,
+            value: typeof val === "object" ? JSON.stringify(val) : String(val),
+        }));
+}
+
 interface ProductFormProps {
     categories: Category[];
     dict: Record<string, string>;
@@ -89,6 +106,38 @@ export function ProductForm({
         ? initialData.images
         : (initialData?.imageUrl ? [initialData.imageUrl] : []);
     const [images, setImages] = useState<string[]>(initialImages);
+
+    // Initialisation des métadonnées personnalisées (metadata ou fallback vers _oldMetadata de la migration)
+    const initialRawMetadata: Record<string, any> = (initialData?.metadata && Object.keys(initialData.metadata).length > 0)
+        ? initialData.metadata
+        : ((initialData as any)?._oldMetadata || {});
+
+    const [metadataEntries, setMetadataEntries] = useState<MetadataEntry[]>(() =>
+        parseInitialMetadata(initialRawMetadata)
+    );
+
+    const addMetadataEntry = () => {
+        setMetadataEntries((prev) => [
+            ...prev,
+            {
+                id: `meta-new-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                key: "",
+                value: "",
+            },
+        ]);
+    };
+
+    const updateMetadataEntry = (index: number, field: "key" | "value", val: string) => {
+        setMetadataEntries((prev) => {
+            const next = [...prev];
+            next[index] = { ...next[index], [field]: val };
+            return next;
+        });
+    };
+
+    const removeMetadataEntry = (index: number) => {
+        setMetadataEntries((prev) => prev.filter((_, i) => i !== index));
+    };
 
     // Prepare default values dynamically for every supported locale
     const defaultName: Record<string, string> = {};
@@ -127,6 +176,7 @@ export function ProductForm({
             imageUrl: initialImages[0] || null,
             images: initialImages,
             order: initialData?.order !== undefined ? initialData.order : Date.now(),
+            metadata: initialRawMetadata,
         },
     });
 
@@ -332,8 +382,27 @@ export function ProductForm({
                 ? Math.round(Number(values.order))
                 : (initialData?.order !== undefined ? initialData.order : Date.now());
 
+            // Convertir les entrées dynamiques en objet metadata
+            const metadataPayload: Record<string, any> = {};
+            metadataEntries.forEach(({ key, value }) => {
+                const trimmedKey = key.trim();
+                if (trimmedKey) {
+                    const trimmedVal = value.trim();
+                    let parsedVal: any = trimmedVal;
+                    if (trimmedVal.toLowerCase() === "true") {
+                        parsedVal = true;
+                    } else if (trimmedVal.toLowerCase() === "false") {
+                        parsedVal = false;
+                    } else if (!isNaN(Number(trimmedVal)) && trimmedVal !== "") {
+                        parsedVal = Number(trimmedVal);
+                    }
+                    metadataPayload[trimmedKey] = parsedVal;
+                }
+            });
+
             const payload = {
                 ...values,
+                metadata: metadataPayload,
                 order: effectiveOrder,
                 artist: trimmedArtist,
                 vendor: trimmedArtist,
@@ -552,7 +621,7 @@ export function ProductForm({
                                                 maxFiles={10}
                                                 lang={lang}
                                                 title={dict.uploadImage || (lang?.startsWith("fr") ? "Cliquez ou glissez-déposez des images ici" : "Click or drag images here")}
-                                                recommendedText={lang?.startsWith("fr") ? "PNG, JPG, WEBP • Plusieurs fichiers autorisés" : "PNG, JPG, WEBP • Multiple files allowed"}
+                                                recommendedText={lang?.startsWith("fr") ? "PNG, JPG, WEBP, AVIF • Plusieurs fichiers autorisés" : "PNG, JPG, WEBP, AVIF • Multiple files allowed"}
                                                 onUpload={uploadProductImage}
                                                 disabled={isLoading}
                                             />
@@ -641,6 +710,101 @@ export function ProductForm({
                                     </FormItem>
                                 )}
                             />
+                        </CardContent>
+                    </Card>
+
+                    {/* Bloc 4 : Spécifications Personnalisées (Custom Fields / Metadata) */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <SlidersHorizontal className="w-5 h-5 text-muted-foreground" />
+                                        <h2 className="text-lg font-medium tracking-tight">
+                                            {lang?.startsWith("fr") ? "Spécifications Personnalisées" : "Custom Specifications"}
+                                        </h2>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                        {lang?.startsWith("fr")
+                                            ? "Champs spécifiques par marque ou produit (ex: THC, CBD, dimensions, etc.)."
+                                            : "Brand or product-specific metadata (e.g. THC, CBD, dimensions, etc.)."}
+                                    </p>
+                                </div>
+                                {metadataEntries.length > 0 && (
+                                    <Badge variant="outline" className="text-xs">
+                                        {metadataEntries.length} {lang?.startsWith("fr") ? "spécification(s)" : "field(s)"}
+                                    </Badge>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {metadataEntries.length === 0 ? (
+                                <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground bg-muted/20">
+                                    <p className="text-sm">
+                                        {lang?.startsWith("fr")
+                                            ? "Aucune spécification personnalisée pour ce produit."
+                                            : "No custom specifications defined for this product."}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-12 gap-3 text-xs font-medium text-muted-foreground px-1 hidden sm:grid">
+                                        <div className="col-span-5">{lang?.startsWith("fr") ? "Clé" : "Key"}</div>
+                                        <div className="col-span-6">{lang?.startsWith("fr") ? "Valeur" : "Value"}</div>
+                                        <div className="col-span-1 text-center">{lang?.startsWith("fr") ? "Action" : "Action"}</div>
+                                    </div>
+                                    {metadataEntries.map((entry, idx) => (
+                                        <div
+                                            key={entry.id || idx}
+                                            className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 items-center p-2.5 sm:p-0 rounded-lg border sm:border-0 bg-muted/20 sm:bg-transparent"
+                                        >
+                                            <div className="sm:col-span-5">
+                                                <Input
+                                                    placeholder={lang?.startsWith("fr") ? "Clé (ex: thc, taille)" : "Key (e.g. thc, size)"}
+                                                    value={entry.key}
+                                                    onChange={(e) => updateMetadataEntry(idx, "key", e.target.value)}
+                                                    className="font-mono text-xs sm:text-sm"
+                                                    disabled={isLoading}
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-6">
+                                                <Input
+                                                    placeholder={lang?.startsWith("fr") ? "Valeur (ex: 24%, XL)" : "Value (e.g. 24%, XL)"}
+                                                    value={entry.value}
+                                                    onChange={(e) => updateMetadataEntry(idx, "value", e.target.value)}
+                                                    className="text-xs sm:text-sm"
+                                                    disabled={isLoading}
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-1 flex justify-end sm:justify-center">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => removeMetadataEntry(idx)}
+                                                    disabled={isLoading}
+                                                    className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                    title={lang?.startsWith("fr") ? "Supprimer ce champ" : "Remove field"}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={addMetadataEntry}
+                                disabled={isLoading}
+                                className="w-full sm:w-auto cursor-pointer gap-2 mt-2"
+                            >
+                                <Plus className="h-4 w-4" />
+                                {lang?.startsWith("fr") ? "Ajouter un champ personnalisé" : "Add custom field"}
+                            </Button>
                         </CardContent>
                     </Card>
                     </div>

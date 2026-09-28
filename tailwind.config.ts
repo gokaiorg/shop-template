@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import typography from '@tailwindcss/typography';
+import defaultTheme from 'tailwindcss/defaultTheme';
 
 const config: Config = {
   content: [
@@ -8,6 +9,22 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-storefront)', 'var(--font-geist-sans)', ...defaultTheme.fontFamily.sans],
+      },
+      borderRadius: {
+        'none': '0px',
+        'xs': 'var(--radius-xs)',
+        'sm': 'var(--radius-sm)',
+        'DEFAULT': 'var(--radius-default)',
+        'md': 'var(--radius-md)',
+        'lg': 'var(--radius-lg)',
+        'xl': 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
+        '3xl': 'var(--radius-3xl)',
+        '4xl': 'var(--radius-4xl)',
+        'full': 'var(--radius-full)',
+      },
       colors: {
         primary: {
           DEFAULT: 'var(--theme-primary)',

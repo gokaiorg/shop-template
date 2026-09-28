@@ -8,7 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-storefront, var(--font-geist-sans));
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -39,13 +39,16 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-default: var(--radius-default);
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
+  --radius-4xl: var(--radius-4xl);
+  --radius-full: var(--radius-full);
 
   /* Soft colored shadows */
   --shadow-soft-xs: var(--shadow-soft-xs);
@@ -80,7 +83,19 @@
 }
 
 :root {
+  --font-storefront: var(--font-geist-sans);
+  --font-sans: var(--font-storefront, var(--font-geist-sans));
   --radius: 0.625rem;
+  --radius-default: 0.25rem;
+  --radius-xs: 0.125rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-full: 9999px;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -194,7 +209,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
@@ -278,4 +293,74 @@
     background-image: var(--glow-subtle);
     background-repeat: no-repeat;
   }
+}
+
+.theme-squared,
+html.theme-squared {
+  --radius: 0px !important;
+  --radius-default: 0px !important;
+  --radius-xs: 0px !important;
+  --radius-sm: 0px !important;
+  --radius-md: 0px !important;
+  --radius-lg: 0px !important;
+  --radius-xl: 0px !important;
+  --radius-2xl: 0px !important;
+  --radius-3xl: 0px !important;
+  --radius-4xl: 0px !important;
+  --radius-full: 0px !important;
+}
+
+/* Strict isolation: Admin panel always preserves neutral typography and rounded style */
+[data-admin],
+[data-admin] *,
+[data-admin-root],
+[data-admin-root] *,
+body[data-admin],
+body[data-admin] *,
+body[data-admin-root],
+body[data-admin-root] *,
+html[data-admin],
+html[data-admin] *,
+body[data-admin] [data-slot="select-content"],
+body[data-admin] [data-slot="select-item"],
+body[data-admin] [data-slot="select-trigger"],
+body[data-admin] [data-slot="select-value"],
+body[data-admin] [data-slot="dropdown-menu-content"],
+body[data-admin] [data-slot="dropdown-menu-item"],
+body[data-admin] [data-slot="dialog-content"],
+body[data-admin] [data-slot="alert-dialog-content"],
+body[data-admin] [data-slot="sheet-content"],
+body[data-admin] [data-radix-popper-content-wrapper],
+body[data-admin-root] [data-slot="select-content"],
+body[data-admin-root] [data-slot="select-item"],
+body[data-admin-root] [data-slot="dropdown-menu-content"],
+body[data-admin-root] [data-slot="dropdown-menu-item"],
+body[data-admin-root] [data-radix-popper-content-wrapper],
+body[data-admin] select,
+body[data-admin] select option,
+body[data-admin-root] select,
+body[data-admin-root] select option {
+  --radius-default: 0.25rem !important;
+  --radius-sm: calc(0.625rem - 4px) !important;
+  --radius-md: calc(0.625rem - 2px) !important;
+  --radius-lg: 0.625rem !important;
+  --radius-xl: calc(0.625rem + 4px) !important;
+  --radius-2xl: calc(0.625rem + 8px) !important;
+  --radius-3xl: calc(0.625rem + 12px) !important;
+  --radius-4xl: calc(0.625rem + 16px) !important;
+  --radius-full: 9999px !important;
+  --font-storefront: var(--font-geist-sans) !important;
+  --font-sans: var(--font-geist-sans) !important;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* Storefront Typography: Dynamic typography applied across entire storefront outside admin */
+html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) {
+  font-family: var(--font-storefront, var(--font-geist-sans)), sans-serif;
+}
+html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) input,
+html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) button,
+html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) select,
+html:not([data-admin]):not([data-admin-root]) body:not([data-admin]):not([data-admin-root]) textarea {
+  font-family: var(--font-storefront, var(--font-geist-sans)), sans-serif;
 }

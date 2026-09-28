@@ -252,8 +252,8 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                             aspectRatio="banner"
                                             recommendedText={
                                                 lang === "fr"
-                                                    ? "1920×800px paysage (JPEG, PNG, WebP)"
-                                                    : "1920×800px landscape image (JPEG, PNG, WebP)"
+                                                    ? "1920×800px paysage (JPEG, PNG, WebP, AVIF)"
+                                                    : "1920×800px landscape image (JPEG, PNG, WebP, AVIF)"
                                             }
                                             onUpload={(file) => uploadBrandAsset(file, "hero")}
                                             lang={lang}

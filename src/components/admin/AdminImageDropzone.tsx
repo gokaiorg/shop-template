@@ -56,15 +56,15 @@ export function AdminImageDropzone({
 
         const filesArray = Array.from(fileList);
         const validFiles = filesArray.filter((file) =>
-            ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"].includes(file.type) ||
-            /\.(jpe?g|png|webp|gif|svg)$/i.test(file.name)
+            ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif", "image/svg+xml"].includes(file.type) ||
+            /\.(jpe?g|png|webp|avif|gif|svg)$/i.test(file.name)
         );
 
         if (validFiles.length === 0) {
             toast.error(
                 lang?.startsWith("fr")
-                    ? "Veuillez sélectionner des fichiers images valides (PNG, JPG, WebP)."
-                    : "Please select valid image files (PNG, JPG, WebP)."
+                    ? "Veuillez sélectionner des fichiers images valides (PNG, JPG, WebP, AVIF)."
+                    : "Please select valid image files (PNG, JPG, WebP, AVIF)."
             );
             return;
         }
@@ -365,8 +365,8 @@ export function AdminImageDropzone({
                     </p>
                     <p className="text-xs text-muted-foreground mt-1 text-center">
                         {recommendedText || (lang?.startsWith("fr")
-                            ? `PNG, JPG, WEBP • ${isSingle ? "1 fichier max" : "Plusieurs fichiers autorisés"}`
-                            : `PNG, JPG, WEBP • ${isSingle ? "1 file max" : "Multiple files allowed"}`)}
+                            ? `PNG, JPG, WEBP, AVIF • ${isSingle ? "1 fichier max" : "Plusieurs fichiers autorisés"}`
+                            : `PNG, JPG, WEBP, AVIF • ${isSingle ? "1 file max" : "Multiple files allowed"}`)}
                     </p>
                 </div>
             )}
@@ -375,7 +375,7 @@ export function AdminImageDropzone({
             <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml,.png,.jpg,.jpeg,.webp,.avif,.gif,.svg"
                 multiple={!isSingle}
                 onChange={handleFileInputChange}
                 disabled={disabled}
