@@ -123,10 +123,13 @@ export default async function RootLayout({
     case "manrope":
       storefrontFontVariable = "var(--font-manrope)";
       break;
+    case "Jersey 25":
+    case "jersey-25":
+    case "jersey":
     case "Pixelify Sans":
     case "pixelify-sans":
     case "pixelify":
-      storefrontFontVariable = "var(--font-pixelify)";
+      storefrontFontVariable = "var(--font-jersey-25)";
       break;
     case "Inter":
     case "inter":
@@ -235,6 +238,7 @@ export default async function RootLayout({
             catalogTitle={storeSettings.catalogTitle}
             catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
             catalogSlugs={typeof storeSettings.catalogSlug === 'object' ? storeSettings.catalogSlug : { [defaultLocale]: storeSettings.catalogSlug || 'shop' }}
+            productImageRatio={storeSettings.productImageRatio || brand.theme?.productImageRatio || (brandKey === 'green-ghost' ? 'square' : 'default')}
           >
             {children}
           </BrandProvider>

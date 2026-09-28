@@ -54,3 +54,4 @@ cors.json
 old-service-account.json
 new-service-account.json
 migrate.js
+link-images.js

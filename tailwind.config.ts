@@ -11,6 +11,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-storefront)', 'var(--font-geist-sans)', ...defaultTheme.fontFamily.sans],
+        jersey: ['var(--font-jersey-25)', 'sans-serif'],
+        pixel: ['var(--font-jersey-25)', 'sans-serif'],
       },
       borderRadius: {
         'none': '0px',

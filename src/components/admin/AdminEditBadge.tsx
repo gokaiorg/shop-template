@@ -28,7 +28,14 @@ export function AdminEditBadge({
     locale,
     title,
 }: AdminEditBadgeProps) {
-    const { data: session } = useSession();
+    let session = null;
+    try {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const res = useSession();
+        session = res?.data;
+    } catch {
+        session = null;
+    }
     const params = useParams();
     const effectiveLocale = locale || (params?.lang as string) || "en";
 

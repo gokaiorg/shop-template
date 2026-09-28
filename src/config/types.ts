@@ -57,6 +57,7 @@ export interface BrandTheme {
     fontSans?: string;
     fontHeading?: string;
     radius?: string; // e.g. "0.625rem", "0.375rem"
+    productImageRatio?: 'default' | 'square' | 'portrait';
     colors?: {
         light?: {
             primary?: string;

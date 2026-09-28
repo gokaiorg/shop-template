@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Product } from "@/types/database";
+import { Product, ProductImageRatio } from "@/types/database";
 import { useCart } from "@/store/useCart";
 import { toast } from "sonner";
 import { getLocalizedField } from "@/lib/i18n";
@@ -17,10 +17,11 @@ interface ShopProductCardProps {
     lang: string;
     dict?: any;
     categorySlug?: string;
+    imageRatio?: ProductImageRatio;
 }
 
-export function ShopProductCard({ product, lang, dict = {}, categorySlug }: ShopProductCardProps) {
-    const { brand, isCartEnabled, currency, catalogSlug } = useBrand();
+export function ShopProductCard({ product, lang, dict = {}, categorySlug, imageRatio }: ShopProductCardProps) {
+    const { brand, isCartEnabled, catalogSlug, productImageRatio } = useBrand();
     const { formattedPrice } = useCurrency(product.price, lang);
     const activeCatalogSlug = catalogSlug || "shop";
     const title = getLocalizedField(product.name, lang) || (lang === 'fr' ? product.nameFr : product.nameEn) || "";
@@ -56,13 +57,26 @@ export function ShopProductCard({ product, lang, dict = {}, categorySlug }: Shop
 
     const isOutOfStock = (product.stock ?? 0) <= 0;
 
+    const activeRatio = imageRatio || productImageRatio || 'default';
+    const aspectRatioClass = (() => {
+        switch (activeRatio) {
+            case 'square':
+                return 'aspect-square';
+            case 'portrait':
+                return 'aspect-[3/4]';
+            case 'default':
+            default:
+                return 'aspect-[16/10] max-h-52';
+        }
+    })();
+
     return (
         <article className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/60 backdrop-blur-md p-8 h-full shadow-soft hover:shadow-soft-xl dark:hover:border-white/25 transition-all duration-300 ease-out">
             {/* Admin Quick Edit Shortcut */}
             <AdminEditBadge href={`/admin/products/${product.id}/edit`} locale={lang} />
 
-            {/* Image Container: Bento Box framed, max 40% card height */}
-            <Link href={productHref} className="relative w-full aspect-[16/10] max-h-52 overflow-hidden rounded-2xl bg-muted/40 block shrink-0">
+            {/* Image Container: Dynamic aspect ratio */}
+            <Link href={productHref} className={`relative w-full ${aspectRatioClass} overflow-hidden rounded-2xl bg-muted/40 block shrink-0`}>
                 <Image
                     src={imageUrl}
                     alt={title}

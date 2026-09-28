@@ -83,6 +83,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
         primaryColor: defaultPrimaryColor,
         borderStyle: 'rounded',
         fontFamily: 'Geist',
+        productImageRatio: brand.theme?.productImageRatio || (brand.identity.id === 'green-ghost' ? 'square' : 'default'),
         vendors: [],
         aboutSection: {
             enabled: false,
@@ -91,6 +92,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             ctaLabel: { en: '', fr: '' },
             ctaUrl: '',
             images: [],
+            imageRatio: 'default',
         },
         contactSection: {
             enabled: false,
@@ -155,6 +157,9 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 primaryColor: (typeof data?.primaryColor === 'string' && data.primaryColor.trim().length > 0) ? data.primaryColor : fallbackSettings.primaryColor,
                 borderStyle: data?.borderStyle === 'squared' ? 'squared' : 'rounded',
                 fontFamily: (typeof data?.fontFamily === 'string' && data.fontFamily.trim().length > 0) ? data.fontFamily : fallbackSettings.fontFamily,
+                productImageRatio: (data?.productImageRatio === 'square' || data?.productImageRatio === 'portrait' || data?.productImageRatio === 'default')
+                    ? data.productImageRatio
+                    : fallbackSettings.productImageRatio,
                 vendors: Array.isArray(data?.vendors) ? data.vendors : fallbackSettings.vendors,
                 aboutSection: data?.aboutSection ? {
                     enabled: Boolean(data.aboutSection.enabled),
@@ -163,6 +168,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                     ctaLabel: (data.aboutSection.ctaLabel && typeof data.aboutSection.ctaLabel === 'object') ? data.aboutSection.ctaLabel : {},
                     ctaUrl: typeof data.aboutSection.ctaUrl === 'string' ? data.aboutSection.ctaUrl : '',
                     images: Array.isArray(data.aboutSection.images) ? data.aboutSection.images : [],
+                    imageRatio: (data.aboutSection.imageRatio === 'square' || data.aboutSection.imageRatio === 'squared') ? 'square' : 'default',
                 } : fallbackSettings.aboutSection,
                 contactSection: data?.contactSection ? {
                     enabled: Boolean(data.contactSection.enabled),

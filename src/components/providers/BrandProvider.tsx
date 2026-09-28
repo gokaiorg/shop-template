@@ -16,6 +16,7 @@ export interface BrandContextType {
     catalogTitle?: Record<string, string>;
     catalogSlug?: string;
     catalogSlugs?: Record<string, string>;
+    productImageRatio?: 'default' | 'square' | 'portrait';
 }
 
 const BrandContext = createContext<BrandContextType>({
@@ -30,6 +31,7 @@ const BrandContext = createContext<BrandContextType>({
     catalogTitle: { en: 'Shop', fr: 'Boutique' },
     catalogSlug: 'shop',
     catalogSlugs: { en: 'shop', fr: 'boutique' },
+    productImageRatio: 'default',
 });
 
 export function BrandProvider({
@@ -44,6 +46,7 @@ export function BrandProvider({
     catalogTitle = { en: 'Shop', fr: 'Boutique' },
     catalogSlug = 'shop',
     catalogSlugs = { en: 'shop', fr: 'boutique' },
+    productImageRatio = 'default',
 }: {
     children: React.ReactNode;
     brand: BrandConfig;
@@ -56,6 +59,7 @@ export function BrandProvider({
     catalogTitle?: Record<string, string>;
     catalogSlug?: string;
     catalogSlugs?: Record<string, string>;
+    productImageRatio?: 'default' | 'square' | 'portrait';
 }) {
     const isMulti = supportedLocales.length > 1;
     return (
@@ -72,6 +76,7 @@ export function BrandProvider({
                 catalogTitle,
                 catalogSlug,
                 catalogSlugs,
+                productImageRatio,
             }}
         >
             {children}

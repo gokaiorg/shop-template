@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Save, BookOpen, ArrowLeft } from "lucide-react";
+import { Loader2, Save, BookOpen, ArrowLeft, Square } from "lucide-react";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 import { AdminBottomBar } from "@/components/admin/AdminBottomBar";
 
@@ -14,6 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Form,
     FormControl,
@@ -66,6 +73,7 @@ export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlock
             ctaLabel: defaultAboutCtaLabel,
             ctaUrl: initialData.aboutSection?.ctaUrl || "",
             images: initialData.aboutSection?.images || [],
+            imageRatio: (initialData.aboutSection?.imageRatio === "square" || initialData.aboutSection?.imageRatio === "squared") ? "square" : "default",
         },
     });
 
@@ -321,6 +329,39 @@ export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlock
                             />
                         </div>
 
+                                {/* Image Display Format (Ratio) */}
+                                <div className="border-t pt-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="imageRatio"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="flex items-center gap-2">
+                                                    <Square className="h-4 w-4 text-muted-foreground" />
+                                                    <span>{isFr ? "Format d'affichage de l'image (Ratio)" : "Image Display Format (Ratio)"}</span>
+                                                </FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value || "default"} value={field.value || "default"}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="w-full sm:max-w-xs cursor-pointer">
+                                                            <SelectValue placeholder={isFr ? "Sélectionner un format" : "Select image ratio"} />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="default">{isFr ? "Défaut (Rectangulaire 4:3 / 16:11)" : "Default (Rectangular 4:3 / 16:11)"}</SelectItem>
+                                                        <SelectItem value="square">{isFr ? "Carré (1:1 / Squared)" : "Square (1:1 / Squared)"}</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription className="text-xs">
+                                                    {isFr
+                                                        ? "Sélectionnez 'Carré (1:1 / Squared)' pour afficher les visuels ou le carrousel au format carré sans bandes noires, ou 'Défaut' pour le format rectangulaire étendu."
+                                                        : "Select 'Square (1:1 / Squared)' to render visuals or carousel in square mode without letterboxing, or 'Default' for extended rectangular mode."}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
                                 {/* Image Carousel Upload */}
                                 <div className="border-t pt-4">
                                     <FormField
@@ -344,11 +385,11 @@ export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlock
                                                         onChange={(urls) => field.onChange(urls)}
                                                         multiple={true}
                                                         maxFiles={5}
-                                                        aspectRatio="video"
+                                                        aspectRatio={form.watch("imageRatio") === "square" || form.watch("imageRatio") === "squared" ? "square" : "video"}
                                                         recommendedText={
                                                             lang === "fr"
-                                                                ? "Jusqu'à 5 photos (4:3 ou 16:9, WebP/JPEG)"
-                                                                : "Up to 5 photos (4:3 or 16:9, WebP/JPEG)"
+                                                                ? "Jusqu'à 5 photos (4:3, 1:1 ou 16:9, WebP/AVIF/JPEG)"
+                                                                : "Up to 5 photos (4:3, 1:1 or 16:9, WebP/AVIF/JPEG)"
                                                         }
                                                         onUpload={(file) => uploadBrandAsset(file, "about")}
                                                         lang={lang}

@@ -21,6 +21,7 @@ interface AboutSectionProps {
     className?: string;
     forceDisplay?: boolean;
     as?: "section" | "div";
+    imageRatio?: 'default' | 'square' | 'squared';
 }
 
 export function AboutSection({
@@ -30,8 +31,13 @@ export function AboutSection({
     className = "",
     forceDisplay = false,
     as: Component = "section",
+    imageRatio,
 }: AboutSectionProps) {
     const activeLocale = locale || lang || "en";
+
+    const effectiveRatio = imageRatio || aboutSection?.imageRatio || 'default';
+    const isSquared = effectiveRatio === 'square' || effectiveRatio === 'squared';
+    const aspectClass = isSquared ? 'aspect-square' : 'aspect-[4/3] sm:aspect-[16/11]';
 
     if (!aboutSection || (!aboutSection.enabled && !forceDisplay)) {
         return null;
@@ -158,9 +164,9 @@ export function AboutSection({
                                 />
 
                                 {/* Overflowing visual container that breaks outside the frame */}
-                                <div className="relative lg:-mr-12 lg:-my-8 lg:translate-x-4 z-10 transition-transform duration-500 ease-out hover:scale-[1.02]">
+                                <div className={`relative ${isSquared ? "max-w-md sm:max-w-lg lg:max-w-xl mx-auto lg:mr-0" : "lg:-mr-12 lg:-my-8 lg:translate-x-4"} z-10 transition-transform duration-500 ease-out hover:scale-[1.02]`}>
                                     {images.length === 1 ? (
-                                        <div className="relative w-full aspect-[4/3] sm:aspect-[16/11] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/40 dark:border-white/15 group [mask-image:radial-gradient(ellipse_95%_95%_at_50%_50%,black_85%,transparent_100%)]">
+                                        <div className={`relative w-full ${aspectClass} rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/40 dark:border-white/15 group [mask-image:radial-gradient(ellipse_95%_95%_at_50%_50%,black_85%,transparent_100%)]`}>
                                             <Image
                                                 src={images[0]}
                                                 alt={title || "About visual"}
@@ -178,7 +184,7 @@ export function AboutSection({
                                             <CarouselContent>
                                                 {images.map((imgUrl, index) => (
                                                     <CarouselItem key={index}>
-                                                        <div className="relative w-full aspect-[4/3] sm:aspect-[16/11] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/40 dark:border-white/15">
+                                                        <div className={`relative w-full ${aspectClass} rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/40 dark:border-white/15`}>
                                                             <Image
                                                                 src={imgUrl}
                                                                 alt={title ? `${title} (${index + 1})` : `About photo ${index + 1}`}

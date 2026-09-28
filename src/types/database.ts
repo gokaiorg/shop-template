@@ -196,6 +196,7 @@ export interface AboutSectionSettings {
   ctaLabel: Record<string, string>;
   ctaUrl: string;
   images: string[];
+  imageRatio?: 'default' | 'square' | 'squared';
 }
 
 export interface ContactSectionSettings {
@@ -234,6 +235,8 @@ export interface GoogleReview {
   relative_time_description?: string;
 }
 
+export type ProductImageRatio = 'default' | 'square' | 'portrait';
+
 export interface StoreSettings {
   id?: string;
   brandName: string;
@@ -269,6 +272,7 @@ export interface StoreSettings {
   primaryColor?: string;
   borderStyle?: 'rounded' | 'squared';
   fontFamily?: string;
+  productImageRatio?: 'default' | 'square' | 'portrait';
   vendors?: string[];
   aboutSection?: AboutSectionSettings;
   contactSection?: ContactSectionSettings;

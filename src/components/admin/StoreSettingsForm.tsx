@@ -16,6 +16,7 @@ import {
     Coins,
     Square,
     Type,
+    ImageIcon,
     Plus,
     Share2,
     LayoutGrid,
@@ -126,6 +127,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
             borderStyle: initialData.borderStyle || "rounded",
             fontFamily: initialData.fontFamily || "Geist",
             defaultCurrency: initialData.defaultCurrency || "THB",
+            productImageRatio: initialData.productImageRatio || "default",
         },
     });
 
@@ -247,7 +249,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                         />
 
                         {/* Theme & Currency Dropdowns */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 pt-4 border-t">
                             {/* Default Theme */}
                             <FormField
                                 control={form.control}
@@ -289,7 +291,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                         const val = (field.value || "").trim().toLowerCase();
                                         if (val === "space grotesk" || val === "space-grotesk") return "Space Grotesk";
                                         if (val === "manrope") return "Manrope";
-                                        if (val === "pixelify sans" || val === "pixelify-sans" || val === "pixelify") return "Pixelify Sans";
+                                        if (val === "jersey 25" || val === "jersey-25" || val === "jersey" || val === "pixelify sans" || val === "pixelify-sans" || val === "pixelify") return "Jersey 25";
                                         if (val === "inter") return "Inter";
                                         return "Geist";
                                     })();
@@ -315,7 +317,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                     <SelectItem value="Inter">Inter</SelectItem>
                                                     <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
                                                     <SelectItem value="Manrope">Manrope</SelectItem>
-                                                    <SelectItem value="Pixelify Sans">Pixelify Sans</SelectItem>
+                                                    <SelectItem value="Jersey 25">Jersey 25</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormDescription className="text-xs">
@@ -389,6 +391,38 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                         </Select>
                                         <FormDescription className="text-xs">
                                             Used for product price formatting and injected into Stripe payment sessions.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Product Image Ratio */}
+                            <FormField
+                                control={form.control}
+                                name="productImageRatio"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2">
+                                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                            {lang === "fr" ? "Ratio d'image produit" : "Product Image Ratio"}
+                                        </FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value || "default"} value={field.value || "default"}>
+                                            <FormControl>
+                                                <SelectTrigger className="w-full cursor-pointer">
+                                                    <SelectValue placeholder={lang === "fr" ? "Sélectionner un ratio" : "Select image ratio"} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="default">{lang === "fr" ? "Défaut (Rectangulaire)" : "Default (Rectangular)"}</SelectItem>
+                                                <SelectItem value="square">{lang === "fr" ? "Carré (1:1)" : "Square (1:1)"}</SelectItem>
+                                                <SelectItem value="portrait">{lang === "fr" ? "Portrait (3:4)" : "Portrait (3:4)"}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription className="text-xs">
+                                            {lang === "fr"
+                                                ? "Format d'affichage des visuels produits dans le catalogue et les grilles."
+                                                : "Visual aspect ratio for product cards in catalog grids."}
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -1168,7 +1202,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                             />
                                                         </FormControl>
                                                         <FormDescription className="text-xs text-muted-foreground">
-                                                            HTML is supported (e.g., &lt;a href="..."&gt;, &lt;br&gt;, &lt;strong&gt;).
+                                                            HTML is supported (e.g., &lt;a href=&quot;...&quot;&gt;, &lt;br&gt;, &lt;strong&gt;).
                                                         </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
@@ -1187,7 +1221,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                 <Textarea rows={3} placeholder="Brand description for the footer" {...field} />
                                             </FormControl>
                                             <FormDescription className="text-xs text-muted-foreground">
-                                                HTML is supported (e.g., &lt;a href="..."&gt;, &lt;br&gt;, &lt;strong&gt;).
+                                                HTML is supported (e.g., &lt;a href=&quot;...&quot;&gt;, &lt;br&gt;, &lt;strong&gt;).
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
