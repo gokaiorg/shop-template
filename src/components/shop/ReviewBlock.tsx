@@ -155,13 +155,36 @@ export function ReviewBlock({
         };
     }, [placeId, activeLocale, initialReviews]);
 
+    const displayReviews = React.useMemo(() => {
+        const seen = new Set<string>();
+        const genericNames = new Set([
+            "client google",
+            "a google user",
+            "google user",
+            "utilisateur google",
+            "un utilisateur de google",
+        ]);
+        return reviews
+            .filter((r) => {
+                const authorNormalized = (r.author_name || "").trim().toLowerCase();
+                const key =
+                    genericNames.has(authorNormalized) || !authorNormalized
+                        ? `${authorNormalized}_${(r.text || "").trim().slice(0, 50).toLowerCase()}`
+                        : authorNormalized;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            })
+            .slice(0, 6);
+    }, [reviews]);
+
     // If disabled or placeId empty and not forced, return null
     if (!forceDisplay && (!reviewSection || !isEnabled || !placeId)) {
         return null;
     }
 
     // If finished loading and there are no reviews, and not in forceDisplay mode, hide block
-    if (!isLoading && reviews.length === 0 && !forceDisplay) {
+    if (!isLoading && displayReviews.length === 0 && !forceDisplay) {
         return null;
     }
 
@@ -257,7 +280,7 @@ export function ReviewBlock({
                 )}
 
                 {/* Empty fallback when forced in editor or no reviews */}
-                {!isLoading && reviews.length === 0 && (
+                {!isLoading && displayReviews.length === 0 && (
                     <div className="text-center py-12 px-6 rounded-2xl border border-dashed border-black/10 dark:border-white/10 max-w-xl mx-auto">
                         <MessageSquareQuote className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
                         <p className="font-medium text-foreground text-sm">
@@ -272,14 +295,14 @@ export function ReviewBlock({
                 )}
 
                 {/* Reviews Grid */}
-                {!isLoading && reviews.length > 0 && (
+                {!isLoading && displayReviews.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {reviews.slice(0, 6).map((review, idx) => {
+                        {displayReviews.map((review, idx) => {
                             const isExpanded = expandedReviewIndex === idx;
                             const isLong = (review.text || "").length > 180;
                             return (
                                 <article
-                                    key={idx}
+                                    key={`${review.author_name}-${idx}`}
                                     className="group relative flex flex-col justify-between rounded-2xl border border-black/[0.06] dark:border-white/10 bg-white/60 dark:bg-white/[0.02] backdrop-blur-xl p-6 sm:p-7 shadow-soft hover:shadow-soft-xl hover:-translate-y-1 transition-all duration-300"
                                 >
                                     {/* Top: Author Avatar, Name, Relative time, Google Badge */}

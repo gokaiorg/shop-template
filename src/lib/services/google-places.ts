@@ -10,9 +10,106 @@ export interface GooglePlaceDetailsResponse {
 }
 
 /**
+ * Free fallback translation helper using standard Google endpoint.
+ * Only invoked if Google Places API returns text in a different language than requested.
+ */
+async function translateTextFallback(text: string, targetLang: string): Promise<string> {
+    if (!text || !targetLang) return text;
+    try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(
+            targetLang
+        )}&dt=t&q=${encodeURIComponent(text)}`;
+        const res = await fetch(url, {
+            headers: { "User-Agent": "Mozilla/5.0" },
+            next: { revalidate: 86400 },
+        });
+        if (!res.ok) return text;
+        const data = await res.json();
+        if (Array.isArray(data) && Array.isArray(data[0])) {
+            const translated = data[0].map((item: any) => item?.[0] || "").join("");
+            return translated || text;
+        }
+    } catch (err) {
+        console.warn("[REVIEW_TRANSLATE_FALLBACK_ERROR]", err);
+    }
+    return text;
+}
+
+/**
+ * Deduplicate reviews strictly by author name (and snippet if generic name)
+ * to ensure that no duplicate reviews are ever displayed.
+ */
+function deduplicateReviews(reviews: GoogleReview[]): GoogleReview[] {
+    const seen = new Set<string>();
+    const genericNames = new Set([
+        "client google",
+        "a google user",
+        "google user",
+        "utilisateur google",
+        "un utilisateur de google",
+    ]);
+    const result: GoogleReview[] = [];
+
+    for (const r of reviews) {
+        const authorNormalized = (r.author_name || "").trim().toLowerCase();
+        const key =
+            genericNames.has(authorNormalized) || !authorNormalized
+                ? `${authorNormalized}_${(r.text || "").trim().slice(0, 50).toLowerCase()}`
+                : authorNormalized;
+
+        if (!seen.has(key)) {
+            seen.add(key);
+            result.push(r);
+        }
+    }
+    return result;
+}
+
+function parseClassicReviews(rawReviews: any[]): GoogleReview[] {
+    if (!Array.isArray(rawReviews)) return [];
+    return rawReviews.map((r) => ({
+        author_name: r.author_name || "Client Google",
+        rating: typeof r.rating === "number" ? r.rating : 5,
+        text: r.text || "",
+        profile_photo_url: r.profile_photo_url || "",
+        relative_time_description: r.relative_time_description || undefined,
+    }));
+}
+
+async function parseNewReviews(rawReviews: any[], targetLang: string = "fr"): Promise<GoogleReview[]> {
+    if (!Array.isArray(rawReviews)) return [];
+    const parsed: GoogleReview[] = [];
+
+    for (const r of rawReviews) {
+        const authorName = r.authorAttribution?.displayName || "Client Google";
+        const rating = typeof r.rating === "number" ? r.rating : 5;
+        let text = typeof r.text === "object" ? r.text?.text || "" : (r.text || "");
+        const textLang = typeof r.text === "object" ? r.text?.languageCode : undefined;
+        const photoUrl = r.authorAttribution?.photoUri || "";
+        const relativeTime = r.relativePublishTimeDescription || undefined;
+
+        // If the review language is present and differs from requested targetLang, auto-translate it
+        if (text && textLang && textLang.toLowerCase() !== targetLang.toLowerCase()) {
+            text = await translateTextFallback(text, targetLang);
+        }
+
+        parsed.push({
+            author_name: authorName,
+            rating,
+            text,
+            profile_photo_url: photoUrl,
+            relative_time_description: relativeTime,
+        });
+    }
+
+    return parsed;
+}
+
+/**
  * Server-only service to securely query Google Places API (Place Details).
  * Extracts author_name, rating, text, and profile_photo_url.
- * Supports both standard Google Place Details endpoint and Places API (New).
+ * Strictly queries the requested language without cross-language fallbacks
+ * and deduplicates reviews without artificial padding.
  * Cached using Next.js fetch cache (1 hour).
  */
 export async function getGooglePlaceReviews(
@@ -45,42 +142,6 @@ export async function getGooglePlaceReviews(
         };
     }
 
-function parseClassicReviews(rawReviews: any[]): GoogleReview[] {
-    if (!Array.isArray(rawReviews)) return [];
-    return rawReviews.map((r) => ({
-        author_name: r.author_name || "Client Google",
-        rating: typeof r.rating === "number" ? r.rating : 5,
-        text: r.text || "",
-        profile_photo_url: r.profile_photo_url || "",
-        relative_time_description: r.relative_time_description || undefined,
-    }));
-}
-
-function parseNewReviews(rawReviews: any[]): GoogleReview[] {
-    if (!Array.isArray(rawReviews)) return [];
-    return rawReviews.map((r) => ({
-        author_name: r.authorAttribution?.displayName || "Client Google",
-        rating: typeof r.rating === "number" ? r.rating : 5,
-        text: typeof r.text === "object" ? r.text?.text || "" : (r.text || ""),
-        profile_photo_url: r.authorAttribution?.photoUri || "",
-        relative_time_description: r.relativePublishTimeDescription || undefined,
-    }));
-}
-
-function mergeReviews(existing: GoogleReview[], incoming: GoogleReview[], maxCount: number = 6): GoogleReview[] {
-    const seen = new Set(existing.map((r) => (r.author_name + "_" + (r.text || "").slice(0, 30)).toLowerCase()));
-    const result = [...existing];
-    for (const r of incoming) {
-        const key = (r.author_name + "_" + (r.text || "").slice(0, 30)).toLowerCase();
-        if (!seen.has(key)) {
-            seen.add(key);
-            result.push(r);
-            if (result.length >= maxCount) break;
-        }
-    }
-    return result;
-}
-
     // 1. Attempt Classic Place Details API
     try {
         const classicUrl = new URL("https://maps.googleapis.com/maps/api/place/details/json");
@@ -97,29 +158,8 @@ function mergeReviews(existing: GoogleReview[], incoming: GoogleReview[], maxCou
             const data = await res.json();
 
             if (data.status === "OK") {
-                let reviews = parseClassicReviews(data.result?.reviews);
-
-                // If fewer than 6 reviews, attempt newest sort or fallback language to complete 6
-                if (reviews.length < 6) {
-                    try {
-                        const fallbackUrl = new URL("https://maps.googleapis.com/maps/api/place/details/json");
-                        fallbackUrl.searchParams.set("place_id", cleanPlaceId);
-                        fallbackUrl.searchParams.set("fields", "name,rating,reviews,user_ratings_total");
-                        fallbackUrl.searchParams.set("key", apiKey);
-                        fallbackUrl.searchParams.set("reviews_sort", "newest");
-                        fallbackUrl.searchParams.set("language", lang === "fr" ? "en" : "fr");
-
-                        const fbRes = await fetch(fallbackUrl.toString(), { next: { revalidate: 3600 } });
-                        if (fbRes.ok) {
-                            const fbData = await fbRes.json();
-                            if (fbData.status === "OK") {
-                                reviews = mergeReviews(reviews, parseClassicReviews(fbData.result?.reviews), 6);
-                            }
-                        }
-                    } catch {
-                        // Silent fallback
-                    }
-                }
+                const rawReviews = parseClassicReviews(data.result?.reviews);
+                const reviews = deduplicateReviews(rawReviews).slice(0, 6);
 
                 return {
                     success: true,
@@ -146,7 +186,7 @@ function mergeReviews(existing: GoogleReview[], incoming: GoogleReview[], maxCou
         console.warn("[GOOGLE_PLACES_API_CLASSIC_ERROR]", classicErr);
     }
 
-    // 2. Fallback / Alternative: Places API (New)
+    // 2. Fallback / Modern Standard: Places API (New)
     try {
         const newUrl = `https://places.googleapis.com/v1/places/${encodeURIComponent(cleanPlaceId)}?fields=id,displayName,rating,reviews,userRatingCount&key=${encodeURIComponent(apiKey)}&languageCode=${encodeURIComponent(lang)}`;
 
@@ -156,36 +196,8 @@ function mergeReviews(existing: GoogleReview[], incoming: GoogleReview[], maxCou
 
         if (resNew.ok) {
             const dataNew = await resNew.json();
-            let reviews = parseNewReviews(dataNew?.reviews);
-
-            // Google Places API returns up to 5 reviews per call.
-            // If fewer than 6 reviews, query fallback language (e.g. en <-> fr) and raw locale to reach 6 reviews.
-            if (reviews.length < 6) {
-                try {
-                    const fallbackLang = lang === "fr" ? "en" : "fr";
-                    const fbUrl = `https://places.googleapis.com/v1/places/${encodeURIComponent(cleanPlaceId)}?fields=id,displayName,rating,reviews,userRatingCount&key=${encodeURIComponent(apiKey)}&languageCode=${encodeURIComponent(fallbackLang)}`;
-                    const fbRes = await fetch(fbUrl, { next: { revalidate: 3600 } });
-                    if (fbRes.ok) {
-                        const fbData = await fbRes.json();
-                        reviews = mergeReviews(reviews, parseNewReviews(fbData?.reviews), 6);
-                    }
-                } catch {
-                    // Silent fallback
-                }
-            }
-
-            if (reviews.length < 6) {
-                try {
-                    const noLangUrl = `https://places.googleapis.com/v1/places/${encodeURIComponent(cleanPlaceId)}?fields=id,displayName,rating,reviews,userRatingCount&key=${encodeURIComponent(apiKey)}`;
-                    const noLangRes = await fetch(noLangUrl, { next: { revalidate: 3600 } });
-                    if (noLangRes.ok) {
-                        const noLangData = await noLangRes.json();
-                        reviews = mergeReviews(reviews, parseNewReviews(noLangData?.reviews), 6);
-                    }
-                } catch {
-                    // Silent fallback
-                }
-            }
+            const rawReviews = await parseNewReviews(dataNew?.reviews, lang);
+            const reviews = deduplicateReviews(rawReviews).slice(0, 6);
 
             return {
                 success: true,
