@@ -62,6 +62,7 @@ export interface Category {
   order?: number;
   showInHeader?: boolean;
   enableProductZoom?: boolean;
+  hideSoldOutByDefault?: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
   name: Record<string, string>;
@@ -233,6 +234,7 @@ export interface GoogleReview {
   text: string;
   profile_photo_url: string;
   relative_time_description?: string;
+  publish_time?: string;
 }
 
 export type ProductImageRatio = 'default' | 'square' | 'portrait';
@@ -250,6 +252,7 @@ export interface StoreSettings {
   productsTitle?: Record<string, string>;
   productsSubtitle?: Record<string, string>;
   catalogTitle?: Record<string, string>;
+  catalogIntro?: Record<string, string>;
   catalogDescription?: Record<string, string>;
   catalogSlug?: Record<string, string> | string;
   catalogBannerUrl?: string;

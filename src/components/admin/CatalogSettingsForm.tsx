@@ -53,11 +53,13 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
 
     const defaultCatalogTitle: Record<string, string> = {};
+    const defaultCatalogIntro: Record<string, string> = {};
     const defaultCatalogDesc: Record<string, string> = {};
     const defaultCatalogSlug: Record<string, string> = {};
 
     supportedLocales.forEach((loc) => {
         defaultCatalogTitle[loc] = initialData.catalogTitle?.[loc] || (loc === "fr" ? "Boutique" : "Shop");
+        defaultCatalogIntro[loc] = initialData.catalogIntro?.[loc] || initialData.catalogIntro?.en || "";
         defaultCatalogDesc[loc] = initialData.catalogDescription?.[loc] || initialData.catalogDescription?.en || "";
         defaultCatalogSlug[loc] = (typeof initialData.catalogSlug === 'object' && initialData.catalogSlug?.[loc])
             ? initialData.catalogSlug[loc]
@@ -71,6 +73,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
         defaultValues: {
             catalogSlug: defaultCatalogSlug,
             catalogTitle: defaultCatalogTitle,
+            catalogIntro: defaultCatalogIntro,
             catalogDescription: defaultCatalogDesc,
             catalogBannerUrl: initialData.catalogBannerUrl || "",
         },
@@ -115,8 +118,8 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                         </div>
                         <p className="text-sm text-muted-foreground mb-4">
                             {lang === "fr"
-                                ? "Titres et descriptions pour la navigation et le SEO."
-                                : "Multilingual titles and descriptions for navigation and SEO."}
+                                ? "Titres, intro et descriptions pour la navigation et le SEO."
+                                : "Multilingual titles, intro, and descriptions for navigation and SEO."}
                         </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -152,6 +155,28 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
 
                                         <FormField
                                             control={form.control}
+                                            name={`catalogIntro.${loc}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{lang === "fr" ? "Intro" : "Intro"}</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder={loc === "fr" ? "e.g. Menu Cannabis Premium & Variétés Exclusives" : "e.g. Weed Shop Premium Cannabis Menu"}
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        {lang === "fr"
+                                                            ? "Sous-titre affiché dans la bannière du catalogue et titre prioritaire pour le SEO."
+                                                            : "Subtitle displayed on the catalog banner and prioritized for SEO page title."}
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
                                             name={`catalogDescription.${loc}`}
                                             render={({ field }) => (
                                                 <FormItem>
@@ -165,8 +190,8 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                                     </FormControl>
                                                     <FormDescription>
                                                         {lang === "fr"
-                                                            ? "Affiché sur la bannière de la page catalogue et utilisé pour le SEO."
-                                                            : "Displayed on the catalog banner and used for SEO metadata."}
+                                                            ? "Affiché sous la bannière sur la page catalogue et utilisé pour la description SEO."
+                                                            : "Displayed below the banner on the catalog page and used for SEO metadata description."}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -195,6 +220,25 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                 />
                                 <FormField
                                     control={form.control}
+                                    name={`catalogIntro.${defaultLocale}`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{lang === "fr" ? "Intro" : "Intro"}</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="e.g. Weed Shop Premium Cannabis Menu"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                Subtitle displayed on the catalog banner and prioritized for SEO page title.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
                                     name={`catalogDescription.${defaultLocale}`}
                                     render={({ field }) => (
                                         <FormItem>
@@ -207,7 +251,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                                 />
                                             </FormControl>
                                             <FormDescription>
-                                                Displayed on the catalog banner and used for SEO metadata.
+                                                Displayed below the banner on the catalog page and used for SEO metadata description.
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>

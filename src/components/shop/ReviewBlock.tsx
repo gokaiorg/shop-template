@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Star, MessageSquareQuote, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, MessageSquareQuote, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { ReviewSectionSettings, GoogleReview } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { AdminEditBadge } from "@/components/admin/AdminEditBadge";
@@ -101,6 +101,9 @@ export function ReviewBlock({
         reviewSection?.enabled || reviewSection?.status === "active"
     );
     const placeId = (reviewSection?.placeId || "").trim();
+    const googleReviewsUrl = placeId
+        ? `https://search.google.com/local/reviews?placeid=${encodeURIComponent(placeId)}`
+        : "";
 
     const [reviews, setReviews] = useState<GoogleReview[]>(initialReviews || []);
     const [overallRating, setOverallRating] = useState<number | null>(null);
@@ -155,13 +158,36 @@ export function ReviewBlock({
         };
     }, [placeId, activeLocale, initialReviews]);
 
+    const displayReviews = React.useMemo(() => {
+        const seen = new Set<string>();
+        const genericNames = new Set([
+            "client google",
+            "a google user",
+            "google user",
+            "utilisateur google",
+            "un utilisateur de google",
+        ]);
+        return reviews
+            .filter((r) => {
+                const authorNormalized = (r.author_name || "").trim().toLowerCase();
+                const key =
+                    genericNames.has(authorNormalized) || !authorNormalized
+                        ? `${authorNormalized}_${(r.text || "").trim().slice(0, 50).toLowerCase()}`
+                        : authorNormalized;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            })
+            .slice(0, 3);
+    }, [reviews]);
+
     // If disabled or placeId empty and not forced, return null
     if (!forceDisplay && (!reviewSection || !isEnabled || !placeId)) {
         return null;
     }
 
     // If finished loading and there are no reviews, and not in forceDisplay mode, hide block
-    if (!isLoading && reviews.length === 0 && !forceDisplay) {
+    if (!isLoading && displayReviews.length === 0 && !forceDisplay) {
         return null;
     }
 
@@ -185,34 +211,71 @@ export function ReviewBlock({
                 {/* Header: Badge, Title, Subtitle, Google Rating Summary */}
                 <div className="max-w-3xl mx-auto text-center mb-12">
                     {/* Google Reviews pill badge */}
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
-                        <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
-                            <path
-                                fill="#4285F4"
-                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                            />
-                            <path
-                                fill="#34A853"
-                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                            />
-                            <path
-                                fill="#FBBC05"
-                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                            />
-                            <path
-                                fill="#EA4335"
-                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                            />
-                        </svg>
-                        <span>{isFr ? "Avis Clients Google" : "Google Reviews"}</span>
-                        {overallRating && (
-                            <span className="flex items-center gap-1 font-bold text-foreground pl-1 border-l border-black/10 dark:border-white/10">
-                                <span className="text-amber-500">★</span>
-                                {overallRating.toFixed(1)}
-                                {totalRatings ? ` (${totalRatings})` : ""}
-                            </span>
-                        )}
-                    </div>
+                    {googleReviewsUrl ? (
+                        <a
+                            href={googleReviewsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 hover:border-black/15 dark:hover:border-white/20 hover:bg-white/80 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs transition-all cursor-pointer group"
+                            title={isFr ? "Voir tous les avis sur Google" : "View all reviews on Google"}
+                        >
+                            <svg className="w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
+                                <path
+                                    fill="#4285F4"
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                />
+                                <path
+                                    fill="#34A853"
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                />
+                                <path
+                                    fill="#FBBC05"
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                                />
+                                <path
+                                    fill="#EA4335"
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                                />
+                            </svg>
+                            <span>{isFr ? "Avis Clients Google" : "Google Reviews"}</span>
+                            {overallRating && (
+                                <span className="flex items-center gap-1 font-bold text-foreground pl-1 border-l border-black/10 dark:border-white/10">
+                                    <span className="text-amber-500">★</span>
+                                    {overallRating.toFixed(1)}
+                                    {totalRatings ? ` (${totalRatings})` : ""}
+                                </span>
+                            )}
+                        </a>
+                    ) : (
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
+                            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
+                                <path
+                                    fill="#4285F4"
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                />
+                                <path
+                                    fill="#34A853"
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                />
+                                <path
+                                    fill="#FBBC05"
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                                />
+                                <path
+                                    fill="#EA4335"
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                                />
+                            </svg>
+                            <span>{isFr ? "Avis Clients Google" : "Google Reviews"}</span>
+                            {overallRating && (
+                                <span className="flex items-center gap-1 font-bold text-foreground pl-1 border-l border-black/10 dark:border-white/10">
+                                    <span className="text-amber-500">★</span>
+                                    {overallRating.toFixed(1)}
+                                    {totalRatings ? ` (${totalRatings})` : ""}
+                                </span>
+                            )}
+                        </div>
+                    )}
 
                     {title && (
                         <h2
@@ -257,7 +320,7 @@ export function ReviewBlock({
                 )}
 
                 {/* Empty fallback when forced in editor or no reviews */}
-                {!isLoading && reviews.length === 0 && (
+                {!isLoading && displayReviews.length === 0 && (
                     <div className="text-center py-12 px-6 rounded-2xl border border-dashed border-black/10 dark:border-white/10 max-w-xl mx-auto">
                         <MessageSquareQuote className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
                         <p className="font-medium text-foreground text-sm">
@@ -272,15 +335,21 @@ export function ReviewBlock({
                 )}
 
                 {/* Reviews Grid */}
-                {!isLoading && reviews.length > 0 && (
+                {!isLoading && displayReviews.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {reviews.map((review, idx) => {
+                        {displayReviews.map((review, idx) => {
                             const isExpanded = expandedReviewIndex === idx;
                             const isLong = (review.text || "").length > 180;
+                            const is3Reviews = displayReviews.length === 3;
                             return (
                                 <article
-                                    key={idx}
-                                    className="group relative flex flex-col justify-between rounded-2xl border border-black/[0.06] dark:border-white/10 bg-white/60 dark:bg-white/[0.02] backdrop-blur-xl p-6 sm:p-7 shadow-soft hover:shadow-soft-xl hover:-translate-y-1 transition-all duration-300"
+                                    key={`${review.author_name}-${idx}`}
+                                    className={cn(
+                                        "group relative flex flex-col justify-between rounded-2xl border border-black/[0.06] dark:border-white/10 bg-white/60 dark:bg-white/[0.02] backdrop-blur-xl p-6 sm:p-7 shadow-soft hover:shadow-soft-xl hover:-translate-y-1 transition-all duration-300",
+                                        is3Reviews &&
+                                            idx === 2 &&
+                                            "md:col-span-2 md:max-w-md md:mx-auto md:w-full lg:max-w-none lg:w-auto lg:col-span-1"
+                                    )}
                                 >
                                     {/* Top: Author Avatar, Name, Relative time, Google Badge */}
                                     <div className="flex items-start justify-between gap-3 mb-4">
@@ -381,6 +450,47 @@ export function ReviewBlock({
                                 </article>
                             );
                         })}
+                    </div>
+                )}
+
+                {/* View All Reviews Button */}
+                {googleReviewsUrl && !isLoading && displayReviews.length > 0 && (
+                    <div className="mt-10 sm:mt-12 text-center">
+                        <a
+                            href={googleReviewsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 hover:bg-black/5 dark:hover:bg-white/10 text-foreground text-sm font-semibold tracking-wide backdrop-blur-md shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+                        >
+                            <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
+                                <path
+                                    fill="#4285F4"
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                />
+                                <path
+                                    fill="#34A853"
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                />
+                                <path
+                                    fill="#FBBC05"
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                                />
+                                <path
+                                    fill="#EA4335"
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                                />
+                            </svg>
+                            <span>
+                                {isFr
+                                    ? totalRatings
+                                        ? `Voir les ${totalRatings} avis sur Google`
+                                        : "Voir tous les avis sur Google"
+                                    : totalRatings
+                                    ? `View all ${totalRatings} reviews on Google`
+                                    : "View all reviews on Google"}
+                            </span>
+                            <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors ml-0.5" />
+                        </a>
                     </div>
                 )}
             </div>

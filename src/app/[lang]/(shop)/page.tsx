@@ -19,6 +19,7 @@ import { getLocalizedField } from "@/lib/i18n";
 
 import { GlobalJsonLd, CategoryJsonLd, JsonLdLocalBusiness } from "@/components/seo/JsonLd";
 import { cn } from "@/lib/utils";
+import { isProductInStock } from "@/lib/services/products";
 
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
@@ -146,7 +147,10 @@ export default async function Home({
     };
   }) as Product[];
 
-  const allProducts = rawProducts.sort((a, b) => {
+  // Filter out products that are out of stock (stock <= 0 or status === 'out-of-stock')
+  const inStockProducts = rawProducts.filter(isProductInStock);
+
+  const allProducts = inStockProducts.sort((a, b) => {
     const orderDiff = (a.order ?? 0) - (b.order ?? 0);
     if (orderDiff !== 0) return orderDiff;
     const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -332,9 +336,13 @@ export default async function Home({
                   {categoryProducts.length > 0 && (
                     <div className="mt-12 flex justify-center">
                       <Link href={categoryHref}>
-                        <Button variant="outline" size="lg" className="rounded-2xl px-8 shadow-soft hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer group">
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          className="rounded-2xl px-8 shadow-soft transition-all cursor-pointer group"
+                        >
                           <span>{homeDict.view_all || (isFr ? "Voir tout" : "View All")}</span>
-                          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 text-muted-foreground group-hover:text-primary" />
                         </Button>
                       </Link>
                     </div>

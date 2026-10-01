@@ -10,6 +10,7 @@ export const categorySchema = z.object({
     order: z.coerce.number().int().default(0),
     showInHeader: z.boolean().default(false),
     enableProductZoom: z.boolean().default(true).optional(),
+    hideSoldOutByDefault: z.boolean().default(false).optional(),
 });
 
 export const productSchema = z.object({

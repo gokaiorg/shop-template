@@ -14,7 +14,7 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-white bg-[linear-gradient(180deg,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0)_100%)] shadow-md shadow-destructive/30 hover:shadow-lg hover:shadow-destructive/45 hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]",
         outline:
-          "border border-border/80 bg-background/60 backdrop-blur-xs shadow-soft hover:bg-primary/10 hover:text-primary hover:border-primary/40 dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border border-border/80 bg-background/60 backdrop-blur-xs shadow-soft hover:bg-primary/10 hover:text-primary hover:border-primary/40 dark:border-input dark:bg-input/30 dark:hover:bg-primary/15 dark:hover:text-primary dark:hover:border-primary/40",
         secondary:
           "bg-secondary text-secondary-foreground shadow-soft hover:bg-secondary/80",
         ghost:
@@ -56,7 +56,7 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   )

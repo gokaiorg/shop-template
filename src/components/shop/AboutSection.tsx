@@ -171,6 +171,7 @@ export function AboutSection({
                                                 src={images[0]}
                                                 alt={title || "About visual"}
                                                 fill
+                                                unoptimized
                                                 sizes="(max-width: 1024px) 100vw, 55vw"
                                                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                                             />
@@ -189,6 +190,7 @@ export function AboutSection({
                                                                 src={imgUrl}
                                                                 alt={title ? `${title} (${index + 1})` : `About photo ${index + 1}`}
                                                                 fill
+                                                                unoptimized
                                                                 sizes="(max-width: 1024px) 100vw, 55vw"
                                                                 className="object-cover transition-transform duration-700 ease-out hover:scale-105"
                                                             />

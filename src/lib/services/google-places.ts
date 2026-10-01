@@ -10,9 +10,132 @@ export interface GooglePlaceDetailsResponse {
 }
 
 /**
+ * Free fallback translation helper using standard Google endpoint.
+ * Only invoked if Google Places API returns text in a different language than requested.
+ */
+async function translateTextFallback(text: string, targetLang: string): Promise<string> {
+    if (!text || !targetLang) return text;
+    try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(
+            targetLang
+        )}&dt=t&q=${encodeURIComponent(text)}`;
+        const res = await fetch(url, {
+            headers: { "User-Agent": "Mozilla/5.0" },
+            next: { revalidate: 86400 },
+        });
+        if (!res.ok) return text;
+        const data = await res.json();
+        if (Array.isArray(data) && Array.isArray(data[0])) {
+            const translated = data[0].map((item: any) => item?.[0] || "").join("");
+            return translated || text;
+        }
+    } catch (err) {
+        console.warn("[REVIEW_TRANSLATE_FALLBACK_ERROR]", err);
+    }
+    return text;
+}
+
+/**
+ * Deduplicate reviews strictly by author name (and snippet if generic name)
+ * to ensure that no duplicate reviews are ever displayed.
+ */
+function deduplicateReviews(reviews: GoogleReview[]): GoogleReview[] {
+    const seen = new Set<string>();
+    const genericNames = new Set([
+        "client google",
+        "a google user",
+        "google user",
+        "utilisateur google",
+        "un utilisateur de google",
+    ]);
+    const result: GoogleReview[] = [];
+
+    for (const r of reviews) {
+        const authorNormalized = (r.author_name || "").trim().toLowerCase();
+        const key =
+            genericNames.has(authorNormalized) || !authorNormalized
+                ? `${authorNormalized}_${(r.text || "").trim().slice(0, 50).toLowerCase()}`
+                : authorNormalized;
+
+        if (!seen.has(key)) {
+            seen.add(key);
+            result.push(r);
+        }
+    }
+    return result;
+}
+
+function parseClassicReviews(rawReviews: any[]): GoogleReview[] {
+    if (!Array.isArray(rawReviews)) return [];
+    return rawReviews.map((r) => ({
+        author_name: r.author_name || "Client Google",
+        rating: typeof r.rating === "number" ? r.rating : 5,
+        text: r.text || "",
+        profile_photo_url: r.profile_photo_url || "",
+        relative_time_description: r.relative_time_description || undefined,
+        publish_time: r.time ? new Date(r.time * 1000).toISOString() : undefined,
+    }));
+}
+
+async function parseNewReviews(
+    rawReviews: any[],
+    targetLang: string = "fr"
+): Promise<GoogleReview[]> {
+    if (!Array.isArray(rawReviews)) return [];
+    const parsed: GoogleReview[] = [];
+
+    for (const r of rawReviews) {
+        const authorName = r.authorAttribution?.displayName || "Client Google";
+        const rating = typeof r.rating === "number" ? r.rating : 5;
+        // Prefer originalText if available to preserve native author comment
+        const origText = typeof r.originalText === "object" ? r.originalText?.text : undefined;
+        const origLang = typeof r.originalText === "object" ? r.originalText?.languageCode : undefined;
+        const textObj = typeof r.text === "object" ? r.text?.text : (r.text || "");
+        const textLang = typeof r.text === "object" ? r.text?.languageCode : undefined;
+
+        // If targetLang is English ("en"), keep ONLY native English reviews
+        // (no translated reviews from French/Russian/Thai/etc.)
+        if (targetLang === "en" && origLang && origLang.toLowerCase() !== "en") {
+            continue;
+        }
+
+        // If targetLang is French ("fr"), keep ONLY native French reviews
+        if (targetLang === "fr" && origLang && origLang.toLowerCase() !== "fr") {
+            continue;
+        }
+
+        const text = origText || textObj || "";
+        const photoUrl = r.authorAttribution?.photoUri || "";
+        const relativeTime = r.relativePublishTimeDescription || undefined;
+        const publishTime = r.publishTime || undefined;
+
+        parsed.push({
+            author_name: authorName,
+            rating,
+            text,
+            profile_photo_url: photoUrl,
+            relative_time_description: relativeTime,
+            publish_time: publishTime,
+        });
+    }
+
+    return parsed;
+}
+
+function sortReviewsByDate(reviews: GoogleReview[]): GoogleReview[] {
+    return [...reviews].sort((a, b) => {
+        if (!a.publish_time && !b.publish_time) return 0;
+        if (!a.publish_time) return 1;
+        if (!b.publish_time) return -1;
+        return new Date(b.publish_time).getTime() - new Date(a.publish_time).getTime();
+    });
+}
+
+/**
  * Server-only service to securely query Google Places API (Place Details).
  * Extracts author_name, rating, text, and profile_photo_url.
- * Supports both standard Google Place Details endpoint and Places API (New).
+ * Strictly queries the requested language without cross-language fallbacks
+ * and deduplicates reviews without artificial padding.
  * Cached using Next.js fetch cache (1 hour).
  */
 export async function getGooglePlaceReviews(
@@ -61,14 +184,8 @@ export async function getGooglePlaceReviews(
             const data = await res.json();
 
             if (data.status === "OK") {
-                const rawReviews: any[] = Array.isArray(data.result?.reviews) ? data.result.reviews : [];
-                const reviews: GoogleReview[] = rawReviews.map((r) => ({
-                    author_name: r.author_name || "Client Google",
-                    rating: typeof r.rating === "number" ? r.rating : 5,
-                    text: r.text || "",
-                    profile_photo_url: r.profile_photo_url || "",
-                    relative_time_description: r.relative_time_description || undefined,
-                }));
+                const rawReviews = parseClassicReviews(data.result?.reviews);
+                const reviews = sortReviewsByDate(deduplicateReviews(rawReviews)).slice(0, 3);
 
                 return {
                     success: true,
@@ -95,7 +212,7 @@ export async function getGooglePlaceReviews(
         console.warn("[GOOGLE_PLACES_API_CLASSIC_ERROR]", classicErr);
     }
 
-    // 2. Fallback / Alternative: Places API (New)
+    // 2. Fallback / Modern Standard: Places API (New)
     try {
         const newUrl = `https://places.googleapis.com/v1/places/${encodeURIComponent(cleanPlaceId)}?fields=id,displayName,rating,reviews,userRatingCount&key=${encodeURIComponent(apiKey)}&languageCode=${encodeURIComponent(lang)}`;
 
@@ -105,15 +222,8 @@ export async function getGooglePlaceReviews(
 
         if (resNew.ok) {
             const dataNew = await resNew.json();
-            const rawReviewsNew: any[] = Array.isArray(dataNew?.reviews) ? dataNew.reviews : [];
-
-            const reviews: GoogleReview[] = rawReviewsNew.map((r) => ({
-                author_name: r.authorAttribution?.displayName || "Client Google",
-                rating: typeof r.rating === "number" ? r.rating : 5,
-                text: typeof r.text === "object" ? r.text?.text || "" : (r.text || ""),
-                profile_photo_url: r.authorAttribution?.photoUri || "",
-                relative_time_description: r.relativePublishTimeDescription || undefined,
-            }));
+            const rawReviews = await parseNewReviews(dataNew?.reviews, lang);
+            const reviews = sortReviewsByDate(deduplicateReviews(rawReviews)).slice(0, 3);
 
             return {
                 success: true,

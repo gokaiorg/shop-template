@@ -186,6 +186,7 @@ export function ProductGallery({
                                     src={src}
                                     alt={`${title} - Photo ${idx + 1}`}
                                     fill
+                                    unoptimized
                                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
                                     className="object-contain p-2 md:p-4"
                                     priority={idx === 0}
@@ -286,6 +287,7 @@ export function ProductGallery({
                                     src={src}
                                     alt={`Vignette ${idx + 1}`}
                                     fill
+                                    unoptimized
                                     sizes="80px"
                                     className="object-cover"
                                 />

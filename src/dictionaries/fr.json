@@ -147,7 +147,13 @@
         "all_categories": "Toutes les catégories",
         "add_to_cart": "Ajouter au panier",
         "products_list": "Liste des produits",
-        "empty_state": "Aucun produit trouvé."
+        "empty_state": "Aucun produit trouvé.",
+        "hide_sold_out": "Masquer épuisés",
+        "in_stock_only": "En stock uniquement",
+        "sort_by": "Trier par",
+        "sort_featured": "Par défaut",
+        "sort_price_asc": "Prix : croissant",
+        "sort_price_desc": "Prix : décroissant"
     },
     "home": {
         "shop_by_category": "Magasiner par catégorie",

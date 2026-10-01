@@ -51,7 +51,8 @@ export function HeroHeader({
             src={backgroundImageUrl}
             alt={cleanTitle}
             fill
-            priority
+            priority={true}
+            unoptimized={true}
             sizes="100vw"
             className="object-cover pointer-events-none"
           />

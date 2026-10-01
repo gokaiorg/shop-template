@@ -62,6 +62,12 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
         const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
         const rawCatalogDisplayTitle = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
         const catalogDisplayTitle = rawCatalogDisplayTitle.replace(new RegExp(`\\s*[|\\-]\\s*${brandName}$`, "i"), "").trim();
+
+        // SEO Title priority: intro if present, otherwise catalog title
+        const rawCatalogIntro = getLocalizedField(storeSettings.catalogIntro, lang);
+        const catalogIntro = (rawCatalogIntro && rawCatalogIntro.trim().length > 0) ? rawCatalogIntro.trim() : "";
+        const seoTitle = catalogIntro || catalogDisplayTitle;
+
         const rawCatalogDesc = getLocalizedField(storeSettings.catalogDescription, lang);
         const catalogDescription = (rawCatalogDesc && rawCatalogDesc.trim().length > 0)
             ? rawCatalogDesc.trim()
@@ -78,19 +84,15 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
             "x-default": `${baseUrl}/en/${enCatalogSlug}`,
         };
 
-        const formattedCatalogTitle = `${catalogDisplayTitle} | ${brandName}`;
-
         return {
-            title: {
-                absolute: formattedCatalogTitle,
-            },
+            title: seoTitle,
             description: catalogDescription,
             alternates: {
                 canonical: canonicalUrl,
                 languages: languagesAlternate,
             },
             openGraph: {
-                title: formattedCatalogTitle,
+                title: seoTitle,
                 description: catalogDescription,
                 url: canonicalUrl,
                 type: "website",
@@ -98,7 +100,7 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
             },
             twitter: {
                 card: "summary_large_image",
-                title: formattedCatalogTitle,
+                title: seoTitle,
                 description: catalogDescription,
                 ...(catalogBannerUrl ? { images: [catalogBannerUrl] } : {}),
             },
@@ -195,6 +197,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
         const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
         const baseUrl = rawBaseUrl.replace(/\/+$/, "");
         const catalogTitle = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
+        const catalogIntro = getLocalizedField(storeSettings.catalogIntro, lang) || "";
         const catalogBanner = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "";
         const catalogDescription = getLocalizedField(storeSettings.catalogDescription, lang) || "";
 
@@ -233,12 +236,12 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 <CatalogJsonLd
                     catalogTitle={catalogTitle}
                     catalogUrl={`${baseUrl}/${lang}/${localizedCatalogSlug}`}
-                    catalogDescription={catalogDescription}
+                    catalogDescription={catalogDescription || catalogIntro}
                     categories={catalogCategoriesList}
                     breadcrumbs={catalogBreadcrumbs}
                 />
                 {/* Edge-to-Edge Illustrated Catalog Banner */}
-                <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
+                <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-8">
                     <AdminEditBadge href="/admin/catalog" locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
                     {catalogBanner ? (
                         <Image
@@ -246,6 +249,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                             alt={catalogTitle || "Catalog Banner"}
                             fill
                             priority
+                            unoptimized
                             sizes="100vw"
                             className="object-cover pointer-events-none"
                         />
@@ -258,13 +262,22 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight drop-shadow-md">
                             {catalogTitle}
                         </h1>
-                        {catalogDescription && (
+                        {catalogIntro && (
                             <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-md text-center">
-                                {catalogDescription}
+                                {catalogIntro}
                             </p>
                         )}
                     </div>
                 </section>
+
+                {/* Catalog Description Container (Directly below the banner, before categories) */}
+                {catalogDescription && (
+                    <div className="w-full max-w-4xl mx-auto px-6 md:px-16 mt-2 mb-12 text-center">
+                        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+                            {catalogDescription}
+                        </p>
+                    </div>
+                )}
 
                 {/* Categories Grid (Clean Silo Links) */}
                 <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-24 md:mb-36">
@@ -314,6 +327,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                                     src={catImg}
                                                     alt={catName}
                                                     fill
+                                                    unoptimized
                                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                                     className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                                                 />

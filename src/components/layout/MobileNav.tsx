@@ -193,6 +193,7 @@ export function MobileNav({
                                         alt={logo.alt || `${brandName} Logo`}
                                         fill
                                         sizes="32px"
+                                        unoptimized
                                         className="object-contain transition-transform group-hover:scale-105"
                                     />
                                 </div>

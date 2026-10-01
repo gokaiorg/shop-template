@@ -208,6 +208,7 @@ export function AdminImageDropzone({
                                 src={images[0]}
                                 alt="Uploaded preview"
                                 fill
+                                unoptimized
                                 sizes="(max-width: 768px) 100vw, 50vw"
                                 className="object-cover"
                             />
@@ -262,6 +263,7 @@ export function AdminImageDropzone({
                                             src={imgUrl}
                                             alt={`Image ${idx + 1}`}
                                             fill
+                                            unoptimized
                                             sizes="(max-width: 768px) 50vw, 25vw"
                                             className="object-cover"
                                         />
