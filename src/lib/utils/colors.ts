@@ -207,11 +207,65 @@ export function getRelativeLuminance(r: number, g: number, b: number): number {
 }
 
 /**
- * Calculates YIQ perceived brightness (0 to 255).
- * Useful as a fast fallback contrast metric.
+ * Calculates standard YIQ perceived brightness from RGB.
+ * Formula: ((r * 299) + (g * 587) + (b * 114)) / 1000
  */
 export function getYIQ(r: number, g: number, b: number): number {
   return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
+/**
+ * Infallible YIQ contrast calculation accepting strictly a HEX color.
+ * Formula: const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+ * If yiq >= 128: returns dark color (default: '#0f172a').
+ * If yiq < 128: returns light color (default: '#ffffff').
+ */
+export function getContrastYIQ(
+  hexColor: string,
+  darkColor: string = "#0f172a",
+  lightColor: string = "#ffffff"
+): string {
+  if (!hexColor || typeof hexColor !== "string") {
+    return lightColor;
+  }
+
+  let cleanHex = hexColor.trim().replace(/^#/, "");
+
+  // Expand shorthand hex (#RGB or #RGBA)
+  if (cleanHex.length === 3 || cleanHex.length === 4) {
+    cleanHex =
+      cleanHex[0] + cleanHex[0] +
+      cleanHex[1] + cleanHex[1] +
+      cleanHex[2] + cleanHex[2];
+  }
+
+  if (cleanHex.length !== 6 && cleanHex.length !== 8) {
+    // Attempt parseColorToRgb if non-standard string passed
+    const parsed = parseColorToRgb(hexColor);
+    if (parsed) {
+      const yiq = getYIQ(parsed.r, parsed.g, parsed.b);
+      return yiq >= 128 ? darkColor : lightColor;
+    }
+    return lightColor;
+  }
+
+  const r = parseInt(cleanHex.slice(0, 2), 16);
+  const g = parseInt(cleanHex.slice(2, 4), 16);
+  const b = parseInt(cleanHex.slice(4, 6), 16);
+
+  if (isNaN(r) || isNaN(g) || isNaN(b)) {
+    return lightColor;
+  }
+
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return yiq >= 128 ? darkColor : lightColor;
+}
+
+/**
+ * Determines whether a hex color is considered light (YIQ >= 128).
+ */
+export function isLightHex(hexColor: string): boolean {
+  return getContrastYIQ(hexColor, "dark", "light") === "dark";
 }
 
 /**
@@ -226,12 +280,9 @@ export function getLuminance(color: string): number {
 /**
  * Determines whether a color is considered "light" (requiring dark text for accessibility)
  * or "dark" (requiring light text for accessibility).
- * Uses WCAG 2.1 luminance threshold (> 0.179) where black text has higher contrast than white text.
  */
 export function isLightColor(color: string): boolean {
-  const rgb = parseColorToRgb(color);
-  if (!rgb) return false;
-  return getRelativeLuminance(rgb.r, rgb.g, rgb.b) > 0.179;
+  return isLightHex(color);
 }
 
 /**
@@ -251,30 +302,24 @@ export interface ContrastTextColorOptions {
 }
 
 /**
- * Returns the appropriate Tailwind text color class based on the background color's luminance.
- * Defaults to `text-gray-900` for light backgrounds and `text-white` for dark backgrounds.
- *
- * @example
- * getContrastTextColor("#13de00") // "text-gray-900"
- * getContrastTextColor("#0f172a") // "text-white"
- * getContrastTextColor("var(--primary)") // dynamically resolves
+ * Returns the appropriate Tailwind text color class based on YIQ luminance.
  */
 export function getContrastTextColor(
   color: string,
   options?: ContrastTextColorOptions
 ): string {
   const { darkClass = "text-gray-900", lightClass = "text-white" } = options || {};
-  return isLightColor(color) ? darkClass : lightClass;
+  return getContrastYIQ(color, darkClass, lightClass);
 }
 
 /**
- * Returns a hex color string for contrast (`#111827` or `#ffffff`).
+ * Returns a hex color string for contrast (`#0f172a` or `#ffffff`).
  * Useful for injecting dynamic CSS variable values (e.g. `--primary-foreground`).
  */
 export function getContrastHex(
   color: string,
   lightHex = "#ffffff",
-  darkHex = "#111827"
+  darkHex = "#0f172a"
 ): string {
-  return isLightColor(color) ? darkHex : lightHex;
+  return getContrastYIQ(color, darkHex, lightHex);
 }

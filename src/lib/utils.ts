@@ -62,6 +62,8 @@ export function serializeFirestore<T = any>(data: any): T {
 }
 
 export {
+  getContrastYIQ,
+  isLightHex,
   getContrastTextColor,
   isLightColor,
   getLuminance,

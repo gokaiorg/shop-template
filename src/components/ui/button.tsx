@@ -3,7 +3,6 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/utils"
-import { getContrastTextColor } from "@/lib/utils/colors"
 
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center cursor-pointer justify-center gap-2 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all duration-200 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 active:scale-[0.98]",
@@ -11,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary bg-[linear-gradient(180deg,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0)_100%)] shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/45 hover:opacity-95 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]",
+          "bg-primary text-primary-foreground bg-[linear-gradient(180deg,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0)_100%)] shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/45 hover:opacity-95 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]",
         destructive:
           "bg-destructive text-white bg-[linear-gradient(180deg,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0)_100%)] shadow-md shadow-destructive/30 hover:shadow-lg hover:shadow-destructive/45 hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]",
         outline:
@@ -51,15 +50,13 @@ function Button({
     asChild?: boolean
   }) {
   const Comp = asChild ? Slot.Root : "button"
-  const isPrimary = !variant || variant === "default";
-  const dynamicTextColor = isPrimary ? getContrastTextColor("var(--primary)") : undefined;
 
   return (
     <Comp
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size }), dynamicTextColor, className)}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   )

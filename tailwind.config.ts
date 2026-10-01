@@ -30,7 +30,7 @@ const config: Config = {
       colors: {
         primary: {
           DEFAULT: 'var(--theme-primary)',
-          foreground: '#ffffff',
+          foreground: 'var(--primary-foreground)',
         },
         glass: {
           light: 'rgba(255, 255, 255, 0.40)',

@@ -58,6 +58,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { StoreSettings } from "@/types/database";
 import { globalSettingsSchema, GlobalSettingsFormData } from "@/schemas/settings";
+import { getContrastYIQ } from "@/lib/utils/colors";
 import { updateGlobalSettings } from "@/actions/settings";
 import { uploadBrandAsset } from "@/lib/firebase-storage";
 import { useBrand } from "@/components/providers/BrandProvider";
@@ -223,7 +224,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                             className="h-10 px-4 rounded-md flex items-center justify-center text-xs font-medium border shadow-xs transition-colors"
                                             style={{
                                                 backgroundColor: field.value || defaultBrandPrimary,
-                                                color: "#ffffff",
+                                                color: getContrastYIQ(field.value || defaultBrandPrimary),
                                             }}
                                         >
                                             {lang === "fr" ? "Aperçu du bouton" : "Button Preview"}

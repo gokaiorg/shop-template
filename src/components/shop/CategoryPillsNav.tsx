@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Category } from "@/types/database";
 import { getLocalizedField } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { getContrastTextColor } from "@/lib/utils/colors";
 
 export interface CategoryPillsNavProps {
     categories: Category[];
@@ -29,38 +28,24 @@ export const INACTIVE_PILL_CLASS = cn(
     "dark:hover:bg-primary/15 dark:hover:text-primary dark:hover:border-primary/40"
 );
 
-export const getActivePillClasses = (dynamicTextColor: string) => cn(
-    "border-primary bg-primary hover:opacity-90 hover:bg-primary shadow-xs",
-    dynamicTextColor,
-    `hover:${dynamicTextColor}`,
-    "dark:border-primary dark:bg-primary dark:hover:opacity-90 dark:hover:bg-primary",
-    `dark:${dynamicTextColor}`,
-    `dark:hover:${dynamicTextColor}`
+export const ACTIVE_PILL_CLASS = cn(
+    "border-primary bg-primary text-primary-foreground hover:opacity-90 hover:bg-primary hover:text-primary-foreground shadow-xs",
+    "dark:border-primary dark:bg-primary dark:text-primary-foreground dark:hover:opacity-90 dark:hover:bg-primary dark:hover:text-primary-foreground"
 );
 
-const defaultActiveTextColor = getContrastTextColor("var(--primary)");
-
-export const ACTIVE_PILL_CLASS = getActivePillClasses(defaultActiveTextColor);
-
-export const getTabTriggerClasses = (dynamicTextColor: string) => cn(
+export const TAB_TRIGGER_CLASS = cn(
     BASE_PILL_CLASS,
     // Inactive state - ONLY apply hover when data-state is inactive
     "data-[state=inactive]:border-border data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground",
     "data-[state=inactive]:hover:bg-primary/10 data-[state=inactive]:hover:text-primary data-[state=inactive]:hover:border-primary/30",
     "dark:data-[state=inactive]:border-border dark:data-[state=inactive]:bg-transparent dark:data-[state=inactive]:text-muted-foreground",
     "dark:data-[state=inactive]:hover:bg-primary/15 dark:data-[state=inactive]:hover:text-primary dark:data-[state=inactive]:hover:border-primary/40",
-    // Active state - strictly identical to getActivePillClasses
-    "data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:shadow-xs",
-    "data-[state=active]:hover:opacity-90 data-[state=active]:hover:bg-primary",
-    `data-[state=active]:${dynamicTextColor}`,
-    `data-[state=active]:hover:${dynamicTextColor}`,
-    "dark:data-[state=active]:border-primary dark:data-[state=active]:bg-primary dark:data-[state=active]:shadow-xs",
-    "dark:data-[state=active]:hover:opacity-90 dark:data-[state=active]:hover:bg-primary",
-    `dark:data-[state=active]:${dynamicTextColor}`,
-    `dark:data-[state=active]:hover:${dynamicTextColor}`
+    // Active state - strictly identical to ACTIVE_PILL_CLASS
+    "data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs",
+    "data-[state=active]:hover:opacity-90 data-[state=active]:hover:bg-primary data-[state=active]:hover:text-primary-foreground",
+    "dark:data-[state=active]:border-primary dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-xs",
+    "dark:data-[state=active]:hover:opacity-90 dark:data-[state=active]:hover:bg-primary dark:data-[state=active]:hover:text-primary-foreground"
 );
-
-export const TAB_TRIGGER_CLASS = getTabTriggerClasses(defaultActiveTextColor);
 
 export function CategoryPillsNav({
     categories,
@@ -72,9 +57,6 @@ export function CategoryPillsNav({
     className,
     listClassName,
 }: CategoryPillsNavProps) {
-    const dynamicActiveTextColor = getContrastTextColor("var(--primary)");
-    const activePillClasses = getActivePillClasses(dynamicActiveTextColor);
-    const tabTriggerStyle = getTabTriggerClasses(dynamicActiveTextColor);
     if (asTabs) {
         return (
             <div className={cn("w-full overflow-x-auto no-scrollbar scrollbar-none pb-2 sm:pb-0", className)}>
@@ -93,7 +75,7 @@ export function CategoryPillsNav({
                                 key={category.id}
                                 value={category.id}
                                 data-slot="tabs-trigger"
-                                className={tabTriggerStyle}
+                                className={TAB_TRIGGER_CLASS}
                             >
                                 {categoryName}
                             </TabsPrimitive.Trigger>
@@ -149,7 +131,7 @@ export function CategoryPillsNav({
                                 className={cn(
                                     BASE_PILL_CLASS,
                                     "inline-block",
-                                    isActive ? activePillClasses : INACTIVE_PILL_CLASS
+                                    isActive ? ACTIVE_PILL_CLASS : INACTIVE_PILL_CLASS
                                 )}
                                 data-state={isActive ? "active" : "inactive"}
                                 aria-current={isActive ? "page" : undefined}
