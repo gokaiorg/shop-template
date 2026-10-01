@@ -45,6 +45,42 @@ export async function getGooglePlaceReviews(
         };
     }
 
+function parseClassicReviews(rawReviews: any[]): GoogleReview[] {
+    if (!Array.isArray(rawReviews)) return [];
+    return rawReviews.map((r) => ({
+        author_name: r.author_name || "Client Google",
+        rating: typeof r.rating === "number" ? r.rating : 5,
+        text: r.text || "",
+        profile_photo_url: r.profile_photo_url || "",
+        relative_time_description: r.relative_time_description || undefined,
+    }));
+}
+
+function parseNewReviews(rawReviews: any[]): GoogleReview[] {
+    if (!Array.isArray(rawReviews)) return [];
+    return rawReviews.map((r) => ({
+        author_name: r.authorAttribution?.displayName || "Client Google",
+        rating: typeof r.rating === "number" ? r.rating : 5,
+        text: typeof r.text === "object" ? r.text?.text || "" : (r.text || ""),
+        profile_photo_url: r.authorAttribution?.photoUri || "",
+        relative_time_description: r.relativePublishTimeDescription || undefined,
+    }));
+}
+
+function mergeReviews(existing: GoogleReview[], incoming: GoogleReview[], maxCount: number = 6): GoogleReview[] {
+    const seen = new Set(existing.map((r) => (r.author_name + "_" + (r.text || "").slice(0, 30)).toLowerCase()));
+    const result = [...existing];
+    for (const r of incoming) {
+        const key = (r.author_name + "_" + (r.text || "").slice(0, 30)).toLowerCase();
+        if (!seen.has(key)) {
+            seen.add(key);
+            result.push(r);
+            if (result.length >= maxCount) break;
+        }
+    }
+    return result;
+}
+
     // 1. Attempt Classic Place Details API
     try {
         const classicUrl = new URL("https://maps.googleapis.com/maps/api/place/details/json");
@@ -61,14 +97,29 @@ export async function getGooglePlaceReviews(
             const data = await res.json();
 
             if (data.status === "OK") {
-                const rawReviews: any[] = Array.isArray(data.result?.reviews) ? data.result.reviews : [];
-                const reviews: GoogleReview[] = rawReviews.map((r) => ({
-                    author_name: r.author_name || "Client Google",
-                    rating: typeof r.rating === "number" ? r.rating : 5,
-                    text: r.text || "",
-                    profile_photo_url: r.profile_photo_url || "",
-                    relative_time_description: r.relative_time_description || undefined,
-                }));
+                let reviews = parseClassicReviews(data.result?.reviews);
+
+                // If fewer than 6 reviews, attempt newest sort or fallback language to complete 6
+                if (reviews.length < 6) {
+                    try {
+                        const fallbackUrl = new URL("https://maps.googleapis.com/maps/api/place/details/json");
+                        fallbackUrl.searchParams.set("place_id", cleanPlaceId);
+                        fallbackUrl.searchParams.set("fields", "name,rating,reviews,user_ratings_total");
+                        fallbackUrl.searchParams.set("key", apiKey);
+                        fallbackUrl.searchParams.set("reviews_sort", "newest");
+                        fallbackUrl.searchParams.set("language", lang === "fr" ? "en" : "fr");
+
+                        const fbRes = await fetch(fallbackUrl.toString(), { next: { revalidate: 3600 } });
+                        if (fbRes.ok) {
+                            const fbData = await fbRes.json();
+                            if (fbData.status === "OK") {
+                                reviews = mergeReviews(reviews, parseClassicReviews(fbData.result?.reviews), 6);
+                            }
+                        }
+                    } catch {
+                        // Silent fallback
+                    }
+                }
 
                 return {
                     success: true,
@@ -105,15 +156,36 @@ export async function getGooglePlaceReviews(
 
         if (resNew.ok) {
             const dataNew = await resNew.json();
-            const rawReviewsNew: any[] = Array.isArray(dataNew?.reviews) ? dataNew.reviews : [];
+            let reviews = parseNewReviews(dataNew?.reviews);
 
-            const reviews: GoogleReview[] = rawReviewsNew.map((r) => ({
-                author_name: r.authorAttribution?.displayName || "Client Google",
-                rating: typeof r.rating === "number" ? r.rating : 5,
-                text: typeof r.text === "object" ? r.text?.text || "" : (r.text || ""),
-                profile_photo_url: r.authorAttribution?.photoUri || "",
-                relative_time_description: r.relativePublishTimeDescription || undefined,
-            }));
+            // Google Places API returns up to 5 reviews per call.
+            // If fewer than 6 reviews, query fallback language (e.g. en <-> fr) and raw locale to reach 6 reviews.
+            if (reviews.length < 6) {
+                try {
+                    const fallbackLang = lang === "fr" ? "en" : "fr";
+                    const fbUrl = `https://places.googleapis.com/v1/places/${encodeURIComponent(cleanPlaceId)}?fields=id,displayName,rating,reviews,userRatingCount&key=${encodeURIComponent(apiKey)}&languageCode=${encodeURIComponent(fallbackLang)}`;
+                    const fbRes = await fetch(fbUrl, { next: { revalidate: 3600 } });
+                    if (fbRes.ok) {
+                        const fbData = await fbRes.json();
+                        reviews = mergeReviews(reviews, parseNewReviews(fbData?.reviews), 6);
+                    }
+                } catch {
+                    // Silent fallback
+                }
+            }
+
+            if (reviews.length < 6) {
+                try {
+                    const noLangUrl = `https://places.googleapis.com/v1/places/${encodeURIComponent(cleanPlaceId)}?fields=id,displayName,rating,reviews,userRatingCount&key=${encodeURIComponent(apiKey)}`;
+                    const noLangRes = await fetch(noLangUrl, { next: { revalidate: 3600 } });
+                    if (noLangRes.ok) {
+                        const noLangData = await noLangRes.json();
+                        reviews = mergeReviews(reviews, parseNewReviews(noLangData?.reviews), 6);
+                    }
+                } catch {
+                    // Silent fallback
+                }
+            }
 
             return {
                 success: true,

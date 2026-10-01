@@ -58,6 +58,7 @@ function HeaderContent({
                                 sizes="32px"
                                 className="object-contain"
                                 priority
+                                unoptimized
                             />
                         </div>
                         <span className="font-bold sm:text-lg tracking-tight leading-none flex items-center">{brandName}</span>

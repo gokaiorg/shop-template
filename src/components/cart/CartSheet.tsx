@@ -135,6 +135,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                 src={imageUrl}
                                                 alt={itemName}
                                                 fill
+                                                unoptimized
                                                 className="object-cover"
                                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                             />

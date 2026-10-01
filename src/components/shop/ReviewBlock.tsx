@@ -233,7 +233,7 @@ export function ReviewBlock({
                 {/* Loading skeleton */}
                 {isLoading && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[1, 2, 3].map((n) => (
+                        {[1, 2, 3, 4, 5, 6].map((n) => (
                             <div
                                 key={n}
                                 className="rounded-2xl border border-black/[0.06] dark:border-white/10 bg-white/40 dark:bg-white/[0.02] backdrop-blur-xl p-6 shadow-soft space-y-4 animate-pulse"
@@ -274,7 +274,7 @@ export function ReviewBlock({
                 {/* Reviews Grid */}
                 {!isLoading && reviews.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {reviews.map((review, idx) => {
+                        {reviews.slice(0, 6).map((review, idx) => {
                             const isExpanded = expandedReviewIndex === idx;
                             const isLong = (review.text || "").length > 180;
                             return (

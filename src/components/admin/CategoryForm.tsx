@@ -95,6 +95,7 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
             order: initialData?.order !== undefined ? initialData.order : Date.now(),
             showInHeader: initialData?.showInHeader ?? false,
             enableProductZoom: initialData?.enableProductZoom !== undefined ? Boolean(initialData.enableProductZoom) : true,
+            hideSoldOutByDefault: initialData?.hideSoldOutByDefault !== undefined ? Boolean(initialData.hideSoldOutByDefault) : false,
         },
     });
 
@@ -763,6 +764,31 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                                                     {lang?.startsWith("fr")
                                                         ? "Permet aux utilisateurs de cliquer pour agrandir en haute définition (lightbox) les photos sur la fiche produit."
                                                         : "Allows users to click and enlarge product photos in high definition (lightbox) on the product page."}
+                                                </FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    checked={Boolean(field.value)}
+                                                    onCheckedChange={field.onChange}
+                                                    disabled={isLoading}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="hideSoldOutByDefault"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-xs">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-base font-semibold cursor-pointer">
+                                                    {lang?.startsWith("fr") ? "Masquer les produits épuisés par défaut" : "Hide sold out products by default"}
+                                                </FormLabel>
+                                                <FormDescription>
+                                                    {lang?.startsWith("fr")
+                                                        ? "Active par défaut le filtre pour cacher les articles en rupture de stock lors de la consultation de cette catégorie."
+                                                        : "Automatically hides out-of-stock items by default when customers view this category."}
                                                 </FormDescription>
                                             </div>
                                             <FormControl>

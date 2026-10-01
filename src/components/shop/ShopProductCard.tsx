@@ -81,11 +81,12 @@ export function ShopProductCard({ product, lang, dict = {}, categorySlug, imageR
                     src={imageUrl}
                     alt={title}
                     fill
+                    unoptimized
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                 />
                 {isOutOfStock && (
-                    <span className="absolute top-3 left-3 bg-black/80 dark:bg-black/90 text-white text-xs px-2.5 py-1 uppercase font-bold tracking-wider z-10 shadow-soft backdrop-blur-xs rounded-full">
+                    <span className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 uppercase font-bold z-10">
                         {dict.sold_out || "Sold"}
                     </span>
                 )}

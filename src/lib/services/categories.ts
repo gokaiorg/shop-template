@@ -27,6 +27,8 @@ export const serializeCategoryDoc = (docId: string, data: Record<string, any>): 
         slug: data.slug || {},
         description: data.description || {},
         showInHeader: Boolean(data.showInHeader),
+        enableProductZoom: data.enableProductZoom !== false,
+        hideSoldOutByDefault: Boolean(data.hideSoldOutByDefault),
         order: typeof data.order === 'number' ? data.order : 0,
         status: data.status || 'published',
         createdAt: serializeCategoryTimestamp(data.createdAt),

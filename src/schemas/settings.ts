@@ -7,6 +7,7 @@ export const socialLinkSchema = z.object({
 
 export const catalogSettingsSchema = z.object({
     catalogTitle: z.record(z.string(), z.string()).optional(),
+    catalogIntro: z.record(z.string(), z.string()).optional(),
     catalogDescription: z.record(z.string(), z.string()).optional(),
     catalogSlug: z.union([
         z.record(z.string(), z.string()).refine((val) => Object.values(val).some(v => v && v.trim().length > 0), {

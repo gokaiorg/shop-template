@@ -128,7 +128,7 @@ export function AccountToggle({ lang, dict, session: propSession }: { lang: stri
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button size="icon" aria-label={accountLabel} className="relative rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
+                    <Button size="icon" aria-label={accountLabel} className="relative rounded-full hover:opacity-90 transition-opacity">
                         <User className="h-[1.2rem] w-[1.2rem]" />
                         <span className="sr-only">{accountLabel}</span>
                         {unreadCount > 0 && (
@@ -219,7 +219,7 @@ export function AccountToggle({ lang, dict, session: propSession }: { lang: stri
 
     return (
         <AuthSheet dict={dict.auth || {}} lang={lang}>
-            <Button size="icon" aria-label={accountLabel} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:opacity-90 transition-opacity">
+            <Button size="icon" aria-label={accountLabel} className="rounded-full hover:opacity-90 transition-opacity">
                 <User className="h-[1.2rem] w-[1.2rem]" />
                 <span className="sr-only">{accountLabel}</span>
             </Button>

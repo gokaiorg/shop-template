@@ -48,6 +48,10 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
             en: 'Shop',
             fr: 'Boutique',
         },
+        catalogIntro: {
+            en: '',
+            fr: '',
+        },
         catalogDescription: {
             en: '',
             fr: '',
@@ -133,6 +137,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
                 productsTitle: (data?.productsTitle && typeof data.productsTitle === 'object') ? data.productsTitle : fallbackSettings.productsTitle,
                 productsSubtitle: (data?.productsSubtitle && typeof data.productsSubtitle === 'object') ? data.productsSubtitle : fallbackSettings.productsSubtitle,
                 catalogTitle: (data?.catalogTitle && typeof data.catalogTitle === 'object') ? data.catalogTitle : fallbackSettings.catalogTitle,
+                catalogIntro: (data?.catalogIntro && typeof data.catalogIntro === 'object') ? data.catalogIntro : (fallbackSettings.catalogIntro || { en: '', fr: '' }),
                 catalogDescription: (data?.catalogDescription && typeof data.catalogDescription === 'object') ? data.catalogDescription : fallbackSettings.catalogDescription,
                 catalogSlug: (data?.catalogSlug && typeof data.catalogSlug === 'object')
                     ? data.catalogSlug

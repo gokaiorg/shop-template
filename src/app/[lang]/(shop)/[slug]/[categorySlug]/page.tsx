@@ -6,8 +6,7 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product } from "@/types/database";
-import { ShopCategoryFilter } from "@/components/shop/ShopCategoryFilter";
-import { ShopProductCard } from "@/components/shop/ShopProductCard";
+import { CategoryProductGrid } from "@/components/shop/CategoryProductGrid";
 import { CategoryTranslationSync } from "@/components/shop/CategoryTranslationSync";
 import { brandConfig } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
@@ -136,13 +135,18 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
     const categoryName = getLocalizedField(category.name, lang) || (lang === "fr" ? category.nameFr : category.nameEn) || "";
     const catalogName = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
 
-    // Dynamic title: [Nom de la Catégorie] [Nom du Catalogue] | [Nom de la Marque]
-    const titleParts = [categoryName, catalogName].filter(Boolean).join(" ");
-    const formattedTitle = titleParts ? `${titleParts} | ${brandName}` : brandName;
+    // Dynamic SEO title: prioritize localized intro, fallback to category name (+ catalog)
+    const localizedIntro = (
+        getLocalizedField(category.intro, lang) ||
+        (lang === "fr" ? category.introFr : category.introEn) ||
+        (typeof category.intro === "string" ? category.intro : "") ||
+        ""
+    ).trim();
+    const defaultTitle = [categoryName, catalogName].filter(Boolean).join(" ") || categoryName;
+    const seoTitle = localizedIntro || defaultTitle;
 
-    const catIntro = getLocalizedField(category.intro, lang) || (lang === "fr" ? category.introFr : category.introEn) || "";
     const catDesc = getLocalizedField(category.description, lang) || (lang === "fr" ? category.descriptionFr : category.descriptionEn) || "";
-    const formattedDescription = catDesc || catIntro || (lang === "fr" ? `Découvrez nos produits ${categoryName}.` : `Explore our ${categoryName} products.`);
+    const formattedDescription = catDesc || localizedIntro || (lang === "fr" ? `Découvrez nos produits ${categoryName}.` : `Explore our ${categoryName} products.`);
     const catalogBannerUrl = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "";
     const categoryImage = category.imageUrl || catalogBannerUrl;
 
@@ -166,16 +170,14 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
     };
 
     return {
-        title: {
-            absolute: formattedTitle,
-        },
+        title: seoTitle,
         description: formattedDescription,
         alternates: {
             canonical: categoryCanonical,
             languages: languagesAlternate,
         },
         openGraph: {
-            title: formattedTitle,
+            title: seoTitle,
             description: formattedDescription,
             url: categoryCanonical,
             type: "website",
@@ -183,7 +185,7 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
         },
         twitter: {
             card: "summary_large_image",
-            title: formattedTitle,
+            title: seoTitle,
             description: formattedDescription,
             ...(categoryImage ? { images: [categoryImage] } : {}),
         },
@@ -333,7 +335,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
     ];
 
     return (
-        <div className="w-full flex flex-col">
+        <>
             <CategoryJsonLd
                 categoryName={bannerTitle}
                 categoryUrl={`${baseUrl}/${lang}/${localizedCatalogSlug}/${categorySlug}`}
@@ -344,70 +346,51 @@ export default async function CategoryPage(props: CategoryPageProps) {
             />
             <CategoryTranslationSync categorySlugs={Object.keys(categorySlugMap).length > 0 ? categorySlugMap : null} />
 
-            {/* Edge-to-Edge Category Banner */}
-            <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
-                <AdminEditBadge href={`/admin/categories/${category.id}/edit`} locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
-                {bannerImageUrl ? (
-                    <Image
-                        src={bannerImageUrl}
-                        alt={bannerTitle || "Category Banner"}
-                        fill
-                        priority
-                        sizes="100vw"
-                        className="object-cover pointer-events-none"
-                    />
-                ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black z-0" />
-                )}
-                <div className="absolute inset-0 bg-black/40 pointer-events-none z-[1]" />
-
-                <div className="relative z-10 px-6 max-w-4xl mx-auto flex flex-col items-center">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight drop-shadow-md">
-                        {bannerTitle}
-                    </h1>
-                    {bannerSubtitle && (
-                        <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-md text-center">
-                            {bannerSubtitle}
-                        </p>
+            <div className="w-full flex flex-col">
+                {/* Edge-to-Edge Category Banner */}
+                <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
+                    <AdminEditBadge href={`/admin/categories/${category.id}/edit`} locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
+                    {bannerImageUrl ? (
+                        <Image
+                            src={bannerImageUrl}
+                            alt={bannerTitle || "Category Banner"}
+                            fill
+                            priority
+                            unoptimized
+                            sizes="100vw"
+                            className="object-cover pointer-events-none"
+                        />
+                    ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black z-0" />
                     )}
+                    <div className="absolute inset-0 bg-black/40 pointer-events-none z-[1]" />
+
+                    <div className="relative z-10 px-6 max-w-4xl mx-auto flex flex-col items-center">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight drop-shadow-md">
+                            {bannerTitle}
+                        </h1>
+                        {bannerSubtitle && (
+                            <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-md text-center">
+                                {bannerSubtitle}
+                            </p>
+                        )}
+                    </div>
+                </section>
+
+                {/* Categories Navigation, Filter Pills, Sort & Products Grid */}
+                <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-16">
+                    <CategoryProductGrid
+                        products={products}
+                        categories={categories}
+                        currentCategorySlug={categorySlug}
+                        catalogSlug={localizedCatalogSlug}
+                        initialHideSoldOut={Boolean(category.hideSoldOutByDefault)}
+                        lang={lang}
+                        dict={dict}
+                        categorySlug={categorySlug}
+                    />
                 </div>
-            </section>
-
-            {/* Filter Pills & Products Grid */}
-            <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-16">
-                <ShopCategoryFilter
-                    categories={categories}
-                    currentCategorySlug={categorySlug}
-                    lang={lang}
-                    catalogSlug={localizedCatalogSlug}
-                />
-
-                {products.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-muted/20 rounded-lg border border-dashed">
-                        <p className="text-muted-foreground text-lg">
-                            {dict.shop?.empty_state || "No products found in this category."}
-                        </p>
-                    </div>
-                ) : (
-                    <div>
-                        <h2 className="sr-only">
-                            {dict.shop?.products_list || (lang === "fr" ? "Liste des produits" : "Products list")}
-                        </h2>
-                        <ul role="list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {products.map((product) => (
-                                <li key={product.id} className="flex flex-col">
-                                    <ShopProductCard
-                                        product={product}
-                                        lang={lang}
-                                        dict={dict.shop || dict}
-                                        categorySlug={categorySlug}
-                                    />
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
             </div>
-        </div>
+        </>
     );
 }

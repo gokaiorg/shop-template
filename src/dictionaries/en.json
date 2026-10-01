@@ -147,7 +147,13 @@
         "all_categories": "All Categories",
         "add_to_cart": "Add to cart",
         "products_list": "Products list",
-        "empty_state": "No products found."
+        "empty_state": "No products found.",
+        "hide_sold_out": "Hide sold out",
+        "in_stock_only": "In stock only",
+        "sort_by": "Sort by",
+        "sort_featured": "Featured",
+        "sort_price_asc": "Price: Low to High",
+        "sort_price_desc": "Price: High to Low"
     },
     "home": {
         "shop_by_category": "Shop by Category",

@@ -11,6 +11,7 @@ import { constructSiteMetadata } from "@/config/site";
 import { BrandConfig } from "@/config/types";
 import { getLocalizedField } from "@/lib/i18n";
 import { GoogleTagManager } from "@next/third-parties/google";
+import { getContrastHex } from "@/lib/utils/colors";
 import "./globals.css";
 
 export async function generateMetadata({
@@ -146,6 +147,9 @@ export default async function RootLayout({
 
   const fallbackPrimaryColor = brandKey === "art-fate" ? "#14B3F6" : "#0f172a";
   const primaryColor = storeSettings.primaryColor || fallbackPrimaryColor;
+  const lightPrimaryForeground = getContrastHex(primaryColor, "#ffffff", "#111827");
+  const darkPrimaryColor = storeSettings.primaryColor || colors?.dark?.primary || primaryColor;
+  const darkPrimaryForeground = getContrastHex(darkPrimaryColor, "#ffffff", "#111827");
 
   const brandStyles = `
     :root {
@@ -154,7 +158,7 @@ export default async function RootLayout({
       --font-sans: ${isAdmin ? 'var(--font-geist-sans)' : 'var(--font-storefront)'};
       --theme-primary: ${primaryColor};
       --primary: var(--theme-primary);
-      --primary-foreground: #ffffff;
+      --primary-foreground: ${lightPrimaryForeground};
       ${colors?.light?.accent ? `--accent: ${colors.light.accent};` : ''}
       ${colors?.light?.background ? `--background: ${colors.light.background};` : ''}
       ${colors?.light?.foreground ? `--foreground: ${colors.light.foreground};` : ''}
@@ -172,9 +176,9 @@ export default async function RootLayout({
     }
     ` : ''}
     .dark {
-      --theme-primary: ${primaryColor};
+      --theme-primary: ${darkPrimaryColor};
       --primary: var(--theme-primary);
-      --primary-foreground: #ffffff;
+      --primary-foreground: ${darkPrimaryForeground};
       ${colors?.dark?.accent ? `--accent: ${colors.dark.accent};` : ''}
       ${colors?.dark?.background ? `--background: ${colors.dark.background};` : ''}
       ${colors?.dark?.foreground ? `--foreground: ${colors.dark.foreground};` : ''}

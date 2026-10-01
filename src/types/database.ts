@@ -62,6 +62,7 @@ export interface Category {
   order?: number;
   showInHeader?: boolean;
   enableProductZoom?: boolean;
+  hideSoldOutByDefault?: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
   name: Record<string, string>;
@@ -250,6 +251,7 @@ export interface StoreSettings {
   productsTitle?: Record<string, string>;
   productsSubtitle?: Record<string, string>;
   catalogTitle?: Record<string, string>;
+  catalogIntro?: Record<string, string>;
   catalogDescription?: Record<string, string>;
   catalogSlug?: Record<string, string> | string;
   catalogBannerUrl?: string;
