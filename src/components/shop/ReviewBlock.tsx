@@ -296,14 +296,35 @@ export function ReviewBlock({
 
                 {/* Reviews Grid */}
                 {!isLoading && displayReviews.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div
+                        className={cn(
+                            "grid grid-cols-1 md:grid-cols-2 gap-6",
+                            displayReviews.length === 5
+                                ? "lg:grid-cols-6"
+                                : displayReviews.length === 4
+                                ? "lg:grid-cols-2 max-w-4xl mx-auto"
+                                : displayReviews.length === 2
+                                ? "lg:grid-cols-2 max-w-4xl mx-auto"
+                                : displayReviews.length === 1
+                                ? "lg:grid-cols-1 max-w-xl mx-auto"
+                                : "lg:grid-cols-3"
+                        )}
+                    >
                         {displayReviews.map((review, idx) => {
                             const isExpanded = expandedReviewIndex === idx;
                             const isLong = (review.text || "").length > 180;
+                            const is5Reviews = displayReviews.length === 5;
                             return (
                                 <article
                                     key={`${review.author_name}-${idx}`}
-                                    className="group relative flex flex-col justify-between rounded-2xl border border-black/[0.06] dark:border-white/10 bg-white/60 dark:bg-white/[0.02] backdrop-blur-xl p-6 sm:p-7 shadow-soft hover:shadow-soft-xl hover:-translate-y-1 transition-all duration-300"
+                                    className={cn(
+                                        "group relative flex flex-col justify-between rounded-2xl border border-black/[0.06] dark:border-white/10 bg-white/60 dark:bg-white/[0.02] backdrop-blur-xl p-6 sm:p-7 shadow-soft hover:shadow-soft-xl hover:-translate-y-1 transition-all duration-300",
+                                        is5Reviews && "lg:col-span-2",
+                                        is5Reviews && idx === 3 && "lg:col-start-2",
+                                        is5Reviews &&
+                                            idx === 4 &&
+                                            "md:col-span-2 md:max-w-md md:mx-auto md:w-full lg:max-w-none lg:w-auto lg:col-span-2"
+                                    )}
                                 >
                                     {/* Top: Author Avatar, Name, Relative time, Google Badge */}
                                     <div className="flex items-start justify-between gap-3 mb-4">

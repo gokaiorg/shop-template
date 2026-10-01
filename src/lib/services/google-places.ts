@@ -76,22 +76,36 @@ function parseClassicReviews(rawReviews: any[]): GoogleReview[] {
     }));
 }
 
-async function parseNewReviews(rawReviews: any[], targetLang: string = "fr"): Promise<GoogleReview[]> {
+async function parseNewReviews(
+    rawReviews: any[],
+    targetLang: string = "fr"
+): Promise<GoogleReview[]> {
     if (!Array.isArray(rawReviews)) return [];
     const parsed: GoogleReview[] = [];
 
     for (const r of rawReviews) {
         const authorName = r.authorAttribution?.displayName || "Client Google";
         const rating = typeof r.rating === "number" ? r.rating : 5;
-        let text = typeof r.text === "object" ? r.text?.text || "" : (r.text || "");
+        // Prefer originalText if available to preserve native author comment
+        const origText = typeof r.originalText === "object" ? r.originalText?.text : undefined;
+        const origLang = typeof r.originalText === "object" ? r.originalText?.languageCode : undefined;
+        const textObj = typeof r.text === "object" ? r.text?.text : (r.text || "");
         const textLang = typeof r.text === "object" ? r.text?.languageCode : undefined;
+
+        // If targetLang is English ("en"), keep ONLY native English reviews
+        // (no translated reviews from French/Russian/Thai/etc.)
+        if (targetLang === "en" && origLang && origLang.toLowerCase() !== "en") {
+            continue;
+        }
+
+        // If targetLang is French ("fr"), keep ONLY native French reviews
+        if (targetLang === "fr" && origLang && origLang.toLowerCase() !== "fr") {
+            continue;
+        }
+
+        const text = origText || textObj || "";
         const photoUrl = r.authorAttribution?.photoUri || "";
         const relativeTime = r.relativePublishTimeDescription || undefined;
-
-        // If the review language is present and differs from requested targetLang, auto-translate it
-        if (text && textLang && textLang.toLowerCase() !== targetLang.toLowerCase()) {
-            text = await translateTextFallback(text, targetLang);
-        }
 
         parsed.push({
             author_name: authorName,
