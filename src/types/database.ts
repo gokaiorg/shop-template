@@ -234,6 +234,7 @@ export interface GoogleReview {
   text: string;
   profile_photo_url: string;
   relative_time_description?: string;
+  publish_time?: string;
 }
 
 export type ProductImageRatio = 'default' | 'square' | 'portrait';

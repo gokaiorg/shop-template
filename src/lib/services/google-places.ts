@@ -73,6 +73,7 @@ function parseClassicReviews(rawReviews: any[]): GoogleReview[] {
         text: r.text || "",
         profile_photo_url: r.profile_photo_url || "",
         relative_time_description: r.relative_time_description || undefined,
+        publish_time: r.time ? new Date(r.time * 1000).toISOString() : undefined,
     }));
 }
 
@@ -106,6 +107,7 @@ async function parseNewReviews(
         const text = origText || textObj || "";
         const photoUrl = r.authorAttribution?.photoUri || "";
         const relativeTime = r.relativePublishTimeDescription || undefined;
+        const publishTime = r.publishTime || undefined;
 
         parsed.push({
             author_name: authorName,
@@ -113,10 +115,20 @@ async function parseNewReviews(
             text,
             profile_photo_url: photoUrl,
             relative_time_description: relativeTime,
+            publish_time: publishTime,
         });
     }
 
     return parsed;
+}
+
+function sortReviewsByDate(reviews: GoogleReview[]): GoogleReview[] {
+    return [...reviews].sort((a, b) => {
+        if (!a.publish_time && !b.publish_time) return 0;
+        if (!a.publish_time) return 1;
+        if (!b.publish_time) return -1;
+        return new Date(b.publish_time).getTime() - new Date(a.publish_time).getTime();
+    });
 }
 
 /**
@@ -173,7 +185,7 @@ export async function getGooglePlaceReviews(
 
             if (data.status === "OK") {
                 const rawReviews = parseClassicReviews(data.result?.reviews);
-                const reviews = deduplicateReviews(rawReviews).slice(0, 6);
+                const reviews = sortReviewsByDate(deduplicateReviews(rawReviews)).slice(0, 6);
 
                 return {
                     success: true,
@@ -211,7 +223,7 @@ export async function getGooglePlaceReviews(
         if (resNew.ok) {
             const dataNew = await resNew.json();
             const rawReviews = await parseNewReviews(dataNew?.reviews, lang);
-            const reviews = deduplicateReviews(rawReviews).slice(0, 6);
+            const reviews = sortReviewsByDate(deduplicateReviews(rawReviews)).slice(0, 6);
 
             return {
                 success: true,
