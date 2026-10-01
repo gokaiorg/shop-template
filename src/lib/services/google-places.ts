@@ -77,12 +77,22 @@ function parseClassicReviews(rawReviews: any[]): GoogleReview[] {
     }));
 }
 
+function sortReviewsByDate(reviews: GoogleReview[]): GoogleReview[] {
+    return [...reviews].sort((a, b) => {
+        if (!a.publish_time && !b.publish_time) return 0;
+        if (!a.publish_time) return 1;
+        if (!b.publish_time) return -1;
+        return new Date(b.publish_time).getTime() - new Date(a.publish_time).getTime();
+    });
+}
+
 async function parseNewReviews(
     rawReviews: any[],
     targetLang: string = "fr"
 ): Promise<GoogleReview[]> {
     if (!Array.isArray(rawReviews)) return [];
-    const parsed: GoogleReview[] = [];
+    const nativeReviews: GoogleReview[] = [];
+    const translatedReviews: GoogleReview[] = [];
 
     for (const r of rawReviews) {
         const authorName = r.authorAttribution?.displayName || "Client Google";
@@ -93,42 +103,51 @@ async function parseNewReviews(
         const textObj = typeof r.text === "object" ? r.text?.text : (r.text || "");
         const textLang = typeof r.text === "object" ? r.text?.languageCode : undefined;
 
-        // If targetLang is English ("en"), keep ONLY native English reviews
-        // (no translated reviews from French/Russian/Thai/etc.)
-        if (targetLang === "en" && origLang && origLang.toLowerCase() !== "en") {
-            continue;
-        }
-
-        // If targetLang is French ("fr"), keep ONLY native French reviews
-        if (targetLang === "fr" && origLang && origLang.toLowerCase() !== "fr") {
-            continue;
-        }
-
-        const text = origText || textObj || "";
         const photoUrl = r.authorAttribution?.photoUri || "";
         const relativeTime = r.relativePublishTimeDescription || undefined;
         const publishTime = r.publishTime || undefined;
 
-        parsed.push({
-            author_name: authorName,
-            rating,
-            text,
-            profile_photo_url: photoUrl,
-            relative_time_description: relativeTime,
-            publish_time: publishTime,
-        });
+        const isNative = Boolean(
+            origLang && origLang.toLowerCase() === targetLang.toLowerCase()
+        );
+
+        if (isNative) {
+            nativeReviews.push({
+                author_name: authorName,
+                rating,
+                text: origText || textObj || "",
+                profile_photo_url: photoUrl,
+                relative_time_description: relativeTime,
+                publish_time: publishTime,
+            });
+        } else {
+            let text = textObj || origText || "";
+            // If the review language is present and differs from requested targetLang, auto-translate it
+            if (!textLang || textLang.toLowerCase() !== targetLang.toLowerCase()) {
+                text = await translateTextFallback(origText || text, targetLang);
+            }
+
+            translatedReviews.push({
+                author_name: authorName,
+                rating,
+                text,
+                profile_photo_url: photoUrl,
+                relative_time_description: relativeTime,
+                publish_time: publishTime,
+            });
+        }
     }
 
-    return parsed;
-}
+    const nativeSorted = sortReviewsByDate(deduplicateReviews(nativeReviews));
+    const translatedSorted = sortReviewsByDate(deduplicateReviews(translatedReviews));
 
-function sortReviewsByDate(reviews: GoogleReview[]): GoogleReview[] {
-    return [...reviews].sort((a, b) => {
-        if (!a.publish_time && !b.publish_time) return 0;
-        if (!a.publish_time) return 1;
-        if (!b.publish_time) return -1;
-        return new Date(b.publish_time).getTime() - new Date(a.publish_time).getTime();
-    });
+    // If we have at least 3 native reviews in the requested language, use them exclusively
+    if (nativeSorted.length >= 3) {
+        return nativeSorted.slice(0, 3);
+    }
+
+    // Otherwise, prioritize any native reviews first, and supplement with translated reviews up to 3
+    return [...nativeSorted, ...translatedSorted].slice(0, 3);
 }
 
 /**
@@ -222,8 +241,7 @@ export async function getGooglePlaceReviews(
 
         if (resNew.ok) {
             const dataNew = await resNew.json();
-            const rawReviews = await parseNewReviews(dataNew?.reviews, lang);
-            const reviews = sortReviewsByDate(deduplicateReviews(rawReviews)).slice(0, 3);
+            const reviews = await parseNewReviews(dataNew?.reviews, lang);
 
             return {
                 success: true,
