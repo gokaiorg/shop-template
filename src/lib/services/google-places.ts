@@ -185,7 +185,7 @@ export async function getGooglePlaceReviews(
 
             if (data.status === "OK") {
                 const rawReviews = parseClassicReviews(data.result?.reviews);
-                const reviews = sortReviewsByDate(deduplicateReviews(rawReviews)).slice(0, 6);
+                const reviews = sortReviewsByDate(deduplicateReviews(rawReviews)).slice(0, 3);
 
                 return {
                     success: true,
@@ -223,7 +223,7 @@ export async function getGooglePlaceReviews(
         if (resNew.ok) {
             const dataNew = await resNew.json();
             const rawReviews = await parseNewReviews(dataNew?.reviews, lang);
-            const reviews = sortReviewsByDate(deduplicateReviews(rawReviews)).slice(0, 6);
+            const reviews = sortReviewsByDate(deduplicateReviews(rawReviews)).slice(0, 3);
 
             return {
                 success: true,
