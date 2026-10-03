@@ -2,6 +2,7 @@
   "name": "shop-template",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@9.1.0",
   "scripts": {
     "dev:st": "env-cmd -f .env.st next dev -H 127.0.0.1",
