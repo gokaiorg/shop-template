@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLanguageSwitcher } from "@/components/admin/AdminLanguageSwitcher";
 import { Badge } from "@/components/ui/badge";
 import { StoreSettings } from "@/types/database";
 import { blocksSchema, BlocksFormData } from "@/schemas/settings";
@@ -160,13 +161,13 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                     </h4>
                                     {isMultiLocale ? (
                                         <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                            <TabsList className="mb-4">
-                                                {supportedLocales.map((loc) => (
-                                                    <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                        {loc.toUpperCase()}
-                                                    </TabsTrigger>
-                                                ))}
-                                            </TabsList>
+                                            <div className="mb-4">
+                                                <AdminLanguageSwitcher
+                                                    activeLang={activeLang}
+                                                    onLanguageChange={setActiveLang}
+                                                    locales={supportedLocales}
+                                                />
+                                            </div>
                                             {supportedLocales.map((loc) => (
                                                 <TabsContent key={loc} value={loc} className="space-y-4">
                                                     <FormField
@@ -306,8 +307,8 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                                                 </FormControl>
                                                 <FormDescription className="text-xs">
                                                     {lang === "fr"
-                                                        ? "Chemin interne (ex: /fr/notre-histoire) ou URL externe complète."
-                                                        : "Internal path (e.g. /en/about-us) or complete external URL."}
+                                                        ? "Chemin interne ou URL externe complète."
+                                                        : "Internal path or complete external URL."}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -443,13 +444,13 @@ export function AdminBlocksForm({ initialData, lang, dict, children }: AdminBloc
                         <div className="space-y-6 pt-2">
                             {isMultiLocale ? (
                                 <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {supportedLocales.map((loc) => (
-                                            <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {loc.toUpperCase()}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
+                                    <div className="mb-4">
+                                        <AdminLanguageSwitcher
+                                            activeLang={activeLang}
+                                            onLanguageChange={setActiveLang}
+                                            locales={supportedLocales}
+                                        />
+                                    </div>
                                     {supportedLocales.map((loc) => (
                                         <TabsContent key={loc} value={loc} className="space-y-4">
                                             {/* Section Title */}

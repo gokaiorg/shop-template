@@ -21,6 +21,9 @@ export interface User {
   updatedAt: Date | string;
 }
 
+export type CustomFieldValue = string | number | boolean | Record<string, string>;
+export type ProductMetadata = Record<string, CustomFieldValue>;
+
 export interface Product {
   id: string;
   order?: number;
@@ -42,7 +45,7 @@ export interface Product {
   description?: Record<string, string>;
   intro?: Record<string, string> | null;
   status: Record<string, string>;
-  metadata?: Record<string, any>;
+  metadata?: ProductMetadata;
   _oldMetadata?: Record<string, any>;
   // Legacy optional fields for compatibility
   nameEn?: string;

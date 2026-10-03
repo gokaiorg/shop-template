@@ -313,8 +313,16 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
 
         await batch.commit();
 
+        revalidatePath('/', 'layout');
+        revalidatePath('/[lang]', 'layout');
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/[lang]/[slug]', 'layout');
+        revalidatePath('/[lang]/[slug]/[categorySlug]', 'page');
+        revalidatePath('/[lang]/[slug]/[categorySlug]/[productSlug]', 'page');
+        supportedLocales.forEach((loc) => {
+            revalidatePath(`/${loc}`, 'page');
+            revalidatePath(`/${loc}/menu`, 'page');
+        });
         return { success: true, product: serializeFirestore(productData) };
     } catch (error) {
         console.error("CREATE_PRODUCT_ERROR:", error);
@@ -430,8 +438,16 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
 
         await batch.commit();
 
+        revalidatePath('/', 'layout');
+        revalidatePath('/[lang]', 'layout');
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/[lang]/[slug]', 'layout');
+        revalidatePath('/[lang]/[slug]/[categorySlug]', 'page');
+        revalidatePath('/[lang]/[slug]/[categorySlug]/[productSlug]', 'page');
+        supportedLocales.forEach((loc) => {
+            revalidatePath(`/${loc}`, 'page');
+            revalidatePath(`/${loc}/menu`, 'page');
+        });
         return { success: true, product: serializeFirestore({ id, ...productData }) };
     } catch (error) {
         console.error("UPDATE_PRODUCT_ERROR:", error);
@@ -789,8 +805,17 @@ export async function deleteProduct(id: string) {
 
         await productRef.delete();
 
+        revalidatePath('/', 'layout');
+        revalidatePath('/[lang]', 'layout');
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/[lang]/[slug]', 'layout');
+        revalidatePath('/[lang]/[slug]/[categorySlug]', 'page');
+        revalidatePath('/[lang]/[slug]/[categorySlug]/[productSlug]', 'page');
+        const supportedLocales = getSupportedLocales();
+        supportedLocales.forEach((loc) => {
+            revalidatePath(`/${loc}`, 'page');
+            revalidatePath(`/${loc}/menu`, 'page');
+        });
         return { success: true };
     } catch (error) {
         console.error("DELETE_PRODUCT_ERROR:", error);

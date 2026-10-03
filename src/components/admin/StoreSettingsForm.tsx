@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLanguageSwitcher } from "@/components/admin/AdminLanguageSwitcher";
 import { Badge } from "@/components/ui/badge";
 import { StoreSettings } from "@/types/database";
 import { globalSettingsSchema, GlobalSettingsFormData } from "@/schemas/settings";
@@ -457,7 +458,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                     <FormItem>
                                         <FormLabel>{lang === "fr" ? "Nom de la marque" : "Brand Name"}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. Green Ghost" {...field} />
+                                            <Input placeholder={lang === "fr" ? "Nom de votre boutique" : "Store Name"} {...field} />
                                         </FormControl>
                                         <FormDescription>
                                             {lang === "fr"
@@ -622,13 +623,13 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                             <h4 className="text-sm font-semibold mb-3">Hero Text Content</h4>
                             {isMultiLocale ? (
                                 <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {supportedLocales.map((loc) => (
-                                            <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {loc.toUpperCase()}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
+                                    <div className="mb-4">
+                                        <AdminLanguageSwitcher
+                                            activeLang={activeLang}
+                                            onLanguageChange={setActiveLang}
+                                            locales={supportedLocales}
+                                        />
+                                    </div>
                                     {supportedLocales.map((loc) => (
                                         <TabsContent key={loc} value={loc} className="space-y-4">
                                             <FormField
@@ -767,13 +768,13 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                     <CardContent className="space-y-6">
                         {isMultiLocale ? (
                             <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                <TabsList className="mb-4">
-                                    {supportedLocales.map((loc) => (
-                                        <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                            {loc.toUpperCase()}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
+                                <div className="mb-4">
+                                    <AdminLanguageSwitcher
+                                        activeLang={activeLang}
+                                        onLanguageChange={setActiveLang}
+                                        locales={supportedLocales}
+                                    />
+                                </div>
                                 {supportedLocales.map((loc) => (
                                     <TabsContent key={loc} value={loc} className="space-y-4">
                                         <FormField
@@ -803,7 +804,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                     <FormControl>
                                                         <Textarea
                                                             rows={2}
-                                                            placeholder={lang === "fr" ? "ex: Découvrez l'ensemble de nos collections artistiques" : `Categories subtitle in ${getLocaleDisplayName(loc)}`}
+                                                            placeholder={lang === "fr" ? "Sous-titre ou description des catégories..." : `Categories subtitle in ${getLocaleDisplayName(loc)}`}
                                                             {...field}
                                                             value={field.value || ""}
                                                             disabled={isPending}
@@ -826,7 +827,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                             <FormLabel>{lang === "fr" ? "Titre de la section" : "Section Title"}</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder={lang === "fr" ? "ex: Nos Univers" : "Categories title"}
+                                                    placeholder={lang === "fr" ? "Catégories" : "Categories"}
                                                     {...field}
                                                     value={field.value || ""}
                                                     disabled={isPending}
@@ -845,7 +846,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                             <FormControl>
                                                 <Textarea
                                                     rows={2}
-                                                    placeholder={lang === "fr" ? "ex: Découvrez l'ensemble de nos collections artistiques" : "Categories subtitle"}
+                                                    placeholder={lang === "fr" ? "Sous-titre ou description des catégories..." : "Categories subtitle"}
                                                     {...field}
                                                     value={field.value || ""}
                                                     disabled={isPending}
@@ -883,13 +884,13 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                     <CardContent className="space-y-6">
                         {isMultiLocale ? (
                             <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                <TabsList className="mb-4">
-                                    {supportedLocales.map((loc) => (
-                                        <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                            {loc.toUpperCase()}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
+                                <div className="mb-4">
+                                    <AdminLanguageSwitcher
+                                        activeLang={activeLang}
+                                        onLanguageChange={setActiveLang}
+                                        locales={supportedLocales}
+                                    />
+                                </div>
                                 {supportedLocales.map((loc) => (
                                     <TabsContent key={loc} value={loc} className="space-y-4">
                                         <FormField
@@ -919,7 +920,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                     <FormControl>
                                                         <Textarea
                                                             rows={2}
-                                                            placeholder={lang === "fr" ? "ex: Découvrez l'ensemble de nos services et réalisations" : `Products subtitle in ${getLocaleDisplayName(loc)}`}
+                                                            placeholder={lang === "fr" ? "Sous-titre ou description des produits..." : `Products subtitle in ${getLocaleDisplayName(loc)}`}
                                                             {...field}
                                                             value={field.value || ""}
                                                             disabled={isPending}
@@ -942,7 +943,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                             <FormLabel>{lang === "fr" ? "Titre de la section" : "Section Title"}</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder={lang === "fr" ? "ex: Solutions" : "Products title"}
+                                                    placeholder={lang === "fr" ? "Produits" : "Products"}
                                                     {...field}
                                                     value={field.value || ""}
                                                     disabled={isPending}
@@ -961,7 +962,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                             <FormControl>
                                                 <Textarea
                                                     rows={2}
-                                                    placeholder={lang === "fr" ? "ex: Découvrez l'ensemble de nos services et réalisations" : "Products subtitle"}
+                                                    placeholder={lang === "fr" ? "Sous-titre ou description des produits..." : "Products subtitle"}
                                                     {...field}
                                                     value={field.value || ""}
                                                     disabled={isPending}
@@ -1181,13 +1182,13 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                             </FormDescription>
                             {isMultiLocale ? (
                                 <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {supportedLocales.map((loc) => (
-                                            <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {loc.toUpperCase()}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
+                                    <div className="mb-4">
+                                        <AdminLanguageSwitcher
+                                            activeLang={activeLang}
+                                            onLanguageChange={setActiveLang}
+                                            locales={supportedLocales}
+                                        />
+                                    </div>
                                     {supportedLocales.map((loc) => (
                                         <TabsContent key={loc} value={loc}>
                                             <FormField
@@ -1203,7 +1204,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                             />
                                                         </FormControl>
                                                         <FormDescription className="text-xs text-muted-foreground">
-                                                            HTML is supported (e.g., &lt;a href=&quot;...&quot;&gt;, &lt;br&gt;, &lt;strong&gt;).
+                                                            HTML is supported.
                                                         </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
@@ -1222,7 +1223,7 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                                                 <Textarea rows={3} placeholder="Brand description for the footer" {...field} />
                                             </FormControl>
                                             <FormDescription className="text-xs text-muted-foreground">
-                                                HTML is supported (e.g., &lt;a href=&quot;...&quot;&gt;, &lt;br&gt;, &lt;strong&gt;).
+                                                HTML is supported.
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -1310,18 +1311,18 @@ export function StoreSettingsForm({ initialData, lang, dict, children }: StoreSe
                             </FormLabel>
                             <FormDescription>
                                 {lang === "fr"
-                                    ? "Titre affiché au-dessus des liens de pages dans la colonne de droite du footer (ex: Legal, Pages, Informations)."
-                                    : "Title displayed above the custom page links in the right column of the footer (e.g. Legal, Pages, Information)."}
+                                    ? "Titre affiché au-dessus des liens de pages dans la colonne de droite du footer."
+                                    : "Title displayed above the custom page links in the right column of the footer."}
                             </FormDescription>
                             {isMultiLocale ? (
                                 <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {supportedLocales.map((loc) => (
-                                            <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                {loc.toUpperCase()}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
+                                    <div className="mb-4">
+                                        <AdminLanguageSwitcher
+                                            activeLang={activeLang}
+                                            onLanguageChange={setActiveLang}
+                                            locales={supportedLocales}
+                                        />
+                                    </div>
                                     {supportedLocales.map((loc) => (
                                         <TabsContent key={loc} value={loc}>
                                             <FormField

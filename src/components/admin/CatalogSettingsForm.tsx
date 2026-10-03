@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLanguageSwitcher } from "@/components/admin/AdminLanguageSwitcher";
 import { Badge } from "@/components/ui/badge";
 import { StoreSettings } from "@/types/database";
 import { catalogSettingsSchema, CatalogSettingsFormData } from "@/schemas/settings";
@@ -125,13 +126,13 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                     <CardContent className="space-y-6">
                         {isMultiLocale ? (
                             <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                <TabsList className="mb-4">
-                                    {supportedLocales.map((loc) => (
-                                        <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                            {loc.toUpperCase()}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
+                                <div className="mb-4">
+                                    <AdminLanguageSwitcher
+                                        activeLang={activeLang}
+                                        onLanguageChange={setActiveLang}
+                                        locales={supportedLocales}
+                                    />
+                                </div>
                                 {supportedLocales.map((loc) => (
                                     <TabsContent key={loc} value={loc} className="space-y-6">
                                         <FormField
@@ -141,7 +142,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                                 <FormItem>
                                                     <FormLabel>{lang === "fr" ? "Titre" : "Title"}</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder={loc === "fr" ? "e.g. Boutique ou Galerie" : "e.g. Shop or Gallery"} {...field} />
+                                                        <Input placeholder={loc === "fr" ? "Boutique" : "Shop"} {...field} />
                                                     </FormControl>
                                                     <FormDescription>
                                                         {lang === "fr" 
@@ -161,7 +162,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                                     <FormLabel>{lang === "fr" ? "Intro" : "Intro"}</FormLabel>
                                                     <FormControl>
                                                         <Input
-                                                            placeholder={loc === "fr" ? "e.g. Menu Cannabis Premium & Variétés Exclusives" : "e.g. Weed Shop Premium Cannabis Menu"}
+                                                            placeholder={loc === "fr" ? "Sous-titre du catalogue..." : "Catalog subtitle..."}
                                                             {...field}
                                                         />
                                                     </FormControl>
@@ -184,7 +185,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                                     <FormControl>
                                                         <Textarea
                                                             rows={3}
-                                                            placeholder={loc === "fr" ? "e.g. Découvrez notre sélection exclusive d'œuvres contemporaines..." : "e.g. Discover our exclusive curated collection..."}
+                                                            placeholder={loc === "fr" ? "Description du catalogue..." : "Catalog description..."}
                                                             {...field}
                                                         />
                                                     </FormControl>
@@ -209,7 +210,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                         <FormItem>
                                             <FormLabel>{lang === "fr" ? "Titre" : "Title"}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="e.g. Shop or Gallery" {...field} />
+                                                <Input placeholder="Shop" {...field} />
                                             </FormControl>
                                             <FormDescription>
                                                 Used in navigation bars, footers, and page headings.
@@ -226,7 +227,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                             <FormLabel>{lang === "fr" ? "Intro" : "Intro"}</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="e.g. Weed Shop Premium Cannabis Menu"
+                                                    placeholder="Catalog subtitle..."
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -246,7 +247,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                             <FormControl>
                                                 <Textarea
                                                     rows={3}
-                                                    placeholder="e.g. Discover our exclusive curated collection..."
+                                                    placeholder="Catalog description..."
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -367,7 +368,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                                         </div>
                                                         <FormControl>
                                                             <Input
-                                                                placeholder={loc === "fr" ? "e.g. boutique, galerie" : "e.g. artworks, shop"}
+                                                                placeholder={loc === "fr" ? "boutique" : "shop"}
                                                                 value={field.value || ""}
                                                                 onChange={(e) => {
                                                                     const cleanSlug = e.target.value
@@ -382,8 +383,8 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                                         </FormControl>
                                                         <FormDescription>
                                                             {lang === "fr"
-                                                                ? "Formaté automatiquement en minuscules avec des traits d'union (ex: artworks, boutique, shop, galerie)."
-                                                                : "Automatically formatted to lowercase with hyphens (e.g. artworks, shop, boutique, gallery)."}
+                                                                ? "Formaté automatiquement en minuscules avec des traits d'union."
+                                                                : "Automatically formatted to lowercase with hyphens."}
                                                         </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
@@ -410,7 +411,7 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                             </div>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="e.g. artworks, shop, boutique, galerie"
+                                                    placeholder="shop"
                                                     value={field.value || ""}
                                                     onChange={(e) => {
                                                         const cleanSlug = e.target.value
@@ -425,8 +426,8 @@ export function CatalogSettingsForm({ initialData, lang, dict }: CatalogSettings
                                             </FormControl>
                                             <FormDescription>
                                                 {lang === "fr"
-                                                    ? "Formaté automatiquement en minuscules avec des traits d'union (ex: artworks, boutique, shop, galerie)."
-                                                    : "Automatically formatted to lowercase with hyphens (e.g. artworks, shop, boutique, gallery)."}
+                                                    ? "Formaté automatiquement en minuscules avec des traits d'union."
+                                                    : "Automatically formatted to lowercase with hyphens."}
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>

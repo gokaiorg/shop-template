@@ -43,6 +43,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLanguageSwitcher } from "@/components/admin/AdminLanguageSwitcher";
 import {
     Select,
     SelectContent,
@@ -354,13 +355,13 @@ export function CategoryForm({ dict, lang, initialData, catalogSlugs: propCatalo
                             <CardContent className="space-y-6">
                                 {isMulti ? (
                                     <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                        <TabsList className="mb-4">
-                                            {locales.map((loc) => (
-                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                    {loc.toUpperCase()}
-                                                </TabsTrigger>
-                                            ))}
-                                        </TabsList>
+                                        <div className="mb-4">
+                                            <AdminLanguageSwitcher
+                                                activeLang={activeLang}
+                                                onLanguageChange={setActiveLang}
+                                                locales={locales}
+                                            />
+                                        </div>
                                         {locales.map((loc) => (
                                             <TabsContent key={loc} value={loc} className="space-y-4">
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

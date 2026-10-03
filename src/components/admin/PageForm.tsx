@@ -35,6 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLanguageSwitcher } from "@/components/admin/AdminLanguageSwitcher";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -262,13 +263,13 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                             <CardContent>
                                 {isMultiLocale ? (
                                     <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                        <TabsList className="mb-4">
-                                            {supportedLocales.map((loc) => (
-                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                    {loc.toUpperCase()}
-                                                </TabsTrigger>
-                                            ))}
-                                        </TabsList>
+                                        <div className="mb-4">
+                                            <AdminLanguageSwitcher
+                                                activeLang={activeLang}
+                                                onLanguageChange={setActiveLang}
+                                                locales={supportedLocales}
+                                            />
+                                        </div>
                                         {supportedLocales.map((loc) => (
                                             <TabsContent key={loc} value={loc} className="space-y-4">
                                                 <FormField
@@ -300,8 +301,8 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                             </FormControl>
                                                             <FormDescription>
                                                                 {lang === "fr"
-                                                                    ? "Balises HTML (ex: <p>, <div>, <iframe>, <h2>, <strong>) et classes utilitaires Tailwind supportées."
-                                                                    : "HTML tags (e.g. <p>, <div>, <iframe>, <h2>, <strong>) and Tailwind utility classes are supported."}
+                                                                    ? "Balises HTML et classes utilitaires Tailwind supportées."
+                                                                    : "HTML tags and Tailwind utility classes are supported."}
                                                             </FormDescription>
                                                             <FormMessage />
                                                         </FormItem>
@@ -319,7 +320,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                 <FormItem>
                                                     <FormLabel>{dict?.forms?.title || 'Page Title'} <span className="text-destructive ml-1">*</span></FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="e.g. About Us, Terms of Service..." {...field} />
+                                                        <Input placeholder="Page title..." {...field} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -341,8 +342,8 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                     </FormControl>
                                                     <FormDescription>
                                                         {lang === "fr"
-                                                            ? "Balises HTML (ex: <p>, <div>, <iframe>, <h2>, <strong>) et classes utilitaires Tailwind supportées."
-                                                            : "HTML tags (e.g. <p>, <div>, <iframe>, <h2>, <strong>) and Tailwind utility classes are supported."}
+                                                            ? "Balises HTML et classes utilitaires Tailwind supportées."
+                                                            : "HTML tags and Tailwind utility classes are supported."}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -545,7 +546,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
 
                                                                 <FormControl>
                                                                     <Input
-                                                                        placeholder={`e.g. about-${loc}...`}
+                                                                        placeholder={`slug-${loc}...`}
                                                                         {...field}
                                                                         disabled={isLoading}
                                                                         value={field.value || ""}
@@ -611,7 +612,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
 
                                                 <FormControl>
                                                     <Input
-                                                        placeholder="e.g. about..."
+                                                        placeholder="page-slug..."
                                                         {...field}
                                                         disabled={isLoading}
                                                         value={field.value || ""}

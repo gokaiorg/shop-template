@@ -13,6 +13,13 @@ export const categorySchema = z.object({
     hideSoldOutByDefault: z.boolean().default(false).optional(),
 });
 
+export const customFieldValueSchema = z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.record(z.string(), z.string()),
+]);
+
 export const productSchema = z.object({
     name: z.record(z.string(), z.string()),
     slug: z.record(z.string(), z.string()),
@@ -21,7 +28,7 @@ export const productSchema = z.object({
     status: z.record(z.string(), z.string()).optional(),
     price: z.number().min(0),
     hidePrice: z.boolean().default(false),
-    stock: z.number().min(0).int(),
+    stock: z.number().min(0),
     artist: z.string().optional().nullable(),
     vendor: z.string().optional().nullable(),
     categoryIds: z.array(z.string()).min(1, "At least one category is required"),
@@ -29,7 +36,7 @@ export const productSchema = z.object({
     imageUrl: z.string().optional().nullable(),
     images: z.array(z.string()).optional(),
     order: z.coerce.number().int().optional(),
-    metadata: z.record(z.string(), z.any()).optional(),
+    metadata: z.record(z.string(), customFieldValueSchema).optional(),
 });
 
 export const pageSchema = z.object({
