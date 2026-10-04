@@ -5,12 +5,13 @@
  * Conçu pour Green Ghost (green-ghost-shop) avec compatibilité multi-marques.
  *
  * Usage :
- *   pnpm tsx --env-file=.env.gg src/scripts/sync-sheet.ts --dry-run
- *   pnpm tsx --env-file=.env.gg src/scripts/sync-sheet.ts
+ *   pnpm run sync --dry-run
+ *   pnpm run sync
+ *   pnpm run sync --prod
  */
 
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -39,6 +40,7 @@ const sheetName = process.env.GOOGLE_SHEET_NAME || 'products';
 // Arguments CLI
 const args = process.argv.slice(2);
 const isDryRun = args.includes('--dry-run') || args.includes('-d');
+const isProd = process.argv.includes('--prod');
 
 if (!clientEmail || !privateKey) {
   console.error('❌ Erreur : FIREBASE_CLIENT_EMAIL et FIREBASE_PRIVATE_KEY doivent être définis.');
@@ -124,6 +126,7 @@ function parsePrice(raw: unknown): number {
 // Colonnes internes obsolètes à ne pas enregistrer dans metadata
 const OBSOLETE_COLS = new Set([
   'originaltype',
+  'type',
   'karon_stock',
   'karon_entry',
   'wsp',
@@ -161,12 +164,16 @@ const ROOT_COLS = new Set([
 // ============================================================================
 
 async function main() {
+  const isProdTarget = process.argv.includes('--prod');
+  const targetBaseUrl = (isProdTarget ? process.env.NEXT_PUBLIC_APP_URL : 'http://localhost:3000') || 'http://localhost:3000';
+
   console.log('================================================================');
   console.log('🚀 Synchronisation Google Sheets -> Firestore');
   console.log(`📋 Google Sheet ID : ${sheetId}`);
   console.log(`📑 Feuille         : ${sheetName}`);
   console.log(`🔥 Projet Firebase : ${projectId}`);
   console.log(`⚙️  Mode            : ${isDryRun ? '🟡 DRY-RUN (Simulation)' : '🟢 LIVE (Écriture Firestore)'}`);
+  console.log(`🌐 Cible Webhook   : ${targetBaseUrl} (${isProdTarget ? 'Production' : 'Local'})`);
   console.log('================================================================\n');
 
   // 1. Lecture du Google Sheet
@@ -317,10 +324,6 @@ async function main() {
       metadata.dominance = row.dominance;
     }
 
-    if (row.type) {
-      metadata.type = row.type;
-    }
-
     // Capture des colonnes personnalisées supplémentaires éventuelles
     for (const [key, val] of Object.entries(row)) {
       const lowerKey = key.toLowerCase();
@@ -421,8 +424,8 @@ async function main() {
     process.exit(0);
   }
 
-  // 6. Opérations Firestore par Lots (WriteBatch avec pagination de 400 docs)
-  const BATCH_SIZE = 400; // Limite Firestore : max 500 opérations par batch
+  // 6. Opérations Firestore par Lots (WriteBatch avec pagination de 200 docs pour respecter la limite de 500 ops)
+  const BATCH_SIZE = 200;
   const totalBatches = Math.ceil(preparedProducts.length / BATCH_SIZE);
 
   console.log(`⏳ Début des écritures Firestore (${totalBatches} lot(s) à exécuter)...`);
@@ -435,6 +438,14 @@ async function main() {
       const docRef = db.collection('products').doc(item.docId);
       // Utilisation stricte de merge: true pour préserver les champs admin existants
       batch.set(docRef, item.data, { merge: true });
+
+      // Suppression définitive de l'attribut obsolète 'type' (dans metadata et à la racine)
+      if (!item.isNew) {
+        batch.update(docRef, {
+          'metadata.type': FieldValue.delete(),
+          type: FieldValue.delete(),
+        });
+      }
     }
 
     await batch.commit();
@@ -447,11 +458,12 @@ async function main() {
   console.log('================================================================');
 
   // 7. Déclenchement de la Revalidation Next.js (On-demand ISR via layout)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000';
+  const isProd = process.argv.includes('--prod');
+  const baseUrl = (isProd ? process.env.NEXT_PUBLIC_APP_URL : 'http://localhost:3000') || 'http://localhost:3000';
   const revalidateSecret = process.env.REVALIDATION_SECRET;
 
   const paths = ['/en/menu', '/fr/menu'];
-  console.log(`\n🔄 Déclenchement de la revalidation du cache Next.js par layout (${paths.join(', ')})...`);
+  console.log(`\n🔄 Déclenchement de la revalidation du cache Next.js par layout (${paths.join(', ')}) sur ${baseUrl} [${isProd ? 'PROD' : 'LOCAL'}]...`);
 
   if (!revalidateSecret) {
     console.warn('⚠️ Variable REVALIDATION_SECRET absente. Revalidation ignorée.');

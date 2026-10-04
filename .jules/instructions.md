@@ -25,6 +25,15 @@ When I trigger these keywords, execute the following sequences:
 5. **Push**: `git push origin [Current Branch Name]`
 6. **Output**: "🚀 Build passed and changes pushed for [Brand] to [Current Branch Name]."
 
+### "Sync-[Brand]" / "Sync-Firestore" (e.g. `Sync-GG`, `Sync-Firestore`)
+1. **Environment Check**: Verify `.env.[brand]` (e.g., `.env.gg`) contains required credentials (`FIREBASE_*`, `GOOGLE_SHEET_ID`, `REVALIDATION_SECRET`).
+2. **Execution**:
+   - **Local Sync (Default)**: Run `pnpm run sync` (syncs Firestore and invalidates local cache on `http://localhost:3000`).
+   - **Production Sync**: Run `pnpm run sync --prod` (syncs Firestore and invalidates production cache via `NEXT_PUBLIC_APP_URL`).
+   - **Dry Run**: Run `pnpm run sync --dry-run` (simulates mapping without modifying Firestore).
+3. **Verification**: Verify batch write success and check that the revalidation webhook (`/api/revalidate`) returns HTTP 200.
+4. **Output**: "✅ Firestore synchronization complete for [Brand] ([X] products processed, cache revalidated on [Target URL])."
+
 ### "ST-Sync" (Post-Squash Alignment)
 Use this workflow immediately after a "Squash and Merge" on GitHub to realign the local branch without duplicating commit history.
 1. `git fetch origin`

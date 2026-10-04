@@ -71,12 +71,12 @@ function HeaderContent({
                 {/* Right Actions */}
                 <div className="flex flex-1 items-center justify-end gap-2 md:gap-4">
                     <div className="hidden md:flex items-center gap-2 md:gap-4">
-                        <ThemeToggle dict={dict.header} />
-                        <LangToggle lang={lang} dict={dict.header} />
-                        <CurrencySwitcher />
+                        <ThemeToggle id="header-theme-toggle" dict={dict.header} />
+                        <LangToggle id="header-lang-toggle" lang={lang} dict={dict.header} />
+                        <CurrencySwitcher id="header-currency-switcher" />
                     </div>
                     {isCartEnabled && <CartSheet dict={dict.header} />}
-                    <AccountToggle lang={lang} dict={dict} session={session} />
+                    <AccountToggle id="header-account-toggle" lang={lang} dict={dict} session={session} />
                 </div>
             </div>
         </header>

@@ -29,7 +29,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AuthSheet } from "@/components/auth/AuthSheet"
 
-export function AccountToggle({ lang, dict, session: propSession }: { lang: string, dict: any, session?: any }) {
+export function AccountToggle({
+    lang,
+    dict,
+    session: propSession,
+    id = "account-toggle",
+}: {
+    lang: string;
+    dict: any;
+    session?: any;
+    id?: string;
+}) {
     const { data: clientSession } = useSession()
     const session = clientSession?.user ? clientSession : (propSession?.user ? propSession : clientSession);
     const { isCartEnabled } = useBrand()
@@ -127,8 +137,14 @@ export function AccountToggle({ lang, dict, session: propSession }: { lang: stri
 
         return (
             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button size="icon" aria-label={accountLabel} className="relative rounded-full hover:opacity-90 transition-opacity">
+                <DropdownMenuTrigger asChild id={`${id}-trigger`}>
+                    <Button
+                        id={`${id}-button`}
+                        size="icon"
+                        aria-label={accountLabel}
+                        className="relative rounded-full hover:opacity-90 transition-opacity"
+                        suppressHydrationWarning
+                    >
                         <User className="h-[1.2rem] w-[1.2rem]" />
                         <span className="sr-only">{accountLabel}</span>
                         {unreadCount > 0 && (
@@ -219,7 +235,13 @@ export function AccountToggle({ lang, dict, session: propSession }: { lang: stri
 
     return (
         <AuthSheet dict={dict.auth || {}} lang={lang}>
-            <Button size="icon" aria-label={accountLabel} className="rounded-full hover:opacity-90 transition-opacity">
+            <Button
+                id={`${id}-auth-button`}
+                size="icon"
+                aria-label={accountLabel}
+                className="rounded-full hover:opacity-90 transition-opacity"
+                suppressHydrationWarning
+            >
                 <User className="h-[1.2rem] w-[1.2rem]" />
                 <span className="sr-only">{accountLabel}</span>
             </Button>

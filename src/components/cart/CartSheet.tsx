@@ -74,7 +74,15 @@ export function CartSheet({ dict }: { dict?: any }) {
 
     if (!mounted) {
         return (
-            <Button variant="ghost" size="icon" aria-label={openCartLabel} className="relative" disabled>
+            <Button
+                id="cart-button"
+                variant="ghost"
+                size="icon"
+                aria-label={openCartLabel}
+                className="relative"
+                disabled
+                suppressHydrationWarning
+            >
                 <ShoppingCart className="h-5 w-5" />
                 <span className="sr-only">{openCartLabel}</span>
             </Button>
@@ -87,8 +95,15 @@ export function CartSheet({ dict }: { dict?: any }) {
 
     return (
         <Sheet>
-            <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label={srOnlyLabel} className="relative cursor-pointer">
+            <SheetTrigger asChild id="cart-sheet-trigger" aria-controls="cart-sheet-content">
+                <Button
+                    id="cart-button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={srOnlyLabel}
+                    className="relative cursor-pointer"
+                    suppressHydrationWarning
+                >
                     <ShoppingCart className="h-5 w-5" />
                     {totalItems > 0 && (
                         <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white" aria-hidden="true">
@@ -98,7 +113,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                     <span className="sr-only">{srOnlyLabel}</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent className="flex w-full flex-col sm:max-w-lg overflow-y-auto p-6">
+            <SheetContent id="cart-sheet-content" className="flex w-full flex-col sm:max-w-lg overflow-y-auto p-6">
                 <SheetHeader className="mb-6">
                     <SheetTitle>{cartTitle}</SheetTitle>
                     <SheetDescription className="sr-only">
@@ -182,7 +197,12 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                         aria-label={`Increase quantity of ${itemName}`}
                                                         className="h-8 w-8 rounded-none cursor-pointer"
                                                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                        disabled={isLoading}
+                                                        disabled={
+                                                            isLoading ||
+                                                            (typeof item.stock === "number" &&
+                                                                !isNaN(item.stock) &&
+                                                                item.quantity >= Math.floor(item.stock))
+                                                        }
                                                     >
                                                         <Plus className="h-3 w-3" />
                                                         <span className="sr-only">Increase quantity of {itemName}</span>

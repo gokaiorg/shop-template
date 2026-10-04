@@ -24,6 +24,7 @@ export const isProductInStock = (product: Product | Record<string, any>): boolea
  */
 export const OBSOLETE_METADATA_KEYS = [
     "originalType",
+    "type",
     "karon_stock",
     "karon_entry",
     "wsp",

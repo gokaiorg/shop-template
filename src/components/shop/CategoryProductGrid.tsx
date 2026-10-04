@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Category, Product } from "@/types/database";
 import { ShopProductCard } from "./ShopProductCard";
 import { CategoryPillsNav } from "./CategoryPillsNav";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { isProductInStock } from "@/lib/products";
 import { PackageCheck, ArrowUpDown } from "lucide-react";
+import { useBrand } from "@/components/providers/BrandProvider";
 
 export type SortOption = "default" | "price_asc" | "price_desc";
 
@@ -28,6 +29,30 @@ export interface CategoryProductGridProps {
     categorySlug: string;
 }
 
+const DOMINANCE_OPTIONS = [
+    {
+        id: "sativa",
+        label: "Sativa",
+        colorText: "text-[#d1fee5]",
+        activeClasses: "bg-[#d1fee5]/15 border-[#d1fee5] text-[#d1fee5] font-bold shadow-[0_0_12px_rgba(209,254,229,0.2)]",
+        inactiveClasses: "bg-muted/40 border-border/60 text-[#d1fee5] hover:bg-muted/70 hover:border-[#d1fee5]/40 font-medium",
+    },
+    {
+        id: "hybrid",
+        label: "Hybrid",
+        colorText: "text-[#c0ef24]",
+        activeClasses: "bg-[#c0ef24]/15 border-[#c0ef24] text-[#c0ef24] font-bold shadow-[0_0_12px_rgba(192,239,36,0.2)]",
+        inactiveClasses: "bg-muted/40 border-border/60 text-[#c0ef24] hover:bg-muted/70 hover:border-[#c0ef24]/40 font-medium",
+    },
+    {
+        id: "indica",
+        label: "Indica",
+        colorText: "text-[#ee9cc9]",
+        activeClasses: "bg-[#ee9cc9]/15 border-[#ee9cc9] text-[#ee9cc9] font-bold shadow-[0_0_12px_rgba(238,156,201,0.2)]",
+        inactiveClasses: "bg-muted/40 border-border/60 text-[#ee9cc9] hover:bg-muted/70 hover:border-[#ee9cc9]/40 font-medium",
+    },
+] as const;
+
 export function CategoryProductGrid({
     products,
     categories,
@@ -38,19 +63,66 @@ export function CategoryProductGrid({
     dict = {},
     categorySlug,
 }: CategoryProductGridProps) {
+    const { brandKey } = useBrand();
     const [hideSoldOut, setHideSoldOut] = useState<boolean>(initialHideSoldOut);
     const [sortBy, setSortBy] = useState<SortOption>("default");
+    const [dominanceFilter, setDominanceFilter] = useState<string | null>(null);
 
     const isFr = lang === "fr";
     const shopDict = dict.shop || dict || {};
 
+    // Reset dominance filter if category changes
+    useEffect(() => {
+        setDominanceFilter(null);
+    }, [currentCategorySlug, categorySlug]);
+
+    // 1. Condition d'affichage : Green Ghost ET catégorie Buds
+    const activeCategory = useMemo(() => {
+        const targetSlug = (currentCategorySlug || categorySlug || "").toLowerCase();
+        return categories?.find((c) => {
+            if (c.id === targetSlug) return true;
+            if (c.slug && typeof c.slug === "object") {
+                return Object.values(c.slug).some((s) => typeof s === "string" && s.toLowerCase() === targetSlug);
+            }
+            const rawSlug = (c as any).slug;
+            return (
+                c.slugEn?.toLowerCase() === targetSlug ||
+                c.slugFr?.toLowerCase() === targetSlug ||
+                (typeof rawSlug === "string" && rawSlug.toLowerCase() === targetSlug)
+            );
+        });
+    }, [categories, currentCategorySlug, categorySlug]);
+
+    const isBudsCategory = useMemo(() => {
+        const targetSlug = (currentCategorySlug || categorySlug || "").toLowerCase();
+        if (targetSlug === "buds" || targetSlug === "fleurs") return true;
+        if (!activeCategory) return false;
+        const enSlug = (typeof activeCategory.slug === "object" ? activeCategory.slug?.en : (activeCategory as any).slugEn) || "";
+        return enSlug.toLowerCase() === "buds";
+    }, [activeCategory, currentCategorySlug, categorySlug]);
+
+    const isGreenGhost = process.env.NEXT_PUBLIC_BRAND === "green-ghost" || brandKey === "green-ghost";
+    const showDominanceFilter = isGreenGhost && isBudsCategory;
+
+    // 3. Logique de Filtrage (Front-end)
     const displayedProducts = useMemo(() => {
-        // 1. Filter out sold out if toggle is active
-        const filtered = hideSoldOut
+        // A. Filtre stock épuisé
+        let filtered = hideSoldOut
             ? products.filter(isProductInStock)
             : products;
 
-        // 2. Sort by price or preserve original order
+        // B. Filtre par Dominance
+        if (dominanceFilter) {
+            const filterLower = dominanceFilter.toLowerCase();
+            filtered = filtered.filter((product) => {
+                const dominance = String(
+                    product.metadata?.dominance ?? (product as any).customSpecs?.dominance ?? ""
+                ).trim().toLowerCase();
+                return dominance.includes(filterLower);
+            });
+        }
+
+        // C. Tri par prix ou ordre par défaut
         if (sortBy === "price_asc") {
             return [...filtered].sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
         }
@@ -58,7 +130,7 @@ export function CategoryProductGrid({
             return [...filtered].sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
         }
         return filtered;
-    }, [products, hideSoldOut, sortBy]);
+    }, [products, hideSoldOut, dominanceFilter, sortBy]);
 
     const sortLabel = shopDict.sort_by || (isFr ? "Trier par" : "Sort by");
     const sortFeatured = shopDict.sort_featured || (isFr ? "Par défaut" : "Featured");
@@ -69,7 +141,7 @@ export function CategoryProductGrid({
     return (
         <div className="w-full">
             {/* Unified Header Toolbar: Categories Navigation (left) & Filter / Sort Controls (right) */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 {/* Left: Category Navigation Pills */}
                 {categories && categories.length > 0 && (
                     <div className="overflow-x-auto no-scrollbar scrollbar-none pb-2 sm:pb-0">
@@ -126,6 +198,32 @@ export function CategoryProductGrid({
                 </div>
             </div>
 
+            {/* 2. Boutons de Sous-Filtre Dominance (Green Ghost & Buds) */}
+            {showDominanceFilter && (
+                <div
+                    role="group"
+                    aria-label={isFr ? "Filtrer par dominance" : "Filter by dominance"}
+                    className="flex flex-wrap items-center gap-2 mb-8 -mt-2"
+                >
+                    {DOMINANCE_OPTIONS.map((opt) => {
+                        const isActive = dominanceFilter === opt.id;
+                        return (
+                            <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => setDominanceFilter((prev) => (prev === opt.id ? null : opt.id))}
+                                aria-pressed={isActive}
+                                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm transition-all duration-200 cursor-pointer border select-none ${
+                                    isActive ? opt.activeClasses : opt.inactiveClasses
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
             {/* Products Grid or Empty State */}
             {displayedProducts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 px-6 bg-muted/20 rounded-2xl border border-dashed text-center">
@@ -134,12 +232,25 @@ export function CategoryProductGrid({
                         {isFr ? "Aucun article disponible" : "No products available"}
                     </p>
                     <p className="text-muted-foreground text-sm max-w-md mb-6">
-                        {hideSoldOut
+                        {dominanceFilter
                             ? (isFr
-                                ? "Tous les produits de cette catégorie sont actuellement épuisés."
-                                : "All items in this category are currently sold out.")
-                            : (shopDict.empty_state || (isFr ? "Aucun produit trouvé." : "No products found."))}
+                                ? `Aucun produit de type "${dominanceFilter}" trouvé dans cette catégorie.`
+                                : `No "${dominanceFilter}" products found in this category.`)
+                            : hideSoldOut
+                                ? (isFr
+                                    ? "Tous les produits de cette catégorie sont actuellement épuisés."
+                                    : "All items in this category are currently sold out.")
+                                : (shopDict.empty_state || (isFr ? "Aucun produit trouvé." : "No products found."))}
                     </p>
+                    {dominanceFilter && (
+                        <button
+                            type="button"
+                            onClick={() => setDominanceFilter(null)}
+                            className="text-sm font-medium text-primary hover:underline cursor-pointer mb-2"
+                        >
+                            {isFr ? "Effacer le filtre de dominance" : "Clear dominance filter"}
+                        </button>
+                    )}
                     {hideSoldOut && (
                         <button
                             type="button"

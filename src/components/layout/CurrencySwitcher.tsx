@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 
 interface CurrencySwitcherProps {
     className?: string;
+    id?: string;
 }
 
 function CurrencyIcon({ code }: { code: string }) {
@@ -23,8 +24,8 @@ function CurrencyIcon({ code }: { code: string }) {
         case "EUR":
             return <Euro className="h-[1.2rem] w-[1.2rem]" />;
         case "USD":
-        case "CAD":
-        case "AUD":
+            case "CAD":
+            case "AUD":
             return <DollarSign className="h-[1.2rem] w-[1.2rem]" />;
         case "GBP":
             return <PoundSterling className="h-[1.2rem] w-[1.2rem]" />;
@@ -42,7 +43,7 @@ function CurrencyIcon({ code }: { code: string }) {
     }
 }
 
-export function CurrencySwitcher({ className }: CurrencySwitcherProps) {
+export function CurrencySwitcher({ className, id = "currency-switcher" }: CurrencySwitcherProps) {
     const { currency: storeBaseCurrency } = useBrand();
     const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
     const setCurrency = useCurrencyStore((state) => state.setCurrency);
@@ -71,12 +72,14 @@ export function CurrencySwitcher({ className }: CurrencySwitcherProps) {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild id={`${id}-trigger`}>
                 <Button
+                    id={`${id}-button`}
                     variant="ghost"
                     size="icon"
                     aria-label={`Devise active : ${currentItem.code}`}
                     className={className}
+                    suppressHydrationWarning
                 >
                     <CurrencyIcon code={activeCurrency} />
                     <span className="sr-only">Devise : {currentItem.code}</span>
