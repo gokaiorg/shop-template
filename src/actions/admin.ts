@@ -632,10 +632,14 @@ export async function createPage(data: z.infer<typeof pageSchema>) {
 
         const title_en = result.data.title?.en || Object.values(result.data.title)[0] || "";
         const title_fr = result.data.title?.fr || title_en;
+        const subtitle_en = result.data.subtitle?.en || (result.data.subtitle ? Object.values(result.data.subtitle)[0] : "") || "";
+        const subtitle_fr = result.data.subtitle?.fr || subtitle_en;
         const slug_en = slugMap.en || slugMap[defaultLocale] || primarySlug;
         const slug_fr = slugMap.fr || slugMap[defaultLocale] || primarySlug;
         const content_en = result.data.content?.en || Object.values(result.data.content)[0] || "";
         const content_fr = result.data.content?.fr || content_en;
+
+        const pageImageUrl = result.data.imageUrl || result.data.image_url || result.data.coverImageUrl || result.data.banner_image || null;
 
         const docRef = adminDb.collection("pages").doc(primarySlug);
         const pageData = {
@@ -645,8 +649,14 @@ export async function createPage(data: z.infer<typeof pageSchema>) {
             slug_en,
             slug_fr,
             order: result.data.order !== undefined ? Math.round(Number(result.data.order)) : Date.now(),
+            imageUrl: pageImageUrl,
+            image_url: pageImageUrl,
+            coverImageUrl: pageImageUrl,
+            banner_image: pageImageUrl,
             title_en,
             title_fr,
+            subtitle_en,
+            subtitle_fr,
             content_en,
             content_fr,
             createdAt: new Date(),
@@ -683,8 +693,12 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
 
         const title_en = result.data.title?.en || Object.values(result.data.title)[0] || "";
         const title_fr = result.data.title?.fr || title_en;
+        const subtitle_en = result.data.subtitle?.en || (result.data.subtitle ? Object.values(result.data.subtitle)[0] : "") || "";
+        const subtitle_fr = result.data.subtitle?.fr || subtitle_en;
         const content_en = result.data.content?.en || Object.values(result.data.content)[0] || "";
         const content_fr = result.data.content?.fr || content_en;
+
+        const pageImageUrl = result.data.imageUrl || result.data.image_url || result.data.coverImageUrl || result.data.banner_image || null;
 
         const ref = adminDb.collection("pages").doc(id);
         const pageData: any = {
@@ -692,8 +706,14 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
             slug: slugMap,
             slug_en,
             slug_fr,
+            imageUrl: pageImageUrl,
+            image_url: pageImageUrl,
+            coverImageUrl: pageImageUrl,
+            banner_image: pageImageUrl,
             title_en,
             title_fr,
+            subtitle_en,
+            subtitle_fr,
             content_en,
             content_fr,
             updatedAt: new Date(),

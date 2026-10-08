@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Trash2, Loader2, Save, ArrowLeft, Globe, Eye, LayoutTemplate, ExternalLink, RotateCcw, Blocks } from "lucide-react";
+import { Trash2, Loader2, Save, ArrowLeft, Globe, Eye, LayoutTemplate, ExternalLink, RotateCcw, Blocks, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 
 import { createPage, updatePage, deletePage } from "@/actions/admin";
 import { pageSchema, PageFormData } from "@/schemas/admin";
+import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
+import { uploadProductImage } from "@/lib/firebase-storage";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -67,26 +69,35 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
     const isEditMode = Boolean(initialData?.id);
 
     const defaultTitles: Record<string, string> = {};
+    const defaultSubtitles: Record<string, string> = {};
     const defaultContents: Record<string, string> = {};
     const defaultSlugs: Record<string, string> = {};
 
     supportedLocales.forEach((loc) => {
         defaultTitles[loc] = initialData?.title?.[loc] || (loc === 'fr' ? initialData?.title_fr : initialData?.title_en) || initialData?.title?.en || "";
+        defaultSubtitles[loc] = initialData?.subtitle?.[loc] || (loc === 'fr' ? (initialData as any)?.subtitle_fr : (initialData as any)?.subtitle_en) || initialData?.subtitle?.en || "";
         defaultContents[loc] = initialData?.content?.[loc] || (loc === 'fr' ? initialData?.content_fr : initialData?.content_en) || initialData?.content?.en || "";
         defaultSlugs[loc] = initialData?.slug?.[loc] || (loc === 'fr' ? (initialData as any)?.slug_fr : (initialData as any)?.slug_en) || (typeof initialData?.slug === 'string' ? initialData.slug : '') || "";
     });
+
+    const initialImageUrl = initialData?.imageUrl || (initialData as any)?.image_url || initialData?.coverImageUrl || (initialData as any)?.banner_image || "";
 
     const form = useForm<PageFormData>({
         resolver: zodResolver(pageSchema) as any,
         defaultValues: {
             slug: defaultSlugs,
             title: defaultTitles,
+            subtitle: defaultSubtitles,
             content: defaultContents,
             status: initialData?.status || "published",
             showInHeader: initialData?.showInHeader ?? false,
             showInFooter: initialData?.showInFooter ?? false,
             order: initialData?.order !== undefined ? initialData.order : Date.now(),
             activeBlocks: initialData?.activeBlocks || [],
+            imageUrl: initialImageUrl,
+            image_url: initialImageUrl,
+            coverImageUrl: initialImageUrl,
+            banner_image: initialImageUrl,
         },
     });
 
@@ -180,9 +191,15 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
             }
         });
 
+        const finalImageUrl = values.imageUrl || values.image_url || values.coverImageUrl || values.banner_image || null;
+
         const payload = {
             ...values,
             slug: completeSlug,
+            imageUrl: finalImageUrl,
+            image_url: finalImageUrl,
+            coverImageUrl: finalImageUrl,
+            banner_image: finalImageUrl,
         };
 
         startTransition(async () => {
@@ -287,6 +304,24 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                 />
                                                 <FormField
                                                     control={form.control}
+                                                    name={`subtitle.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{lang === 'fr' ? 'Sous-titre' : 'Subtitle'}</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder={`Page subtitle in ${loc.toUpperCase()}...`} {...field} value={field.value || ""} />
+                                                            </FormControl>
+                                                            <FormDescription>
+                                                                {lang === "fr"
+                                                                    ? "Affiché sur la bannière Hero sous le titre."
+                                                                    : "Displayed on the hero banner under the title."}
+                                                            </FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
                                                     name={`content.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
@@ -328,6 +363,24 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                         />
                                         <FormField
                                             control={form.control}
+                                            name={`subtitle.${defaultLocale}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{lang === 'fr' ? 'Sous-titre' : 'Subtitle'}</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Page subtitle..." {...field} value={field.value || ""} />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        {lang === "fr"
+                                                            ? "Affiché sur la bannière Hero sous le titre."
+                                                            : "Displayed on the hero banner under the title."}
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
                                             name={`content.${defaultLocale}`}
                                             render={({ field }) => (
                                                 <FormItem>
@@ -351,6 +404,75 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                         />
                                     </div>
                                 )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Page Hero Banner */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang === 'fr' ? 'Bannière de la page (Hero)' : 'Page Banner (Hero)'}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang === 'fr' 
+                                        ? "Image d'en-tête pleine largeur affichée en haut de la page." 
+                                        : "Full-width hero header image displayed at the top of the page."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="imageUrl"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <AdminImageDropzone
+                                                    value={field.value}
+                                                    onChange={(val) => {
+                                                        field.onChange(val);
+                                                        form.setValue("image_url", val, { shouldDirty: true });
+                                                        form.setValue("banner_image", val, { shouldDirty: true });
+                                                        form.setValue("coverImageUrl", val, { shouldDirty: true });
+                                                    }}
+                                                    maxFiles={1}
+                                                    aspectRatio="banner"
+                                                    lang={lang}
+                                                    title={lang?.startsWith("fr") ? "Cliquez ou glissez-déposez la bannière de la page" : "Click or drag page banner here"}
+                                                    recommendedText={lang?.startsWith("fr") ? "Recommandé : 1920×600px paysage (JPEG, PNG, WebP, AVIF)" : "Recommended: 1920×600px landscape image (JPEG, PNG, WebP, AVIF)"}
+                                                    onUpload={(file) => uploadProductImage(file, `pages/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`)}
+                                                    disabled={isLoading}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="imageUrl"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Direct image URL or uploaded file path"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        form.setValue("image_url", e.target.value, { shouldDirty: true });
+                                                        form.setValue("banner_image", e.target.value, { shouldDirty: true });
+                                                        form.setValue("coverImageUrl", e.target.value, { shouldDirty: true });
+                                                    }}
+                                                    className="text-xs font-mono"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </CardContent>
                         </Card>
 

@@ -452,6 +452,115 @@ export function CatalogJsonLd({
     return <JsonLd data={schemas} />;
 }
 
+// =============================================================================
+// 6. PAGE / CMS SCHEMA (AboutPage, WebPage, ContactPage, Organization)
+// =============================================================================
+
+export interface PageJsonLdProps {
+    title: string;
+    description?: string;
+    url: string;
+    lang?: string;
+    type?: "AboutPage" | "ContactPage" | "FAQPage" | "WebPage";
+    imageUrl?: string;
+    datePublished?: string;
+    dateModified?: string;
+    brandName?: string;
+    breadcrumbs?: BreadcrumbItem[];
+    organization?: {
+        name: string;
+        url: string;
+        logo?: string;
+        description?: string;
+        sameAs?: string[];
+    };
+}
+
+export function PageJsonLd({
+    title,
+    description,
+    url,
+    lang = "en",
+    type = "WebPage",
+    imageUrl,
+    datePublished,
+    dateModified,
+    brandName,
+    breadcrumbs = [],
+    organization,
+}: PageJsonLdProps) {
+    const activeBrandName = brandName || process.env.NEXT_PUBLIC_BRAND || "Store";
+    const rawBaseUrl = url.startsWith("http")
+        ? new URL(url).origin
+        : (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+    const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+    const schemas: Record<string, any>[] = [];
+
+    // 1. Breadcrumbs
+    if (breadcrumbs.length > 0) {
+        schemas.push({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: breadcrumbs.map((b, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: b.name,
+                item: b.url,
+            })),
+        });
+    }
+
+    // 2. Main Page Schema (AboutPage / WebPage / ContactPage)
+    const pageSchema: Record<string, any> = {
+        "@context": "https://schema.org",
+        "@type": type,
+        name: title,
+        url,
+        inLanguage: lang,
+        ...(description ? { description } : {}),
+        ...(imageUrl ? {
+            image: imageUrl,
+            primaryImageOfPage: {
+                "@type": "ImageObject",
+                url: imageUrl,
+            }
+        } : {}),
+        ...(datePublished ? { datePublished } : {}),
+        ...(dateModified ? { dateModified } : {}),
+        isPartOf: {
+            "@type": "WebSite",
+            name: activeBrandName,
+            url: `${baseUrl}/${lang}`,
+        },
+        ...(organization ? {
+            about: {
+                "@type": "Organization",
+                name: organization.name || activeBrandName,
+                url: organization.url || baseUrl,
+                ...(organization.logo ? { logo: organization.logo } : {}),
+                ...(organization.description ? { description: organization.description } : {}),
+                ...(organization.sameAs && organization.sameAs.length > 0 ? { sameAs: organization.sameAs } : {}),
+            },
+            publisher: {
+                "@type": "Organization",
+                name: organization.name || activeBrandName,
+                url: organization.url || baseUrl,
+                ...(organization.logo ? { logo: organization.logo } : {}),
+            }
+        } : {
+            publisher: {
+                "@type": "Organization",
+                name: activeBrandName,
+                url: baseUrl,
+            }
+        }),
+    };
+
+    schemas.push(pageSchema);
+
+    return <JsonLd data={schemas} />;
+}
+
 // Re-export LocalBusiness JSON-LD schema component
 export { JsonLdLocalBusiness } from "./JsonLdLocalBusiness";
 export type { JsonLdLocalBusinessProps, LocalBusinessAddress, LocalBusinessGeo } from "./JsonLdLocalBusiness";
