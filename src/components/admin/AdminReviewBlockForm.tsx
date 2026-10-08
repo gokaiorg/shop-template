@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLanguageSwitcher } from "@/components/admin/AdminLanguageSwitcher";
 import { StoreSettings, GoogleReview } from "@/types/database";
 import { reviewSectionSchema, ReviewSectionFormData } from "@/schemas/settings";
 import { updateReviewBlockSettings } from "@/actions/settings";
@@ -230,19 +231,11 @@ export function AdminReviewBlockForm({ initialData, lang }: AdminReviewBlockForm
                             <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
                                 {/* Language Switcher (EN / FR) */}
                                 {isMultiLocale && (
-                                    <Tabs value={activeLang} onValueChange={setActiveLang}>
-                                        <TabsList className="h-8 p-0.5 bg-muted/60">
-                                            {supportedLocales.map((loc) => (
-                                                <TabsTrigger
-                                                    key={loc}
-                                                    value={loc}
-                                                    className="uppercase text-xs font-semibold px-2.5 h-7 data-[state=active]:shadow-xs cursor-pointer"
-                                                >
-                                                    {loc.toUpperCase()}
-                                                </TabsTrigger>
-                                            ))}
-                                        </TabsList>
-                                    </Tabs>
+                                    <AdminLanguageSwitcher
+                                        activeLang={activeLang}
+                                        onLanguageChange={setActiveLang}
+                                        locales={supportedLocales}
+                                    />
                                 )}
 
                                 {/* Activation Switch */}

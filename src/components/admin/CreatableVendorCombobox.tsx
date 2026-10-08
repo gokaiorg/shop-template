@@ -18,7 +18,7 @@ export function CreatableVendorCombobox({
     options = [],
     value = "",
     onChange,
-    placeholder = "e.g. Amann Inkspiration",
+    placeholder = "Select or create...",
     disabled = false,
     className,
     lang = "en",

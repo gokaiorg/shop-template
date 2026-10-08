@@ -21,10 +21,10 @@ export function AuthSheet({ children, dict, lang }: AuthSheetProps) {
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
+            <SheetTrigger asChild id="auth-sheet-trigger" aria-controls="auth-sheet-content">
                 {children}
             </SheetTrigger>
-            <SheetContent side="right" className="w-full sm:max-w-md p-6">
+            <SheetContent id="auth-sheet-content" side="right" className="w-full sm:max-w-md p-6">
                 <SheetHeader className="mb-6">
                     <SheetTitle>{dict.login_title || "Welcome back"}</SheetTitle>
                     <SheetDescription>

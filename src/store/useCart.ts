@@ -25,17 +25,31 @@ export const useCart = create<CartState>()(
 
             addItem: (product, quantity = 1) => {
                 set((state) => {
+                    const rawStock = product.stock;
+                    const maxStock = typeof rawStock === 'number' && !isNaN(rawStock)
+                        ? Math.floor(rawStock)
+                        : Infinity;
+
+                    if (maxStock <= 0) {
+                        return state;
+                    }
+
                     const existingItem = state.items.find((item) => item.id === product.id);
                     let newItems;
 
                     if (existingItem) {
+                        const newQuantity = Math.min(existingItem.quantity + quantity, maxStock);
+                        if (newQuantity === existingItem.quantity) {
+                            return state;
+                        }
                         newItems = state.items.map((item) =>
                             item.id === product.id
-                                ? { ...item, quantity: item.quantity + quantity }
+                                ? { ...item, quantity: newQuantity }
                                 : item
                         );
                     } else {
-                        newItems = [...state.items, { ...product, quantity }];
+                        const newQuantity = Math.min(Math.max(1, quantity), maxStock);
+                        newItems = [...state.items, { ...product, quantity: newQuantity }];
                     }
 
                     const totalItems = newItems.reduce((total, item) => total + item.quantity, 0);
@@ -67,12 +81,26 @@ export const useCart = create<CartState>()(
             updateQuantity: (productId, quantity) => {
                 set((state) => {
                     if (quantity <= 0) {
-                        // Remove item if quantity is 0 or less
-                        return get().removeItem(productId) as any;
+                        const newItems = state.items.filter((item) => item.id !== productId);
+                        const totalItems = newItems.reduce((total, item) => total + item.quantity, 0);
+                        const totalPrice = newItems.reduce((total, item) => total + item.price * item.quantity, 0);
+                        return {
+                            items: newItems,
+                            totalItems,
+                            totalPrice,
+                        };
                     }
 
+                    const existingItem = state.items.find((item) => item.id === productId);
+                    const rawStock = existingItem?.stock;
+                    const maxStock = typeof rawStock === 'number' && !isNaN(rawStock)
+                        ? Math.floor(rawStock)
+                        : Infinity;
+
+                    const safeQuantity = Math.min(quantity, maxStock);
+
                     const newItems = state.items.map((item) =>
-                        item.id === productId ? { ...item, quantity } : item
+                        item.id === productId ? { ...item, quantity: safeQuantity } : item
                     );
 
                     const totalItems = newItems.reduce((total, item) => total + item.quantity, 0);

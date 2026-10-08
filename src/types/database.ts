@@ -21,6 +21,9 @@ export interface User {
   updatedAt: Date | string;
 }
 
+export type CustomFieldValue = string | number | boolean | Record<string, string>;
+export type ProductMetadata = Record<string, CustomFieldValue>;
+
 export interface Product {
   id: string;
   order?: number;
@@ -42,7 +45,7 @@ export interface Product {
   description?: Record<string, string>;
   intro?: Record<string, string> | null;
   status: Record<string, string>;
-  metadata?: Record<string, any>;
+  metadata?: ProductMetadata;
   _oldMetadata?: Record<string, any>;
   // Legacy optional fields for compatibility
   nameEn?: string;
@@ -136,12 +139,17 @@ export interface Page {
   id: string; // The doc ID or slug
   slug: Record<string, string>;
   title: Record<string, string>;
+  subtitle?: Record<string, string>;
   content: Record<string, string>;
   status: "draft" | "published";
   showInHeader: boolean;
   showInFooter: boolean;
   order?: number;
   activeBlocks?: string[];
+  imageUrl?: string | null;
+  image_url?: string | null;
+  coverImageUrl?: string | null;
+  banner_image?: string | null;
   metaTitle?: Record<string, string>;
   metaDescription?: Record<string, string>;
   createdAt?: Date | string;
@@ -151,6 +159,8 @@ export interface Page {
   slug_fr?: string;
   title_en?: string;
   title_fr?: string;
+  subtitle_en?: string;
+  subtitle_fr?: string;
   content_en?: string;
   content_fr?: string;
   meta_title_en?: string;

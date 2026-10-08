@@ -198,8 +198,8 @@ export function Aside({ lang, dict, session }: { lang: string, dict: any, sessio
                     </div>
                 )}
                 <div className="flex items-center gap-2">
-                    <ThemeToggle dict={dict?.header} />
-                    <LangToggle lang={lang} dict={dict?.header} />
+                    <ThemeToggle id="admin-aside-theme-toggle" dict={dict?.header} />
+                    <LangToggle id="admin-aside-lang-toggle" lang={lang} dict={dict?.header} />
                 </div>
                 <SignOutButton />
             </div>

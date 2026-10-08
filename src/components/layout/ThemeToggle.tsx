@@ -13,7 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useBrand } from "@/components/providers/BrandProvider"
 
-export function ThemeToggle({ dict }: { dict: Record<string, string> }) {
+export function ThemeToggle({
+    dict,
+    id = "theme-toggle",
+}: {
+    dict: Record<string, string>;
+    id?: string;
+}) {
     const { setTheme, forcedTheme } = useTheme();
     const { defaultTheme } = useBrand();
 
@@ -26,8 +32,14 @@ export function ThemeToggle({ dict }: { dict: Record<string, string> }) {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label={toggleThemeLabel}>
+            <DropdownMenuTrigger asChild id={`${id}-trigger`}>
+                <Button
+                    id={`${id}-button`}
+                    variant="ghost"
+                    size="icon"
+                    aria-label={toggleThemeLabel}
+                    suppressHydrationWarning
+                >
                     <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                     <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                     <span className="sr-only">{toggleThemeLabel}</span>

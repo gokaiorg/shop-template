@@ -16,9 +16,8 @@ import { getStoreSettings } from "@/lib/services/settings";
 import { getPageBySlug } from "@/lib/services/pages";
 import { CmsBlockRenderer } from "@/components/shop/CmsBlockRenderer";
 import { PageTranslationSync } from "@/components/shop/PageTranslationSync";
-import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 import { AdminEditBadge } from "@/components/admin/AdminEditBadge";
-import { CatalogJsonLd, JsonLd } from "@/components/seo/JsonLd";
+import { CatalogJsonLd, PageJsonLd } from "@/components/seo/JsonLd";
 
 interface SlugPageProps {
     params: Promise<{ lang: string; slug: string }>;
@@ -54,8 +53,8 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
         (typeof storeSettings.catalogSlug === "string" ? storeSettings.catalogSlug : "shop")
     ).toLowerCase();
 
-    const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
-    const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+    const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
+    const baseUrl = rawSiteUrl.replace(/\/+$/, "");
 
     // 1. Is it the Catalog?
     if (slug.toLowerCase() === localizedCatalogSlug) {
@@ -72,7 +71,10 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
         const catalogDescription = (rawCatalogDesc && rawCatalogDesc.trim().length > 0)
             ? rawCatalogDesc.trim()
             : getLocalizedField(storeSettings.heroDescription, lang) || `Browse our complete collection of ${brandName} products.`;
-        const catalogBannerUrl = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "";
+        const rawCatalogBannerUrl = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "/images/og-about.jpg";
+        const catalogBannerUrl = rawCatalogBannerUrl.startsWith("http")
+            ? rawCatalogBannerUrl
+            : `${baseUrl}${rawCatalogBannerUrl.startsWith("/") ? "" : "/"}${rawCatalogBannerUrl}`;
         const canonicalUrl = `${baseUrl}/${lang}/${localizedCatalogSlug}`;
 
         const enCatalogSlug = (typeof storeSettings.catalogSlug === "object" ? storeSettings.catalogSlug?.en : "shop") || "shop";
@@ -85,6 +87,7 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
         };
 
         return {
+            metadataBase: new URL(baseUrl),
             title: seoTitle,
             description: catalogDescription,
             alternates: {
@@ -96,13 +99,22 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
                 description: catalogDescription,
                 url: canonicalUrl,
                 type: "website",
-                ...(catalogBannerUrl ? { images: [catalogBannerUrl] } : {}),
+                siteName: brandName,
+                locale: lang === "fr" ? "fr_FR" : "en_US",
+                images: [
+                    {
+                        url: catalogBannerUrl,
+                        width: 1200,
+                        height: 630,
+                        alt: seoTitle,
+                    },
+                ],
             },
             twitter: {
                 card: "summary_large_image",
                 title: seoTitle,
                 description: catalogDescription,
-                ...(catalogBannerUrl ? { images: [catalogBannerUrl] } : {}),
+                images: [catalogBannerUrl],
             },
         };
     }
@@ -112,11 +124,32 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
     if (page && page.status !== "draft") {
         const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
         const displaySlug = getLocalizedField(page.slug, lang) || (typeof page.slug === "string" ? page.slug : page.id);
-        const rawTitle = page.metaTitle?.[lang] || page.meta_title_fr || page.meta_title_en || getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || displaySlug;
-        const cleanTitle = rawTitle.replace(new RegExp(`\\s*[|\\-]\\s*${brandName}$`, "i"), "").trim();
-        const formattedPageTitle = `${cleanTitle} | ${brandName}`;
-        const description = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || getLocalizedField(page.content, lang)?.replace(/<[^>]*>?/gm, "").slice(0, 160) || "";
-        const canonicalUrl = `${baseUrl}/${lang}/${slug}`;
+        const baseTitle = (getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || displaySlug).trim();
+        const pageSubtitle = (getLocalizedField(page.subtitle, lang) || (lang === "fr" ? page.subtitle_fr : page.subtitle_en) || "").trim();
+
+        const customMetaTitle = page.metaTitle?.[lang] || (lang === "fr" ? page.meta_title_fr : page.meta_title_en);
+        let formattedPageTitle = "";
+        if (customMetaTitle) {
+            formattedPageTitle = customMetaTitle.includes(brandName) ? customMetaTitle : `${customMetaTitle} - ${brandName}`;
+        } else {
+            const combinedTitle = pageSubtitle ? `${baseTitle} ${pageSubtitle}` : baseTitle;
+            formattedPageTitle = `${combinedTitle} - ${brandName}`;
+        }
+
+        const isAboutPage = slug.toLowerCase() === "about" ||
+            slug.toLowerCase() === "a-propos" ||
+            page.slug?.en === "about" ||
+            page.slug_en === "about" ||
+            page.id === "about";
+
+        // Clean text for meta description
+        const rawContent = getLocalizedField(page.content, lang) || (lang === "fr" ? page.content_fr : page.content_en) || "";
+        const cleanContentText = rawContent
+            .replace(/<[^>]*>?/gm, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+        const description = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || pageSubtitle || cleanContentText.slice(0, 160) || `Learn more about ${baseTitle} at ${brandName}.`;
+        const canonicalUrl = `${baseUrl}/${lang}/${displaySlug}`;
 
         const enPageSlug = (typeof page.slug === "object" && page.slug?.en)
             ? page.slug.en
@@ -131,7 +164,21 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
             "x-default": `${baseUrl}/en/${enPageSlug}`,
         };
 
+        // Cover / Social Image for OG and Twitter
+        let rawOgImage = page.imageUrl || page.image_url || page.coverImageUrl || page.banner_image;
+        if (!rawOgImage && isAboutPage) {
+            rawOgImage = storeSettings.aboutSection?.images?.[0] || "/images/og-about.jpg";
+        }
+        if (!rawOgImage) {
+            rawOgImage = storeSettings.catalogBannerUrl || brandConfig.assets?.ogImage || brandConfig.assets?.heroBanner || "/images/og-about.jpg";
+        }
+
+        const ogImageUrl = rawOgImage.startsWith("http")
+            ? rawOgImage
+            : `${baseUrl}${rawOgImage.startsWith("/") ? "" : "/"}${rawOgImage}`;
+
         return {
+            metadataBase: new URL(baseUrl),
             title: {
                 absolute: formattedPageTitle,
             },
@@ -144,12 +191,23 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
                 title: formattedPageTitle,
                 description,
                 url: canonicalUrl,
-                type: "website",
+                siteName: brandName,
+                locale: lang === "fr" ? "fr_FR" : "en_US",
+                type: isAboutPage ? "article" : "website",
+                images: [
+                    {
+                        url: ogImageUrl,
+                        width: 1200,
+                        height: 630,
+                        alt: formattedPageTitle,
+                    },
+                ],
             },
             twitter: {
                 card: "summary_large_image",
                 title: formattedPageTitle,
                 description,
+                images: [ogImageUrl],
             },
         };
     }
@@ -391,6 +449,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
 
     const displaySlug = expectedPageSlug;
     const title = getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || displaySlug;
+    const subtitle = getLocalizedField(page.subtitle, lang) || (lang === "fr" ? page.subtitle_fr : page.subtitle_en) || "";
     const content = getLocalizedField(page.content, lang) || (lang === "fr" ? page.content_fr : page.content_en) || "";
     const activeBlocks: string[] = Array.isArray(page.activeBlocks) ? page.activeBlocks : [];
 
@@ -407,60 +466,166 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
     if (page.slug_fr && !pageSlugMap["fr"]) pageSlugMap["fr"] = page.slug_fr;
 
     const sanitizedContent = DOMPurify.sanitize(content || "<p></p>", {
+        USE_PROFILES: { html: true, svg: true },
         ALLOWED_TAGS: [
             "h1", "h2", "h3", "h4", "h5", "h6",
             "p", "div", "span", "strong", "em", "b", "i", "u", "s", "strike",
             "ul", "ol", "li", "blockquote", "a", "img",
             "table", "thead", "tbody", "tr", "th", "td",
             "br", "hr", "code", "pre",
-            "iframe", "figure", "figcaption", "section",
+            "iframe", "figure", "figcaption", "section", "article", "header", "footer", "aside", "nav",
+            // SVG elements
+            "svg", "path", "g", "circle", "rect", "line", "polyline", "polygon", "ellipse",
+            "use", "defs", "symbol", "clipPath", "mask", "text", "tspan",
+            "linearGradient", "radialGradient", "stop", "pattern", "image",
         ],
         ALLOWED_ATTR: [
-            "href", "src", "alt", "title", "class", "className", "style",
+            "href", "src", "alt", "title", "class", "className", "style", "id",
             "target", "rel", "width", "height",
             "allowfullscreen", "allowFullScreen", "loading", "referrerpolicy", "referrerPolicy",
-            "aria-hidden", "role",
+            "aria-hidden", "aria-label", "aria-labelledby", "aria-describedby", "role",
+            // SVG attributes
+            "xmlns", "viewBox", "viewbox", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
+            "stroke-dasharray", "stroke-dashoffset", "stroke-miterlimit", "stroke-opacity", "fill-opacity",
+            "fill-rule", "clip-rule", "clip-path", "d", "cx", "cy", "r", "rx", "ry",
+            "x", "y", "x1", "y1", "x2", "y2", "points", "transform", "transform-origin", "opacity",
+            "offset", "stop-color", "stop-opacity", "gradientUnits", "gradientTransform", "spreadMethod",
         ],
         ADD_TAGS: ["iframe"],
-        ADD_ATTR: ["allowfullscreen", "allowFullScreen", "loading", "referrerpolicy", "referrerPolicy", "style"],
+        ADD_ATTR: ["allowfullscreen", "allowFullScreen", "loading", "referrerpolicy", "referrerPolicy", "style", "target"],
     });
 
-    const pageBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000").replace(/\/+$/, "");
+    const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
+    const pageBaseUrl = rawSiteUrl.replace(/\/+$/, "");
+
+    const isAboutPage = slug.toLowerCase() === "about" ||
+        slug.toLowerCase() === "a-propos" ||
+        page.slug?.en === "about" ||
+        page.slug_en === "about" ||
+        page.id === "about";
+
+    const schemaType = isAboutPage ? "AboutPage" : "WebPage";
+
+    // Clean text for SEO description
+    const cleanContentText = content
+        .replace(/<[^>]*>?/gm, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
+    const seoDescription = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || subtitle || cleanContentText.slice(0, 160) || `Learn more about ${title} at ${brandName}.`;
+
+    // Hero Banner image directly from page doc in Firestore
+    const pageHeroImage = page.imageUrl || page.image_url || page.coverImageUrl || page.banner_image || null;
+
+    // Cover Image for Schema.org / Structured Data
+    let rawFeaturedImage = pageHeroImage;
+    if (!rawFeaturedImage && isAboutPage) {
+        rawFeaturedImage = storeSettings.aboutSection?.images?.[0] || "/images/og-about.jpg";
+    }
+    if (!rawFeaturedImage) {
+        rawFeaturedImage = storeSettings.catalogBannerUrl || brandConfig.assets?.ogImage || brandConfig.assets?.heroBanner || "/images/og-about.jpg";
+    }
+
+    const absoluteFeaturedImage = rawFeaturedImage.startsWith("http")
+        ? rawFeaturedImage
+        : `${pageBaseUrl}${rawFeaturedImage.startsWith("/") ? "" : "/"}${rawFeaturedImage}`;
+
+    const rawLogo = storeSettings.logoUrl || brandConfig.assets.logo.src;
+    const absoluteLogoUrl = rawLogo.startsWith("http")
+        ? rawLogo
+        : `${pageBaseUrl}${rawLogo.startsWith("/") ? "" : "/"}${rawLogo}`;
+
+    const brandDescription = getLocalizedField(storeSettings.heroDescription, lang) ||
+        getLocalizedField(brandConfig.identity.description, lang) ||
+        `Official store for ${brandName}`;
+
+    const activeSocials = (brandConfig.navigation?.socials || []).map((s) => s.url).filter(Boolean);
+
+    const breadcrumbs = [
+        {
+            name: lang === "fr" ? "Accueil" : "Home",
+            url: `${pageBaseUrl}/${lang}`,
+        },
+        {
+            name: title,
+            url: `${pageBaseUrl}/${lang}/${displaySlug}`,
+        },
+    ];
 
     return (
-        <div className="flex-1 bg-zinc-50 dark:bg-black">
-            <JsonLd
-                data={{
-                    "@context": "https://schema.org",
-                    "@type": "BreadcrumbList",
-                    itemListElement: [
-                        {
-                            "@type": "ListItem",
-                            position: 1,
-                            name: lang === "fr" ? "Accueil" : "Home",
-                            item: `${pageBaseUrl}/${lang}`,
-                        },
-                        {
-                            "@type": "ListItem",
-                            position: 2,
-                            name: title,
-                            item: `${pageBaseUrl}/${lang}/${displaySlug}`,
-                        },
-                    ],
+        <main className="flex-1 bg-zinc-50 dark:bg-black">
+            {/* 1. Structured Data (JSON-LD) - AboutPage / WebPage with Organization & Breadcrumbs */}
+            <PageJsonLd
+                title={title}
+                description={seoDescription}
+                url={`${pageBaseUrl}/${lang}/${displaySlug}`}
+                lang={lang}
+                type={schemaType}
+                imageUrl={absoluteFeaturedImage}
+                datePublished={typeof page.createdAt === "string" ? page.createdAt : page.createdAt?.toISOString?.()}
+                dateModified={typeof page.updatedAt === "string" ? page.updatedAt : page.updatedAt?.toISOString?.()}
+                brandName={brandName}
+                breadcrumbs={breadcrumbs}
+                organization={{
+                    name: brandName,
+                    url: pageBaseUrl,
+                    logo: absoluteLogoUrl,
+                    description: brandDescription,
+                    sameAs: activeSocials,
                 }}
             />
+
             <PageTranslationSync pageSlugs={Object.keys(pageSlugMap).length > 0 ? pageSlugMap : null} />
-            <div className="w-full max-w-7xl mx-auto py-16 px-6 md:px-16">
-                <div className="flex items-center justify-between gap-4 mb-8">
-                    <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
-                    <AdminQuickEdit entityType="page" id={page.id} locale={lang} />
-                </div>
-                <article className="prose prose-zinc dark:prose-invert max-w-none">
+
+            {/* 2. Hero Header Banner (Mutualisé avec le style des pages catégories) */}
+            {pageHeroImage ? (
+                <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
+                    <AdminEditBadge href={`/admin/pages/${page.id}/edit`} locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
+                    <Image
+                        src={pageHeroImage}
+                        alt={title}
+                        fill
+                        priority
+                        sizes="100vw"
+                        className="object-cover pointer-events-none"
+                        unoptimized={pageHeroImage.startsWith("http")}
+                    />
+                    <div className="absolute inset-0 bg-black/50 pointer-events-none z-[1]" />
+
+                    <div className="relative z-10 px-6 max-w-4xl mx-auto flex flex-col items-center text-center">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight drop-shadow-md">
+                            {title}
+                        </h1>
+                        {subtitle && (
+                            <p className="mt-4 text-lg md:text-xl text-zinc-200 max-w-2xl mx-auto drop-shadow-md text-center">
+                                {subtitle}
+                            </p>
+                        )}
+                    </div>
+                </section>
+            ) : (
+                /* Fallback : En-tête classique centré si aucune bannière n'est définie */
+                <header className="relative w-full max-w-4xl mx-auto pt-12 sm:pt-16 pb-8 px-6 text-center flex flex-col items-center">
+                    <AdminEditBadge href={`/admin/pages/${page.id}/edit`} locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground">
+                        {title}
+                    </h1>
+                    {subtitle && (
+                        <p className="mt-4 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-center">
+                            {subtitle}
+                        </p>
+                    )}
+                </header>
+            )}
+
+            {/* 3. Contenu textuel épuré */}
+            <div className="w-full max-w-5xl mx-auto px-6 md:px-12 mb-16">
+                <article className="prose prose-zinc dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-4 prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg prose-a:text-primary prose-a:font-semibold prose-a:underline-offset-4 hover:prose-a:underline prose-img:rounded-3xl prose-img:shadow-soft-xl prose-img:border prose-img:border-border/60">
                     {parse(sanitizedContent)}
                 </article>
             </div>
 
-            {/* Modular Page Blocks */}
+            {/* 6. Modular Page Blocks */}
             {activeBlocks.length > 0 && (
                 <CmsBlockRenderer
                     blocks={activeBlocks}
@@ -470,6 +635,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                     className="mt-8 md:mt-16"
                 />
             )}
-        </div>
+        </main>
     );
 }

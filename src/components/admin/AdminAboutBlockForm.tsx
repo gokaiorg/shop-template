@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLanguageSwitcher } from "@/components/admin/AdminLanguageSwitcher";
 import { Badge } from "@/components/ui/badge";
 import { StoreSettings } from "@/types/database";
 import { aboutSectionSchema, AboutSectionFormData } from "@/schemas/settings";
@@ -127,19 +128,11 @@ export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlock
                             <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
                                 {/* Language Switcher */}
                                 {isMultiLocale && (
-                                    <Tabs value={activeLang} onValueChange={setActiveLang}>
-                                        <TabsList className="h-8 p-0.5 bg-muted/60">
-                                            {supportedLocales.map((loc) => (
-                                                <TabsTrigger
-                                                    key={loc}
-                                                    value={loc}
-                                                    className="uppercase text-xs font-semibold px-2.5 h-7 data-[state=active]:shadow-xs cursor-pointer"
-                                                >
-                                                    {loc.toUpperCase()}
-                                                </TabsTrigger>
-                                            ))}
-                                        </TabsList>
-                                    </Tabs>
+                                    <AdminLanguageSwitcher
+                                        activeLang={activeLang}
+                                        onLanguageChange={setActiveLang}
+                                        locales={supportedLocales}
+                                    />
                                 )}
 
                                 {/* Activation Switch */}
@@ -320,8 +313,8 @@ export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlock
                                         </FormControl>
                                         <FormDescription className="text-xs">
                                             {isFr
-                                                ? "Chemin interne (ex: /fr/notre-histoire) ou URL externe complète."
-                                                : "Internal path (e.g. /en/about-us) or complete external URL."}
+                                                ? "Chemin interne ou URL externe complète."
+                                                : "Internal path or complete external URL."}
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>

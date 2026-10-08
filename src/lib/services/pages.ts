@@ -26,6 +26,15 @@ export function formatPageDoc(doc: FirebaseFirestore.DocumentSnapshot): Page {
         if (data.content_fr) content.fr = data.content_fr;
     }
 
+    // Normalize multilingual subtitle
+    let subtitle: Record<string, string> = {};
+    if (data.subtitle && typeof data.subtitle === 'object') {
+        subtitle = data.subtitle;
+    } else {
+        if (data.subtitle_en) subtitle.en = data.subtitle_en;
+        if (data.subtitle_fr) subtitle.fr = data.subtitle_fr;
+    }
+
     // Normalize multilingual slug
     let slug: Record<string, string> = {};
     if (data.slug && typeof data.slug === 'object') {
@@ -40,23 +49,31 @@ export function formatPageDoc(doc: FirebaseFirestore.DocumentSnapshot): Page {
     if (data.slug_fr && !slug.fr) slug.fr = data.slug_fr;
 
     const status = (data.status === 'draft' || data.status === 'published') ? data.status : 'published';
+    const imageUrl = data.imageUrl || data.image_url || data.coverImageUrl || data.banner_image || null;
 
     return {
         id: doc.id,
         slug,
         title,
+        subtitle,
         content,
         status,
         showInHeader: Boolean(data.showInHeader),
         showInFooter: Boolean(data.showInFooter),
         order: typeof data.order === 'number' ? data.order : 0,
         activeBlocks: Array.isArray(data.activeBlocks) ? data.activeBlocks : [],
+        imageUrl,
+        image_url: imageUrl,
+        coverImageUrl: imageUrl,
+        banner_image: imageUrl,
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
         slug_en: data.slug_en || slug.en,
         slug_fr: data.slug_fr || slug.fr,
         title_en: data.title_en || title.en,
         title_fr: data.title_fr || title.fr,
+        subtitle_en: data.subtitle_en || subtitle.en,
+        subtitle_fr: data.subtitle_fr || subtitle.fr,
         content_en: data.content_en || content.en,
         content_fr: data.content_fr || content.fr,
         meta_title_en: data.meta_title_en,

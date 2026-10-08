@@ -160,12 +160,14 @@ export function MobileNav({
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
+            <SheetTrigger asChild id="mobile-menu-trigger" aria-controls="mobile-nav-sheet">
                 <Button
+                    id="mobile-menu-button"
                     variant="ghost"
                     size="icon"
                     aria-label={menuLabel}
                     className="md:hidden cursor-pointer bg-transparent text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors"
+                    suppressHydrationWarning
                 >
                     <Menu className="h-6 w-6 transition-colors" />
                     <span className="sr-only">{menuLabel}</span>
@@ -174,6 +176,7 @@ export function MobileNav({
 
             {/* 1. Structure Principale: Full height (h-screen / h-dvh), flex, flex-col, justify-between */}
             <SheetContent
+                id="mobile-nav-sheet"
                 side="left"
                 showCloseButton={false}
                 className="h-screen max-h-screen w-[310px] sm:w-[360px] p-6 flex flex-col justify-between overflow-hidden bg-background"
@@ -355,9 +358,9 @@ export function MobileNav({
                             {isFr ? "Options" : "Options"}
                         </span>
                         <div className="flex items-center gap-1.5">
-                            <CurrencySwitcher />
-                            <ThemeToggle dict={headerDict} />
-                            <LangToggle lang={lang} dict={headerDict} />
+                            <CurrencySwitcher id="mobile-currency-switcher" />
+                            <ThemeToggle id="mobile-theme-toggle" dict={headerDict} />
+                            <LangToggle id="mobile-lang-toggle" lang={lang} dict={headerDict} />
                         </div>
                     </div>
 

@@ -15,7 +15,15 @@ import { useBrand } from "@/components/providers/BrandProvider"
 import { getLocaleDisplayName } from "@/lib/i18n"
 import { useTranslationStore } from "@/store/useTranslationStore"
 
-export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, string> }) {
+export function LangToggle({
+    lang,
+    dict,
+    id = "lang-toggle",
+}: {
+    lang: string;
+    dict: Record<string, string>;
+    id?: string;
+}) {
     const { isMultiLocale, supportedLocales, catalogSlugs } = useBrand();
     const pathname = usePathname();
     const router = useRouter();
@@ -108,8 +116,14 @@ export function LangToggle({ lang, dict }: { lang: string, dict: Record<string, 
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label={toggleLangLabel}>
+            <DropdownMenuTrigger asChild id={`${id}-trigger`}>
+                <Button
+                    id={`${id}-button`}
+                    variant="ghost"
+                    size="icon"
+                    aria-label={toggleLangLabel}
+                    suppressHydrationWarning
+                >
                     <Globe className="h-[1.2rem] w-[1.2rem]" />
                     <span className="sr-only">{toggleLangLabel}</span>
                 </Button>

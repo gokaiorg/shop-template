@@ -18,6 +18,7 @@ import { ProductTranslationSync } from "@/components/shop/ProductTranslationSync
 import { CategoryTranslationSync } from "@/components/shop/CategoryTranslationSync";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 import { ProductJsonLd } from "@/components/seo/JsonLd";
+import { ProductSpecifications } from "@/components/product/ProductSpecifications";
 
 interface ProductPageProps {
     params: Promise<{
@@ -420,6 +421,14 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                         isOutOfStock={isOutOfStock}
                         enableZoom={activeCategory?.enableProductZoom !== false}
                     />
+                    {/* Desktop Specifications (under gallery on desktop) */}
+                    <div className="hidden md:block">
+                        <ProductSpecifications
+                            specifications={product.metadata || (product as any).customSpecs}
+                            lang={lang}
+                            id="desktop-product-specifications"
+                        />
+                    </div>
                 </div>
 
                 {/* Right column: Content */}
@@ -456,20 +465,16 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                         )}
                     </div>
 
-                    <h2 className="sr-only">Product Details</h2>
-                    <div className="prose dark:prose-invert max-w-none">
-                        {intro && (
-                            <p className="text-lg text-muted-foreground font-medium mb-4">
-                                {intro}
-                            </p>
-                        )}
-                        <p className="text-base text-muted-foreground whitespace-pre-wrap">
-                            {description}
+                    {/* Short Introduction */}
+                    {intro && (
+                        <p className="text-lg text-muted-foreground font-medium -mt-2 leading-relaxed">
+                            {intro}
                         </p>
-                    </div>
+                    )}
 
+                    {/* Add to Cart Action (Quantity selector + Add to cart button) */}
                     {isCartEnabled && !product.hidePrice && (
-                        <div className="pt-6 border-t">
+                        <div className="pt-2 pb-2">
                             <AddToCartButton
                                 product={product}
                                 lang={lang}
@@ -480,6 +485,28 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                             />
                         </div>
                     )}
+
+                    {/* Full Description */}
+                    {description && (
+                        <div className="pt-6 border-t">
+                            <h2 className="sr-only">Product Details</h2>
+                            <div className="prose dark:prose-invert max-w-none">
+                                <p className="text-base text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                                    {description}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Mobile Specifications (Displayed at the bottom of the page on mobile only) */}
+                    <div className="block md:hidden mt-8 pt-8 border-t border-zinc-200/80 dark:border-zinc-800">
+                        <ProductSpecifications
+                            specifications={product.metadata || (product as any).customSpecs}
+                            lang={lang}
+                            id="mobile-product-specifications"
+                            className="mt-0"
+                        />
+                    </div>
                 </div>
             </div>
         </div>

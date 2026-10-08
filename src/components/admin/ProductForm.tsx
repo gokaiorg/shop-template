@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, LayoutTemplate, RotateCcw, ArrowLeft, Plus, SlidersHorizontal } from "lucide-react";
+import { Upload, Image as ImageIcon, Loader2, Trash2, Save, ExternalLink, FileText, DollarSign, FolderTree, LayoutTemplate, RotateCcw, ArrowLeft, Plus, SlidersHorizontal, Languages } from "lucide-react";
 import Link from "next/link";
 
 import { createProduct, updateProduct, deleteProduct, getSuggestedUniqueSlug } from "@/actions/admin";
@@ -15,6 +15,8 @@ import { productSchema } from "@/schemas/admin";
 import { uploadProductImage, deleteProductImage } from "@/lib/firebase-storage";
 import { AdminImageDropzone } from "@/components/admin/AdminImageDropzone";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import { cleanAndMigrateMetadata, OBSOLETE_METADATA_KEYS_SET, KNOWN_TRANSLATABLE_METADATA_KEYS_SET } from "@/lib/products";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -44,6 +46,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLanguageSwitcher } from "@/components/admin/AdminLanguageSwitcher";
 
 import { Category, Product } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
@@ -60,21 +63,92 @@ function getCategorySlugForLocale(cat: Category | undefined, loc: string): strin
     return getLocalizedField(cat.slug, loc) || cat.id || "category";
 }
 
-interface MetadataEntry {
+export interface MetadataEntry {
     id: string;
     key: string;
-    value: string;
+    value: string | Record<string, string>;
+    isMultilingual: boolean;
 }
 
-function parseInitialMetadata(raw: Record<string, any> | undefined): MetadataEntry[] {
-    if (!raw || typeof raw !== "object") return [];
-    return Object.entries(raw)
-        .filter(([k, v]) => k && v !== null && v !== undefined)
-        .map(([key, val], idx) => ({
+export function parseInitialMetadata(
+    raw: Record<string, any> | undefined,
+    supportedLocales: string[] = ["en", "fr"]
+): MetadataEntry[] {
+    const cleaned = cleanAndMigrateMetadata(raw, supportedLocales);
+
+    return Object.entries(cleaned).map(([key, val], idx) => {
+        const isMulti = typeof val === "object" && val !== null && !Array.isArray(val);
+        let valueData: string | Record<string, string>;
+
+        if (isMulti) {
+            const locObj: Record<string, string> = {};
+            supportedLocales.forEach((loc) => {
+                locObj[loc] = val[loc] !== undefined ? String(val[loc]) : "";
+            });
+            Object.entries(val).forEach(([k, v]) => {
+                if (!(k in locObj)) locObj[k] = String(v ?? "");
+            });
+            valueData = locObj;
+        } else {
+            valueData = String(val ?? "");
+        }
+
+        return {
             id: `meta-${idx}-${key}`,
             key,
-            value: typeof val === "object" ? JSON.stringify(val) : String(val),
-        }));
+            value: valueData,
+            isMultilingual: isMulti,
+        };
+    });
+}
+
+export function buildMetadataPayload(
+    entries: MetadataEntry[],
+    supportedLocales: string[] = ["en", "fr"]
+): Record<string, any> {
+    const payload: Record<string, any> = {};
+
+    entries.forEach(({ key, value, isMultilingual }) => {
+        const trimmedKey = key.trim();
+        if (!trimmedKey) return;
+        if (OBSOLETE_METADATA_KEYS_SET.has(trimmedKey.toLowerCase())) return;
+
+        if (isMultilingual && typeof value === "object" && value !== null) {
+            const cleanObj: Record<string, string> = {};
+            let hasText = false;
+            supportedLocales.forEach((loc) => {
+                const text = (value as Record<string, string>)[loc] || "";
+                const trimmed = text.trim();
+                cleanObj[loc] = trimmed;
+                if (trimmed) hasText = true;
+            });
+            Object.entries(value).forEach(([k, v]) => {
+                if (!(k in cleanObj)) {
+                    const trimmed = String(v ?? "").trim();
+                    cleanObj[k] = trimmed;
+                    if (trimmed) hasText = true;
+                }
+            });
+
+            if (hasText) {
+                payload[trimmedKey] = cleanObj;
+            }
+        } else {
+            const strVal = typeof value === "string" ? value.trim() : (typeof value === "object" ? "" : String(value || ""));
+            if (strVal === "") return;
+            if (strVal.toLowerCase() === "true") {
+                payload[trimmedKey] = true;
+            } else if (strVal.toLowerCase() === "false") {
+                payload[trimmedKey] = false;
+            } else if (!isNaN(Number(strVal)) && strVal !== "") {
+                payload[trimmedKey] = Number(strVal);
+            } else {
+                payload[trimmedKey] = strVal;
+            }
+        }
+    });
+
+    return payload;
 }
 
 interface ProductFormProps {
@@ -107,30 +181,117 @@ export function ProductForm({
         : (initialData?.imageUrl ? [initialData.imageUrl] : []);
     const [images, setImages] = useState<string[]>(initialImages);
 
-    // Initialisation des métadonnées personnalisées (metadata ou fallback vers _oldMetadata de la migration)
+    // Initialisation des métadonnées personnalisées (nettoyage des clés obsolètes et fusion multilingue)
     const initialRawMetadata: Record<string, any> = (initialData?.metadata && Object.keys(initialData.metadata).length > 0)
         ? initialData.metadata
         : ((initialData as any)?._oldMetadata || {});
 
     const [metadataEntries, setMetadataEntries] = useState<MetadataEntry[]>(() =>
-        parseInitialMetadata(initialRawMetadata)
+        parseInitialMetadata(initialRawMetadata, locales)
     );
 
-    const addMetadataEntry = () => {
+    const addMetadataEntry = (asMultilingual = false) => {
+        const newObj: Record<string, string> = {};
+        locales.forEach((loc) => {
+            newObj[loc] = "";
+        });
+
         setMetadataEntries((prev) => [
             ...prev,
             {
                 id: `meta-new-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
                 key: "",
-                value: "",
+                value: asMultilingual ? newObj : "",
+                isMultilingual: asMultilingual,
             },
         ]);
     };
 
-    const updateMetadataEntry = (index: number, field: "key" | "value", val: string) => {
+    const updateMetadataEntryKey = (index: number, newKey: string) => {
         setMetadataEntries((prev) => {
             const next = [...prev];
-            next[index] = { ...next[index], [field]: val };
+            const entry = next[index];
+            if (!entry) return prev;
+
+            const trimmed = newKey.trim();
+            let isMulti = entry.isMultilingual;
+            let val = entry.value;
+
+            // Détection automatique des clés traduisibles connues (ex: effects, relieves)
+            if (!isMulti && KNOWN_TRANSLATABLE_METADATA_KEYS_SET.has(trimmed.toLowerCase())) {
+                isMulti = true;
+                const strVal = typeof val === "string" ? val : String(val || "");
+                const newObj: Record<string, string> = {};
+                locales.forEach((loc) => {
+                    newObj[loc] = loc === activeLang ? strVal : "";
+                });
+                val = newObj;
+            }
+
+            next[index] = {
+                ...entry,
+                key: newKey,
+                isMultilingual: isMulti,
+                value: val,
+            };
+            return next;
+        });
+    };
+
+    const updateMetadataEntryValue = (index: number, rawVal: string) => {
+        setMetadataEntries((prev) => {
+            const next = [...prev];
+            const entry = next[index];
+            if (!entry) return prev;
+
+            if (entry.isMultilingual) {
+                const currentObj = typeof entry.value === "object" && entry.value !== null
+                    ? { ...entry.value }
+                    : {};
+                currentObj[activeLang] = rawVal;
+                next[index] = {
+                    ...entry,
+                    value: currentObj,
+                };
+            } else {
+                next[index] = {
+                    ...entry,
+                    value: rawVal,
+                };
+            }
+            return next;
+        });
+    };
+
+    const toggleMetadataEntryMultilingual = (index: number) => {
+        setMetadataEntries((prev) => {
+            const next = [...prev];
+            const entry = next[index];
+            if (!entry) return prev;
+
+            if (entry.isMultilingual) {
+                // Bascule de multilingue vers universel
+                const currentStr = typeof entry.value === "object" && entry.value !== null
+                    ? (entry.value[activeLang] || Object.values(entry.value).find((v) => Boolean(v)) || "")
+                    : String(entry.value || "");
+                next[index] = {
+                    ...entry,
+                    isMultilingual: false,
+                    value: currentStr,
+                };
+            } else {
+                // Bascule d'universel vers multilingue
+                const strVal = typeof entry.value === "string" ? entry.value : String(entry.value || "");
+                const newObj: Record<string, string> = {};
+                locales.forEach((loc) => {
+                    newObj[loc] = loc === activeLang ? strVal : "";
+                });
+                next[index] = {
+                    ...entry,
+                    isMultilingual: true,
+                    value: newObj,
+                };
+            }
             return next;
         });
     };
@@ -168,7 +329,9 @@ export function ProductForm({
             status: defaultStatus,
             price: initialData?.price || 0,
             hidePrice: initialData?.hidePrice ?? false,
-            stock: initialData?.stock || 0,
+            stock: (typeof initialData?.stock === 'number' && !isNaN(initialData.stock))
+                ? initialData.stock
+                : (initialRawMetadata?.rawai_stock !== undefined ? (Number(initialRawMetadata.rawai_stock) || 0) : 0),
             artist: initialData?.artist || initialData?.vendor || "",
             vendor: initialData?.vendor || initialData?.artist || "",
             categoryIds: initialCategoryIds,
@@ -176,9 +339,15 @@ export function ProductForm({
             imageUrl: initialImages[0] || null,
             images: initialImages,
             order: initialData?.order !== undefined ? initialData.order : Date.now(),
-            metadata: initialRawMetadata,
+            metadata: buildMetadataPayload(parseInitialMetadata(initialRawMetadata, locales), locales),
         },
     });
+
+    // Safeguard: on-the-fly migration syncing cleaned and merged metadata into react-hook-form state
+    useEffect(() => {
+        const cleaned = buildMetadataPayload(metadataEntries, locales);
+        form.setValue("metadata", cleaned, { shouldDirty: false });
+    }, [form, locales]);
 
     const watchedCategoryIds = form.watch("categoryIds") || (form.watch("categoryId") ? [form.watch("categoryId")] : []);
     const parentCategory = categories.find((c) => (watchedCategoryIds || []).includes(c.id));
@@ -347,7 +516,7 @@ export function ProductForm({
             if (values.stock === undefined || values.stock === null || isNaN(values.stock) || values.stock < 0) {
                 form.setError("stock", {
                     type: "manual",
-                    message: lang?.startsWith("fr") ? "Le stock doit être un entier positif ou nul." : "Stock must be >= 0.",
+                    message: lang?.startsWith("fr") ? "Le stock doit être un nombre positif ou nul." : "Stock must be >= 0.",
                 });
                 hasError = true;
             }
@@ -382,23 +551,8 @@ export function ProductForm({
                 ? Math.round(Number(values.order))
                 : (initialData?.order !== undefined ? initialData.order : Date.now());
 
-            // Convertir les entrées dynamiques en objet metadata
-            const metadataPayload: Record<string, any> = {};
-            metadataEntries.forEach(({ key, value }) => {
-                const trimmedKey = key.trim();
-                if (trimmedKey) {
-                    const trimmedVal = value.trim();
-                    let parsedVal: any = trimmedVal;
-                    if (trimmedVal.toLowerCase() === "true") {
-                        parsedVal = true;
-                    } else if (trimmedVal.toLowerCase() === "false") {
-                        parsedVal = false;
-                    } else if (!isNaN(Number(trimmedVal)) && trimmedVal !== "") {
-                        parsedVal = Number(trimmedVal);
-                    }
-                    metadataPayload[trimmedKey] = parsedVal;
-                }
-            });
+            // Convertir les entrées dynamiques en objet metadata propre
+            const metadataPayload = buildMetadataPayload(metadataEntries, locales);
 
             const payload = {
                 ...values,
@@ -467,10 +621,10 @@ export function ProductForm({
                 <input type="hidden" {...form.register("order", { valueAsNumber: true })} />
 
                 <div className="flex items-center justify-between">
-                        <Link href={`/${lang}/admin/products`} className="flex items-center gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors px-3 py-1.5 rounded-md w-fit">
-                            <ArrowLeft className="h-4 w-4" />
-                            {dict?.back_to_products || (lang?.startsWith('fr') ? 'Retour aux produits' : 'Back to products')}
-                        </Link>
+                    <Link href={`/${lang}/admin/products`} className="flex items-center gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors px-3 py-1.5 rounded-md w-fit">
+                        <ArrowLeft className="h-4 w-4" />
+                        {dict?.back_to_products || (lang?.startsWith('fr') ? 'Retour aux produits' : 'Back to products')}
+                    </Link>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -492,13 +646,13 @@ export function ProductForm({
                             <CardContent className="space-y-6">
                                 {isMulti ? (
                                     <Tabs value={activeLang} onValueChange={setActiveLang} className="w-full">
-                                        <TabsList className="mb-4">
-                                            {locales.map((loc) => (
-                                                <TabsTrigger key={loc} value={loc} className="uppercase text-xs">
-                                                    {loc.toUpperCase()}
-                                                </TabsTrigger>
-                                            ))}
-                                        </TabsList>
+                                        <div className="mb-4">
+                                            <AdminLanguageSwitcher
+                                                activeLang={activeLang}
+                                                onLanguageChange={setActiveLang}
+                                                locales={locales}
+                                            />
+                                        </div>
                                         {locales.map((loc) => (
                                             <TabsContent key={loc} value={loc} className="space-y-4">
                                                 <FormField
@@ -598,215 +752,296 @@ export function ProductForm({
                                         {lang?.startsWith("fr") ? "Images du produit" : "Product Images"}
                                     </h2>
                                 </div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {lang?.startsWith("fr") ? "Photos du produit. La première sert de couverture." : "Product photos. First image serves as cover."}
-                            </p>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <FormField
-                                control={form.control}
-                                name="images"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <AdminImageDropzone
-                                                value={field.value || images}
-                                                onChange={(newImages) => {
-                                                    const arr = Array.isArray(newImages) ? newImages : (newImages ? [newImages] : []);
-                                                    setImages(arr);
-                                                    form.setValue("images", arr, { shouldValidate: true, shouldDirty: true });
-                                                    form.setValue("imageUrl", arr[0] || null, { shouldValidate: true, shouldDirty: true });
-                                                }}
-                                                multiple={true}
-                                                maxFiles={10}
-                                                lang={lang}
-                                                title={dict.uploadImage || (lang?.startsWith("fr") ? "Cliquez ou glissez-déposez des images ici" : "Click or drag images here")}
-                                                recommendedText={lang?.startsWith("fr") ? "PNG, JPG, WEBP, AVIF • Plusieurs fichiers autorisés" : "PNG, JPG, WEBP, AVIF • Multiple files allowed"}
-                                                onUpload={uploadProductImage}
-                                                disabled={isLoading}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* Bloc 3 : Prix et Inventaire */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-2 mb-1">
-                                <DollarSign className="w-5 h-5 text-muted-foreground" />
-                                <h2 className="text-lg font-medium tracking-tight">
-                                    {lang?.startsWith("fr") ? "Prix & Inventaire" : "Pricing & Inventory"}
-                                </h2>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {lang?.startsWith("fr") ? "Tarif unitaire et quantité disponible en stock." : "Unit pricing and available inventory stock."}
-                            </p>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr") ? "Photos du produit. La première sert de couverture." : "Product photos. First image serves as cover."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
                                 <FormField
                                     control={form.control}
-                                    name="price"
+                                    name="images"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{dict.price || "Price"} <span className="text-destructive ml-1">*</span></FormLabel>
                                             <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    {...field}
-                                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                                <AdminImageDropzone
+                                                    value={field.value || images}
+                                                    onChange={(newImages) => {
+                                                        const arr = Array.isArray(newImages) ? newImages : (newImages ? [newImages] : []);
+                                                        setImages(arr);
+                                                        form.setValue("images", arr, { shouldValidate: true, shouldDirty: true });
+                                                        form.setValue("imageUrl", arr[0] || null, { shouldValidate: true, shouldDirty: true });
+                                                    }}
+                                                    multiple={true}
+                                                    maxFiles={10}
+                                                    lang={lang}
+                                                    title={dict.uploadImage || (lang?.startsWith("fr") ? "Cliquez ou glissez-déposez des images ici" : "Click or drag images here")}
+                                                    recommendedText={lang?.startsWith("fr") ? "PNG, JPG, WEBP, AVIF • Plusieurs fichiers autorisés" : "PNG, JPG, WEBP, AVIF • Multiple files allowed"}
+                                                    onUpload={uploadProductImage}
+                                                    disabled={isLoading}
                                                 />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+                            </CardContent>
+                        </Card>
+
+                        {/* Bloc 3 : Prix et Inventaire */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <DollarSign className="w-5 h-5 text-muted-foreground" />
+                                    <h2 className="text-lg font-medium tracking-tight">
+                                        {lang?.startsWith("fr") ? "Prix & Inventaire" : "Pricing & Inventory"}
+                                    </h2>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {lang?.startsWith("fr") ? "Tarif unitaire et quantité disponible en stock." : "Unit pricing and available inventory stock."}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <FormField
+                                        control={form.control}
+                                        name="price"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{dict.price || "Price"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        step="any"
+                                                        {...field}
+                                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="stock"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{dict.stock || "Stock"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        step="any"
+                                                        {...field}
+                                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
                                 <FormField
                                     control={form.control}
-                                    name="stock"
+                                    name="hidePrice"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{dict.stock || "Stock"} <span className="text-destructive ml-1">*</span></FormLabel>
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
                                             <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    {...field}
-                                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                                <Checkbox
+                                                    checked={Boolean(field.value)}
+                                                    onCheckedChange={field.onChange}
+                                                    disabled={isLoading}
                                                 />
                                             </FormControl>
-                                            <FormMessage />
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel className="text-sm font-medium cursor-pointer">
+                                                    {lang?.startsWith("fr") ? "Masquer le prix (Non destiné à la vente)" : "Hide price (Not for sale)"}
+                                                </FormLabel>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {lang?.startsWith("fr")
+                                                        ? "Masque le prix et le bouton d'ajout au panier sur la boutique pour les pièces d'exposition ou archives."
+                                                        : "Hides the price and add-to-cart button in the storefront for exhibition pieces or archives."}
+                                                </p>
+                                            </div>
                                         </FormItem>
                                     )}
                                 />
-                            </div>
+                            </CardContent>
+                        </Card>
 
-                            <FormField
-                                control={form.control}
-                                name="hidePrice"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={Boolean(field.value)}
-                                                onCheckedChange={field.onChange}
-                                                disabled={isLoading}
-                                            />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel className="text-sm font-medium cursor-pointer">
-                                                {lang?.startsWith("fr") ? "Masquer le prix (Non destiné à la vente)" : "Hide price (Not for sale)"}
-                                            </FormLabel>
-                                            <p className="text-xs text-muted-foreground">
-                                                {lang?.startsWith("fr")
-                                                    ? "Masque le prix et le bouton d'ajout au panier sur la boutique pour les pièces d'exposition ou archives."
-                                                    : "Hides the price and add-to-cart button in the storefront for exhibition pieces or archives."}
-                                            </p>
+                        {/* Bloc 4 : Spécifications Personnalisées (Custom Fields / Metadata) */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <SlidersHorizontal className="w-5 h-5 text-muted-foreground" />
+                                            <h2 className="text-lg font-medium tracking-tight">
+                                                {lang?.startsWith("fr") ? "Spécifications Personnalisées" : "Custom Specifications"}
+                                            </h2>
                                         </div>
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                    </Card>
+                                        <p className="text-sm text-muted-foreground">
+                                            {lang?.startsWith("fr")
+                                                ? "Champs spécifiques par marque ou produit."
+                                                : "Brand or product-specific metadata."}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {isMulti && (
+                                            <AdminLanguageSwitcher
+                                                activeLang={activeLang}
+                                                onLanguageChange={setActiveLang}
+                                                locales={locales}
+                                            />
+                                        )}
+                                        {metadataEntries.length > 0 && (
+                                            <Badge variant="outline" className="text-xs">
+                                                {metadataEntries.length} {lang?.startsWith("fr") ? "spécification(s)" : "field(s)"}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {metadataEntries.length === 0 ? (
+                                    <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground bg-muted/20">
+                                        <p className="text-sm">
+                                            {lang?.startsWith("fr")
+                                                ? "Aucune spécification personnalisée pour ce produit."
+                                                : "No custom specifications defined for this product."}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-12 gap-3 text-xs font-medium text-muted-foreground px-1 hidden sm:grid">
+                                            <div className="col-span-4">{lang?.startsWith("fr") ? "Clé" : "Key"}</div>
+                                            <div className="col-span-6">
+                                                <div className="flex items-center justify-between">
+                                                    <span>{lang?.startsWith("fr") ? "Valeur" : "Value"}</span>
+                                                    {isMulti && (
+                                                        <span className="text-[11px] font-normal text-muted-foreground">
+                                                            {lang?.startsWith("fr") ? "Langue active : " : "Active language: "}
+                                                            <span className="font-semibold text-primary uppercase">{activeLang}</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="col-span-2 text-center">{lang?.startsWith("fr") ? "Actions" : "Actions"}</div>
+                                        </div>
+                                        {metadataEntries.map((entry, idx) => {
+                                            const displayValue = entry.isMultilingual
+                                                ? (typeof entry.value === "object" && entry.value !== null ? (entry.value[activeLang] ?? "") : "")
+                                                : (typeof entry.value === "string" ? entry.value : String(entry.value ?? ""));
 
-                    {/* Bloc 4 : Spécifications Personnalisées (Custom Fields / Metadata) */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <SlidersHorizontal className="w-5 h-5 text-muted-foreground" />
-                                        <h2 className="text-lg font-medium tracking-tight">
-                                            {lang?.startsWith("fr") ? "Spécifications Personnalisées" : "Custom Specifications"}
-                                        </h2>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        {lang?.startsWith("fr")
-                                            ? "Champs spécifiques par marque ou produit (ex: THC, CBD, dimensions, etc.)."
-                                            : "Brand or product-specific metadata (e.g. THC, CBD, dimensions, etc.)."}
-                                    </p>
-                                </div>
-                                {metadataEntries.length > 0 && (
-                                    <Badge variant="outline" className="text-xs">
-                                        {metadataEntries.length} {lang?.startsWith("fr") ? "spécification(s)" : "field(s)"}
-                                    </Badge>
-                                )}
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {metadataEntries.length === 0 ? (
-                                <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground bg-muted/20">
-                                    <p className="text-sm">
-                                        {lang?.startsWith("fr")
-                                            ? "Aucune spécification personnalisée pour ce produit."
-                                            : "No custom specifications defined for this product."}
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    <div className="grid grid-cols-12 gap-3 text-xs font-medium text-muted-foreground px-1 hidden sm:grid">
-                                        <div className="col-span-5">{lang?.startsWith("fr") ? "Clé" : "Key"}</div>
-                                        <div className="col-span-6">{lang?.startsWith("fr") ? "Valeur" : "Value"}</div>
-                                        <div className="col-span-1 text-center">{lang?.startsWith("fr") ? "Action" : "Action"}</div>
-                                    </div>
-                                    {metadataEntries.map((entry, idx) => (
-                                        <div
-                                            key={entry.id || idx}
-                                            className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 items-center p-2.5 sm:p-0 rounded-lg border sm:border-0 bg-muted/20 sm:bg-transparent"
-                                        >
-                                            <div className="sm:col-span-5">
-                                                <Input
-                                                    placeholder={lang?.startsWith("fr") ? "Clé (ex: thc, taille)" : "Key (e.g. thc, size)"}
-                                                    value={entry.key}
-                                                    onChange={(e) => updateMetadataEntry(idx, "key", e.target.value)}
-                                                    className="font-mono text-xs sm:text-sm"
-                                                    disabled={isLoading}
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-6">
-                                                <Input
-                                                    placeholder={lang?.startsWith("fr") ? "Valeur (ex: 24%, XL)" : "Value (e.g. 24%, XL)"}
-                                                    value={entry.value}
-                                                    onChange={(e) => updateMetadataEntry(idx, "value", e.target.value)}
-                                                    className="text-xs sm:text-sm"
-                                                    disabled={isLoading}
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-1 flex justify-end sm:justify-center">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => removeMetadataEntry(idx)}
-                                                    disabled={isLoading}
-                                                    className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                                                    title={lang?.startsWith("fr") ? "Supprimer ce champ" : "Remove field"}
+                                            return (
+                                                <div
+                                                    key={entry.id || idx}
+                                                    className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 items-center p-2.5 sm:p-0 rounded-lg border sm:border-0 bg-muted/20 sm:bg-transparent"
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                                                    <div className="sm:col-span-4">
+                                                        <Input
+                                                            placeholder={lang?.startsWith("fr") ? "Clé" : "Key"}
+                                                            value={entry.key}
+                                                            onChange={(e) => updateMetadataEntryKey(idx, e.target.value)}
+                                                            className="font-mono text-xs sm:text-sm"
+                                                            disabled={isLoading}
+                                                        />
+                                                    </div>
+                                                    <div className="sm:col-span-6">
+                                                        <div className="relative flex items-center">
+                                                            <Input
+                                                                placeholder={
+                                                                    entry.isMultilingual
+                                                                        ? (lang?.startsWith("fr")
+                                                                            ? `Valeur (${activeLang.toUpperCase()})...`
+                                                                            : `Value (${activeLang.toUpperCase()})...`)
+                                                                        : (lang?.startsWith("fr")
+                                                                            ? "Valeur..."
+                                                                            : "Value...")
+                                                                }
+                                                                value={displayValue}
+                                                                onChange={(e) => updateMetadataEntryValue(idx, e.target.value)}
+                                                                className={cn(
+                                                                    "text-xs sm:text-sm",
+                                                                    entry.isMultilingual ? "pr-14" : ""
+                                                                )}
+                                                                disabled={isLoading}
+                                                            />
+                                                            {entry.isMultilingual && (
+                                                                <div className="absolute right-2 flex items-center pointer-events-none">
+                                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20 uppercase tracking-wider">
+                                                                        {activeLang}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="sm:col-span-2 flex items-center justify-end sm:justify-center gap-1">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => toggleMetadataEntryMultilingual(idx)}
+                                                            disabled={isLoading}
+                                                            className={cn(
+                                                                "h-9 w-9 cursor-pointer rounded-md transition-colors",
+                                                                entry.isMultilingual
+                                                                    ? "text-primary bg-primary/10 hover:bg-primary/20"
+                                                                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                                            )}
+                                                            title={
+                                                                entry.isMultilingual
+                                                                    ? (lang?.startsWith("fr") ? "Champ multilingue (Cliquer pour rendre universel)" : "Multilingual field (Click to make universal)")
+                                                                    : (lang?.startsWith("fr") ? "Champ universel (Cliquer pour rendre multilingue)" : "Universal field (Click to make multilingual)")
+                                                            }
+                                                        >
+                                                            <Languages className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => removeMetadataEntry(idx)}
+                                                            disabled={isLoading}
+                                                            className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                            title={lang?.startsWith("fr") ? "Supprimer ce champ" : "Remove field"}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
 
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={addMetadataEntry}
-                                disabled={isLoading}
-                                className="w-full sm:w-auto cursor-pointer gap-2 mt-2"
-                            >
-                                <Plus className="h-4 w-4" />
-                                {lang?.startsWith("fr") ? "Ajouter un champ personnalisé" : "Add custom field"}
-                            </Button>
-                        </CardContent>
-                    </Card>
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => addMetadataEntry(false)}
+                                        disabled={isLoading}
+                                        className="cursor-pointer gap-2"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        {lang?.startsWith("fr") ? "Ajouter un champ universel" : "Add universal field"}
+                                    </Button>
+                                    {isMulti && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => addMetadataEntry(true)}
+                                            disabled={isLoading}
+                                            className="cursor-pointer gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                                        >
+                                            <Languages className="h-4 w-4" />
+                                            {lang?.startsWith("fr") ? "Ajouter un champ multilingue" : "Add multilingual field"}
+                                        </Button>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
 
                     {/* Colonne secondaire (Droite) */}
@@ -1040,11 +1275,10 @@ export function ProductForm({
                                                     return (
                                                         <label
                                                             key={c.id}
-                                                            className={`flex items-center gap-2.5 px-3 py-2 rounded-md border cursor-pointer transition-colors text-sm ${
-                                                                isChecked 
-                                                                    ? "bg-primary/10 border-primary shadow-xs" 
+                                                            className={`flex items-center gap-2.5 px-3 py-2 rounded-md border cursor-pointer transition-colors text-sm ${isChecked
+                                                                    ? "bg-primary/10 border-primary shadow-xs"
                                                                     : "bg-card hover:bg-muted/50 border-input"
-                                                            }`}
+                                                                }`}
                                                         >
                                                             <Checkbox
                                                                 checked={isChecked}
@@ -1083,7 +1317,7 @@ export function ProductForm({
                                                         field.onChange(val);
                                                         form.setValue("vendor", val);
                                                     }}
-                                                    placeholder={dict.artistPlaceholder || "e.g. Amann Inkspiration"}
+                                                    placeholder={dict.artistPlaceholder || (lang?.startsWith("fr") ? "Sélectionner ou créer..." : "Select or create...")}
                                                     lang={lang}
                                                 />
                                             </FormControl>
