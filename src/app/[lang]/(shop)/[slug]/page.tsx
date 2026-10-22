@@ -24,24 +24,26 @@ interface SlugPageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-// Convert Firestore Timestamps to strings for safe serialization
-const serializeCategoryData = (docId: string, data: Record<string, any>): Category => {
-    const result = { ...data, id: docId } as any;
-    if (result.createdAt) {
-        result.createdAt = typeof result.createdAt.toDate === "function"
-            ? result.createdAt.toDate().toISOString()
-            : new Date(result.createdAt).toISOString();
-    } else {
-        result.createdAt = null;
-    }
-    if (result.updatedAt) {
-        result.updatedAt = typeof result.updatedAt.toDate === "function"
-            ? result.updatedAt.toDate().toISOString()
-            : new Date(result.updatedAt).toISOString();
-    } else {
-        result.updatedAt = null;
-    }
-    return result;
+const serializeCategoryData = (docId: string, data: Record<string, unknown>): Category => {
+    const rawCreatedAt = data.createdAt as { toDate?: () => Date } | string | Date | undefined;
+    const rawUpdatedAt = data.updatedAt as { toDate?: () => Date } | string | Date | undefined;
+    const createdAt = rawCreatedAt
+        ? (typeof rawCreatedAt === "object" && "toDate" in rawCreatedAt && typeof rawCreatedAt.toDate === "function"
+            ? rawCreatedAt.toDate().toISOString()
+            : new Date(rawCreatedAt as string | Date).toISOString())
+        : new Date().toISOString();
+    const updatedAt = rawUpdatedAt
+        ? (typeof rawUpdatedAt === "object" && "toDate" in rawUpdatedAt && typeof rawUpdatedAt.toDate === "function"
+            ? rawUpdatedAt.toDate().toISOString()
+            : new Date(rawUpdatedAt as string | Date).toISOString())
+        : new Date().toISOString();
+
+    return {
+        ...(data as unknown as Category),
+        id: docId,
+        createdAt,
+        updatedAt,
+    };
 };
 
 export async function generateMetadata(props: SlugPageProps): Promise<Metadata> {
@@ -119,22 +121,17 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
         };
     }
 
-    // 2. Is it a Page?
     const page = await getPageBySlug(slug);
     if (page && page.status !== "draft") {
         const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
         const displaySlug = getLocalizedField(page.slug, lang) || (typeof page.slug === "string" ? page.slug : page.id);
-        const baseTitle = (getLocalizedField(page.title, lang) || (lang === "fr" ? page.title_fr : page.title_en) || displaySlug).trim();
-        const pageSubtitle = (getLocalizedField(page.subtitle, lang) || (lang === "fr" ? page.subtitle_fr : page.subtitle_en) || "").trim();
+        const pageSubtitle = page.subtitle?.[lang] || (lang === "fr" ? page.subtitle_fr : page.subtitle_en) || page.subtitle_en || page.subtitle_fr || getLocalizedField(page.subtitle, lang);
+        const pageTitle = (page.title?.[lang] || (lang === "fr" ? page.title_fr : page.title_en) || page.title_en || page.title_fr || getLocalizedField(page.title, lang) || displaySlug).trim();
+        const metaTitleCandidate = pageSubtitle?.trim() || pageTitle;
 
-        const customMetaTitle = page.metaTitle?.[lang] || (lang === "fr" ? page.meta_title_fr : page.meta_title_en);
-        let formattedPageTitle = "";
-        if (customMetaTitle) {
-            formattedPageTitle = customMetaTitle.includes(brandName) ? customMetaTitle : `${customMetaTitle} - ${brandName}`;
-        } else {
-            const combinedTitle = pageSubtitle ? `${baseTitle} ${pageSubtitle}` : baseTitle;
-            formattedPageTitle = `${combinedTitle} - ${brandName}`;
-        }
+        const customMetaTitle = page.metaTitle?.[lang] || (lang === "fr" ? page.meta_title_fr : page.meta_title_en) || page.meta_title_en || page.meta_title_fr;
+        const targetTitle = customMetaTitle?.trim() || metaTitleCandidate;
+        const formattedPageTitle = targetTitle.includes(brandName) ? targetTitle : `${targetTitle} | ${brandName}`;
 
         const isAboutPage = slug.toLowerCase() === "about" ||
             slug.toLowerCase() === "a-propos" ||
@@ -142,13 +139,12 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
             page.slug_en === "about" ||
             page.id === "about";
 
-        // Clean text for meta description
         const rawContent = getLocalizedField(page.content, lang) || (lang === "fr" ? page.content_fr : page.content_en) || "";
         const cleanContentText = rawContent
             .replace(/<[^>]*>?/gm, " ")
             .replace(/\s+/g, " ")
             .trim();
-        const description = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || pageSubtitle || cleanContentText.slice(0, 160) || `Learn more about ${baseTitle} at ${brandName}.`;
+        const description = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || pageSubtitle?.trim() || cleanContentText.slice(0, 160) || `Learn more about ${pageTitle} at ${brandName}.`;
         const canonicalUrl = `${baseUrl}/${lang}/${displaySlug}`;
 
         const enPageSlug = (typeof page.slug === "object" && page.slug?.en)
@@ -513,6 +509,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
         .trim();
     const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
     const seoDescription = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || subtitle || cleanContentText.slice(0, 160) || `Learn more about ${title} at ${brandName}.`;
+    const pageIntro = getLocalizedField(page.metaDescription, lang) || (lang === "fr" ? page.meta_description_fr : page.meta_description_en);
 
     // Hero Banner image directly from page doc in Firestore
     const pageHeroImage = page.imageUrl || page.image_url || page.coverImageUrl || page.banner_image || null;
@@ -618,9 +615,13 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 </header>
             )}
 
-            {/* 3. Contenu textuel épuré */}
             <div className="w-full max-w-5xl mx-auto px-6 md:px-12 mb-16">
-                <article className="prose prose-zinc dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-4 prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg prose-a:text-primary prose-a:font-semibold prose-a:underline-offset-4 hover:prose-a:underline prose-img:rounded-3xl prose-img:shadow-soft-xl prose-img:border prose-img:border-border/60">
+                {pageIntro && (
+                    <div className="w-full max-w-3xl mx-auto text-center mb-8">
+                        <p className="text-lg text-muted-foreground max-w-3xl mx-auto text-center">{pageIntro}</p>
+                    </div>
+                )}
+                <article className="prose prose-zinc dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-4 prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg prose-a:text-primary prose-a:font-semibold prose-a:underline-offset-4 hover:prose-a:underline prose-img:rounded-lg prose-img:max-w-full prose-img:h-auto prose-img:shadow-soft-xl prose-img:border prose-img:border-border/60">
                     {parse(sanitizedContent)}
                 </article>
             </div>

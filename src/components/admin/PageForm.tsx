@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, FieldErrors, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Trash2, Loader2, Save, ArrowLeft, Globe, Eye, LayoutTemplate, ExternalLink, RotateCcw, Blocks, Image as ImageIcon } from "lucide-react";
@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminLanguageSwitcher } from "@/components/admin/AdminLanguageSwitcher";
+import { WysiwygEditor } from "@/components/admin/WysiwygEditor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -47,21 +48,45 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Page } from "@/types/database";
+import { Page, StoreSettings } from "@/types/database";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { getLocaleDisplayName, getLocalizedField } from "@/lib/i18n";
 
 import { slugify, generateSlug } from "@/lib/slug";
 
-interface PageFormProps {
-    dict: any;
-    lang: string;
-    initialData?: Page | null;
+interface PageFormDict {
+    back_to_pages?: string;
+    forms?: {
+        title?: string;
+        subtitle?: string;
+        introduction?: string;
+        content?: string;
+        success?: string;
+        deleting?: string;
+        deleted?: string;
+        [key: string]: string | undefined;
+    };
+    [key: string]: unknown;
 }
 
-export function PageForm({ dict, lang, initialData }: PageFormProps) {
+interface PageFormProps {
+    dict: PageFormDict;
+    lang: string;
+    initialData?: Page | null;
+    defaultTheme?: "light" | "dark" | "system";
+    storeSettings?: StoreSettings | null;
+}
+
+export function PageForm({
+    dict,
+    lang,
+    initialData,
+    defaultTheme: propDefaultTheme,
+    storeSettings,
+}: PageFormProps) {
     const router = useRouter();
-    const { supportedLocales, defaultLocale, isMultiLocale } = useBrand();
+    const { supportedLocales, defaultLocale, isMultiLocale, defaultTheme: brandDefaultTheme } = useBrand();
+    const effectiveTheme = propDefaultTheme || storeSettings?.defaultTheme || brandDefaultTheme;
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");
     const [isPending, startTransition] = useTransition();
     const [isDeleting, setIsDeleting] = useState(false);
@@ -70,24 +95,27 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
 
     const defaultTitles: Record<string, string> = {};
     const defaultSubtitles: Record<string, string> = {};
+    const defaultMetaDescriptions: Record<string, string> = {};
     const defaultContents: Record<string, string> = {};
     const defaultSlugs: Record<string, string> = {};
 
     supportedLocales.forEach((loc) => {
         defaultTitles[loc] = initialData?.title?.[loc] || (loc === 'fr' ? initialData?.title_fr : initialData?.title_en) || initialData?.title?.en || "";
-        defaultSubtitles[loc] = initialData?.subtitle?.[loc] || (loc === 'fr' ? (initialData as any)?.subtitle_fr : (initialData as any)?.subtitle_en) || initialData?.subtitle?.en || "";
+        defaultSubtitles[loc] = initialData?.subtitle?.[loc] || (loc === 'fr' ? initialData?.subtitle_fr : initialData?.subtitle_en) || initialData?.subtitle?.en || "";
+        defaultMetaDescriptions[loc] = initialData?.metaDescription?.[loc] || (loc === 'fr' ? initialData?.meta_description_fr : initialData?.meta_description_en) || initialData?.metaDescription?.en || "";
         defaultContents[loc] = initialData?.content?.[loc] || (loc === 'fr' ? initialData?.content_fr : initialData?.content_en) || initialData?.content?.en || "";
-        defaultSlugs[loc] = initialData?.slug?.[loc] || (loc === 'fr' ? (initialData as any)?.slug_fr : (initialData as any)?.slug_en) || (typeof initialData?.slug === 'string' ? initialData.slug : '') || "";
+        defaultSlugs[loc] = initialData?.slug?.[loc] || (loc === 'fr' ? initialData?.slug_fr : initialData?.slug_en) || (typeof initialData?.slug === 'string' ? initialData.slug : '') || "";
     });
 
-    const initialImageUrl = initialData?.imageUrl || (initialData as any)?.image_url || initialData?.coverImageUrl || (initialData as any)?.banner_image || "";
+    const initialImageUrl = initialData?.imageUrl || initialData?.image_url || initialData?.coverImageUrl || initialData?.banner_image || "";
 
     const form = useForm<PageFormData>({
-        resolver: zodResolver(pageSchema) as any,
+        resolver: zodResolver(pageSchema) as Resolver<PageFormData>,
         defaultValues: {
             slug: defaultSlugs,
             title: defaultTitles,
             subtitle: defaultSubtitles,
+            metaDescription: defaultMetaDescriptions,
             content: defaultContents,
             status: initialData?.status || "published",
             showInHeader: initialData?.showInHeader ?? false,
@@ -107,9 +135,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
             : {}
     );
 
-    // Live auto-slug generation from title per locale
     useEffect(() => {
-        // 1. Initial generation in create mode if title has content but slug is empty
         if (!isEditMode) {
             supportedLocales.forEach((loc) => {
                 const currentSlug = form.getValues(`slug.${loc}`);
@@ -122,7 +148,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
             });
         }
 
-        // 2. React Hook Form subscription on title keystrokes per locale
         const subscription = form.watch((value, { name }) => {
             if (!name || !name.startsWith("title")) return;
 
@@ -171,7 +196,7 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
         }
     };
 
-    const onInvalid = (errors: any) => {
+    const onInvalid = (errors: FieldErrors<PageFormData>) => {
         console.warn("Page form validation errors:", errors);
         toast.error(
             lang === "fr"
@@ -261,7 +286,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                 </div>
 
                 <div className="grid gap-8 md:grid-cols-3">
-                    {/* Left Column: Multilingual Content */}
                     <div className="md:col-span-2 space-y-6">
                         <Card>
                             <CardHeader>
@@ -322,16 +346,36 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                 />
                                                 <FormField
                                                     control={form.control}
+                                                    name={`metaDescription.${loc}`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{dict?.forms?.introduction ? `${dict.forms.introduction} (${lang === 'fr' ? 'optionnel' : 'optional'})` : (lang === 'fr' ? 'Introduction (optionnel)' : 'Introduction (optional)')}</FormLabel>
+                                                            <FormControl>
+                                                                <Textarea
+                                                                    rows={3}
+                                                                    placeholder={loc === 'fr' ? 'Texte d\'introduction de la page...' : `Introduction in ${loc.toUpperCase()}...`}
+                                                                    {...field}
+                                                                    value={field.value || ""}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
                                                     name={`content.${loc}`}
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormLabel>{dict?.forms?.content || 'Content'} <span className="text-destructive ml-1">*</span></FormLabel>
                                                             <FormControl>
-                                                                <Textarea
-                                                                    rows={12}
-                                                                    placeholder={`HTML or text content in ${loc.toUpperCase()}...`}
-                                                                    className="font-mono text-sm"
-                                                                    {...field}
+                                                                <WysiwygEditor
+                                                                    value={field.value || ""}
+                                                                    onChange={field.onChange}
+                                                                    placeholder={loc === "fr" ? "Contenu de la page..." : `HTML or text content in ${loc.toUpperCase()}...`}
+                                                                    disabled={isPending}
+                                                                    onUpload={(file) => uploadProductImage(file, `pages/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`)}
+                                                                    defaultTheme={effectiveTheme}
                                                                 />
                                                             </FormControl>
                                                             <FormDescription>
@@ -381,16 +425,36 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                         />
                                         <FormField
                                             control={form.control}
+                                            name={`metaDescription.${defaultLocale}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{dict?.forms?.introduction ? `${dict.forms.introduction} (${lang === 'fr' ? 'optionnel' : 'optional'})` : (lang === 'fr' ? 'Introduction (optionnel)' : 'Introduction (optional)')}</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            rows={3}
+                                                            placeholder={defaultLocale === 'fr' ? 'Texte d\'introduction de la page...' : 'Page introduction...'}
+                                                            {...field}
+                                                            value={field.value || ""}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
                                             name={`content.${defaultLocale}`}
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>{dict?.forms?.content || 'Page Content'} <span className="text-destructive ml-1">*</span></FormLabel>
                                                     <FormControl>
-                                                        <Textarea
-                                                            rows={14}
-                                                            placeholder="HTML or text content..."
-                                                            className="font-mono text-sm"
-                                                            {...field}
+                                                        <WysiwygEditor
+                                                            value={field.value || ""}
+                                                            onChange={field.onChange}
+                                                            placeholder={defaultLocale === "fr" ? "Contenu de la page..." : "HTML or text content..."}
+                                                            disabled={isPending}
+                                                            onUpload={(file) => uploadProductImage(file, `pages/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`)}
+                                                            defaultTheme={effectiveTheme}
                                                         />
                                                     </FormControl>
                                                     <FormDescription>
@@ -407,7 +471,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                             </CardContent>
                         </Card>
 
-                        {/* Page Hero Banner */}
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center gap-2 mb-1">
@@ -476,7 +539,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                             </CardContent>
                         </Card>
 
-                        {/* Modular Page Blocks */}
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center gap-2 mb-1">
@@ -507,7 +569,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
 
                                         return (
                                             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                {/* About Section Checkbox */}
                                                 <div className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-2xs hover:bg-muted/10 transition-colors">
                                                     <Checkbox
                                                         id="block-about"
@@ -530,7 +591,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                     </div>
                                                 </div>
 
-                                                {/* Contact Section Checkbox */}
                                                 <div className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-2xs hover:bg-muted/10 transition-colors">
                                                     <Checkbox
                                                         id="block-contact"
@@ -553,7 +613,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                     </div>
                                                 </div>
 
-                                                {/* FAQ Section Checkbox */}
                                                 <div className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-2xs hover:bg-muted/10 transition-colors">
                                                     <Checkbox
                                                         id="block-faq"
@@ -576,7 +635,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                                                     </div>
                                                 </div>
 
-                                                {/* Review Section Checkbox */}
                                                 <div className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-2xs hover:bg-muted/10 transition-colors">
                                                     <Checkbox
                                                         id="block-reviews"
@@ -606,7 +664,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                         </Card>
                     </div>
 
-                    {/* Right Column: Settings & Navigation Placement */}
                     <div className="space-y-6">
                         <Card>
                             <CardHeader>
@@ -846,7 +903,6 @@ export function PageForm({ dict, lang, initialData }: PageFormProps) {
                     </div>
                 </div>
 
-                {/* Submit Action Bar */}
                 <div className="sticky bottom-0 z-40 flex items-center justify-end gap-4 border-t border-border bg-background p-4 sm:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-auto -mx-4 sm:-mx-8">
                     {isEditMode && (
                         <AlertDialog>

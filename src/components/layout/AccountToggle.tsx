@@ -40,10 +40,17 @@ export function AccountToggle({
     session?: any;
     id?: string;
 }) {
-    const { data: clientSession } = useSession()
-    const session = clientSession?.user ? clientSession : (propSession?.user ? propSession : clientSession);
-    const { isCartEnabled } = useBrand()
-    const unreadCount = useUnreadMessages(session)
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const { data: clientSession } = useSession();
+    const session = mounted
+        ? (clientSession?.user ? clientSession : propSession)
+        : (propSession?.user ? propSession : null);
+    const { isCartEnabled } = useBrand();
+    const unreadCount = useUnreadMessages(session);
     
     const accountLabel =
         typeof dict?.header?.account === "string"

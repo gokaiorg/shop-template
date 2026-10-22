@@ -121,3 +121,15 @@ export type GlobalSettingsFormData = z.infer<typeof globalSettingsSchema>;
 
 export const storeSettingsSchema = globalSettingsSchema.merge(catalogSettingsSchema);
 export type StoreSettingsFormData = z.infer<typeof storeSettingsSchema>;
+
+export const contactMessageSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    message: z.string().min(10, 'Message must be at least 10 characters'),
+    website_url: z.string().optional(),
+    confirm_email: z.string().optional(),
+    honeypot: z.string().optional(),
+    timestamp: z.number().optional(),
+});
+
+export type ContactMessageFormData = z.infer<typeof contactMessageSchema>;
