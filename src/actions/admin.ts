@@ -14,6 +14,11 @@ import { SETTINGS_COLLECTION, STORE_FRONT_DOC_ID } from "@/lib/services/settings
 import { resolveUniqueSlugMap, resolveUniqueSlug } from "@/lib/services/slug";
 import { slugify } from "@/lib/slug";
 import { serializeFirestore } from "@/lib/utils";
+import {
+    batchDeleteContactMessages as batchDeleteContactMessagesAction,
+    batchArchiveContactMessages as batchArchiveContactMessagesAction,
+    cleanupSpamMessages as cleanupSpamMessagesAction,
+} from "@/actions/contact";
 
 /**
  * Server Action callable from client forms to preview/suggest a unique slug in real-time.
@@ -860,3 +865,63 @@ export async function deletePage(id: string) {
         return { success: false, error: "Failed to delete page." };
     }
 }
+
+export async function uploadImage(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+    const session = await auth();
+    const userRole = (session?.user?.role || "").toLowerCase();
+    if (userRole !== "admin") {
+        return { success: false, error: "Forbidden: Admin role required" };
+    }
+
+    try {
+        const file = formData.get("file");
+        if (!file || !(file instanceof File)) {
+            return { success: false, error: "No file provided" };
+        }
+
+        const bucketName = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || (process.env.FIREBASE_PROJECT_ID ? `${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app` : undefined);
+        const bucket = bucketName ? adminStorage.bucket(bucketName) : adminStorage.bucket();
+        const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+        const rawPrefix = formData.get("prefix");
+        const prefix = typeof rawPrefix === "string" && rawPrefix.trim() ? rawPrefix.trim() : "pages";
+        const filePath = `${prefix}/${Date.now()}-${cleanName}`;
+        const fileRef = bucket.file(filePath);
+
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const downloadToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+        await fileRef.save(buffer, {
+            contentType: file.type || "image/jpeg",
+            metadata: {
+                contentType: file.type || "image/jpeg",
+                metadata: {
+                    firebaseStorageDownloadTokens: downloadToken,
+                },
+            },
+        });
+
+        await fileRef.makePublic().catch(() => {});
+        const bucketNameResolved = bucket.name;
+        const encodedPath = encodeURIComponent(filePath);
+        const url = `https://firebasestorage.googleapis.com/v0/b/${bucketNameResolved}/o/${encodedPath}?alt=media&token=${downloadToken}`;
+
+        return { success: true, url };
+    } catch (error) {
+        console.error("UPLOAD_IMAGE_ERROR:", error);
+        return { success: false, error: "Failed to upload image" };
+    }
+}
+
+export async function batchDeleteContactMessages(...args: Parameters<typeof batchDeleteContactMessagesAction>) {
+    return batchDeleteContactMessagesAction(...args);
+}
+
+export async function batchArchiveContactMessages(...args: Parameters<typeof batchArchiveContactMessagesAction>) {
+    return batchArchiveContactMessagesAction(...args);
+}
+
+export async function cleanupSpamMessages(...args: Parameters<typeof cleanupSpamMessagesAction>) {
+    return cleanupSpamMessagesAction(...args);
+}
+

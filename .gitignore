@@ -50,8 +50,17 @@ cors.json
 .firebase/
 
 /art-fate-images
+/demo.html
 
 old-service-account.json
 new-service-account.json
 migrate.js
 link-images.js
+
+# Notebook & Context exports
+context-st.md
+docs-*.md
+firestore-schema.md
+generate-notebook-context.sh
+scripts/export-firestore-schema.mjs
+

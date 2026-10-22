@@ -26,13 +26,17 @@ export function AdminQuickEdit({
     variant = "floating",
     showLabel = true,
 }: AdminQuickEditProps) {
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const { data: session } = useSession();
     const params = useParams();
     const effectiveLocale = locale || (params?.lang as string) || "en";
 
-    // Strictly enforce admin role
     const isAdmin = session?.user?.role === "admin";
-    if (!isAdmin || (!id && !href && entityType !== "catalog" && entityType !== "hero" && entityType !== "settings" && entityType !== "footer")) {
+    if (!mounted || !isAdmin || (!id && !href && entityType !== "catalog" && entityType !== "hero" && entityType !== "settings" && entityType !== "footer")) {
         return null;
     }
 
@@ -88,7 +92,6 @@ export function AdminQuickEdit({
         <Link
             href={editHref}
             onClick={(e) => {
-                // Prevent navigation of parent clickable containers/cards
                 e.stopPropagation();
             }}
             aria-label={isFr ? `Modifier ce contenu (${entityLabel})` : `Edit this content (${entityLabel})`}
@@ -107,4 +110,3 @@ export function AdminQuickEdit({
 }
 
 export { AdminEditBadge } from "@/components/admin/AdminEditBadge";
-

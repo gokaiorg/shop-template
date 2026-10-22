@@ -49,6 +49,7 @@ export const pageSchema = z.object({
         { message: "Title is required in at least one language" }
     ),
     subtitle: z.record(z.string(), z.string()).optional(),
+    metaDescription: z.record(z.string(), z.string()).optional(),
     content: z.record(z.string(), z.string()),
     status: z.enum(["draft", "published"]),
     showInHeader: z.boolean(),

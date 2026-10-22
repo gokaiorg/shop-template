@@ -13,6 +13,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "aria-invalid:border-destructive aria-invalid:border-b-2 dark:aria-invalid:border-destructive",
         className
       )}
+      suppressHydrationWarning
       {...props}
     />
   )

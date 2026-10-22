@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useMemo, useEffect } from "react";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -20,44 +20,87 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { submitContactForm, type ContactFormData } from "@/actions/contact";
 
+interface ContactFormDict {
+  validation?: {
+    name_min?: string;
+    email_invalid?: string;
+    message_min?: string;
+  };
+  success_toast?: string;
+  error_toast?: string;
+  unexpected_error?: string;
+  success_title?: string;
+  success_message?: string;
+  send_another?: string;
+  name_label?: string;
+  name_placeholder?: string;
+  email_label?: string;
+  email_placeholder?: string;
+  message_label?: string;
+  message_placeholder?: string;
+  submitting_button?: string;
+  submit_button?: string;
+  [key: string]: unknown;
+}
+
 interface ContactFormProps {
   lang?: string;
-  dict?: any;
+  dict?: ContactFormDict;
 }
+
+const getTimestamp = () => Date.now();
 
 export function ContactForm({ lang = "en", dict }: ContactFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [formLoadedAt, setFormLoadedAt] = useState<number>(0);
+
+  useEffect(() => {
+    setFormLoadedAt(getTimestamp());
+  }, []);
 
   const contactSchema = useMemo(() => {
+    const valDict = dict?.validation;
     return z.object({
-      name: z.string().min(2, dict?.validation?.name_min || (lang === "fr" ? "Le nom doit comporter au moins 2 caractères" : "Name must be at least 2 characters")),
-      email: z.string().email(dict?.validation?.email_invalid || (lang === "fr" ? "Adresse email invalide" : "Invalid email address")),
-      message: z.string().min(10, dict?.validation?.message_min || (lang === "fr" ? "Le message doit comporter au moins 10 caractères" : "Message must be at least 10 characters")),
+      name: z.string().min(2, valDict?.name_min || (lang === "fr" ? "Le nom doit comporter au moins 2 caractères" : "Name must be at least 2 characters")),
+      email: z.string().email(valDict?.email_invalid || (lang === "fr" ? "Adresse email invalide" : "Invalid email address")),
+      message: z.string().min(10, valDict?.message_min || (lang === "fr" ? "Le message doit comporter au moins 10 caractères" : "Message must be at least 10 characters")),
+      website_url: z.string().optional(),
+      confirm_email: z.string().optional(),
+      honeypot: z.string().optional(),
+      timestamp: z.number().optional(),
     });
   }, [dict, lang]);
 
   const form = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema) as any,
+    resolver: zodResolver(contactSchema) as Resolver<ContactFormData>,
     defaultValues: {
       name: "",
       email: "",
       message: "",
+      website_url: "",
+      confirm_email: "",
+      honeypot: "",
     },
   });
 
   async function onSubmit(data: ContactFormData) {
     setIsLoading(true);
     try {
-      const result = await submitContactForm(data);
+      const payload: ContactFormData = {
+        ...data,
+        timestamp: formLoadedAt || getTimestamp(),
+      };
+      const result = await submitContactForm(payload);
       if (result.success) {
         setIsSubmitted(true);
         toast.success(dict?.success_toast || (lang === "fr" ? "Message envoyé avec succès !" : "Message sent successfully!"));
         form.reset();
+        setFormLoadedAt(getTimestamp());
       } else {
         toast.error(result.error || dict?.error_toast || (lang === "fr" ? "Échec de l'envoi du message." : "Failed to send message."));
       }
-    } catch (error) {
+    } catch {
       toast.error(dict?.unexpected_error || (lang === "fr" ? "Une erreur inattendue est survenue." : "An unexpected error occurred."));
     } finally {
       setIsLoading(false);
@@ -87,6 +130,7 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
             size="lg"
             onClick={() => {
               form.reset();
+              setFormLoadedAt(getTimestamp());
               setIsSubmitted(false);
             }}
             className="rounded-2xl px-8 cursor-pointer"
@@ -102,6 +146,18 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
     <div className="max-w-2xl mx-auto p-8 sm:p-10 rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/60 backdrop-blur-md shadow-soft-xl mt-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="opacity-0 absolute -z-10 select-none pointer-events-none h-0 w-0 overflow-hidden" aria-hidden="true">
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              {...form.register("website_url")}
+            />
+          </div>
+
+          <input type="hidden" name="timestamp" value={formLoadedAt} readOnly suppressHydrationWarning />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <FormField
               control={form.control}
