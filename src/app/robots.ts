@@ -4,6 +4,15 @@ import { brandConfig } from '@/config/brand.config';
 
 export const dynamic = 'force-dynamic';
 
+const DEFAULT_DISALLOW = [
+    '/private/',
+    '/admin/',
+    '/*/admin/',
+    '/checkout/',
+    '/*/checkout/',
+    '/api/',
+];
+
 export default async function robots(): Promise<MetadataRoute.Robots> {
     let hostBaseUrl: string | undefined;
     try {
@@ -38,19 +47,39 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
 
     const baseUrl = rawBaseUrl.replace(/\/+$/, '');
 
-    return {
-        rules: {
+    const isArtFate =
+        process.env.NEXT_PUBLIC_BRAND === 'art-fate' ||
+        process.env.BRAND === 'art-fate' ||
+        brandConfig.identity.id === 'art-fate';
+
+    const customDisallow = brandConfig.seo?.robots?.disallow;
+    const customDisallowArray = Array.isArray(customDisallow)
+        ? customDisallow
+        : customDisallow
+            ? [customDisallow]
+            : [];
+
+    const disallowList = Array.from(
+        new Set([...customDisallowArray, ...DEFAULT_DISALLOW])
+    );
+
+    const rules: MetadataRoute.Robots['rules'] = [
+        {
             userAgent: '*',
-            allow: '/',
-            disallow: [
-                '/private/',
-                '/admin/',
-                '/*/admin/',
-                '/checkout/',
-                '/*/checkout/',
-                '/api/',
-            ],
+            allow: brandConfig.seo?.robots?.allow ?? '/',
+            disallow: disallowList,
         },
+    ];
+
+    if (isArtFate) {
+        rules.push({
+            userAgent: 'Meta-ExternalAgent',
+            disallow: '/',
+        });
+    }
+
+    return {
+        rules,
         sitemap: `${baseUrl}/sitemap.xml`,
     };
 }
