@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, HelpCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { adminDb } from "@/lib/firebase-admin";
 import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
@@ -268,12 +268,6 @@ export default async function Home({
         .filter((item) => item.question.length > 0 && item.answer.length > 0)
     : [];
 
-  const faqHeadingTitle =
-    getLocalizedField(storeSettings.faqSection?.title, lang) ||
-    (isFr ? "Questions fréquentes" : "Frequently Asked Questions");
-  const faqHeadingSubtitle =
-    getLocalizedField(storeSettings.faqSection?.subtitle, lang) || "";
-
   const orgConfig = resolveOrganizationSeoConfig(storeSettings, baseUrl);
   const graphNodes: Array<Record<string, unknown>> = [
     buildOrganizationNode(orgConfig),
@@ -448,57 +442,7 @@ export default async function Home({
         )}
       </section>
 
-      {localizedFaqs.length > 0 && (
-        <section
-          aria-labelledby="home-faq-heading"
-          className="relative w-full py-16 md:py-24"
-        >
-          <div className="w-full max-w-7xl mx-auto px-6 md:px-16">
-            <div className="max-w-3xl mx-auto text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
-                <HelpCircle className="w-3.5 h-3.5 text-primary" />
-                <span>FAQ</span>
-              </div>
-              <h2
-                id="home-faq-heading"
-                className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mb-4"
-              >
-                {faqHeadingTitle}
-              </h2>
-              {faqHeadingSubtitle && (
-                <p className="text-base text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-                  {faqHeadingSubtitle}
-                </p>
-              )}
-            </div>
-
-            <div className="max-w-3xl mx-auto border-b border-black/[0.08] dark:border-white/10">
-              {localizedFaqs.map((faq, index) => (
-                <details
-                  key={`home-faq-${index}`}
-                  open={index === 0}
-                  className="group border-t border-black/[0.08] dark:border-white/10 transition-colors duration-200 open:border-primary/40 dark:open:border-primary/40"
-                >
-                  <summary className="w-full flex items-center justify-between py-6 text-left transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden group-hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl">
-                    <span className="text-base sm:text-lg font-medium text-foreground pr-6 transition-colors group-hover:text-primary">
-                      {faq.question}
-                    </span>
-                    <span className="size-8 rounded-full flex items-center justify-center bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10 shrink-0 transition-all duration-300 group-open:bg-primary/10 group-open:border-primary/30 group-open:text-primary group-open:rotate-180">
-                      <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </span>
-                  </summary>
-                  <div className="pb-6 pt-1 text-base text-muted-foreground leading-relaxed whitespace-pre-line">
-                    {faq.answer}
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       <CmsBlockRenderer
-        blocks={["about", "reviews", "contact"]}
         storeSettings={storeSettings}
         lang={lang}
         dict={dict}

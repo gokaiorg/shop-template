@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { ChevronDown, HelpCircle } from "lucide-react";
 import { adminDb } from "@/lib/firebase-admin";
 import { Category, Product, ProductMetadata } from "@/types/database";
 import { getDictionary } from "@/lib/dictionaries";
@@ -20,12 +19,10 @@ import { ProductSpecifications } from "@/components/product/ProductSpecification
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import {
   buildBreadcrumbNode,
-  buildFaqNode,
   buildJsonLdGraph,
   buildOrganizationNode,
   buildProductNode,
   buildWebsiteNode,
-  FaqItemInput,
 } from "@/lib/seo/json-ld";
 import {
   constructLocalizedMetadata,
@@ -607,20 +604,6 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
     },
   ];
 
-  const rawFaqItems = storeSettings.faqSection?.items || [];
-  const faqEnabled = Boolean(
-    storeSettings.faqSection?.enabled ||
-      storeSettings.faqSection?.status === "active"
-  );
-  const localizedFaqs: FaqItemInput[] = faqEnabled
-    ? rawFaqItems
-        .map((item) => ({
-          question: getLocalizedField(item.question, lang).trim(),
-          answer: getLocalizedField(item.answer, lang).trim(),
-        }))
-        .filter((item) => item.question.length > 0 && item.answer.length > 0)
-    : [];
-
   const orgConfig = resolveOrganizationSeoConfig(storeSettings, baseUrl);
   const graphNodes: Array<Record<string, unknown>> = [
     buildOrganizationNode(orgConfig),
@@ -628,10 +611,6 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
     buildBreadcrumbNode(productUrl, productBreadcrumbs),
     buildProductNode(productSeoInput, baseUrl),
   ];
-
-  if (localizedFaqs.length > 0) {
-    graphNodes.push(buildFaqNode(productUrl, localizedFaqs));
-  }
 
   const jsonLdGraph = buildJsonLdGraph(graphNodes);
   const specs = product.metadata || product.customSpecs;
@@ -763,50 +742,6 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
           </div>
         </div>
       </section>
-
-      {localizedFaqs.length > 0 && (
-        <section
-          aria-labelledby="product-faq-heading"
-          className="mt-16 pt-12 border-t border-zinc-200/80 dark:border-zinc-800"
-        >
-          <div className="max-w-3xl mx-auto text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
-              <HelpCircle className="w-3.5 h-3.5 text-primary" />
-              <span>FAQ</span>
-            </div>
-            <h2
-              id="product-faq-heading"
-              className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground"
-            >
-              {lang === "fr"
-                ? "Questions fréquentes"
-                : "Frequently Asked Questions"}
-            </h2>
-          </div>
-
-          <div className="max-w-3xl mx-auto border-b border-black/[0.08] dark:border-white/10">
-            {localizedFaqs.map((faq, index) => (
-              <details
-                key={`product-faq-${index}`}
-                open={index === 0}
-                className="group border-t border-black/[0.08] dark:border-white/10 transition-colors duration-200 open:border-primary/40 dark:open:border-primary/40"
-              >
-                <summary className="w-full flex items-center justify-between py-6 text-left transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden group-hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl">
-                  <span className="text-base sm:text-lg font-medium text-foreground pr-6 transition-colors group-hover:text-primary">
-                    {faq.question}
-                  </span>
-                  <span className="size-8 rounded-full flex items-center justify-center bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10 shrink-0 transition-all duration-300 group-open:bg-primary/10 group-open:border-primary/30 group-open:text-primary group-open:rotate-180">
-                    <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </span>
-                </summary>
-                <div className="pb-6 pt-1 text-base text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {faq.answer}
-                </div>
-              </details>
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

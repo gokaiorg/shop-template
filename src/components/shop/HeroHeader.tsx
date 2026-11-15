@@ -80,7 +80,7 @@ export function HeroHeader({
         </div>
       )}
 
-      <div className="relative z-10 bg-white/85 dark:bg-slate-950/85 backdrop-blur-md shadow-xl border border-white/40 dark:border-white/10 p-8 sm:p-12 md:p-14 rounded-3xl max-w-3xl mx-auto flex flex-col items-center">
+      <div className="relative z-10 glass-2-card p-8 sm:p-12 md:p-14 rounded-3xl max-w-3xl mx-auto shadow-soft-xl border border-white/40 dark:border-white/10 flex flex-col items-center">
         <h1 className="max-w-3xl text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50 mb-6 drop-shadow-xs">
           {title}
         </h1>

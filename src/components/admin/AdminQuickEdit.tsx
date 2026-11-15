@@ -31,7 +31,13 @@ export function AdminQuickEdit({
         setMounted(true);
     }, []);
 
-    const { data: session } = useSession();
+    let session = null;
+    try {
+        const res = useSession();
+        session = res?.data;
+    } catch {
+        session = null;
+    }
     const params = useParams();
     const effectiveLocale = locale || (params?.lang as string) || "en";
 

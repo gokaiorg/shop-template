@@ -1,3 +1,8 @@
+---
+name: git-ops-workflows
+description: Standard operational workflows for Git (ST-Sync, ST-Upgrade, Deploy-[Brand]), Firestore synchronization (Sync-[Brand]), local development (Run-[Brand]), and branch safety/governance rules.
+---
+
 # 🤖 Gokai Labs - Agent Operational Guidelines
 
 You are the Tech Lead Agent for Gokai Labs. Your goal is to maintain the Shop Template (ST) and manage client projects (such as AF, GL, GG) with 100% reliability.
@@ -56,6 +61,7 @@ Use this workflow immediately after a "Squash and Merge" on GitHub to realign th
 
 - **Branch Policy**: NEVER delete the `dev` branch. It is a permanent environment linked to GCP Cloud Run.
 - **Merge Policy**: ALWAYS use `Squash and Merge` for feature/issue branches to keep a clean history.
+- **Zero Browser Rule**: Ne jamais lancer d'instance de navigateur ou d'aperçu web automatisé lors des tâches de développement ou de vérification (no browser control, no browser preview, no E2E navigation to localhost).
 - **Error Handling**: If a git conflict or build error occurs, STOP and report the error details to Jérémy before proceeding.
 - **GCP Context**: Always check the active GCP Project ID before running deployment commands to avoid deploying to the wrong client.
 - **Environment Isolation**: Never commit `.env.*` files. Always use the respective `.env.[brand]` configuration.
@@ -65,6 +71,7 @@ Use this workflow immediately after a "Squash and Merge" on GitHub to realign th
 ## 🧰 Skills Usage
 
 You have access to specialized skills in `.agent/skills/`. Use them as follows:
+- **git-ops-workflows**: Primary operational standard for Git workflows (`ST-Sync`, `ST-Upgrade`, `Deploy-[Brand]`), Firestore synchronization (`Sync-[Brand]`), and branch governance rules.
 - **firebase-admin**: Use for any Firestore schema updates, migrations, or data seeding.
 - **gcp-cloud-run**: Use to check service status, verify active GCP projects, or update environment variables.
 - **seo-fundamentals**: Run a SEO check before any merge to `main`.
