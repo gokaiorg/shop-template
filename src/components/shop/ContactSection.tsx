@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Mail } from "lucide-react";
 import { ContactSectionSettings } from "@/types/database";
 import { getLocalizedField } from "@/lib/i18n";
@@ -9,10 +10,11 @@ interface ContactSectionProps {
     contactSection?: ContactSectionSettings;
     locale?: string;
     lang?: string;
-    dict?: any;
+    dict?: Record<string, unknown>;
     className?: string;
     forceDisplay?: boolean;
     as?: "section" | "div";
+    initialArtwork?: string;
 }
 
 export function ContactSection({
@@ -23,6 +25,7 @@ export function ContactSection({
     className = "",
     forceDisplay = false,
     as: Component = "section",
+    initialArtwork,
 }: ContactSectionProps) {
     const activeLocale = locale || lang || "en";
 
@@ -37,7 +40,7 @@ export function ContactSection({
 
     const description = getLocalizedField(contactSection?.description, activeLocale) || "";
 
-    const contactDict = dict?.contact || dict;
+    const contactDict = (dict?.contact as Record<string, unknown> | undefined) || dict;
 
     return (
         <Component
@@ -67,7 +70,9 @@ export function ContactSection({
                 </div>
 
                 <div className="max-w-2xl mx-auto">
-                    <ContactForm lang={activeLocale} dict={contactDict} />
+                    <Suspense fallback={null}>
+                        <ContactForm lang={activeLocale} dict={contactDict} initialArtwork={initialArtwork} />
+                    </Suspense>
                 </div>
             </div>
         </Component>

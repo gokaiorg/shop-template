@@ -56,7 +56,9 @@ export function constructSiteMetadata({
         icons: {
             icon: [
                 { url: activeIcon, sizes: 'any' },
-                { url: '/favicon.ico' },
+            ],
+            shortcut: [
+                { url: activeIcon },
             ],
             apple: [
                 { url: activeIcon },

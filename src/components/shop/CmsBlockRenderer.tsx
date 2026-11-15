@@ -1,5 +1,5 @@
 import React from "react";
-import { StoreSettings } from "@/types/database";
+import { GoogleReview, StoreSettings } from "@/types/database";
 import { AboutSection } from "@/components/shop/AboutSection";
 import { FaqAccordion } from "@/components/shop/FaqAccordion";
 import { ContactSection } from "@/components/shop/ContactSection";
@@ -7,149 +7,169 @@ import { ReviewBlock } from "@/components/shop/ReviewBlock";
 import { cn } from "@/lib/utils";
 
 export interface CmsBlockRendererProps {
-    blocks?: string[];
-    storeSettings: StoreSettings;
-    lang: string;
-    dict?: any;
-    forceDisplay?: boolean;
-    className?: string;
+  blocks?: string[];
+  storeSettings: StoreSettings;
+  lang: string;
+  dict?: Record<string, unknown>;
+  forceDisplay?: boolean;
+  className?: string;
+  initialReviews?: GoogleReview[];
+  initialRating?: number | null;
+  initialTotalRatings?: number | null;
+  initialArtwork?: string;
 }
 
 const DEFAULT_BLOCK_ORDER = ["about", "reviews", "faq", "contact"];
 
 export function CmsBlockRenderer({
-    blocks,
-    storeSettings,
-    lang,
-    dict,
-    forceDisplay = false,
-    className,
+  blocks,
+  storeSettings,
+  lang,
+  dict,
+  forceDisplay = false,
+  className,
+  initialReviews,
+  initialRating = null,
+  initialTotalRatings = null,
+  initialArtwork,
 }: CmsBlockRendererProps) {
-    if (!storeSettings) {
-        return null;
+  if (!storeSettings) {
+    return null;
+  }
+
+  if (blocks !== undefined && blocks.length === 0) {
+    return null;
+  }
+
+  const isModularPage = blocks !== undefined;
+  const shouldForce = forceDisplay || isModularPage;
+
+  const targetBlocks = blocks !== undefined ? blocks : DEFAULT_BLOCK_ORDER;
+  const renderedBlocks: { key: string; component: React.ReactNode }[] = [];
+
+  targetBlocks.forEach((blockKey) => {
+    if (blockKey === "about") {
+      const isEnabled =
+        shouldForce || Boolean(storeSettings.aboutSection?.enabled);
+      const hasContent = Boolean(
+        storeSettings.aboutSection?.title ||
+          storeSettings.aboutSection?.description ||
+          (storeSettings.aboutSection?.images &&
+            storeSettings.aboutSection.images.length > 0)
+      );
+      if (isEnabled && storeSettings.aboutSection && hasContent) {
+        renderedBlocks.push({
+          key: "about",
+          component: (
+            <AboutSection
+              aboutSection={storeSettings.aboutSection}
+              lang={lang}
+              forceDisplay={shouldForce}
+              as="div"
+            />
+          ),
+        });
+      }
+    } else if (blockKey === "reviews") {
+      const isEnabled =
+        shouldForce ||
+        Boolean(
+          storeSettings.reviewSection?.enabled ||
+            storeSettings.reviewSection?.status === "active"
+        );
+      const hasPlaceId = Boolean(storeSettings.reviewSection?.placeId?.trim());
+      if (
+        isEnabled &&
+        storeSettings.reviewSection &&
+        (hasPlaceId || shouldForce)
+      ) {
+        renderedBlocks.push({
+          key: "reviews",
+          component: (
+            <ReviewBlock
+              reviewSection={storeSettings.reviewSection}
+              lang={lang}
+              forceDisplay={shouldForce}
+              as="div"
+              initialReviews={initialReviews}
+              initialRating={initialRating}
+              initialTotalRatings={initialTotalRatings}
+            />
+          ),
+        });
+      }
+    } else if (blockKey === "faq") {
+      const isEnabled =
+        shouldForce ||
+        Boolean(
+          storeSettings.faqSection?.enabled ||
+            storeSettings.faqSection?.status === "active"
+        );
+      const hasItems =
+        Array.isArray(storeSettings.faqSection?.items) &&
+        storeSettings.faqSection.items.length > 0;
+      if (isEnabled && storeSettings.faqSection && hasItems) {
+        renderedBlocks.push({
+          key: "faq",
+          component: (
+            <FaqAccordion
+              faqSection={storeSettings.faqSection}
+              lang={lang}
+              forceDisplay={shouldForce}
+              as="div"
+            />
+          ),
+        });
+      }
+    } else if (blockKey === "contact") {
+      const isEnabled =
+        shouldForce || Boolean(storeSettings.contactSection?.enabled);
+      if (isEnabled && storeSettings.contactSection) {
+        renderedBlocks.push({
+          key: "contact",
+          component: (
+            <ContactSection
+              contactSection={storeSettings.contactSection}
+              lang={lang}
+              dict={dict}
+              forceDisplay={shouldForce}
+              as="div"
+              initialArtwork={initialArtwork}
+            />
+          ),
+        });
+      }
     }
+  });
 
-    // If blocks is explicitly provided (e.g. activeBlocks from a page), respect it strictly.
-    // If it is an empty array, no blocks should be rendered.
-    if (blocks !== undefined && blocks.length === 0) {
-        return null;
-    }
+  if (renderedBlocks.length === 0) {
+    return null;
+  }
 
-    // Modular pages display their explicitly selected blocks regardless of the global/homepage toggle.
-    // The global activation in /admin/blocks controls display on the home page.
-    const isModularPage = blocks !== undefined;
-    const shouldForce = forceDisplay || isModularPage;
+  return (
+    <div
+      className={cn(
+        "relative flex flex-col gap-y-24 md:gap-y-32 w-full pb-24 md:pb-32",
+        className
+      )}
+    >
+      <div
+        className="absolute inset-0 -z-10 pointer-events-none overflow-hidden"
+        aria-hidden="true"
+      >
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-glow-ambient opacity-80 blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 -left-48 w-[600px] h-[600px] bg-glow-primary opacity-60 blur-3xl pointer-events-none" />
+        <div className="absolute top-2/3 -right-48 w-[650px] h-[650px] bg-glow-accent opacity-50 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-glow-subtle opacity-70 blur-3xl pointer-events-none" />
+      </div>
 
-    const targetBlocks = blocks !== undefined ? blocks : DEFAULT_BLOCK_ORDER;
-    const renderedBlocks: { key: string; component: React.ReactNode }[] = [];
-
-    targetBlocks.forEach((blockKey) => {
-        if (blockKey === "about") {
-            const isEnabled = shouldForce || Boolean(storeSettings.aboutSection?.enabled);
-            const hasContent = Boolean(
-                storeSettings.aboutSection?.title ||
-                storeSettings.aboutSection?.description ||
-                (storeSettings.aboutSection?.images && storeSettings.aboutSection.images.length > 0)
-            );
-            if (isEnabled && storeSettings.aboutSection && hasContent) {
-                renderedBlocks.push({
-                    key: "about",
-                    component: (
-                        <AboutSection
-                            aboutSection={storeSettings.aboutSection}
-                            lang={lang}
-                            forceDisplay={shouldForce}
-                            as="div"
-                        />
-                    ),
-                });
-            }
-        } else if (blockKey === "reviews") {
-            const isEnabled =
-                shouldForce ||
-                Boolean(storeSettings.reviewSection?.enabled || storeSettings.reviewSection?.status === "active");
-            const hasPlaceId = Boolean(storeSettings.reviewSection?.placeId?.trim());
-            if (isEnabled && storeSettings.reviewSection && (hasPlaceId || shouldForce)) {
-                renderedBlocks.push({
-                    key: "reviews",
-                    component: (
-                        <ReviewBlock
-                            reviewSection={storeSettings.reviewSection}
-                            lang={lang}
-                            forceDisplay={shouldForce}
-                            as="div"
-                        />
-                    ),
-                });
-            }
-        } else if (blockKey === "faq") {
-            const isEnabled =
-                shouldForce ||
-                Boolean(storeSettings.faqSection?.enabled || storeSettings.faqSection?.status === "active");
-            const hasItems =
-                Array.isArray(storeSettings.faqSection?.items) &&
-                storeSettings.faqSection.items.length > 0;
-            if (isEnabled && storeSettings.faqSection && hasItems) {
-                renderedBlocks.push({
-                    key: "faq",
-                    component: (
-                        <FaqAccordion
-                            faqSection={storeSettings.faqSection}
-                            lang={lang}
-                            forceDisplay={shouldForce}
-                            as="div"
-                        />
-                    ),
-                });
-            }
-        } else if (blockKey === "contact") {
-            const isEnabled = shouldForce || Boolean(storeSettings.contactSection?.enabled);
-            if (isEnabled && storeSettings.contactSection) {
-                renderedBlocks.push({
-                    key: "contact",
-                    component: (
-                        <ContactSection
-                            contactSection={storeSettings.contactSection}
-                            lang={lang}
-                            dict={dict}
-                            forceDisplay={shouldForce}
-                            as="div"
-                        />
-                    ),
-                });
-            }
-        }
-    });
-
-    if (renderedBlocks.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className={cn("relative flex flex-col gap-y-24 md:gap-y-32 w-full pb-24 md:pb-32", className)}>
-            {/* Ambient Glows: positioned in absolute -z-10 behind the component flow */}
-            <div
-                className="absolute inset-0 -z-10 pointer-events-none overflow-hidden"
-                aria-hidden="true"
-            >
-                {/* Radial ambient glow at the top */}
-                <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-glow-ambient opacity-80 blur-3xl pointer-events-none" />
-                {/* Primary theme radial glow on upper left */}
-                <div className="absolute top-1/4 -left-48 w-[600px] h-[600px] bg-glow-primary opacity-60 blur-3xl pointer-events-none" />
-                {/* Accent theme radial glow on lower right */}
-                <div className="absolute top-2/3 -right-48 w-[650px] h-[650px] bg-glow-accent opacity-50 blur-3xl pointer-events-none" />
-                {/* Subtle base radial glow at the bottom */}
-                <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-glow-subtle opacity-70 blur-3xl pointer-events-none" />
-            </div>
-
-            {/* Injected block components, each wrapped in a semantic <section> with m-0 */}
-            {renderedBlocks.map(({ key, component }) => (
-                <section key={key} className="m-0 relative w-full">
-                    {component}
-                </section>
-            ))}
-        </div>
-    );
+      {renderedBlocks.map(({ key, component }) => (
+        <section key={key} className="m-0 relative w-full">
+          {component}
+        </section>
+      ))}
+    </div>
+  );
 }
 
 export { CmsBlockRenderer as CmsBlocksRenderer };

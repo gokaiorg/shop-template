@@ -11,6 +11,16 @@ interface StorefrontThemeManagerProps {
   forcedTheme?: string;
 }
 
+function setStyleIfChanged(
+  element: HTMLElement,
+  property: string,
+  value: string
+): void {
+  if (element.style.getPropertyValue(property) !== value) {
+    element.style.setProperty(property, value);
+  }
+}
+
 export function StorefrontThemeManager({
   isSquared,
   storefrontFont,
@@ -21,7 +31,8 @@ export function StorefrontThemeManager({
   const isAdmin = pathname?.includes("/admin") ?? false;
   const { resolvedTheme, theme: currentTheme, setTheme } = useTheme();
 
-  const effectiveTheme = forcedTheme || resolvedTheme || currentTheme || defaultTheme;
+  const effectiveTheme =
+    forcedTheme || resolvedTheme || currentTheme || defaultTheme;
 
   useEffect(() => {
     if (forcedTheme && currentTheme !== forcedTheme) {
@@ -30,47 +41,74 @@ export function StorefrontThemeManager({
   }, [forcedTheme, currentTheme, setTheme]);
 
   useEffect(() => {
-    const root = document.documentElement;
+    const frameId = window.requestAnimationFrame(() => {
+      const root = document.documentElement;
+      const body = document.body;
 
-    if (effectiveTheme === "dark") {
-      if (!root.classList.contains("dark")) {
-        root.classList.add("dark");
+      if (effectiveTheme === "dark") {
+        if (!root.classList.contains("dark")) {
+          root.classList.add("dark");
+        }
+      } else if (effectiveTheme === "light") {
+        if (root.classList.contains("dark")) {
+          root.classList.remove("dark");
+        }
       }
-    } else if (effectiveTheme === "light") {
-      if (root.classList.contains("dark")) {
-        root.classList.remove("dark");
-      }
-    }
 
-    if (isAdmin) {
-      root.setAttribute("data-admin", "true");
-      root.setAttribute("data-admin-root", "true");
-      document.body.setAttribute("data-admin", "true");
-      document.body.setAttribute("data-admin-root", "true");
-      root.classList.remove("theme-squared");
-      root.style.setProperty("--font-storefront", "var(--font-geist-sans)");
-      root.style.setProperty("--font-sans", "var(--font-geist-sans)");
-      root.style.setProperty("--radius", "0.625rem");
-      document.body.style.setProperty("--font-storefront", "var(--font-geist-sans)");
-      document.body.style.setProperty("--font-sans", "var(--font-geist-sans)");
-      document.body.style.setProperty("font-family", "var(--font-geist-sans), sans-serif");
-    } else {
-      root.removeAttribute("data-admin");
-      root.removeAttribute("data-admin-root");
-      document.body.removeAttribute("data-admin");
-      document.body.removeAttribute("data-admin-root");
-      if (isSquared) {
-        root.classList.add("theme-squared");
-        root.style.setProperty("--radius", "0px");
+      if (isAdmin) {
+        if (root.getAttribute("data-admin") !== "true") {
+          root.setAttribute("data-admin", "true");
+          root.setAttribute("data-admin-root", "true");
+          body.setAttribute("data-admin", "true");
+          body.setAttribute("data-admin-root", "true");
+        }
+        if (root.classList.contains("theme-squared")) {
+          root.classList.remove("theme-squared");
+        }
+        setStyleIfChanged(root, "--font-storefront", "var(--font-geist-sans)");
+        setStyleIfChanged(root, "--font-sans", "var(--font-geist-sans)");
+        setStyleIfChanged(root, "--radius", "0.625rem");
+        setStyleIfChanged(body, "--font-storefront", "var(--font-geist-sans)");
+        setStyleIfChanged(body, "--font-sans", "var(--font-geist-sans)");
+        setStyleIfChanged(
+          body,
+          "font-family",
+          "var(--font-geist-sans), sans-serif"
+        );
       } else {
-        root.classList.remove("theme-squared");
-        root.style.removeProperty("--radius");
+        if (root.hasAttribute("data-admin")) {
+          root.removeAttribute("data-admin");
+          root.removeAttribute("data-admin-root");
+          body.removeAttribute("data-admin");
+          body.removeAttribute("data-admin-root");
+        }
+        if (isSquared) {
+          if (!root.classList.contains("theme-squared")) {
+            root.classList.add("theme-squared");
+          }
+          setStyleIfChanged(root, "--radius", "0px");
+        } else {
+          if (root.classList.contains("theme-squared")) {
+            root.classList.remove("theme-squared");
+          }
+          if (root.style.getPropertyValue("--radius")) {
+            root.style.removeProperty("--radius");
+          }
+        }
+        setStyleIfChanged(root, "--font-storefront", storefrontFont);
+        setStyleIfChanged(root, "--font-sans", "var(--font-storefront)");
+        setStyleIfChanged(body, "--font-storefront", storefrontFont);
+        setStyleIfChanged(
+          body,
+          "font-family",
+          "var(--font-storefront), sans-serif"
+        );
       }
-      root.style.setProperty("--font-storefront", storefrontFont);
-      root.style.setProperty("--font-sans", "var(--font-storefront)");
-      document.body.style.setProperty("--font-storefront", storefrontFont);
-      document.body.style.setProperty("font-family", "var(--font-storefront), sans-serif");
-    }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [isAdmin, isSquared, storefrontFont, effectiveTheme, pathname]);
 
   return null;

@@ -154,7 +154,10 @@
         "sort_by": "Trier par",
         "sort_featured": "Par défaut",
         "sort_price_asc": "Prix : croissant",
-        "sort_price_desc": "Prix : décroissant"
+        "sort_price_desc": "Prix : décroissant",
+        "inquireAcquire": "Acquérir",
+        "inquireSimilar": "Commander",
+        "inquirePiece": "Contact"
     },
     "home": {
         "shop_by_category": "Magasiner par catégorie",
