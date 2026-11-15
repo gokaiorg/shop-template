@@ -1,29 +1,27 @@
-# Dependencies and build outputs
 node_modules
 .next
 out
 build
 coverage
 
-# Version control and agent metadata
 .git
+.github
 .gitignore
+.firebase
 .jules
 .agent
 .gemini
 *.md
+generate-notebook-context.sh
 
-# Environment variables & secrets
 .env*
 !.env.production
 *-firebase-adminsdk-*.json
 
-# Assets & large local files
 art-fate-images
 .DS_Store
 tsconfig.tsbuildinfo
 
-# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -31,6 +29,6 @@ yarn-error.log*
 *.log
 dev_server.log
 
-# Docker files
 Dockerfile
 .dockerignore
+docker-compose.yml

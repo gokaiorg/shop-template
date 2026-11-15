@@ -123,6 +123,11 @@ export function FeaturedCategories({
                   fill
                   loading="lazy"
                   quality={75}
+                  unoptimized={
+                    typeof imageSrc === "string" &&
+                    (imageSrc.includes("firebasestorage.googleapis.com") ||
+                      imageSrc.includes("storage.googleapis.com"))
+                  }
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                 />

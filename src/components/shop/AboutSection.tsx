@@ -182,6 +182,11 @@ export function AboutSection({
                         fill
                         loading="lazy"
                         quality={75}
+                        unoptimized={
+                          typeof images[0] === "string" &&
+                          (images[0].includes("firebasestorage.googleapis.com") ||
+                            images[0].includes("storage.googleapis.com"))
+                        }
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                       />
@@ -208,6 +213,13 @@ export function AboutSection({
                                 fill
                                 loading="lazy"
                                 quality={75}
+                                unoptimized={
+                                  typeof imgUrl === "string" &&
+                                  (imgUrl.includes(
+                                    "firebasestorage.googleapis.com"
+                                  ) ||
+                                    imgUrl.includes("storage.googleapis.com"))
+                                }
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="object-cover transition-transform duration-700 ease-out hover:scale-105"
                               />

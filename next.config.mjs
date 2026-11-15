@@ -3,16 +3,9 @@ const nextConfig = {
   productionBrowserSourceMaps: true,
   compress: true,
   experimental: {
-    optimizePackageImports: [
-      "lucide-react",
-      "@radix-ui/react-icons",
-      "framer-motion",
-      "date-fns",
-    ],
+    optimizePackageImports: ["lucide-react", "radix-ui", "date-fns"],
   },
   images: {
-    loader: "custom",
-    loaderFile: "./src/lib/image-loader.ts",
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 31536000,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],

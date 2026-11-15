@@ -69,6 +69,11 @@ function HeaderContent({
                 height={40}
                 sizes="48px"
                 quality={75}
+                unoptimized={
+                  typeof logo.src === "string" &&
+                  (logo.src.includes("firebasestorage.googleapis.com") ||
+                    logo.src.includes("storage.googleapis.com"))
+                }
                 referrerPolicy="no-referrer"
                 className="h-8 w-8 object-contain"
               />

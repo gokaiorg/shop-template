@@ -61,6 +61,11 @@ export function HeroHeader({
             fetchPriority="high"
             sizes="100vw"
             quality={75}
+            unoptimized={
+              typeof backgroundImageUrl === "string" &&
+              (backgroundImageUrl.includes("firebasestorage.googleapis.com") ||
+                backgroundImageUrl.includes("storage.googleapis.com"))
+            }
             className="object-cover object-center pointer-events-none"
           />
           <div className="absolute inset-0 bg-black/25 dark:bg-black/45 pointer-events-none z-[1]" />

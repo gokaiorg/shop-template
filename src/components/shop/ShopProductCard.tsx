@@ -109,6 +109,11 @@ export function ShopProductCard({
           fill
           loading="lazy"
           quality={75}
+          unoptimized={
+            typeof imageUrl === "string" &&
+            (imageUrl.includes("firebasestorage.googleapis.com") ||
+              imageUrl.includes("storage.googleapis.com"))
+          }
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />
