@@ -1,33 +1,45 @@
-import { Geist, Geist_Mono, Inter, Space_Grotesk, Manrope, Jersey_25 } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Inter,
+  Space_Grotesk,
+  Manrope,
+  Jersey_25,
+} from "next/font/google";
 
 export const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
 });
 
 export const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
 });
 
 export const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
 });
 
 export const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
 });
 
 export const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
 });
 
 export const jersey25 = Jersey_25({
@@ -35,6 +47,7 @@ export const jersey25 = Jersey_25({
   variable: "--font-jersey-25",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
 });
 
 export type FontFamilyKey =
@@ -78,7 +91,8 @@ export const FONT_OPTIONS: Record<string, FontOption> = {
     id: "Space Grotesk",
     label: "Space Grotesk",
     cssVariable: "var(--font-space-grotesk)",
-    fontFamilyValue: "var(--font-space-grotesk, 'Space Grotesk'), 'Space Grotesk', sans-serif",
+    fontFamilyValue:
+      "var(--font-space-grotesk, 'Space Grotesk'), 'Space Grotesk', sans-serif",
     fontClass: spaceGrotesk.variable,
   },
   Manrope: {
@@ -92,14 +106,16 @@ export const FONT_OPTIONS: Record<string, FontOption> = {
     id: "Jersey 25",
     label: "Jersey 25",
     cssVariable: "var(--font-jersey-25)",
-    fontFamilyValue: "var(--font-jersey-25, 'Jersey 25'), 'Jersey 25', sans-serif",
+    fontFamilyValue:
+      "var(--font-jersey-25, 'Jersey 25'), 'Jersey 25', sans-serif",
     fontClass: jersey25.variable,
   },
   "Pixelify Sans": {
     id: "Jersey 25",
     label: "Jersey 25",
     cssVariable: "var(--font-jersey-25)",
-    fontFamilyValue: "var(--font-jersey-25, 'Jersey 25'), 'Jersey 25', sans-serif",
+    fontFamilyValue:
+      "var(--font-jersey-25, 'Jersey 25'), 'Jersey 25', sans-serif",
     fontClass: jersey25.variable,
   },
 };
@@ -142,7 +158,8 @@ export function getStorefrontFontVariable(fontFamily?: string): string {
       const lower = (fontFamily || "").trim().toLowerCase();
       if (lower.includes("space")) return "var(--font-space-grotesk)";
       if (lower.includes("manrope")) return "var(--font-manrope)";
-      if (lower.includes("jersey") || lower.includes("pixel")) return "var(--font-jersey-25)";
+      if (lower.includes("jersey") || lower.includes("pixel"))
+        return "var(--font-jersey-25)";
       if (lower.includes("inter")) return "var(--font-inter)";
       return "var(--font-geist-sans)";
     }
@@ -151,7 +168,8 @@ export function getStorefrontFontVariable(fontFamily?: string): string {
 
 export function getFontConfig(fontFamily?: string): FontOption {
   const variable = getStorefrontFontVariable(fontFamily);
-  if (variable === "var(--font-space-grotesk)") return FONT_OPTIONS["Space Grotesk"];
+  if (variable === "var(--font-space-grotesk)")
+    return FONT_OPTIONS["Space Grotesk"];
   if (variable === "var(--font-manrope)") return FONT_OPTIONS["Manrope"];
   if (variable === "var(--font-jersey-25)") return FONT_OPTIONS["Jersey 25"];
   if (variable === "var(--font-inter)") return FONT_OPTIONS["Inter"];

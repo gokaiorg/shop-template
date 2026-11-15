@@ -1,171 +1,220 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-  async redirects() {
+  output: "standalone",
+  productionBrowserSourceMaps: true,
+  compress: true,
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@radix-ui/react-icons",
+      "framer-motion",
+      "date-fns",
+    ],
+  },
+  images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 31536000,
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.googleusercontent.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.shopify.com",
+        pathname: "/**",
+      },
+    ],
+  },
+  async headers() {
     return [
-      // 1. Racine des collections
       {
-        source: '/collections',
-        destination: '/en/artworks',
-        statusCode: 301,
+        source: "/:all*(svg|jpg|jpeg|png|webp|avif|gif|ico|woff|woff2)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
       },
       {
-        source: '/:locale(en|fr)/collections',
-        destination: '/en/artworks',
-        statusCode: 301,
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
       },
       {
-        source: '/collections/all',
-        destination: '/en/artworks',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/collections/all',
-        destination: '/en/artworks',
-        statusCode: 301,
-      },
-      {
-        source: '/collections-all',
-        destination: '/en/artworks',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/collections-all',
-        destination: '/en/artworks',
-        statusCode: 301,
-      },
-
-      // 2. Règle spécifique prioritaire : /collections/abstract
-      {
-        source: '/collections/abstract',
-        destination: '/en/artworks/abstract-and-more',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/collections/abstract',
-        destination: '/en/artworks/abstract-and-more',
-        statusCode: 301,
-      },
-
-      // 3. Produits au sein d'une collection
-      {
-        source: '/collections/:category/products/:slug',
-        destination: '/en/artworks/:category/:slug',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/collections/:category/products/:slug',
-        destination: '/en/artworks/:category/:slug',
-        statusCode: 301,
-      },
-
-      // 4. Catégories / Collections génériques
-      {
-        source: '/collections/:category',
-        destination: '/en/artworks/:category',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/collections/:category',
-        destination: '/en/artworks/:category',
-        statusCode: 301,
-      },
-
-      // 5. Pages institutionnelles & Artiste
-      {
-        source: '/pages/amann',
-        destination: '/en/amann',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/pages/amann',
-        destination: '/en/amann',
-        statusCode: 301,
-      },
-      {
-        source: '/amann',
-        destination: '/en/amann',
-        statusCode: 301,
-      },
-      {
-        source: '/pages/contact',
-        destination: '/en/contact',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/pages/contact',
-        destination: '/en/contact',
-        statusCode: 301,
-      },
-      {
-        source: '/pages/:slug',
-        destination: '/en/:slug',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/pages/:slug',
-        destination: '/en/:slug',
-        statusCode: 301,
-      },
-
-      // 6. Racines de repli globales
-      {
-        source: '/products',
-        destination: '/en/artworks',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/products',
-        destination: '/en/artworks',
-        statusCode: 301,
-      },
-      {
-        source: '/policies',
-        destination: '/en/about',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/policies',
-        destination: '/en/about',
-        statusCode: 301,
-      },
-      {
-        source: '/policies/:slug',
-        destination: '/en/about',
-        statusCode: 301,
-      },
-      {
-        source: '/:locale(en|fr)/policies/:slug',
-        destination: '/en/about',
-        statusCode: 301,
+        source: "/:path*",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+        ],
       },
     ];
   },
-  images: {
-    loader: 'custom',
-    loaderFile: './src/lib/image-loader.ts',
-    remotePatterns: [
+  async redirects() {
+    return [
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
+        source: "/collections",
+        destination: "/en/artworks",
+        statusCode: 301,
       },
       {
-        protocol: 'https',
-        hostname: 'firebasestorage.googleapis.com',
+        source: "/:locale(en|fr)/collections",
+        destination: "/en/artworks",
+        statusCode: 301,
       },
       {
-        protocol: 'https',
-        hostname: 'storage.googleapis.com',
+        source: "/collections/all",
+        destination: "/en/artworks",
+        statusCode: 301,
       },
       {
-        protocol: 'https',
-        hostname: 'cdn.shopify.com',
+        source: "/:locale(en|fr)/collections/all",
+        destination: "/en/artworks",
+        statusCode: 301,
       },
       {
-        protocol: 'https',
-        hostname: '*.googleusercontent.com',
+        source: "/collections-all",
+        destination: "/en/artworks",
+        statusCode: 301,
       },
-    ],
+      {
+        source: "/:locale(en|fr)/collections-all",
+        destination: "/en/artworks",
+        statusCode: 301,
+      },
+      {
+        source: "/collections/abstract",
+        destination: "/en/artworks/abstract-and-more",
+        statusCode: 301,
+      },
+      {
+        source: "/:locale(en|fr)/collections/abstract",
+        destination: "/en/artworks/abstract-and-more",
+        statusCode: 301,
+      },
+      {
+        source: "/collections/:category/products/:slug",
+        destination: "/en/artworks/:category/:slug",
+        statusCode: 301,
+      },
+      {
+        source: "/:locale(en|fr)/collections/:category/products/:slug",
+        destination: "/en/artworks/:category/:slug",
+        statusCode: 301,
+      },
+      {
+        source: "/collections/:category",
+        destination: "/en/artworks/:category",
+        statusCode: 301,
+      },
+      {
+        source: "/:locale(en|fr)/collections/:category",
+        destination: "/en/artworks/:category",
+        statusCode: 301,
+      },
+      {
+        source: "/pages/amann",
+        destination: "/en/amann",
+        statusCode: 301,
+      },
+      {
+        source: "/:locale(en|fr)/pages/amann",
+        destination: "/en/amann",
+        statusCode: 301,
+      },
+      {
+        source: "/amann",
+        destination: "/en/amann",
+        statusCode: 301,
+      },
+      {
+        source: "/pages/contact",
+        destination: "/en/contact",
+        statusCode: 301,
+      },
+      {
+        source: "/:locale(en|fr)/pages/contact",
+        destination: "/en/contact",
+        statusCode: 301,
+      },
+      {
+        source: "/pages/:slug",
+        destination: "/en/:slug",
+        statusCode: 301,
+      },
+      {
+        source: "/:locale(en|fr)/pages/:slug",
+        destination: "/en/:slug",
+        statusCode: 301,
+      },
+      {
+        source: "/products",
+        destination: "/en/artworks",
+        statusCode: 301,
+      },
+      {
+        source: "/:locale(en|fr)/products",
+        destination: "/en/artworks",
+        statusCode: 301,
+      },
+      {
+        source: "/policies",
+        destination: "/en/about",
+        statusCode: 301,
+      },
+      {
+        source: "/:locale(en|fr)/policies",
+        destination: "/en/about",
+        statusCode: 301,
+      },
+      {
+        source: "/policies/:slug",
+        destination: "/en/about",
+        statusCode: 301,
+      },
+      {
+        source: "/:locale(en|fr)/policies/:slug",
+        destination: "/en/about",
+        statusCode: 301,
+      },
+    ];
   },
 };
 
