@@ -6,11 +6,14 @@ export interface ImageLoaderProps {
   quality?: number;
 }
 
-export default function customImageLoader({
-  src,
-  width,
-  quality,
-}: ImageLoaderProps): string {
-  const q = quality || 75;
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${q}`;
+export default function customImageLoader({ src }: ImageLoaderProps): string {
+  if (
+    src.includes("firebasestorage.googleapis.com") ||
+    src.includes("storage.googleapis.com") ||
+    src.toLowerCase().includes(".avif")
+  ) {
+    return src;
+  }
+
+  return src;
 }
