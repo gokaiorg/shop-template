@@ -25,7 +25,7 @@ export async function GET() {
                 return new NextResponse(buffer, {
                     headers: {
                         'Content-Type': contentType,
-                        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
                     },
                 });
             }
@@ -46,7 +46,7 @@ export async function GET() {
             return new NextResponse(buffer, {
                 headers: {
                     'Content-Type': contentType,
-                    'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
                 },
             });
         }
@@ -58,7 +58,7 @@ export async function GET() {
             return new NextResponse(buffer, {
                 headers: {
                     'Content-Type': 'image/webp',
-                    'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
                 },
             });
         }

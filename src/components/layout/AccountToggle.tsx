@@ -233,7 +233,7 @@ export function AccountToggle({
             id={`${id}-button`}
             size="icon"
             aria-label={accountLabel}
-            className="relative rounded-full hover:opacity-90 transition-opacity overflow-hidden"
+            className="relative rounded-full hover:opacity-90 transition-opacity overflow-visible"
             suppressHydrationWarning
           >
             {userAvatarUrl && !avatarError ? (
@@ -253,7 +253,7 @@ export function AccountToggle({
             )}
             <span className="sr-only">{accountLabel}</span>
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white pointer-events-none">
+              <span className="absolute -top-1 -right-1 z-10 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white pointer-events-none">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}

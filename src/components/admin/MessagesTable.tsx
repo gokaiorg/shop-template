@@ -500,14 +500,14 @@ export function MessagesTable({ initialMessages, lang, dict }: MessagesTableProp
         <SheetContent side="right" className="w-full sm:max-w-lg p-6 flex flex-col justify-between overflow-y-auto">
           {selectedMessage && (
             <div className="space-y-6">
-              <SheetHeader className="text-left space-y-2 border-b pb-4">
-                <div className="flex items-center justify-between gap-2">
+              <SheetHeader className="text-left space-y-2 border-b pb-4 pr-8">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     {renderStatusBadge(selectedMessage.status)}
                     {renderOriginBadge(selectedMessage.source)}
                   </div>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
+                  <span className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
+                    <Calendar className="h-3.5 w-3.5 shrink-0" />
                     {formatDate(selectedMessage.createdAt)}
                   </span>
                 </div>

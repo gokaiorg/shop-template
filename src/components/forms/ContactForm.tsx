@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -46,14 +47,17 @@ interface ContactFormDict {
 interface ContactFormProps {
   lang?: string;
   dict?: ContactFormDict;
+  initialArtwork?: string;
 }
 
 const getTimestamp = () => Date.now();
 
-export function ContactForm({ lang = "en", dict }: ContactFormProps) {
+export function ContactForm({ lang = "en", dict, initialArtwork }: ContactFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formLoadedAt, setFormLoadedAt] = useState<number>(0);
+  const searchParams = useSearchParams();
+  const artworkParam = (initialArtwork || searchParams.get("artwork") || "").trim();
 
   useEffect(() => {
     setFormLoadedAt(getTimestamp());
@@ -77,12 +81,18 @@ export function ContactForm({ lang = "en", dict }: ContactFormProps) {
     defaultValues: {
       name: "",
       email: "",
-      message: "",
+      message: artworkParam,
       website_url: "",
       confirm_email: "",
       honeypot: "",
     },
   });
+
+  useEffect(() => {
+    if (artworkParam && !form.getValues("message")) {
+      form.setValue("message", artworkParam);
+    }
+  }, [artworkParam, form]);
 
   async function onSubmit(data: ContactFormData) {
     setIsLoading(true);

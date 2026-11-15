@@ -16,6 +16,7 @@ export interface CmsBlockRendererProps {
   initialReviews?: GoogleReview[];
   initialRating?: number | null;
   initialTotalRatings?: number | null;
+  initialArtwork?: string;
 }
 
 const DEFAULT_BLOCK_ORDER = ["about", "reviews", "faq", "contact"];
@@ -30,6 +31,7 @@ export function CmsBlockRenderer({
   initialReviews,
   initialRating = null,
   initialTotalRatings = null,
+  initialArtwork,
 }: CmsBlockRendererProps) {
   if (!storeSettings) {
     return null;
@@ -132,6 +134,7 @@ export function CmsBlockRenderer({
               dict={dict}
               forceDisplay={shouldForce}
               as="div"
+              initialArtwork={initialArtwork}
             />
           ),
         });

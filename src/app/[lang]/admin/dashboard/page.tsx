@@ -104,9 +104,9 @@ export default async function AdminDashboardPage({
 
             {/* Main Content Area */}
             {isCartEnabled ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
                     {/* Recent Orders Table */}
-                    <Card className="col-span-4 lg:col-span-5">
+                    <Card className="min-w-0 md:col-span-2 lg:col-span-5">
                         <CardHeader>
                             <div className="flex items-center gap-2 mb-1">
                                 <ShoppingCart className="w-5 h-5 text-muted-foreground" />
@@ -155,7 +155,7 @@ export default async function AdminDashboardPage({
                     </Card>
 
                     {/* Quick Actions & Profile */}
-                    <div className="col-span-2 lg:col-span-2 space-y-4">
+                    <div className="min-w-0 md:col-span-2 lg:col-span-2 space-y-4">
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center gap-2 mb-1">

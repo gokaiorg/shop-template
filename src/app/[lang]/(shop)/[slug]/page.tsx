@@ -214,6 +214,8 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
 export default async function UnifiedSlugPage(props: SlugPageProps) {
     const { lang, slug } = await props.params;
     const searchParams = await props.searchParams;
+    const rawArtwork = searchParams.artwork;
+    const initialArtwork = typeof rawArtwork === "string" ? rawArtwork.trim() : undefined;
 
     const storeSettings = await getStoreSettings();
     const localizedCatalogSlug = (
@@ -621,12 +623,11 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                         <p className="text-lg text-muted-foreground max-w-3xl mx-auto text-center">{pageIntro}</p>
                     </div>
                 )}
-                <article className="prose prose-zinc dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-4 prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg prose-a:text-primary prose-a:font-semibold prose-a:underline-offset-4 hover:prose-a:underline prose-img:rounded-lg prose-img:max-w-full prose-img:h-auto prose-img:shadow-soft-xl prose-img:border prose-img:border-border/60">
+                <article className="prose prose-zinc dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-4 prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg [&_a:not([class*='bg-'])]:text-primary prose-a:font-semibold prose-a:underline-offset-4 hover:prose-a:underline [&_a[class*='bg-']]:!text-primary-foreground [&_a[class*='bg-']]:!no-underline prose-img:rounded-lg prose-img:max-w-full prose-img:h-auto prose-img:shadow-soft-xl prose-img:border prose-img:border-border/60">
                     {parse(sanitizedContent)}
                 </article>
             </div>
 
-            {/* 6. Modular Page Blocks */}
             {activeBlocks.length > 0 && (
                 <CmsBlockRenderer
                     blocks={activeBlocks}
@@ -634,6 +635,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                     lang={lang}
                     dict={dict}
                     className="mt-8 md:mt-16"
+                    initialArtwork={initialArtwork}
                 />
             )}
         </main>

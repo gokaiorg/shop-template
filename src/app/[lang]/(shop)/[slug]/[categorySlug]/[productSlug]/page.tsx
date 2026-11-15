@@ -7,6 +7,7 @@ import { getDictionary } from "@/lib/dictionaries";
 import { Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { brandConfig, getIsCartEnabled } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
 import { ProductGallery } from "@/components/shop/ProductGallery";
@@ -703,7 +704,7 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
             </p>
           )}
 
-          {isCartEnabled && !product.hidePrice && (
+          {isCartEnabled && !product.hidePrice && !isOutOfStock ? (
             <div className="pt-2 pb-2">
               <AddToCartButton
                 product={product}
@@ -713,6 +714,23 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
                 size="lg"
                 className="w-full md:w-auto px-12"
               />
+            </div>
+          ) : (
+            <div className="pt-2 pb-2">
+              <Button
+                asChild
+                variant="default"
+                size="lg"
+                className="rounded-full shadow-xs cursor-pointer w-full md:w-auto px-12"
+              >
+                <Link href={`/${lang}/contact?artwork=${encodeURIComponent(title)}`}>
+                  {product.hidePrice
+                    ? shopDict.inquirePiece || (lang === "fr" ? "Contact" : "Inquire")
+                    : isOutOfStock
+                      ? shopDict.inquireSimilar || (lang === "fr" ? "Commander" : "Commission")
+                      : shopDict.inquireAcquire || (lang === "fr" ? "Acquérir" : "Acquire")}
+                </Link>
+              </Button>
             </div>
           )}
 
