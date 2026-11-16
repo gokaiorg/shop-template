@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "test-db.js",
     "update-shop-page.js",
+    "link-images.js",
     "test.mjs",
     "test-zustand.js",
   ]),

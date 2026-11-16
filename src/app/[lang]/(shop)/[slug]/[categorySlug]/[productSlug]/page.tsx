@@ -1,10 +1,9 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { adminDb } from "@/lib/firebase-admin";
-import { Category, Product, ProductMetadata } from "@/types/database";
+import { Category } from "@/types/database";
 import { getDictionary } from "@/lib/dictionaries";
-import { Locale } from "@/app/i18n-config";
+import { getDefaultLocale, getSupportedLocales, Locale } from "@/app/i18n-config";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,8 @@ import { brandConfig, getIsCartEnabled } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { getStoreSettings } from "@/lib/services/settings";
+import { getAllPublishedCategories } from "@/lib/services/categories";
+import { lookupProductBySlug } from "@/lib/services/products";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { ProductTranslationSync } from "@/components/shop/ProductTranslationSync";
 import { CategoryTranslationSync } from "@/components/shop/CategoryTranslationSync";
@@ -31,7 +32,7 @@ import {
   resolveSiteBaseUrl,
   toAbsoluteUrl,
 } from "@/lib/seo/metadata";
-import { ProductSeoInput } from "@/schemas/seo";
+import { normalizeCountryCode, ProductSeoInput } from "@/schemas/seo";
 
 interface ProductPageProps {
   params: Promise<{
@@ -40,145 +41,6 @@ interface ProductPageProps {
     categorySlug: string;
     productSlug: string;
   }>;
-}
-
-interface FirestoreDateLike {
-  toDate?: () => Date;
-}
-
-type ProductWithExtras = Product & {
-  sku?: string;
-  brand?: string;
-  customSpecs?: ProductMetadata;
-};
-
-function normalizeProduct(
-  docId: string,
-  data: Record<string, unknown>
-): ProductWithExtras {
-  const rawImages =
-    data?.images && Array.isArray(data.images) && data.images.length > 0
-      ? data.images.filter((img): img is string => typeof img === "string")
-      : typeof data?.imageUrl === "string"
-        ? [data.imageUrl]
-        : [];
-
-  const created = data?.createdAt as
-    | FirestoreDateLike
-    | string
-    | null
-    | undefined;
-  const updated = data?.updatedAt as
-    | FirestoreDateLike
-    | string
-    | null
-    | undefined;
-
-  return {
-    ...(data as unknown as ProductWithExtras),
-    id: docId,
-    images: rawImages,
-    imageUrl:
-      typeof data?.imageUrl === "string"
-        ? data.imageUrl
-        : rawImages[0] || null,
-    createdAt:
-      created &&
-      typeof created === "object" &&
-      typeof created.toDate === "function"
-        ? created.toDate().toISOString()
-        : typeof created === "string"
-          ? created
-          : new Date().toISOString(),
-    updatedAt:
-      updated &&
-      typeof updated === "object" &&
-      typeof updated.toDate === "function"
-        ? updated.toDate().toISOString()
-        : typeof updated === "string"
-          ? updated
-          : new Date().toISOString(),
-  };
-}
-
-interface ProductLookupResult {
-  product: ProductWithExtras | null;
-  correctSlugForLang?: string;
-  shouldRedirect?: boolean;
-}
-
-async function lookupProductBySlug(
-  lang: string,
-  slug: string
-): Promise<ProductLookupResult> {
-  const snapshot = await adminDb
-    .collection("products")
-    .where(`slug.${lang}`, "==", slug)
-    .limit(1)
-    .get();
-  if (!snapshot.empty) {
-    const doc = snapshot.docs[0];
-    return {
-      product: normalizeProduct(doc.id, doc.data()),
-      shouldRedirect: false,
-    };
-  }
-
-  const legacyField = lang === "fr" ? "slugFr" : "slugEn";
-  const legacySnapshot = await adminDb
-    .collection("products")
-    .where(legacyField, "==", slug)
-    .limit(1)
-    .get();
-  if (!legacySnapshot.empty) {
-    const doc = legacySnapshot.docs[0];
-    return {
-      product: normalizeProduct(doc.id, doc.data()),
-      shouldRedirect: false,
-    };
-  }
-
-  const allSnapshot = await adminDb.collection("products").get();
-  let crossLocaleProduct: ProductWithExtras | null = null;
-
-  for (const doc of allSnapshot.docs) {
-    const normalized = normalizeProduct(doc.id, doc.data());
-    const localizedSlug =
-      getLocalizedField(normalized.slug, lang) ||
-      (lang === "fr" ? normalized.slugFr : normalized.slugEn);
-
-    if (localizedSlug === slug) {
-      return { product: normalized, shouldRedirect: false };
-    }
-
-    const allProductSlugs = [
-      ...(typeof normalized.slug === "object" && normalized.slug
-        ? Object.values(normalized.slug)
-        : []),
-      normalized.slugEn,
-      normalized.slugFr,
-      normalized.id,
-    ].filter((s): s is string => typeof s === "string" && Boolean(s));
-
-    if (allProductSlugs.includes(slug) && !crossLocaleProduct) {
-      crossLocaleProduct = normalized;
-    }
-  }
-
-  if (crossLocaleProduct) {
-    const correctSlug =
-      getLocalizedField(crossLocaleProduct.slug, lang) ||
-      (lang === "fr" ? crossLocaleProduct.slugFr : crossLocaleProduct.slugEn);
-    if (correctSlug && correctSlug !== slug) {
-      return {
-        product: crossLocaleProduct,
-        correctSlugForLang: correctSlug,
-        shouldRedirect: true,
-      };
-    }
-  }
-
-  return { product: null };
 }
 
 function cleanDescription(text?: string | null, maxLength = 160): string {
@@ -208,13 +70,42 @@ function ensureMinDescription(
   return composed.length >= 20 ? composed : composed.padEnd(25, ".");
 }
 
+function findCategoryFromPool(
+  pool: Category[],
+  lang: string,
+  catIds: string[],
+  fallbackSlug: string
+): Category | null {
+  if (catIds.length > 0) {
+    const byId = pool.find((cat) => catIds.includes(cat.id));
+    if (byId) return byId;
+  }
+  if (fallbackSlug) {
+    const bySlug = pool.find((cat) => {
+      const locSlug =
+        (typeof cat.slug === "object" && cat.slug?.[lang]) ||
+        (lang === "fr" ? cat.slugFr : cat.slugEn) ||
+        getLocalizedField(cat.slug, lang);
+      return (
+        locSlug === fallbackSlug ||
+        cat.slugEn === fallbackSlug ||
+        cat.slugFr === fallbackSlug ||
+        cat.id === fallbackSlug
+      );
+    });
+    if (bySlug) return bySlug;
+  }
+  return null;
+}
+
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { lang, slug, categorySlug, productSlug } = await params;
-  const [lookupResult, storeSettings] = await Promise.all([
+  const [lookupResult, storeSettings, allCategories] = await Promise.all([
     lookupProductBySlug(lang, productSlug),
     getStoreSettings(),
+    getAllPublishedCategories(),
   ]);
 
   const localizedCatalogSlug = (
@@ -255,34 +146,9 @@ export async function generateMetadata({
 
   const catIds =
     product.categoryIds || (product.categoryId ? [product.categoryId] : []);
-  let categoryData: Category | null = product.category || null;
-  if (!categoryData && catIds.length > 0) {
-    try {
-      const catDoc = await adminDb
-        .collection("categories")
-        .doc(catIds[0])
-        .get();
-      if (catDoc.exists) {
-        categoryData = catDoc.data() as Category;
-      }
-    } catch {
-      categoryData = null;
-    }
-  }
-  if (!categoryData && categorySlug) {
-    try {
-      const snap = await adminDb
-        .collection("categories")
-        .where(`slug.${lang}`, "==", categorySlug)
-        .limit(1)
-        .get();
-      if (!snap.empty) {
-        categoryData = snap.docs[0].data() as Category;
-      }
-    } catch {
-      categoryData = null;
-    }
-  }
+  const categoryData =
+    product.category ||
+    findCategoryFromPool(allCategories, lang, catIds, categorySlug);
 
   const categoryName = categoryData
     ? getLocalizedField(categoryData.name, lang) ||
@@ -306,51 +172,49 @@ export async function generateMetadata({
 
   const firstImage =
     product.images && product.images.length > 0
-      ? product.images[0]
+      ? product.images.find((img) => img.trim().length > 0)
       : product.imageUrl || undefined;
 
   const baseUrl = resolveSiteBaseUrl(
-    process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      brandConfig.identity.url
   );
 
-  const enCatalogSlug =
-    (typeof storeSettings.catalogSlug === "object"
-      ? storeSettings.catalogSlug?.en
-      : "shop") || "shop";
-  const frCatalogSlug =
-    (typeof storeSettings.catalogSlug === "object"
-      ? storeSettings.catalogSlug?.fr
-      : "boutique") || "boutique";
+  const supportedLocales = getSupportedLocales();
+  const defaultLocale = getDefaultLocale();
 
-  const enCatSlug =
-    categoryData &&
-    typeof categoryData.slug === "object" &&
-    categoryData.slug?.en
-      ? categoryData.slug.en
-      : categoryData?.slugEn ||
-        getLocalizedField(categoryData?.slug, "en") ||
-        categorySlug;
-  const frCatSlug =
-    categoryData &&
-    typeof categoryData.slug === "object" &&
-    categoryData.slug?.fr
-      ? categoryData.slug.fr
-      : categoryData?.slugFr ||
-        getLocalizedField(categoryData?.slug, "fr") ||
+  const productLanguages = Object.fromEntries(
+    supportedLocales.map((loc) => {
+      const locCatalogSlug =
+        (typeof storeSettings.catalogSlug === "object"
+          ? getLocalizedField(storeSettings.catalogSlug, loc)
+          : storeSettings.catalogSlug) ||
+        (loc === "fr" ? "boutique" : "shop");
+
+      const legacyCatSlug =
+        loc === "fr" ? categoryData?.slugFr : categoryData?.slugEn;
+      const locCatSlug =
+        (categoryData &&
+          typeof categoryData.slug === "object" &&
+          categoryData.slug?.[loc]) ||
+        legacyCatSlug ||
+        getLocalizedField(categoryData?.slug, loc) ||
         categorySlug;
 
-  const enProdSlug =
-    typeof product.slug === "object" && product.slug?.en
-      ? product.slug.en
-      : product.slugEn ||
-        getLocalizedField(product.slug, "en") ||
+      const legacyProdSlug = loc === "fr" ? product.slugFr : product.slugEn;
+      const locProdSlug =
+        (typeof product.slug === "object" && product.slug?.[loc]) ||
+        legacyProdSlug ||
+        getLocalizedField(product.slug, loc) ||
         productSlug;
-  const frProdSlug =
-    typeof product.slug === "object" && product.slug?.fr
-      ? product.slug.fr
-      : product.slugFr ||
-        getLocalizedField(product.slug, "fr") ||
-        productSlug;
+
+      return [loc, `/${loc}/${locCatalogSlug}/${locCatSlug}/${locProdSlug}`];
+    })
+  );
+  productLanguages["x-default"] =
+    productLanguages[defaultLocale] ||
+    `/${defaultLocale}/${localizedCatalogSlug}/${categorySlug}/${productSlug}`;
 
   const artistOrVendor = product.artist?.trim() || product.vendor?.trim();
   const authorName = artistOrVendor || brandName;
@@ -362,11 +226,7 @@ export async function generateMetadata({
     siteName: brandName,
     baseUrl,
     canonicalPath: `/${lang}/${localizedCatalogSlug}/${categorySlug}/${productSlug}`,
-    languages: {
-      en: `${baseUrl}/en/${enCatalogSlug}/${enCatSlug}/${enProdSlug}`,
-      fr: `${baseUrl}/fr/${frCatalogSlug}/${frCatSlug}/${frProdSlug}`,
-      "x-default": `${baseUrl}/en/${enCatalogSlug}/${enCatSlug}/${enProdSlug}`,
-    },
+    languages: productLanguages,
     imageUrl: firstImage,
     type: "website",
     absoluteTitle: true,
@@ -385,7 +245,13 @@ export async function generateMetadata({
 export default async function SiloProductPage({ params }: ProductPageProps) {
   const { lang, slug, categorySlug, productSlug } = await params;
 
-  const storeSettings = await getStoreSettings();
+  const [storeSettings, lookupResult, allCategories, dict] = await Promise.all([
+    getStoreSettings(),
+    lookupProductBySlug(lang, productSlug),
+    getAllPublishedCategories(),
+    getDictionary(lang as Locale),
+  ]);
+
   const localizedCatalogSlug = (
     getLocalizedField(storeSettings.catalogSlug, lang) ||
     (typeof storeSettings.catalogSlug === "string"
@@ -397,8 +263,7 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const { product, shouldRedirect, correctSlugForLang } =
-    await lookupProductBySlug(lang, productSlug);
+  const { product, shouldRedirect, correctSlugForLang } = lookupResult;
 
   if (!product) {
     notFound();
@@ -406,16 +271,10 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
 
   const catIds =
     product.categoryIds || (product.categoryId ? [product.categoryId] : []);
-  let assignedCategories: Category[] = [];
-  if (catIds.length > 0) {
-    const catDocs = await Promise.all(
-      catIds.map((id) => adminDb.collection("categories").doc(id).get())
-    );
-    assignedCategories = catDocs
-      .filter((d) => d.exists)
-      .map((d) => ({ id: d.id, ...(d.data() as Omit<Category, "id">) }))
-      .filter((c) => (c.status ?? "published") === "published");
-  }
+  const categoryMap = new Map(allCategories.map((c) => [c.id, c]));
+  const assignedCategories: Category[] = catIds
+    .map((id) => categoryMap.get(id))
+    .filter((c): c is Category => Boolean(c));
 
   const activeCategory =
     assignedCategories.find((cat) => {
@@ -493,7 +352,6 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
       })()
     : null;
 
-  const dict = await getDictionary(lang as Locale);
   const shopDict = dict.shop;
   const rawCurrency = storeSettings.defaultCurrency || "EUR";
   const currency = rawCurrency.length === 3 ? rawCurrency.toUpperCase() : "EUR";
@@ -511,12 +369,13 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
     (lang === "fr" ? product.introFr : product.introEn) ||
     "";
 
-  const productImages =
+  const productImages = (
     product.images && product.images.length > 0
       ? product.images
       : product.imageUrl
         ? [product.imageUrl]
-        : [];
+        : []
+  ).filter((img): img is string => typeof img === "string" && img.trim().length > 0);
   const images =
     productImages.length > 0
       ? productImages
@@ -528,7 +387,9 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
   const isOutOfStock = (product.stock ?? 0) <= 0;
 
   const baseUrl = resolveSiteBaseUrl(
-    process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      brandConfig.identity.url
   );
   const catalogName =
     getLocalizedField(storeSettings.catalogTitle, lang) ||
@@ -539,14 +400,29 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
       primaryCatSlug
     : primaryCatSlug;
 
-  const absoluteImages = images.map((img) => toAbsoluteUrl(baseUrl, img));
+  const rawAbsoluteImages = images
+    .map((img) => toAbsoluteUrl(baseUrl, img))
+    .filter((img) => {
+      try {
+        new URL(img);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+  const absoluteImages =
+    rawAbsoluteImages.length > 0
+      ? rawAbsoluteImages
+      : [toAbsoluteUrl(baseUrl, "/brand/default/placeholder.webp")];
   const brandName =
-    product.brand ||
-    product.vendor ||
-    storeSettings.brandName ||
-    brandConfig.identity.name ||
-    "Store";
-  const sku = product.sku || product.id;
+    (
+      product.brand ||
+      product.vendor ||
+      storeSettings.brandName ||
+      brandConfig.identity.name ||
+      "Store"
+    ).trim() || "Store";
+  const sku = (product.sku || product.id || "").trim() || product.id;
 
   const productDescription = ensureMinDescription(
     description || intro || title,
@@ -557,25 +433,32 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
 
   const productUrl = `${baseUrl}/${lang}/${localizedCatalogSlug}/${primaryCatSlug}/${productSlug}`;
 
-  const validFromDate =
+  const parsedCreatedAt =
     typeof product.createdAt === "string" && product.createdAt.length > 0
-      ? new Date(product.createdAt).toISOString()
-      : new Date().toISOString();
+      ? new Date(product.createdAt)
+      : null;
+  const validFromDate =
+    parsedCreatedAt && !isNaN(parsedCreatedAt.getTime())
+      ? parsedCreatedAt.toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0];
   const nextYearDate = new Date();
   nextYearDate.setFullYear(nextYearDate.getFullYear() + 1);
-  const priceValidUntilDate = nextYearDate.toISOString();
+  const priceValidUntilDate = nextYearDate.toISOString().split("T")[0];
+  const countryCode = normalizeCountryCode(
+    storeSettings.seoCountry || brandConfig.contact?.address?.country
+  );
 
   const productSeoInput: ProductSeoInput = {
     id: product.id,
     sku,
-    name: title,
+    name: title.trim() || "Product",
     description: productDescription,
     url: productUrl,
     images: absoluteImages,
     brandName,
-    categoryName,
+    categoryName: categoryName.trim() || "Catalog",
     offer: {
-      price: Math.max(0, product.price ?? 0),
+      price: Math.max(0, Number(product.price) || 0),
       priceCurrency: currency,
       availability: isOutOfStock ? "OutOfStock" : "InStock",
       validFrom: validFromDate,
@@ -583,6 +466,7 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
       isDigitalOrService: false,
       shippingRate: 0,
       returnDays: 14,
+      countryCode,
     },
   };
 
@@ -605,7 +489,9 @@ export default async function SiloProductPage({ params }: ProductPageProps) {
     },
   ];
 
-  const orgConfig = resolveOrganizationSeoConfig(storeSettings, baseUrl);
+  const orgConfig = resolveOrganizationSeoConfig(storeSettings, baseUrl, {
+    locale: lang,
+  });
   const graphNodes: Array<Record<string, unknown>> = [
     buildOrganizationNode(orgConfig),
     buildWebsiteNode(baseUrl, brandName, lang),

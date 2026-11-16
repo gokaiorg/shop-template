@@ -46,7 +46,7 @@ function HeaderContent({
   const headerDict: Record<string, string> = dict.header || {};
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
       <div className="w-full max-w-7xl mx-auto flex h-16 items-center justify-between px-6 md:px-16">
         <div className="flex items-center gap-6 md:gap-10 h-full">
           <MobileNav
@@ -59,7 +59,7 @@ function HeaderContent({
           />
           <Link
             href={`/${lang}`}
-            className="flex items-center gap-2.5 shrink-0 group"
+            className="flex items-center gap-2.5 shrink-0 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-md"
           >
             <div className="relative h-8 w-8 shrink-0">
               <Image
@@ -67,13 +67,8 @@ function HeaderContent({
                 alt={logo.alt || `${brandName} Logo`}
                 width={40}
                 height={40}
-                sizes="48px"
+                sizes="40px"
                 quality={75}
-                unoptimized={
-                  typeof logo.src === "string" &&
-                  (logo.src.includes("firebasestorage.googleapis.com") ||
-                    logo.src.includes("storage.googleapis.com"))
-                }
                 referrerPolicy="no-referrer"
                 className="h-8 w-8 object-contain"
               />

@@ -115,7 +115,7 @@ export function FeaturedCategories({
               )}
               <Link
                 href={href}
-                className="group relative aspect-[16/9] w-full overflow-hidden rounded-2xl block shadow-md hover:shadow-xl transition-all"
+                className="group relative aspect-[16/9] w-full overflow-hidden rounded-2xl block shadow-md hover:shadow-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 <Image
                   src={imageSrc}
@@ -123,15 +123,11 @@ export function FeaturedCategories({
                   fill
                   loading="lazy"
                   quality={75}
-                  unoptimized={
-                    typeof imageSrc === "string" &&
-                    (imageSrc.includes("firebasestorage.googleapis.com") ||
-                      imageSrc.includes("storage.googleapis.com"))
-                  }
+                  referrerPolicy="no-referrer"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300" />
+                <div className="absolute inset-0 bg-black/55 group-hover:bg-black/65 transition-colors duration-300" />
                 <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
                   <h3 className="text-2xl md:text-3xl font-medium text-white relative z-10 tracking-tight drop-shadow-md group-hover:scale-105 transition-transform duration-300">
                     {catName}

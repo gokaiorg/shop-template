@@ -95,16 +95,16 @@ export function AboutSection({
             className={cn(
               hasImages
                 ? "lg:col-span-6 xl:col-span-5 relative z-10 flex flex-col space-y-6"
-                : "text-center p-8 sm:p-12 rounded-3xl border border-black/[0.06] dark:border-white/10 bg-white/40 dark:bg-white/[0.02] backdrop-blur-xl shadow-soft-xl space-y-6"
+                : "text-center p-8 sm:p-12 rounded-3xl border border-border/60 bg-white/85 dark:bg-zinc-900/80 backdrop-blur-xl shadow-soft-xl space-y-6"
             )}
           >
             <div
               className={cn(
-                "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider backdrop-blur-md shadow-xs",
+                "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-border/60 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider backdrop-blur-md shadow-xs",
                 hasImages ? "self-start" : "mx-auto"
               )}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
               <span>{activeLocale === "fr" ? "À Propos" : "About Us"}</span>
             </div>
 
@@ -145,7 +145,7 @@ export function AboutSection({
                     }
                   >
                     <span>{ctaLabel}</span>
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
                   </Link>
                 </Button>
               </div>
@@ -159,7 +159,7 @@ export function AboutSection({
                 aria-hidden="true"
               />
 
-              <div className="relative rounded-3xl border border-black/[0.06] dark:border-white/10 bg-white/40 dark:bg-white/[0.02] backdrop-blur-xl p-4 sm:p-6 lg:p-8 shadow-soft-xl">
+              <div className="relative rounded-3xl border border-border/60 bg-white/85 dark:bg-zinc-900/80 backdrop-blur-xl p-4 sm:p-6 lg:p-8 shadow-soft-xl">
                 <div
                   className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-24 h-24 rounded-full bg-linear-to-br from-primary/20 to-accent/20 blur-xl pointer-events-none"
                   aria-hidden="true"
@@ -182,11 +182,7 @@ export function AboutSection({
                         fill
                         loading="lazy"
                         quality={75}
-                        unoptimized={
-                          typeof images[0] === "string" &&
-                          (images[0].includes("firebasestorage.googleapis.com") ||
-                            images[0].includes("storage.googleapis.com"))
-                        }
+                        referrerPolicy="no-referrer"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                       />
@@ -213,13 +209,7 @@ export function AboutSection({
                                 fill
                                 loading="lazy"
                                 quality={75}
-                                unoptimized={
-                                  typeof imgUrl === "string" &&
-                                  (imgUrl.includes(
-                                    "firebasestorage.googleapis.com"
-                                  ) ||
-                                    imgUrl.includes("storage.googleapis.com"))
-                                }
+                                referrerPolicy="no-referrer"
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="object-cover transition-transform duration-700 ease-out hover:scale-105"
                               />
@@ -228,8 +218,8 @@ export function AboutSection({
                           </CarouselItem>
                         ))}
                       </CarouselContent>
-                      <CarouselPrevious className="left-4 opacity-90 hover:opacity-100 shadow-md cursor-pointer rounded-2xl bg-background/80 backdrop-blur-md border-border/80" />
-                      <CarouselNext className="right-4 opacity-90 hover:opacity-100 shadow-md cursor-pointer rounded-2xl bg-background/80 backdrop-blur-md border-border/80" />
+                      <CarouselPrevious className="left-4 opacity-90 hover:opacity-100 shadow-md cursor-pointer rounded-2xl bg-background/95 backdrop-blur-md border-border/80" />
+                      <CarouselNext className="right-4 opacity-90 hover:opacity-100 shadow-md cursor-pointer rounded-2xl bg-background/95 backdrop-blur-md border-border/80" />
                     </Carousel>
                   )}
                 </div>

@@ -1,7 +1,7 @@
 import React from "react";
 
 export interface ProductSpecificationsProps {
-    specifications?: Record<string, any> | null;
+    specifications?: object | null;
     lang: string;
     className?: string;
     id?: string;
@@ -30,9 +30,9 @@ function formatLabel(key: string, lang: string): string {
 
 function getDominanceColor(value: string): string {
     const valLower = value.toLowerCase();
-    if (valLower.includes("sativa")) return "text-[#d1fee5]";
-    if (valLower.includes("hybrid")) return "text-[#c0ef24]";
-    if (valLower.includes("indica")) return "text-[#ee9cc9]";
+    if (valLower.includes("sativa")) return "text-emerald-800 dark:text-[#d1fee5]";
+    if (valLower.includes("hybrid")) return "text-lime-900 dark:text-[#c0ef24]";
+    if (valLower.includes("indica")) return "text-pink-900 dark:text-[#ee9cc9]";
     return "text-foreground";
 }
 
@@ -46,17 +46,15 @@ export function ProductSpecifications({
         return null;
     }
 
-    const customSpecs = specifications;
+    const customSpecs = specifications as Record<string, unknown>;
     const items: SpecItem[] = [];
 
-    // 1. Ordre strict et filtrage des clés
     for (const key of SPEC_ORDER) {
         const rawValue = customSpecs[key];
         if (rawValue === undefined || rawValue === null) {
             continue;
         }
 
-        // 2. Règle d'exclusion (Zéro absolu pour THC et CBD)
         if (key === "thc" || key === "cbd") {
             const cleanStr = String(rawValue).trim().replace(",", ".").replace("%", "");
             const num = Number(cleanStr);
@@ -65,17 +63,16 @@ export function ProductSpecifications({
             }
         }
 
-        // 4. Résolution de la valeur (Multilingue & formatage)
         let displayValue = "";
         if (typeof rawValue === "object" && !Array.isArray(rawValue)) {
-            const locVal = (rawValue as Record<string, string>)[lang]
-                || (rawValue as Record<string, string>)["en"]
-                || Object.values(rawValue)[0]
+            const localizedRecord = rawValue as Record<string, string>;
+            const locVal = localizedRecord[lang]
+                || localizedRecord["en"]
+                || Object.values(localizedRecord)[0]
                 || "";
             displayValue = String(locVal).trim();
         } else {
             displayValue = String(rawValue).trim();
-            // Ajout du suffixe '%' uniquement pour THC et CBD si manquant
             if ((key === "thc" || key === "cbd") && !displayValue.includes("%")) {
                 displayValue = `${displayValue}%`;
             }
@@ -85,7 +82,6 @@ export function ProductSpecifications({
             continue;
         }
 
-        // 3. Formatage du label
         const label = formatLabel(key, lang);
 
         items.push({
@@ -104,27 +100,26 @@ export function ProductSpecifications({
     return (
         <section
             aria-labelledby={`${id}-title`}
-            className={`mt-8 rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/50 backdrop-blur-md p-6 shadow-soft ${className}`}
+            className={`mt-8 rounded-3xl border border-zinc-200/90 dark:border-white/15 bg-white/90 dark:bg-zinc-900/85 backdrop-blur-md p-6 shadow-soft ${className}`}
         >
-            <h3
+            <h2
                 id={`${id}-title`}
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4"
             >
                 {headingText}
-            </h3>
+            </h2>
 
             <ul
                 className="grid grid-cols-2 gap-3"
                 aria-label={lang.startsWith("fr") ? "Caractéristiques du produit" : "Product specifications"}
             >
                 {items.map(({ key, label, value }) => {
-                    // 1. Règle pour "Dominance" : pas de label, couleur dynamique, aligné à gauche
                     if (key === "dominance") {
                         const colorClass = getDominanceColor(value);
                         return (
                             <li
                                 key={key}
-                                className="col-span-1 flex items-center justify-start p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5 transition-colors text-left"
+                                className="col-span-1 flex items-center justify-start p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/10 transition-colors text-left"
                                 aria-label={`Dominance: ${value}`}
                             >
                                 <span className={`text-sm sm:text-base md:text-xl font-bold tracking-wide uppercase ${colorClass}`}>
@@ -134,12 +129,11 @@ export function ProductSpecifications({
                         );
                     }
 
-                    // 2. Règle pour "THC" et "CBD" : label conservé, valeur agrandie (text-xl à text-3xl)
                     if (key === "thc" || key === "cbd") {
                         return (
                             <li
                                 key={key}
-                                className="col-span-1 flex items-center justify-between gap-2 sm:gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5 transition-colors"
+                                className="col-span-1 flex items-center justify-between gap-2 sm:gap-3 p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/10 transition-colors"
                                 aria-label={`${label}: ${value}`}
                             >
                                 <span className="text-xs sm:text-sm font-medium text-muted-foreground uppercase">
@@ -152,12 +146,11 @@ export function ProductSpecifications({
                         );
                     }
 
-                    // 3. Règle pour "Effects" et "Relieves" : label au-dessus, pleine largeur (col-span-2)
                     if (key === "effects" || key === "relieves") {
                         return (
                             <li
                                 key={key}
-                                className="col-span-2 flex flex-col items-start gap-1.5 p-4 rounded-2xl bg-zinc-50/80 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5 transition-colors"
+                                className="col-span-2 flex flex-col items-start gap-1.5 p-4 rounded-2xl bg-zinc-50/90 dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/10 transition-colors"
                                 aria-label={`${label}: ${value}`}
                             >
                                 <span className="text-xs sm:text-sm font-medium text-muted-foreground">
@@ -170,11 +163,10 @@ export function ProductSpecifications({
                         );
                     }
 
-                    // Fallback générique
                     return (
                         <li
                             key={key}
-                            className="col-span-1 flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5 transition-colors"
+                            className="col-span-1 flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/10 transition-colors"
                             aria-label={`${label}: ${value}`}
                         >
                             <span className="text-xs sm:text-sm font-medium text-muted-foreground capitalize">

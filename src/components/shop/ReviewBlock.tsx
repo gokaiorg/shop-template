@@ -27,6 +27,29 @@ interface ReviewsApiResponse {
   userRatingsTotal?: number | null;
 }
 
+function GoogleLogoIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      />
+    </svg>
+  );
+}
+
 function getAuthorInitials(name?: string): string {
   if (!name) return "C";
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -237,67 +260,30 @@ export function ReviewBlock({
               href={googleReviewsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 hover:border-black/15 dark:hover:border-white/20 hover:bg-white/80 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs transition-all cursor-pointer group"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-border/60 hover:border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title={
                 isFr
                   ? "Voir tous les avis sur Google"
                   : "View all reviews on Google"
               }
             >
-              <svg
-                className="w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
+              <GoogleLogoIcon className="w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110" />
               <span>{isFr ? "Avis Clients Google" : "Google Reviews"}</span>
               {overallRating && (
-                <span className="flex items-center gap-1 font-bold text-foreground pl-1 border-l border-black/10 dark:border-white/10">
-                  <span className="text-amber-500">★</span>
+                <span className="flex items-center gap-1 font-bold text-foreground pl-1 border-l border-border/60">
+                  <span className="text-amber-500" aria-hidden="true">★</span>
                   {overallRating.toFixed(1)}
                   {totalRatings ? ` (${totalRatings})` : ""}
                 </span>
               )}
             </a>
           ) : (
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-border/60 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
+              <GoogleLogoIcon className="w-3.5 h-3.5 shrink-0" />
               <span>{isFr ? "Avis Clients Google" : "Google Reviews"}</span>
               {overallRating && (
-                <span className="flex items-center gap-1 font-bold text-foreground pl-1 border-l border-black/10 dark:border-white/10">
-                  <span className="text-amber-500">★</span>
+                <span className="flex items-center gap-1 font-bold text-foreground pl-1 border-l border-border/60">
+                  <span className="text-amber-500" aria-hidden="true">★</span>
                   {overallRating.toFixed(1)}
                   {totalRatings ? ` (${totalRatings})` : ""}
                 </span>
@@ -326,7 +312,7 @@ export function ReviewBlock({
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
-                className="rounded-2xl border border-black/[0.06] dark:border-white/10 bg-white/40 dark:bg-white/[0.02] backdrop-blur-xl p-6 shadow-soft space-y-4 animate-pulse"
+                className="rounded-2xl border border-border/60 bg-white/90 dark:bg-zinc-900/85 backdrop-blur-xl p-6 shadow-soft space-y-4 animate-pulse"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-muted" />
@@ -347,8 +333,8 @@ export function ReviewBlock({
         )}
 
         {!isLoading && displayReviews.length === 0 && (
-          <div className="text-center py-12 px-6 rounded-2xl border border-dashed border-black/10 dark:border-white/10 max-w-xl mx-auto">
-            <MessageSquareQuote className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+          <div className="text-center py-12 px-6 rounded-2xl border border-dashed border-border max-w-xl mx-auto">
+            <MessageSquareQuote className="w-10 h-10 text-muted-foreground mx-auto mb-3" aria-hidden="true" />
             <p className="font-medium text-foreground text-sm">
               {isFr
                 ? "Aucun avis à afficher pour le moment."
@@ -368,11 +354,12 @@ export function ReviewBlock({
               const isExpanded = expandedReviewIndex === idx;
               const isLong = (review.text || "").length > 180;
               const is3Reviews = displayReviews.length === 3;
+              const ratingValue = review.rating || 5;
               return (
                 <article
                   key={`${review.author_name}-${idx}`}
                   className={cn(
-                    "group relative flex flex-col justify-between rounded-2xl border border-black/[0.06] dark:border-white/10 bg-white/60 dark:bg-white/[0.02] backdrop-blur-xl p-6 sm:p-7 shadow-soft hover:shadow-soft-xl hover:-translate-y-1 transition-all duration-300",
+                    "group relative flex flex-col justify-between rounded-2xl border border-border/60 bg-white/90 dark:bg-zinc-900/85 backdrop-blur-xl p-6 sm:p-7 shadow-soft hover:shadow-soft-xl hover:-translate-y-1 transition-all duration-300",
                     is3Reviews &&
                       idx === 2 &&
                       "md:col-span-2 md:max-w-md md:mx-auto md:w-full lg:max-w-none lg:w-auto lg:col-span-1"
@@ -398,36 +385,28 @@ export function ReviewBlock({
                     </div>
 
                     <div
-                      className="p-1.5 rounded-full bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10 shrink-0"
-                      title="Avis vérifié Google"
+                      className="p-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-border/60 shrink-0"
+                      title={isFr ? "Avis vérifié Google" : "Verified Google review"}
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path
-                          fill="#4285F4"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                        />
-                      </svg>
+                      <GoogleLogoIcon className="w-4 h-4" />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 mb-3.5">
+                  <div
+                    className="flex items-center gap-1 mb-3.5"
+                    role="img"
+                    aria-label={
+                      isFr
+                        ? `Note : ${ratingValue} sur 5`
+                        : `Rating: ${ratingValue} out of 5`
+                    }
+                  >
                     {[1, 2, 3, 4, 5].map((starVal) => {
-                      const isFilled = starVal <= (review.rating || 5);
+                      const isFilled = starVal <= ratingValue;
                       return (
                         <Star
                           key={starVal}
+                          aria-hidden="true"
                           className={cn(
                             "w-4 h-4 transition-transform group-hover:scale-105",
                             isFilled
@@ -442,7 +421,7 @@ export function ReviewBlock({
                   <div className="flex-1">
                     <p
                       className={cn(
-                        "text-sm text-foreground/80 leading-relaxed font-normal whitespace-pre-line",
+                        "text-sm text-foreground/90 leading-relaxed font-normal whitespace-pre-line",
                         !isExpanded && isLong && "line-clamp-4"
                       )}
                     >
@@ -458,7 +437,8 @@ export function ReviewBlock({
                     <button
                       type="button"
                       onClick={() => toggleExpand(idx)}
-                      className="mt-3 text-xs font-semibold text-primary hover:underline self-start cursor-pointer focus:outline-none"
+                      aria-expanded={isExpanded}
+                      className="mt-3 text-xs font-semibold text-primary hover:underline self-start cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-sm"
                     >
                       {isExpanded
                         ? isFr
@@ -481,29 +461,9 @@ export function ReviewBlock({
               href={googleReviewsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 hover:bg-black/5 dark:hover:bg-white/10 text-foreground text-sm font-semibold tracking-wide backdrop-blur-md shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-border/70 bg-zinc-100/90 dark:bg-zinc-900/90 hover:bg-zinc-200/80 dark:hover:bg-zinc-800 text-foreground text-sm font-semibold tracking-wide backdrop-blur-md shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <svg
-                className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
+              <GoogleLogoIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
               <span>
                 {isFr
                   ? totalRatings
@@ -513,7 +473,7 @@ export function ReviewBlock({
                     ? `View all ${totalRatings} reviews on Google`
                     : "View all reviews on Google"}
               </span>
-              <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors ml-0.5" />
+              <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors ml-0.5" aria-hidden="true" />
             </a>
           </div>
         )}

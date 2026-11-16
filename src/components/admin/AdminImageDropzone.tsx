@@ -193,7 +193,6 @@ export function AdminImageDropzone({
                 /* Affichage des images (Simple ou Grille) */
                 <div className="space-y-4">
                     {isSingle ? (
-                        /* Mode Image Unique : Aperçu complet avec overlay */
                         <div
                             onDrop={handleDrop}
                             onDragOver={handleDragOver}
@@ -208,12 +207,12 @@ export function AdminImageDropzone({
                                 src={images[0]}
                                 alt="Uploaded preview"
                                 fill
-                                unoptimized
+                                quality={75}
+                                referrerPolicy="no-referrer"
                                 sizes="(max-width: 768px) 100vw, 50vw"
                                 className="object-cover"
                             />
 
-                            {/* Bouton de suppression corbeille */}
                             <Button
                                 type="button"
                                 variant="destructive"
@@ -224,10 +223,9 @@ export function AdminImageDropzone({
                                 aria-label="Remove image"
                                 title={lang?.startsWith("fr") ? "Supprimer l'image" : "Remove image"}
                             >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4" aria-hidden="true" />
                             </Button>
 
-                            {/* Bouton pour changer l'image au clic */}
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
@@ -235,11 +233,10 @@ export function AdminImageDropzone({
                                 className="absolute top-2 left-2 text-xs px-2.5 py-1 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-xs border shadow-xs opacity-90 hover:opacity-100 transition-opacity cursor-pointer z-20 flex items-center gap-1.5"
                                 title={lang?.startsWith("fr") ? "Changer l'image" : "Change image"}
                             >
-                                <RotateCcw className="h-3 w-3" />
+                                <RotateCcw className="h-3 w-3" aria-hidden="true" />
                                 <span>{lang?.startsWith("fr") ? "Remplacer" : "Replace"}</span>
                             </button>
 
-                            {/* Affichage de l'URL source */}
                             <div
                                 className="absolute bottom-0 left-0 w-full bg-black/70 text-white text-xs font-mono p-1.5 truncate text-center backdrop-blur-sm z-10"
                                 title={images[0]}
@@ -248,7 +245,6 @@ export function AdminImageDropzone({
                             </div>
                         </div>
                     ) : (
-                        /* Mode Multiple : Grille d'images */
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             {images.map((imgUrl, idx) => {
                                 const isCover = idx === 0;
@@ -263,12 +259,12 @@ export function AdminImageDropzone({
                                             src={imgUrl}
                                             alt={`Image ${idx + 1}`}
                                             fill
-                                            unoptimized
+                                            quality={75}
+                                            referrerPolicy="no-referrer"
                                             sizes="(max-width: 768px) 50vw, 25vw"
                                             className="object-cover"
                                         />
 
-                                        {/* Badge Couverture sur la 1ère image */}
                                         {isCover ? (
                                             <Badge className="absolute top-2 left-2 text-xs px-1.5 py-0.5 bg-primary text-primary-foreground font-semibold shadow-xs z-10">
                                                 {lang?.startsWith("fr") ? "Couverture" : "Cover"}

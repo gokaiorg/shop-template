@@ -93,7 +93,7 @@ export function ShopProductCard({
   })();
 
   return (
-    <article className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/60 backdrop-blur-md p-8 h-full shadow-soft hover:shadow-soft-xl dark:hover:border-white/25 transition-all duration-300 ease-out">
+    <article className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-zinc-200/90 dark:border-white/15 bg-white/90 dark:bg-zinc-900/85 backdrop-blur-md p-8 h-full shadow-soft hover:shadow-soft-xl dark:hover:border-white/25 transition-all duration-300 ease-out">
       <AdminEditBadge
         href={`/admin/products/${product.id}/edit`}
         locale={lang}
@@ -109,11 +109,7 @@ export function ShopProductCard({
           fill
           loading="lazy"
           quality={75}
-          unoptimized={
-            typeof imageUrl === "string" &&
-            (imageUrl.includes("firebasestorage.googleapis.com") ||
-              imageUrl.includes("storage.googleapis.com"))
-          }
+          referrerPolicy="no-referrer"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />

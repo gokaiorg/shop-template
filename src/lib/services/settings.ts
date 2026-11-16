@@ -1,234 +1,468 @@
-import { cache } from 'react';
-import { adminDb } from '@/lib/firebase-admin';
-import { StoreSettings } from '@/types/database';
-import { getActiveBrand, getIsCartEnabled } from '@/config/brand.config';
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import { adminDb } from "@/lib/firebase-admin";
+import { StoreSettings } from "@/types/database";
+import { getActiveBrand, getActiveBrandKey, getIsCartEnabled } from "@/config/brand.config";
 
-export const SETTINGS_COLLECTION = 'settings';
-export const STORE_FRONT_DOC_ID = 'store_front';
+export const SETTINGS_COLLECTION = "settings";
+export const STORE_FRONT_DOC_ID = "store_front";
 
-/**
- * Retrieves the store_front settings document from Firestore.
- * Wrapped with React cache for per-request memoization during SSR.
- * If not present in Firestore, returns fallback values derived from active brand configuration.
- */
-export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
-    const brand = getActiveBrand();
-    const defaultPrimaryColor = brand.identity.id === 'art-fate' ? '#14B3F6' : '#0f172a';
-    const fallbackSettings: StoreSettings = {
-        id: STORE_FRONT_DOC_ID,
-        brandName: brand.identity.name || '',
-        logoUrl: brand.assets.logo.src || '',
-        faviconUrl: brand.assets.favicon || '',
-        heroTitle: {
-            en: brand.identity.name || '',
-            fr: brand.identity.name || '',
-        },
-        heroDescription: {
-            en: '',
-            fr: '',
-        },
-        heroBackgroundImageUrl: brand.assets?.heroBanner || (brand.assets as any)?.banner || '',
-        categoriesTitle: {
-            en: '',
-            fr: '',
-        },
-        categoriesSubtitle: {
-            en: '',
-            fr: '',
-        },
-        productsTitle: {
-            en: '',
-            fr: '',
-        },
-        productsSubtitle: {
-            en: '',
-            fr: '',
-        },
-        catalogTitle: {
-            en: 'Shop',
-            fr: 'Boutique',
-        },
-        catalogIntro: {
-            en: '',
-            fr: '',
-        },
-        catalogDescription: {
-            en: '',
-            fr: '',
-        },
-        catalogSlug: {
-            en: 'shop',
-            fr: 'boutique',
-        },
-        catalogBannerUrl: brand.assets?.heroBanner || (brand.assets as any)?.banner || '',
-        footerDescription: {
-            en: '',
-            fr: '',
-        },
-        footerRightMenuTitle: {
-            en: 'Legal',
-            fr: 'Légal',
-        },
-        socialLinks: (brand.navigation?.socials || []).map((s: { platform?: string; url?: string }) => ({
-            platform: s.platform || '',
-            url: s.url || '',
-        })),
-        contactEmail: brand.contact?.email || '',
-        contactPhone: brand.contact?.phone || '',
-        supportHoursEn: brand.contact?.supportHours?.en || '',
-        supportHoursFr: brand.contact?.supportHours?.fr || '',
-        seoEntityType: brand.identity.id === 'green-ghost' ? 'Dispensary' : brand.identity.id === 'art-fate' ? 'ArtGallery' : 'Store',
-        seoAddressStreet: brand.contact?.address?.street || '',
-        seoAddressLocality: brand.contact?.address?.city || '',
-        seoPostalCode: brand.contact?.address?.postalCode || '',
-        seoCountry: brand.contact?.address?.country || '',
-        defaultTheme: 'system',
-        defaultCurrency: 'THB',
-        primaryColor: defaultPrimaryColor,
-        borderStyle: 'rounded',
-        fontFamily: 'Geist',
-        productImageRatio: brand.theme?.productImageRatio || (brand.identity.id === 'green-ghost' ? 'square' : 'default'),
-        vendors: [],
-        aboutSection: {
-            enabled: false,
-            title: { en: '', fr: '' },
-            description: { en: '', fr: '' },
-            ctaLabel: { en: '', fr: '' },
-            ctaUrl: '',
-            images: [],
-            imageRatio: 'default',
-        },
-        contactSection: {
-            enabled: false,
-            title: { en: '', fr: '' },
-            description: { en: '', fr: '' },
-        },
-        faqSection: {
-            enabled: false,
-            status: 'inactive',
-            title: { en: 'Frequently Asked Questions', fr: 'Questions fréquentes' },
-            subtitle: { en: 'Find quick answers to common questions.', fr: 'Trouvez des réponses rapides à vos questions.' },
-            items: [],
-        },
-        reviewSection: {
-            enabled: false,
-            status: 'inactive',
-            title: { en: 'What Our Customers Say', fr: 'Ce que disent nos clients' },
-            subtitle: { en: '', fr: '' },
-            placeId: '',
-        },
-        cartEnabled: getIsCartEnabled(),
-    };
+interface TimestampLike {
+  toDate?: () => Date;
+  _seconds?: number;
+}
 
-    try {
-        const docSnap = await adminDb.collection(SETTINGS_COLLECTION).doc(STORE_FRONT_DOC_ID).get();
-        if (docSnap.exists) {
-            const data = docSnap.data();
-            return {
-                id: docSnap.id,
-                brandName: data?.brandName ?? fallbackSettings.brandName,
-                logoUrl: data?.logoUrl ?? fallbackSettings.logoUrl,
-                faviconUrl: data?.faviconUrl ?? fallbackSettings.faviconUrl,
-                heroTitle: (data?.heroTitle && typeof data.heroTitle === 'object') ? data.heroTitle : fallbackSettings.heroTitle,
-                heroDescription: (data?.heroDescription && typeof data.heroDescription === 'object') ? data.heroDescription : fallbackSettings.heroDescription,
-                heroBackgroundImageUrl: typeof data?.heroBackgroundImageUrl === 'string' ? data.heroBackgroundImageUrl : fallbackSettings.heroBackgroundImageUrl,
-                categoriesTitle: (data?.categoriesTitle && typeof data.categoriesTitle === 'object') ? data.categoriesTitle : fallbackSettings.categoriesTitle,
-                categoriesSubtitle: (data?.categoriesSubtitle && typeof data.categoriesSubtitle === 'object') ? data.categoriesSubtitle : fallbackSettings.categoriesSubtitle,
-                productsTitle: (data?.productsTitle && typeof data.productsTitle === 'object') ? data.productsTitle : fallbackSettings.productsTitle,
-                productsSubtitle: (data?.productsSubtitle && typeof data.productsSubtitle === 'object') ? data.productsSubtitle : fallbackSettings.productsSubtitle,
-                catalogTitle: (data?.catalogTitle && typeof data.catalogTitle === 'object') ? data.catalogTitle : fallbackSettings.catalogTitle,
-                catalogIntro: (data?.catalogIntro && typeof data.catalogIntro === 'object') ? data.catalogIntro : (fallbackSettings.catalogIntro || { en: '', fr: '' }),
-                catalogDescription: (data?.catalogDescription && typeof data.catalogDescription === 'object') ? data.catalogDescription : fallbackSettings.catalogDescription,
-                catalogSlug: (data?.catalogSlug && typeof data.catalogSlug === 'object')
-                    ? data.catalogSlug
-                    : (typeof data?.catalogSlug === 'string' && data.catalogSlug.trim().length > 0)
-                        ? { en: data.catalogSlug.trim().toLowerCase(), fr: data.catalogSlug.trim().toLowerCase() }
-                        : fallbackSettings.catalogSlug,
-                catalogBannerUrl: typeof data?.catalogBannerUrl === 'string' ? data.catalogBannerUrl : fallbackSettings.catalogBannerUrl,
-                footerDescription: (data?.footerDescription && typeof data.footerDescription === 'object') ? data.footerDescription : fallbackSettings.footerDescription,
-                footerRightMenuTitle: (data?.footerRightMenuTitle && typeof data.footerRightMenuTitle === 'object') ? data.footerRightMenuTitle : fallbackSettings.footerRightMenuTitle,
-                socialLinks: Array.isArray(data?.socialLinks) ? data.socialLinks : fallbackSettings.socialLinks,
-                contactEmail: typeof data?.contactEmail === 'string' ? data.contactEmail : (fallbackSettings.contactEmail || ''),
-                contactPhone: typeof data?.contactPhone === 'string' ? data.contactPhone : (fallbackSettings.contactPhone || ''),
-                supportHoursEn: typeof data?.supportHoursEn === 'string' ? data.supportHoursEn : (fallbackSettings.supportHoursEn || ''),
-                supportHoursFr: typeof data?.supportHoursFr === 'string' ? data.supportHoursFr : (fallbackSettings.supportHoursFr || ''),
-                seoEntityType: typeof data?.seoEntityType === 'string' ? data.seoEntityType : (fallbackSettings.seoEntityType || ''),
-                seoAddressStreet: typeof data?.seoAddressStreet === 'string' ? data.seoAddressStreet : (fallbackSettings.seoAddressStreet || ''),
-                seoAddressLocality: typeof data?.seoAddressLocality === 'string' ? data.seoAddressLocality : (fallbackSettings.seoAddressLocality || ''),
-                seoPostalCode: typeof data?.seoPostalCode === 'string' ? data.seoPostalCode : (fallbackSettings.seoPostalCode || ''),
-                seoCountry: typeof data?.seoCountry === 'string' ? data.seoCountry : (fallbackSettings.seoCountry || ''),
-                defaultTheme: data?.defaultTheme ?? fallbackSettings.defaultTheme,
-                defaultCurrency: data?.defaultCurrency ?? fallbackSettings.defaultCurrency,
-                primaryColor: (typeof data?.primaryColor === 'string' && data.primaryColor.trim().length > 0) ? data.primaryColor : fallbackSettings.primaryColor,
-                borderStyle: data?.borderStyle === 'squared' ? 'squared' : 'rounded',
-                fontFamily: (typeof data?.fontFamily === 'string' && data.fontFamily.trim().length > 0) ? data.fontFamily : fallbackSettings.fontFamily,
-                productImageRatio: (data?.productImageRatio === 'square' || data?.productImageRatio === 'portrait' || data?.productImageRatio === 'default')
-                    ? data.productImageRatio
-                    : fallbackSettings.productImageRatio,
-                vendors: Array.isArray(data?.vendors) ? data.vendors : fallbackSettings.vendors,
-                aboutSection: data?.aboutSection ? {
-                    enabled: Boolean(data.aboutSection.enabled),
-                    title: (data.aboutSection.title && typeof data.aboutSection.title === 'object') ? data.aboutSection.title : {},
-                    description: (data.aboutSection.description && typeof data.aboutSection.description === 'object') ? data.aboutSection.description : {},
-                    ctaLabel: (data.aboutSection.ctaLabel && typeof data.aboutSection.ctaLabel === 'object') ? data.aboutSection.ctaLabel : {},
-                    ctaUrl: typeof data.aboutSection.ctaUrl === 'string' ? data.aboutSection.ctaUrl : '',
-                    images: Array.isArray(data.aboutSection.images) ? data.aboutSection.images : [],
-                    imageRatio: (data.aboutSection.imageRatio === 'square' || data.aboutSection.imageRatio === 'squared') ? 'square' : 'default',
-                } : fallbackSettings.aboutSection,
-                contactSection: data?.contactSection ? {
-                    enabled: Boolean(data.contactSection.enabled),
-                    title: (data.contactSection.title && typeof data.contactSection.title === 'object') ? data.contactSection.title : {},
-                    description: (data.contactSection.description && typeof data.contactSection.description === 'object') ? data.contactSection.description : {},
-                } : fallbackSettings.contactSection,
-                faqSection: data?.faqSection ? {
-                    enabled: Boolean(data.faqSection.enabled ?? (data.faqSection.status === 'active')),
-                    status: (data.faqSection.status === 'active' || data.faqSection.enabled) ? 'active' : 'inactive',
-                    title: (data.faqSection.title && typeof data.faqSection.title === 'object')
-                        ? data.faqSection.title
-                        : typeof data.faqSection.title === 'string'
-                        ? { en: data.faqSection.title, fr: data.faqSection.title }
-                        : (fallbackSettings.faqSection?.title || {}),
-                    subtitle: (data.faqSection.subtitle && typeof data.faqSection.subtitle === 'object')
-                        ? data.faqSection.subtitle
-                        : typeof data.faqSection.subtitle === 'string'
-                        ? { en: data.faqSection.subtitle, fr: data.faqSection.subtitle }
-                        : (fallbackSettings.faqSection?.subtitle || {}),
-                    items: Array.isArray(data.faqSection.items) ? data.faqSection.items : [],
-                } : fallbackSettings.faqSection,
-                reviewSection: data?.reviewSection ? {
-                    enabled: Boolean(data.reviewSection.enabled ?? (data.reviewSection.status === 'active')),
-                    status: (data.reviewSection.status === 'active' || data.reviewSection.enabled) ? 'active' : 'inactive',
-                    title: (data.reviewSection.title && typeof data.reviewSection.title === 'object')
-                        ? data.reviewSection.title
-                        : typeof data.reviewSection.title === 'string'
-                        ? { en: data.reviewSection.title, fr: data.reviewSection.title }
-                        : (fallbackSettings.reviewSection?.title || {}),
-                    subtitle: (data.reviewSection.subtitle && typeof data.reviewSection.subtitle === 'object')
-                        ? data.reviewSection.subtitle
-                        : typeof data.reviewSection.subtitle === 'string'
-                        ? { en: data.reviewSection.subtitle, fr: data.reviewSection.subtitle }
-                        : (fallbackSettings.reviewSection?.subtitle || {}),
-                    placeId: typeof data.reviewSection.placeId === 'string' ? data.reviewSection.placeId : '',
-                } : fallbackSettings.reviewSection,
-                cartEnabled: typeof data?.cartEnabled === 'boolean' ? data.cartEnabled : fallbackSettings.cartEnabled,
-                updatedAt: data?.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data?.updatedAt,
-            };
-        }
-    } catch (error) {
-        console.error('[SETTINGS_SERVICE_GET_ERROR]', error);
+function serializeTimestamp(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === "string") return value;
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? undefined : value.toISOString();
+  }
+  if (typeof value === "object") {
+    const ts = value as TimestampLike;
+    if (typeof ts.toDate === "function") {
+      const d = ts.toDate();
+      return isNaN(d.getTime()) ? undefined : d.toISOString();
     }
+    if (typeof ts._seconds === "number") {
+      const d = new Date(ts._seconds * 1000);
+      return isNaN(d.getTime()) ? undefined : d.toISOString();
+    }
+  }
+  return undefined;
+}
 
-    return fallbackSettings;
+function getCacheScopeKey(): string {
+  const brandKey = getActiveBrandKey();
+  const projectId =
+    process.env.FIREBASE_PROJECT_ID ||
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+    "default";
+  const dbId =
+    process.env.FIREBASE_DATABASE_ID ||
+    process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID ||
+    "default";
+  return `${brandKey}:${projectId}:${dbId}`;
+}
+
+async function fetchStoreSettingsFromFirestore(_scopeKey: string): Promise<StoreSettings> {
+  void _scopeKey;
+  const brand = getActiveBrand();
+  const brandAssets = brand.assets as { heroBanner?: string; banner?: string };
+  const defaultPrimaryColor =
+    brand.identity.id === "art-fate" ? "#14B3F6" : "#0f172a";
+
+  const fallbackSettings: StoreSettings = {
+    id: STORE_FRONT_DOC_ID,
+    brandName: brand.identity.name || "",
+    logoUrl: brand.assets.logo.src || "",
+    faviconUrl: brand.assets.favicon || "",
+    heroTitle: {
+      en: brand.identity.name || "",
+      fr: brand.identity.name || "",
+    },
+    heroDescription: {
+      en: "",
+      fr: "",
+    },
+    heroBackgroundImageUrl: brandAssets?.heroBanner || brandAssets?.banner || "",
+    categoriesTitle: {
+      en: "",
+      fr: "",
+    },
+    categoriesSubtitle: {
+      en: "",
+      fr: "",
+    },
+    productsTitle: {
+      en: "",
+      fr: "",
+    },
+    productsSubtitle: {
+      en: "",
+      fr: "",
+    },
+    catalogTitle: {
+      en: "Shop",
+      fr: "Boutique",
+    },
+    catalogIntro: {
+      en: "",
+      fr: "",
+    },
+    catalogDescription: {
+      en: "",
+      fr: "",
+    },
+    catalogSlug: {
+      en: "shop",
+      fr: "boutique",
+    },
+    catalogBannerUrl: brandAssets?.heroBanner || brandAssets?.banner || "",
+    footerDescription: {
+      en: "",
+      fr: "",
+    },
+    footerRightMenuTitle: {
+      en: "Legal",
+      fr: "Légal",
+    },
+    socialLinks: (brand.navigation?.socials || []).map(
+      (s: { platform?: string; url?: string }) => ({
+        platform: s.platform || "",
+        url: s.url || "",
+      })
+    ),
+    contactEmail: brand.contact?.email || "",
+    contactPhone: brand.contact?.phone || "",
+    supportHoursEn: brand.contact?.supportHours?.en || "",
+    supportHoursFr: brand.contact?.supportHours?.fr || "",
+    seoEntityType:
+      brand.identity.id === "green-ghost"
+        ? "Dispensary"
+        : brand.identity.id === "art-fate"
+          ? "ArtGallery"
+          : "Store",
+    seoAddressStreet: brand.contact?.address?.street || "",
+    seoAddressLocality: brand.contact?.address?.city || "",
+    seoPostalCode: brand.contact?.address?.postalCode || "",
+    seoCountry: brand.contact?.address?.country || "",
+    defaultTheme: "system",
+    defaultCurrency: "THB",
+    primaryColor: defaultPrimaryColor,
+    borderStyle: "rounded",
+    fontFamily: "Geist",
+    productImageRatio:
+      brand.theme?.productImageRatio ||
+      (brand.identity.id === "green-ghost" ? "square" : "default"),
+    vendors: [],
+    aboutSection: {
+      enabled: false,
+      title: { en: "", fr: "" },
+      description: { en: "", fr: "" },
+      ctaLabel: { en: "", fr: "" },
+      ctaUrl: "",
+      images: [],
+      imageRatio: "default",
+    },
+    contactSection: {
+      enabled: false,
+      title: { en: "", fr: "" },
+      description: { en: "", fr: "" },
+    },
+    faqSection: {
+      enabled: false,
+      status: "inactive",
+      title: { en: "Frequently Asked Questions", fr: "Questions fréquentes" },
+      subtitle: {
+        en: "Find quick answers to common questions.",
+        fr: "Trouvez des réponses rapides à vos questions.",
+      },
+      items: [],
+    },
+    reviewSection: {
+      enabled: false,
+      status: "inactive",
+      title: { en: "What Our Customers Say", fr: "Ce que disent nos clients" },
+      subtitle: { en: "", fr: "" },
+      placeId: "",
+    },
+    cartEnabled: getIsCartEnabled(),
+  };
+
+  try {
+    const docSnap = await adminDb
+      .collection(SETTINGS_COLLECTION)
+      .doc(STORE_FRONT_DOC_ID)
+      .get();
+    if (docSnap.exists) {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        brandName: data?.brandName ?? fallbackSettings.brandName,
+        logoUrl: data?.logoUrl ?? fallbackSettings.logoUrl,
+        faviconUrl: data?.faviconUrl ?? fallbackSettings.faviconUrl,
+        heroTitle:
+          data?.heroTitle && typeof data.heroTitle === "object"
+            ? data.heroTitle
+            : fallbackSettings.heroTitle,
+        heroDescription:
+          data?.heroDescription && typeof data.heroDescription === "object"
+            ? data.heroDescription
+            : fallbackSettings.heroDescription,
+        heroBackgroundImageUrl:
+          typeof data?.heroBackgroundImageUrl === "string"
+            ? data.heroBackgroundImageUrl
+            : fallbackSettings.heroBackgroundImageUrl,
+        categoriesTitle:
+          data?.categoriesTitle && typeof data.categoriesTitle === "object"
+            ? data.categoriesTitle
+            : fallbackSettings.categoriesTitle,
+        categoriesSubtitle:
+          data?.categoriesSubtitle &&
+          typeof data.categoriesSubtitle === "object"
+            ? data.categoriesSubtitle
+            : fallbackSettings.categoriesSubtitle,
+        productsTitle:
+          data?.productsTitle && typeof data.productsTitle === "object"
+            ? data.productsTitle
+            : fallbackSettings.productsTitle,
+        productsSubtitle:
+          data?.productsSubtitle && typeof data.productsSubtitle === "object"
+            ? data.productsSubtitle
+            : fallbackSettings.productsSubtitle,
+        catalogTitle:
+          data?.catalogTitle && typeof data.catalogTitle === "object"
+            ? data.catalogTitle
+            : fallbackSettings.catalogTitle,
+        catalogIntro:
+          data?.catalogIntro && typeof data.catalogIntro === "object"
+            ? data.catalogIntro
+            : fallbackSettings.catalogIntro || { en: "", fr: "" },
+        catalogDescription:
+          data?.catalogDescription &&
+          typeof data.catalogDescription === "object"
+            ? data.catalogDescription
+            : fallbackSettings.catalogDescription,
+        catalogSlug:
+          data?.catalogSlug && typeof data.catalogSlug === "object"
+            ? data.catalogSlug
+            : typeof data?.catalogSlug === "string" &&
+                data.catalogSlug.trim().length > 0
+              ? {
+                  en: data.catalogSlug.trim().toLowerCase(),
+                  fr: data.catalogSlug.trim().toLowerCase(),
+                }
+              : fallbackSettings.catalogSlug,
+        catalogBannerUrl:
+          typeof data?.catalogBannerUrl === "string"
+            ? data.catalogBannerUrl
+            : fallbackSettings.catalogBannerUrl,
+        footerDescription:
+          data?.footerDescription && typeof data.footerDescription === "object"
+            ? data.footerDescription
+            : fallbackSettings.footerDescription,
+        footerRightMenuTitle:
+          data?.footerRightMenuTitle &&
+          typeof data.footerRightMenuTitle === "object"
+            ? data.footerRightMenuTitle
+            : fallbackSettings.footerRightMenuTitle,
+        socialLinks: Array.isArray(data?.socialLinks)
+          ? data.socialLinks
+          : fallbackSettings.socialLinks,
+        contactEmail:
+          typeof data?.contactEmail === "string"
+            ? data.contactEmail
+            : fallbackSettings.contactEmail || "",
+        contactPhone:
+          typeof data?.contactPhone === "string"
+            ? data.contactPhone
+            : fallbackSettings.contactPhone || "",
+        supportHoursEn:
+          typeof data?.supportHoursEn === "string"
+            ? data.supportHoursEn
+            : fallbackSettings.supportHoursEn || "",
+        supportHoursFr:
+          typeof data?.supportHoursFr === "string"
+            ? data.supportHoursFr
+            : fallbackSettings.supportHoursFr || "",
+        seoEntityType:
+          typeof data?.seoEntityType === "string"
+            ? data.seoEntityType
+            : fallbackSettings.seoEntityType || "",
+        seoAddressStreet:
+          typeof data?.seoAddressStreet === "string"
+            ? data.seoAddressStreet
+            : fallbackSettings.seoAddressStreet || "",
+        seoAddressLocality:
+          typeof data?.seoAddressLocality === "string"
+            ? data.seoAddressLocality
+            : fallbackSettings.seoAddressLocality || "",
+        seoPostalCode:
+          typeof data?.seoPostalCode === "string"
+            ? data.seoPostalCode
+            : fallbackSettings.seoPostalCode || "",
+        seoCountry:
+          typeof data?.seoCountry === "string"
+            ? data.seoCountry
+            : fallbackSettings.seoCountry || "",
+        defaultTheme: data?.defaultTheme ?? fallbackSettings.defaultTheme,
+        defaultCurrency:
+          data?.defaultCurrency ?? fallbackSettings.defaultCurrency,
+        primaryColor:
+          typeof data?.primaryColor === "string" &&
+          data.primaryColor.trim().length > 0
+            ? data.primaryColor
+            : fallbackSettings.primaryColor,
+        borderStyle: data?.borderStyle === "squared" ? "squared" : "rounded",
+        fontFamily:
+          typeof data?.fontFamily === "string" &&
+          data.fontFamily.trim().length > 0
+            ? data.fontFamily
+            : fallbackSettings.fontFamily,
+        productImageRatio:
+          data?.productImageRatio === "square" ||
+          data?.productImageRatio === "portrait" ||
+          data?.productImageRatio === "default"
+            ? data.productImageRatio
+            : fallbackSettings.productImageRatio,
+        vendors: Array.isArray(data?.vendors)
+          ? data.vendors
+          : fallbackSettings.vendors,
+        aboutSection: data?.aboutSection
+          ? {
+              enabled: Boolean(data.aboutSection.enabled),
+              title:
+                data.aboutSection.title &&
+                typeof data.aboutSection.title === "object"
+                  ? data.aboutSection.title
+                  : {},
+              description:
+                data.aboutSection.description &&
+                typeof data.aboutSection.description === "object"
+                  ? data.aboutSection.description
+                  : {},
+              ctaLabel:
+                data.aboutSection.ctaLabel &&
+                typeof data.aboutSection.ctaLabel === "object"
+                  ? data.aboutSection.ctaLabel
+                  : {},
+              ctaUrl:
+                typeof data.aboutSection.ctaUrl === "string"
+                  ? data.aboutSection.ctaUrl
+                  : "",
+              images: Array.isArray(data.aboutSection.images)
+                ? data.aboutSection.images
+                : [],
+              imageRatio:
+                data.aboutSection.imageRatio === "square" ||
+                data.aboutSection.imageRatio === "squared"
+                  ? "square"
+                  : "default",
+            }
+          : fallbackSettings.aboutSection,
+        contactSection: data?.contactSection
+          ? {
+              enabled: Boolean(data.contactSection.enabled),
+              title:
+                data.contactSection.title &&
+                typeof data.contactSection.title === "object"
+                  ? data.contactSection.title
+                  : {},
+              description:
+                data.contactSection.description &&
+                typeof data.contactSection.description === "object"
+                  ? data.contactSection.description
+                  : {},
+            }
+          : fallbackSettings.contactSection,
+        faqSection: data?.faqSection
+          ? {
+              enabled: Boolean(
+                data.faqSection.enabled ?? data.faqSection.status === "active"
+              ),
+              status:
+                data.faqSection.status === "active" || data.faqSection.enabled
+                  ? "active"
+                  : "inactive",
+              title:
+                data.faqSection.title &&
+                typeof data.faqSection.title === "object"
+                  ? data.faqSection.title
+                  : typeof data.faqSection.title === "string"
+                    ? { en: data.faqSection.title, fr: data.faqSection.title }
+                    : fallbackSettings.faqSection?.title || {},
+              subtitle:
+                data.faqSection.subtitle &&
+                typeof data.faqSection.subtitle === "object"
+                  ? data.faqSection.subtitle
+                  : typeof data.faqSection.subtitle === "string"
+                    ? {
+                        en: data.faqSection.subtitle,
+                        fr: data.faqSection.subtitle,
+                      }
+                    : fallbackSettings.faqSection?.subtitle || {},
+              items: Array.isArray(data.faqSection.items)
+                ? data.faqSection.items
+                : [],
+            }
+          : fallbackSettings.faqSection,
+        reviewSection: data?.reviewSection
+          ? {
+              enabled: Boolean(
+                data.reviewSection.enabled ??
+                  data.reviewSection.status === "active"
+              ),
+              status:
+                data.reviewSection.status === "active" ||
+                data.reviewSection.enabled
+                  ? "active"
+                  : "inactive",
+              title:
+                data.reviewSection.title &&
+                typeof data.reviewSection.title === "object"
+                  ? data.reviewSection.title
+                  : typeof data.reviewSection.title === "string"
+                    ? {
+                        en: data.reviewSection.title,
+                        fr: data.reviewSection.title,
+                      }
+                    : fallbackSettings.reviewSection?.title || {},
+              subtitle:
+                data.reviewSection.subtitle &&
+                typeof data.reviewSection.subtitle === "object"
+                  ? data.reviewSection.subtitle
+                  : typeof data.reviewSection.subtitle === "string"
+                    ? {
+                        en: data.reviewSection.subtitle,
+                        fr: data.reviewSection.subtitle,
+                      }
+                    : fallbackSettings.reviewSection?.subtitle || {},
+              placeId:
+                typeof data.reviewSection.placeId === "string"
+                  ? data.reviewSection.placeId
+                  : "",
+            }
+          : fallbackSettings.reviewSection,
+        cartEnabled:
+          typeof data?.cartEnabled === "boolean"
+            ? data.cartEnabled
+            : fallbackSettings.cartEnabled,
+        updatedAt: serializeTimestamp(data?.updatedAt),
+      };
+    }
+  } catch (error) {
+    console.error("[SETTINGS_SERVICE_GET_ERROR]", error);
+  }
+
+  return fallbackSettings;
+}
+
+const getCachedStoreSettings = unstable_cache(
+  fetchStoreSettingsFromFirestore,
+  ["store-settings"],
+  {
+    revalidate: 300,
+    tags: ["store-settings"],
+  }
+);
+
+export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
+  return getCachedStoreSettings(getCacheScopeKey());
 });
 
-/**
- * Persists store_front settings into Firestore.
- */
-export async function saveStoreSettings(settings: Partial<Omit<StoreSettings, 'id'>>): Promise<void> {
-    const docRef = adminDb.collection(SETTINGS_COLLECTION).doc(STORE_FRONT_DOC_ID);
+export async function saveStoreSettings(
+  settings: Partial<Omit<StoreSettings, "id">>
+): Promise<void> {
+  const docRef = adminDb
+    .collection(SETTINGS_COLLECTION)
+    .doc(STORE_FRONT_DOC_ID);
 
-    await docRef.set({
-        ...settings,
-        updatedAt: new Date(),
-    }, { merge: true });
+  await docRef.set(
+    {
+      ...settings,
+      updatedAt: new Date(),
+    },
+    { merge: true }
+  );
 }

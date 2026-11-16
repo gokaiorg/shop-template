@@ -1,9 +1,12 @@
 import {
+  BreadcrumbListInputSchema,
+  FaqListInputSchema,
   OrganizationSeoConfig,
   OrganizationSeoConfigSchema,
   ProductSeoInput,
   ProductSeoInputSchema,
 } from "@/schemas/seo";
+import { getSupportedLocales } from "@/app/i18n-config";
 
 export interface BreadcrumbItemInput {
   name: string;
@@ -24,9 +27,14 @@ export function buildOrganizationNode(
 ): Record<string, unknown> {
   const parsed = OrganizationSeoConfigSchema.parse(config);
   const cleanUrl = stripTrailingSlash(parsed.url);
+  const availableLanguages = getSupportedLocales();
+  const entityType =
+    parsed.entityType === "Organization"
+      ? "Organization"
+      : ["Organization", parsed.entityType];
 
   return {
-    "@type": ["Organization", "ProfessionalService"],
+    "@type": entityType,
     "@id": `${cleanUrl}/#organization`,
     name: parsed.name,
     legalName: parsed.legalName,
@@ -39,6 +47,8 @@ export function buildOrganizationNode(
     image: parsed.logo,
     email: parsed.email,
     telephone: parsed.telephone,
+    ...(parsed.priceRange ? { priceRange: parsed.priceRange } : {}),
+    ...(parsed.openingHours ? { openingHours: parsed.openingHours } : {}),
     address: {
       "@type": "PostalAddress",
       streetAddress: parsed.address.streetAddress,
@@ -56,9 +66,20 @@ export function buildOrganizationNode(
       telephone: parsed.telephone,
       email: parsed.email,
       contactType: "customer service",
-      availableLanguage: ["en", "fr"],
+      availableLanguage: availableLanguages,
     },
-    sameAs: parsed.sameAs,
+    ...(parsed.sameAs.length > 0 ? { sameAs: parsed.sameAs } : {}),
+    ...(parsed.aggregateRating
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: parsed.aggregateRating.ratingValue.toFixed(1),
+            reviewCount: String(parsed.aggregateRating.reviewCount),
+            bestRating: String(parsed.aggregateRating.bestRating),
+            worstRating: String(parsed.aggregateRating.worstRating),
+          },
+        }
+      : {}),
   };
 }
 
@@ -85,10 +106,12 @@ export function buildBreadcrumbNode(
   pageUrl: string,
   items: Array<BreadcrumbItemInput>
 ): Record<string, unknown> {
+  const parsed = BreadcrumbListInputSchema.parse({ pageUrl, items });
+
   return {
     "@type": "BreadcrumbList",
-    "@id": `${pageUrl}#breadcrumb`,
-    itemListElement: items.map((item, index) => ({
+    "@id": `${parsed.pageUrl}#breadcrumb`,
+    itemListElement: parsed.items.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
       name: item.name,
@@ -103,6 +126,7 @@ export function buildProductNode(
 ): Record<string, unknown> {
   const parsed = ProductSeoInputSchema.parse(input);
   const cleanBaseUrl = stripTrailingSlash(baseUrl);
+  const countryCode = parsed.offer.countryCode.toUpperCase();
 
   return {
     "@type": "Product",
@@ -132,7 +156,7 @@ export function buildProductNode(
       },
       hasMerchantReturnPolicy: {
         "@type": "MerchantReturnPolicy",
-        applicableCountry: "FR",
+        applicableCountry: countryCode,
         returnPolicyCategory:
           "https://schema.org/MerchantReturnFiniteReturnWindow",
         merchantReturnDays: parsed.offer.returnDays,
@@ -148,7 +172,7 @@ export function buildProductNode(
         },
         shippingDestination: {
           "@type": "DefinedRegion",
-          addressCountry: "FR",
+          addressCountry: countryCode,
         },
         deliveryTime: {
           "@type": "ShippingDeliveryTime",
@@ -174,10 +198,12 @@ export function buildFaqNode(
   pageUrl: string,
   faqs: Array<FaqItemInput>
 ): Record<string, unknown> {
+  const parsed = FaqListInputSchema.parse({ pageUrl, faqs });
+
   return {
     "@type": "FAQPage",
-    "@id": `${pageUrl}#faq`,
-    mainEntity: faqs.map((faq) => ({
+    "@id": `${parsed.pageUrl}#faq`,
+    mainEntity: parsed.faqs.map((faq) => ({
       "@type": "Question",
       name: faq.question,
       acceptedAnswer: {
@@ -197,6 +223,8 @@ export function buildJsonLdGraph(
   };
 }
 
-export function serializeJsonLd(data: Record<string, unknown>): string {
+export function serializeJsonLd(
+  data: Record<string, unknown> | Array<Record<string, unknown>>
+): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }

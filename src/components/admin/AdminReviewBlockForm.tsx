@@ -39,11 +39,12 @@ import { updateReviewBlockSettings } from "@/actions/settings";
 import { getGoogleReviewsAction } from "@/actions/reviews";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { getLocaleDisplayName } from "@/lib/i18n";
+import type { Dictionary } from "@/lib/dictionaries";
 
 interface AdminReviewBlockFormProps {
     initialData: StoreSettings;
     lang: string;
-    dict?: Record<string, string>;
+    dict?: Partial<Dictionary["admin"]>;
 }
 
 export function AdminReviewBlockForm({ initialData, lang }: AdminReviewBlockFormProps) {

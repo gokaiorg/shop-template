@@ -1,21 +1,24 @@
 import { MetadataRoute } from "next";
 import { headers } from "next/headers";
 import { brandConfig } from "@/config/brand.config";
+import { getSupportedLocales } from "@/app/i18n-config";
+import { resolveSiteBaseUrl } from "@/lib/seo/metadata";
 
 export const dynamic = "force-dynamic";
-
-const ALLOWED_PATHS = ["/en", "/fr"];
 
 const DEFAULT_DISALLOW = [
   "/api/",
   "/admin/",
-  "/_next/",
-  "/*/checkout",
-  "/*/cart",
-  "/private/",
   "/*/admin/",
   "/checkout/",
   "/*/checkout/",
+  "/*/checkout",
+  "/*/cart",
+  "/account/",
+  "/*/account/",
+  "/login",
+  "/*/login",
+  "/private/",
 ];
 
 const USER_AGENTS = [
@@ -40,7 +43,10 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       !host.includes("127.0.0.1") &&
       !host.includes("0.0.0.0")
     ) {
-      const proto = headersList.get("x-forwarded-proto") || "https";
+      const proto =
+        process.env.NODE_ENV === "production"
+          ? "https"
+          : headersList.get("x-forwarded-proto") || "https";
       hostBaseUrl = `${proto}://${host}`;
     }
   } catch {
@@ -48,6 +54,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   }
 
   const envUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.APP_URL ||
     process.env["NEXT_PUBLIC_APP_URL"] ||
     process.env.NEXT_PUBLIC_APP_URL;
@@ -74,7 +81,13 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     rawBaseUrl = envUrl || brandUrl || "https://gokai.org";
   }
 
-  const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+  const baseUrl = resolveSiteBaseUrl(rawBaseUrl);
+  const allowedPaths = [
+    "/",
+    ...getSupportedLocales().map((locale) => `/${locale}`),
+    "/_next/static/",
+    "/_next/image",
+  ];
 
   const isArtFate =
     process.env.NEXT_PUBLIC_BRAND === "art-fate" ||
@@ -94,7 +107,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
 
   const rules: MetadataRoute.Robots["rules"] = USER_AGENTS.map((agent) => ({
     userAgent: agent,
-    allow: ALLOWED_PATHS,
+    allow: allowedPaths,
     disallow: disallowList,
   }));
 

@@ -109,7 +109,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.45 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -145,10 +145,9 @@
   --shadow-soft-xl: 0 40px 100px -20px rgba(80, 80, 120, 0.08), 0 16px 32px -8px rgba(80, 80, 120, 0.05);
   --shadow-soft-2xl: 0 50px 120px -24px rgba(80, 80, 120, 0.10), 0 20px 40px -10px rgba(80, 80, 120, 0.06);
 
-  /* Glassmorphism 2.0 Tokens (Light theme) */
-  --glass-bg: rgba(255, 255, 255, 0.40);
-  --glass-border-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.60);
-  --glass-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.60), 0 20px 40px -15px rgba(80, 80, 120, 0.07);
+  --glass-bg: rgba(255, 255, 255, 0.84);
+  --glass-border-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+  --glass-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75), 0 20px 40px -15px rgba(80, 80, 120, 0.08);
 }
 
 .dark {
@@ -199,10 +198,9 @@
   --shadow-soft-xl: 0 40px 100px -20px rgba(0, 0, 0, 0.55), 0 16px 32px -8px rgba(0, 0, 0, 0.40);
   --shadow-soft-2xl: 0 50px 120px -24px rgba(0, 0, 0, 0.65), 0 20px 40px -10px rgba(0, 0, 0, 0.45);
 
-  /* Glassmorphism 2.0 Tokens (Dark: bg-white/5, inset 0 0 0 1px rgba(255,255,255,0.1)) */
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
-  --glass-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10), 0 20px 40px -15px rgba(0, 0, 0, 0.50);
+  --glass-bg: rgba(9, 9, 11, 0.78);
+  --glass-border-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  --glass-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 20px 40px -15px rgba(0, 0, 0, 0.55);
 }
 
 @layer base {
@@ -226,53 +224,45 @@
     scrollbar-width: none;
   }
 
-  /* ==========================================================================
-     Glassmorphism 2.0 Utility Classes
-     - Ultra-transparent background (bg-white/40 light, bg-white/5 dark)
-     - High blur (backdrop-blur-2xl / 40px)
-     - 1px inner border (box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1) in dark, 0.60 in light)
-     ========================================================================== */
   .glass-2,
   .glassmorphism-2 {
-    background-color: rgba(255, 255, 255, 0.40);
+    background-color: rgba(255, 255, 255, 0.84);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.60), var(--shadow-soft, 0 20px 40px -15px rgba(80, 80, 120, 0.07));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75), var(--shadow-soft, 0 20px 40px -15px rgba(80, 80, 120, 0.08));
   }
 
   :is(.dark .glass-2),
   :is(.dark .glassmorphism-2),
   .dark .glass-2,
   .dark .glassmorphism-2 {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(9, 9, 11, 0.78);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10), 0 20px 40px -15px rgba(0, 0, 0, 0.50);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 20px 40px -15px rgba(0, 0, 0, 0.55);
   }
 
-  /* Glassmorphism 2.0 Card preset */
   .glass-2-card {
-    background-color: rgba(255, 255, 255, 0.40);
+    background-color: rgba(255, 255, 255, 0.84);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.60), var(--shadow-soft-xl, 0 40px 100px -20px rgba(80, 80, 120, 0.08));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75), var(--shadow-soft-xl, 0 40px 100px -20px rgba(80, 80, 120, 0.08));
     border-radius: var(--radius-xl, 0.875rem);
   }
 
   :is(.dark .glass-2-card),
   .dark .glass-2-card {
-    background-color: rgba(255, 255, 255, 0.05);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10), 0 40px 100px -20px rgba(0, 0, 0, 0.55);
+    background-color: rgba(9, 9, 11, 0.78);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 40px 100px -20px rgba(0, 0, 0, 0.58);
   }
 
-  /* Glassmorphism 2.0 Inset 1px border */
   .glass-border-inset {
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.60);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
   }
 
   :is(.dark .glass-border-inset),
   .dark .glass-border-inset {
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
   }
 
   /* Ambient Glow Helpers */

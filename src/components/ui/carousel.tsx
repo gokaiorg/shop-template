@@ -180,8 +180,9 @@ function CarouselPrevious({
       data-slot="carousel-previous"
       variant={variant}
       size={size}
+      aria-label="Previous slide"
       className={cn(
-        "absolute size-8 rounded-full shadow-md z-10 transition-all bg-background/80 backdrop-blur-xs hover:bg-background",
+        "absolute size-8 rounded-full shadow-md z-10 transition-all bg-background/90 backdrop-blur-xs hover:bg-background",
         orientation === "horizontal"
           ? "left-3 top-1/2 -translate-y-1/2"
           : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
@@ -191,7 +192,7 @@ function CarouselPrevious({
       onClick={scrollPrev}
       {...props}
     >
-      <ArrowLeft className="size-4" />
+      <ArrowLeft className="size-4" aria-hidden="true" />
       <span className="sr-only">Previous slide</span>
     </Button>
   )
@@ -210,8 +211,9 @@ function CarouselNext({
       data-slot="carousel-next"
       variant={variant}
       size={size}
+      aria-label="Next slide"
       className={cn(
-        "absolute size-8 rounded-full shadow-md z-10 transition-all bg-background/80 backdrop-blur-xs hover:bg-background",
+        "absolute size-8 rounded-full shadow-md z-10 transition-all bg-background/90 backdrop-blur-xs hover:bg-background",
         orientation === "horizontal"
           ? "right-3 top-1/2 -translate-y-1/2"
           : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
@@ -221,7 +223,7 @@ function CarouselNext({
       onClick={scrollNext}
       {...props}
     >
-      <ArrowRight className="size-4" />
+      <ArrowRight className="size-4" aria-hidden="true" />
       <span className="sr-only">Next slide</span>
     </Button>
   )

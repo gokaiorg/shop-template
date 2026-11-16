@@ -7,13 +7,18 @@ import { ArrowRight } from "lucide-react";
 import { Metadata } from "next";
 
 import { getDictionary } from "@/lib/dictionaries";
-import { Locale } from "@/app/i18n-config";
-import { adminDb } from "@/lib/firebase-admin";
-import { Category } from "@/types/database";
+import { getDefaultLocale, getSupportedLocales, Locale } from "@/app/i18n-config";
 import { brandConfig } from "@/config/brand.config";
 import { getLocalizedField } from "@/lib/i18n";
 import { getStoreSettings } from "@/lib/services/settings";
+import { getAllPublishedCategories } from "@/lib/services/categories";
 import { getPageBySlug } from "@/lib/services/pages";
+import {
+    constructLocalizedMetadata,
+    resolveOrganizationSeoConfig,
+    resolveSiteBaseUrl,
+    toAbsoluteUrl,
+} from "@/lib/seo/metadata";
 import { CmsBlockRenderer } from "@/components/shop/CmsBlockRenderer";
 import { PageTranslationSync } from "@/components/shop/PageTranslationSync";
 import { AdminEditBadge } from "@/components/admin/AdminEditBadge";
@@ -24,47 +29,28 @@ interface SlugPageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-const serializeCategoryData = (docId: string, data: Record<string, unknown>): Category => {
-    const rawCreatedAt = data.createdAt as { toDate?: () => Date } | string | Date | undefined;
-    const rawUpdatedAt = data.updatedAt as { toDate?: () => Date } | string | Date | undefined;
-    const createdAt = rawCreatedAt
-        ? (typeof rawCreatedAt === "object" && "toDate" in rawCreatedAt && typeof rawCreatedAt.toDate === "function"
-            ? rawCreatedAt.toDate().toISOString()
-            : new Date(rawCreatedAt as string | Date).toISOString())
-        : new Date().toISOString();
-    const updatedAt = rawUpdatedAt
-        ? (typeof rawUpdatedAt === "object" && "toDate" in rawUpdatedAt && typeof rawUpdatedAt.toDate === "function"
-            ? rawUpdatedAt.toDate().toISOString()
-            : new Date(rawUpdatedAt as string | Date).toISOString())
-        : new Date().toISOString();
-
-    return {
-        ...(data as unknown as Category),
-        id: docId,
-        createdAt,
-        updatedAt,
-    };
-};
-
 export async function generateMetadata(props: SlugPageProps): Promise<Metadata> {
-    const { lang, slug } = await props.params;
-    const storeSettings = await getStoreSettings();
+    const [{ lang, slug }, storeSettings] = await Promise.all([
+        props.params,
+        getStoreSettings(),
+    ]);
 
+    const supportedLocales = getSupportedLocales();
+    const defaultLocale = getDefaultLocale();
     const localizedCatalogSlug = (
         getLocalizedField(storeSettings.catalogSlug, lang) ||
         (typeof storeSettings.catalogSlug === "string" ? storeSettings.catalogSlug : "shop")
     ).toLowerCase();
 
-    const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
-    const baseUrl = rawSiteUrl.replace(/\/+$/, "");
+    const baseUrl = resolveSiteBaseUrl(
+        process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url
+    );
 
-    // 1. Is it the Catalog?
     if (slug.toLowerCase() === localizedCatalogSlug) {
         const brandName = storeSettings.brandName || brandConfig.identity.name || "Store";
         const rawCatalogDisplayTitle = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
         const catalogDisplayTitle = rawCatalogDisplayTitle.replace(new RegExp(`\\s*[|\\-]\\s*${brandName}$`, "i"), "").trim();
 
-        // SEO Title priority: intro if present, otherwise catalog title
         const rawCatalogIntro = getLocalizedField(storeSettings.catalogIntro, lang);
         const catalogIntro = (rawCatalogIntro && rawCatalogIntro.trim().length > 0) ? rawCatalogIntro.trim() : "";
         const seoTitle = catalogIntro || catalogDisplayTitle;
@@ -74,51 +60,30 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
             ? rawCatalogDesc.trim()
             : getLocalizedField(storeSettings.heroDescription, lang) || `Browse our complete collection of ${brandName} products.`;
         const rawCatalogBannerUrl = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "/images/og-about.jpg";
-        const catalogBannerUrl = rawCatalogBannerUrl.startsWith("http")
-            ? rawCatalogBannerUrl
-            : `${baseUrl}${rawCatalogBannerUrl.startsWith("/") ? "" : "/"}${rawCatalogBannerUrl}`;
-        const canonicalUrl = `${baseUrl}/${lang}/${localizedCatalogSlug}`;
 
-        const enCatalogSlug = (typeof storeSettings.catalogSlug === "object" ? storeSettings.catalogSlug?.en : "shop") || "shop";
-        const frCatalogSlug = (typeof storeSettings.catalogSlug === "object" ? storeSettings.catalogSlug?.fr : "boutique") || "boutique";
+        const catalogLanguages = Object.fromEntries(
+            supportedLocales.map((loc) => {
+                const locSlug =
+                    (typeof storeSettings.catalogSlug === "object"
+                        ? getLocalizedField(storeSettings.catalogSlug, loc)
+                        : storeSettings.catalogSlug) ||
+                    (loc === "fr" ? "boutique" : "shop");
+                return [loc, `/${loc}/${locSlug}`];
+            })
+        );
+        catalogLanguages["x-default"] = catalogLanguages[defaultLocale] || `/${defaultLocale}/${localizedCatalogSlug}`;
 
-        const languagesAlternate: Record<string, string> = {
-            en: `${baseUrl}/en/${enCatalogSlug}`,
-            fr: `${baseUrl}/fr/${frCatalogSlug}`,
-            "x-default": `${baseUrl}/en/${enCatalogSlug}`,
-        };
-
-        return {
-            metadataBase: new URL(baseUrl),
+        return constructLocalizedMetadata({
+            locale: lang,
             title: seoTitle,
             description: catalogDescription,
-            alternates: {
-                canonical: canonicalUrl,
-                languages: languagesAlternate,
-            },
-            openGraph: {
-                title: seoTitle,
-                description: catalogDescription,
-                url: canonicalUrl,
-                type: "website",
-                siteName: brandName,
-                locale: lang === "fr" ? "fr_FR" : "en_US",
-                images: [
-                    {
-                        url: catalogBannerUrl,
-                        width: 1200,
-                        height: 630,
-                        alt: seoTitle,
-                    },
-                ],
-            },
-            twitter: {
-                card: "summary_large_image",
-                title: seoTitle,
-                description: catalogDescription,
-                images: [catalogBannerUrl],
-            },
-        };
+            siteName: brandName,
+            baseUrl,
+            canonicalPath: `/${lang}/${localizedCatalogSlug}`,
+            languages: catalogLanguages,
+            imageUrl: rawCatalogBannerUrl,
+            type: "website",
+        });
     }
 
     const page = await getPageBySlug(slug);
@@ -145,22 +110,20 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
             .replace(/\s+/g, " ")
             .trim();
         const description = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || pageSubtitle?.trim() || cleanContentText.slice(0, 160) || `Learn more about ${pageTitle} at ${brandName}.`;
-        const canonicalUrl = `${baseUrl}/${lang}/${displaySlug}`;
 
-        const enPageSlug = (typeof page.slug === "object" && page.slug?.en)
-            ? page.slug.en
-            : (page.slug_en || (typeof page.slug === "string" ? page.slug : slug));
-        const frPageSlug = (typeof page.slug === "object" && page.slug?.fr)
-            ? page.slug.fr
-            : (page.slug_fr || (typeof page.slug === "string" ? page.slug : slug));
+        const pageLanguages = Object.fromEntries(
+            supportedLocales.map((loc) => {
+                const fallbackLegacy = loc === "fr" ? page.slug_fr : page.slug_en;
+                const locSlug =
+                    (typeof page.slug === "object" && page.slug?.[loc]) ||
+                    fallbackLegacy ||
+                    getLocalizedField(page.slug, loc) ||
+                    (typeof page.slug === "string" ? page.slug : slug);
+                return [loc, `/${loc}/${locSlug}`];
+            })
+        );
+        pageLanguages["x-default"] = pageLanguages[defaultLocale] || `/${defaultLocale}/${displaySlug}`;
 
-        const languagesAlternate: Record<string, string> = {
-            en: `${baseUrl}/en/${enPageSlug}`,
-            fr: `${baseUrl}/fr/${frPageSlug}`,
-            "x-default": `${baseUrl}/en/${enPageSlug}`,
-        };
-
-        // Cover / Social Image for OG and Twitter
         let rawOgImage = page.imageUrl || page.image_url || page.coverImageUrl || page.banner_image;
         if (!rawOgImage && isAboutPage) {
             rawOgImage = storeSettings.aboutSection?.images?.[0] || "/images/og-about.jpg";
@@ -169,80 +132,49 @@ export async function generateMetadata(props: SlugPageProps): Promise<Metadata> 
             rawOgImage = storeSettings.catalogBannerUrl || brandConfig.assets?.ogImage || brandConfig.assets?.heroBanner || "/images/og-about.jpg";
         }
 
-        const ogImageUrl = rawOgImage.startsWith("http")
-            ? rawOgImage
-            : `${baseUrl}${rawOgImage.startsWith("/") ? "" : "/"}${rawOgImage}`;
-
-        return {
-            metadataBase: new URL(baseUrl),
-            title: {
-                absolute: formattedPageTitle,
-            },
+        return constructLocalizedMetadata({
+            locale: lang,
+            title: formattedPageTitle,
+            absoluteTitle: true,
             description,
-            alternates: {
-                canonical: canonicalUrl,
-                languages: languagesAlternate,
-            },
-            openGraph: {
-                title: formattedPageTitle,
-                description,
-                url: canonicalUrl,
-                siteName: brandName,
-                locale: lang === "fr" ? "fr_FR" : "en_US",
-                type: isAboutPage ? "article" : "website",
-                images: [
-                    {
-                        url: ogImageUrl,
-                        width: 1200,
-                        height: 630,
-                        alt: formattedPageTitle,
-                    },
-                ],
-            },
-            twitter: {
-                card: "summary_large_image",
-                title: formattedPageTitle,
-                description,
-                images: [ogImageUrl],
-            },
-        };
+            siteName: brandName,
+            baseUrl,
+            canonicalPath: `/${lang}/${displaySlug}`,
+            languages: pageLanguages,
+            imageUrl: rawOgImage,
+            type: isAboutPage ? "article" : "website",
+        });
     }
 
     return {};
 }
 
 export default async function UnifiedSlugPage(props: SlugPageProps) {
-    const { lang, slug } = await props.params;
-    const searchParams = await props.searchParams;
+    const [{ lang, slug }, searchParams, storeSettings] = await Promise.all([
+        props.params,
+        props.searchParams,
+        getStoreSettings(),
+    ]);
     const rawArtwork = searchParams.artwork;
     const initialArtwork = typeof rawArtwork === "string" ? rawArtwork.trim() : undefined;
 
-    const storeSettings = await getStoreSettings();
     const localizedCatalogSlug = (
         getLocalizedField(storeSettings.catalogSlug, lang) ||
         (typeof storeSettings.catalogSlug === "string" ? storeSettings.catalogSlug : "shop")
     ).toLowerCase();
 
-    // =========================================================================
-    // CASE 1: The slug matches the Catalog root
-    // =========================================================================
     if (slug.toLowerCase() === localizedCatalogSlug) {
-        // SEO: If legacy ?category=xyz is requested, 301 redirect to silo URL /[lang]/[catalogSlug]/xyz
         const categoryQuery = searchParams.category;
         if (typeof categoryQuery === "string" && categoryQuery.trim()) {
             permanentRedirect(`/${lang}/${localizedCatalogSlug}/${categoryQuery.trim()}`);
         }
 
-        const [dict, categoriesSnapshot] = await Promise.all([
+        const [dict, publishedCategories] = await Promise.all([
             getDictionary(lang as Locale),
-            adminDb.collection("categories").orderBy("order", "asc").get(),
+            getAllPublishedCategories(),
         ]);
 
-        const rawCategories = categoriesSnapshot.docs
-            .map((doc) => serializeCategoryData(doc.id, doc.data()))
-            .filter((c) => (c.status ?? "published") === "published");
-
-        const categories = rawCategories.sort((a, b) => {
+        const categories = [...publishedCategories].sort((a, b) => {
             const orderDiff = (a.order ?? 0) - (b.order ?? 0);
             if (orderDiff !== 0) return orderDiff;
             const nameA = getLocalizedField(a.name, lang) || (lang === "fr" ? a.nameFr : a.nameEn) || "";
@@ -250,8 +182,9 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
             return nameA.localeCompare(nameB, lang);
         });
 
-        const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
-        const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+        const baseUrl = resolveSiteBaseUrl(
+            process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url
+        );
         const catalogTitle = getLocalizedField(storeSettings.catalogTitle, lang) || (lang === "fr" ? "Boutique" : "Shop");
         const catalogIntro = getLocalizedField(storeSettings.catalogIntro, lang) || "";
         const catalogBanner = storeSettings.catalogBannerUrl || brandConfig.assets?.heroBanner || "";
@@ -271,7 +204,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
             return {
                 name: catName,
                 url: `${baseUrl}/${lang}/${localizedCatalogSlug}/${catSlug}`,
-                image: catImg,
+                image: catImg ? toAbsoluteUrl(baseUrl, catImg) : undefined,
                 description: catIntro,
             };
         });
@@ -296,7 +229,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                     categories={catalogCategoriesList}
                     breadcrumbs={catalogBreadcrumbs}
                 />
-                {/* Edge-to-Edge Illustrated Catalog Banner */}
                 <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-8">
                     <AdminEditBadge href="/admin/catalog" locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
                     {catalogBanner ? (
@@ -305,28 +237,28 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                             alt={catalogTitle || "Catalog Banner"}
                             fill
                             priority
-                            unoptimized
+                            fetchPriority="high"
+                            quality={75}
                             sizes="100vw"
                             className="object-cover pointer-events-none"
                         />
                     ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black z-0" />
                     )}
-                    <div className="absolute inset-0 bg-black/40 pointer-events-none z-[1]" />
+                    <div className="absolute inset-0 bg-black/50 pointer-events-none z-[1]" />
 
                     <div className="relative z-10 px-6 max-w-4xl mx-auto flex flex-col items-center">
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight drop-shadow-md">
                             {catalogTitle}
                         </h1>
                         {catalogIntro && (
-                            <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-md text-center">
+                            <p className="mt-4 text-lg text-white/95 max-w-2xl mx-auto drop-shadow-md text-center">
                                 {catalogIntro}
                             </p>
                         )}
                     </div>
                 </section>
 
-                {/* Catalog Description Container (Directly below the banner, before categories) */}
                 {catalogDescription && (
                     <div className="w-full max-w-4xl mx-auto px-6 md:px-16 mt-2 mb-12 text-center">
                         <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
@@ -335,7 +267,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                     </div>
                 )}
 
-                {/* Categories Grid (Clean Silo Links) */}
                 <div className="w-full max-w-7xl mx-auto px-6 md:px-16 mb-24 md:mb-36">
                     <div className="flex items-center justify-between border-b pb-4 mb-8">
                         <h2 className="text-2xl font-bold tracking-tight">
@@ -376,14 +307,14 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                         )}
                                         <Link
                                             href={`/${lang}/${localizedCatalogSlug}/${catSlug}`}
-                                            className="group relative block aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden border bg-muted shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                                            className="group relative block aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden border bg-muted shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                                         >
                                             {catImg ? (
                                                 <Image
                                                     src={catImg}
                                                     alt={catName}
                                                     fill
-                                                    unoptimized
+                                                    quality={75}
                                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                                     className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                                                 />
@@ -391,19 +322,19 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                                                 <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-900" />
                                             )}
 
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:from-black/90 transition-colors duration-300" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15 group-hover:from-black/95 transition-colors duration-300" />
 
                                             <div className="absolute inset-0 p-6 flex flex-col justify-end text-white">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <h3 className="text-2xl font-bold tracking-tight group-hover:translate-x-1 transition-transform duration-300">
                                                         {catName}
                                                     </h3>
-                                                    <span className="h-9 w-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:bg-white group-hover:text-black transition-all duration-300">
-                                                        <ArrowRight className="h-4 w-4" />
+                                                    <span className="h-9 w-9 rounded-full bg-black/75 border border-white/25 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-white group-hover:text-black transition-all duration-300">
+                                                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
                                                     </span>
                                                 </div>
                                                 {catIntro && (
-                                                    <p className="mt-2 text-sm text-zinc-300 line-clamp-2">
+                                                    <p className="mt-2 text-sm text-zinc-200 line-clamp-2">
                                                         {catIntro}
                                                     </p>
                                                 )}
@@ -419,9 +350,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
         );
     }
 
-    // =========================================================================
-    // CASE 2: The slug matches a Content Page
-    // =========================================================================
     const [page, dict] = await Promise.all([
         getPageBySlug(slug),
         getDictionary(lang as Locale),
@@ -431,7 +359,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
         notFound();
     }
 
-    // Cross-locale redirect if accessed with another language's slug for this page
     const expectedPageSlug = getLocalizedField(page.slug, lang) || (typeof page.slug === "string" ? page.slug : page.id);
     if (expectedPageSlug && slug !== expectedPageSlug) {
         const otherSlugs = [
@@ -451,7 +378,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
     const content = getLocalizedField(page.content, lang) || (lang === "fr" ? page.content_fr : page.content_en) || "";
     const activeBlocks: string[] = Array.isArray(page.activeBlocks) ? page.activeBlocks : [];
 
-    // Extract multilingual page slugs for language switcher
     const pageSlugMap: Record<string, string> = {};
     if (typeof page.slug === "object" && page.slug !== null) {
         Object.entries(page.slug).forEach(([loc, s]) => {
@@ -472,7 +398,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
             "table", "thead", "tbody", "tr", "th", "td",
             "br", "hr", "code", "pre",
             "iframe", "figure", "figcaption", "section", "article", "header", "footer", "aside", "nav",
-            // SVG elements
             "svg", "path", "g", "circle", "rect", "line", "polyline", "polygon", "ellipse",
             "use", "defs", "symbol", "clipPath", "mask", "text", "tspan",
             "linearGradient", "radialGradient", "stop", "pattern", "image",
@@ -482,7 +407,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
             "target", "rel", "width", "height",
             "allowfullscreen", "allowFullScreen", "loading", "referrerpolicy", "referrerPolicy",
             "aria-hidden", "aria-label", "aria-labelledby", "aria-describedby", "role",
-            // SVG attributes
             "xmlns", "viewBox", "viewbox", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
             "stroke-dasharray", "stroke-dashoffset", "stroke-miterlimit", "stroke-opacity", "fill-opacity",
             "fill-rule", "clip-rule", "clip-path", "d", "cx", "cy", "r", "rx", "ry",
@@ -493,8 +417,9 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
         ADD_ATTR: ["allowfullscreen", "allowFullScreen", "loading", "referrerpolicy", "referrerPolicy", "style", "target"],
     });
 
-    const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url || "http://localhost:3000";
-    const pageBaseUrl = rawSiteUrl.replace(/\/+$/, "");
+    const pageBaseUrl = resolveSiteBaseUrl(
+        process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || brandConfig.identity.url
+    );
 
     const isAboutPage = slug.toLowerCase() === "about" ||
         slug.toLowerCase() === "a-propos" ||
@@ -504,7 +429,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
 
     const schemaType = isAboutPage ? "AboutPage" : "WebPage";
 
-    // Clean text for SEO description
     const cleanContentText = content
         .replace(/<[^>]*>?/gm, " ")
         .replace(/\s+/g, " ")
@@ -513,10 +437,8 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
     const seoDescription = page.metaDescription?.[lang] || page.meta_description_fr || page.meta_description_en || subtitle || cleanContentText.slice(0, 160) || `Learn more about ${title} at ${brandName}.`;
     const pageIntro = getLocalizedField(page.metaDescription, lang) || (lang === "fr" ? page.meta_description_fr : page.meta_description_en);
 
-    // Hero Banner image directly from page doc in Firestore
     const pageHeroImage = page.imageUrl || page.image_url || page.coverImageUrl || page.banner_image || null;
 
-    // Cover Image for Schema.org / Structured Data
     let rawFeaturedImage = pageHeroImage;
     if (!rawFeaturedImage && isAboutPage) {
         rawFeaturedImage = storeSettings.aboutSection?.images?.[0] || "/images/og-about.jpg";
@@ -525,20 +447,14 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
         rawFeaturedImage = storeSettings.catalogBannerUrl || brandConfig.assets?.ogImage || brandConfig.assets?.heroBanner || "/images/og-about.jpg";
     }
 
-    const absoluteFeaturedImage = rawFeaturedImage.startsWith("http")
-        ? rawFeaturedImage
-        : `${pageBaseUrl}${rawFeaturedImage.startsWith("/") ? "" : "/"}${rawFeaturedImage}`;
-
-    const rawLogo = storeSettings.logoUrl || brandConfig.assets.logo.src;
-    const absoluteLogoUrl = rawLogo.startsWith("http")
-        ? rawLogo
-        : `${pageBaseUrl}${rawLogo.startsWith("/") ? "" : "/"}${rawLogo}`;
-
-    const brandDescription = getLocalizedField(storeSettings.heroDescription, lang) ||
+    const absoluteFeaturedImage = toAbsoluteUrl(pageBaseUrl, rawFeaturedImage);
+    const brandDescription =
+        getLocalizedField(storeSettings.heroDescription, lang) ||
         getLocalizedField(brandConfig.identity.description, lang) ||
         `Official store for ${brandName}`;
-
-    const activeSocials = (brandConfig.navigation?.socials || []).map((s) => s.url).filter(Boolean);
+    const orgConfig = resolveOrganizationSeoConfig(storeSettings, pageBaseUrl, {
+        locale: lang,
+    });
 
     const breadcrumbs = [
         {
@@ -552,8 +468,7 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
     ];
 
     return (
-        <main className="flex-1 bg-zinc-50 dark:bg-black">
-            {/* 1. Structured Data (JSON-LD) - AboutPage / WebPage with Organization & Breadcrumbs */}
+        <div className="flex-1 bg-zinc-50 dark:bg-black">
             <PageJsonLd
                 title={title}
                 description={seoDescription}
@@ -566,17 +481,16 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                 brandName={brandName}
                 breadcrumbs={breadcrumbs}
                 organization={{
-                    name: brandName,
-                    url: pageBaseUrl,
-                    logo: absoluteLogoUrl,
+                    name: orgConfig.name,
+                    url: orgConfig.url,
+                    logo: orgConfig.logo,
                     description: brandDescription,
-                    sameAs: activeSocials,
+                    sameAs: orgConfig.sameAs,
                 }}
             />
 
             <PageTranslationSync pageSlugs={Object.keys(pageSlugMap).length > 0 ? pageSlugMap : null} />
 
-            {/* 2. Hero Header Banner (Mutualisé avec le style des pages catégories) */}
             {pageHeroImage ? (
                 <section className="relative isolate w-full min-h-[40vh] sm:min-h-[45vh] md:min-h-[50vh] py-20 sm:py-28 md:py-32 px-6 md:px-16 flex flex-col items-center justify-center text-center overflow-hidden mb-12">
                     <AdminEditBadge href={`/admin/pages/${page.id}/edit`} locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
@@ -585,9 +499,10 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                         alt={title}
                         fill
                         priority
+                        fetchPriority="high"
+                        quality={75}
                         sizes="100vw"
                         className="object-cover pointer-events-none"
-                        unoptimized={pageHeroImage.startsWith("http")}
                     />
                     <div className="absolute inset-0 bg-black/50 pointer-events-none z-[1]" />
 
@@ -596,14 +511,13 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                             {title}
                         </h1>
                         {subtitle && (
-                            <p className="mt-4 text-lg md:text-xl text-zinc-200 max-w-2xl mx-auto drop-shadow-md text-center">
+                            <p className="mt-4 text-lg md:text-xl text-zinc-100 max-w-2xl mx-auto drop-shadow-md text-center">
                                 {subtitle}
                             </p>
                         )}
                     </div>
                 </section>
             ) : (
-                /* Fallback : En-tête classique centré si aucune bannière n'est définie */
                 <header className="relative w-full max-w-4xl mx-auto pt-12 sm:pt-16 pb-8 px-6 text-center flex flex-col items-center">
                     <AdminEditBadge href={`/admin/pages/${page.id}/edit`} locale={lang} className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" />
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground">
@@ -638,6 +552,6 @@ export default async function UnifiedSlugPage(props: SlugPageProps) {
                     initialArtwork={initialArtwork}
                 />
             )}
-        </main>
+        </div>
     );
 }

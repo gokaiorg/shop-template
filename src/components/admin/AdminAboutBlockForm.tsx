@@ -40,14 +40,15 @@ import { updateAboutBlockSettings } from "@/actions/settings";
 import { uploadBrandAsset } from "@/lib/firebase-storage";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { getLocaleDisplayName } from "@/lib/i18n";
+import type { Dictionary } from "@/lib/dictionaries";
 
 interface AdminAboutBlockFormProps {
     initialData: StoreSettings;
     lang: string;
-    dict?: Record<string, string>;
+    dict?: Partial<Dictionary["admin"]>;
 }
 
-export function AdminAboutBlockForm({ initialData, lang, dict }: AdminAboutBlockFormProps) {
+export function AdminAboutBlockForm({ initialData, lang }: AdminAboutBlockFormProps) {
     const router = useRouter();
     const { supportedLocales, defaultLocale, isMultiLocale } = useBrand();
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");

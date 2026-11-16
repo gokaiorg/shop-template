@@ -5,18 +5,14 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: true,
   compress: true,
   experimental: {
-    optimizePackageImports: [
-      "lucide-react",
-      "@radix-ui/react-icons",
-      "framer-motion",
-      "date-fns",
-    ],
+    optimizePackageImports: ["lucide-react", "radix-ui", "date-fns"],
   },
   images: {
-    loader: "custom",
-    loaderFile: "./src/lib/image-loader.ts",
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 31536000,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
@@ -42,6 +38,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "*.firebasestorage.app",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
@@ -55,7 +56,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/:all*(svg|jpg|jpeg|png|webp|avif|gif|ico|woff|woff2)",
+        source: "/_next/static/:path*",
         headers: [
           {
             key: "Cache-Control",
@@ -64,7 +65,34 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/_next/static/:path*",
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/fonts/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/brand/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/:all*(svg|jpg|jpeg|png|webp|avif|gif|woff|woff2)",
         headers: [
           {
             key: "Cache-Control",

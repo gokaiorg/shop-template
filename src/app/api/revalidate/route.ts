@@ -1,19 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
-/**
- * POST /api/revalidate
- *
- * Route sécurisée de revalidation du cache Next.js à la demande (On-demand ISR).
- *
- * Authentification :
- *   Paramètre URL ?secret=... OU header x-revalidation-secret / Authorization: Bearer ...
- *
- * Corps attendu (JSON) :
- *   { "path": "/en/menu/buds/amnesia" }
- *   OU
- *   { "paths": ["/en/menu", "/fr/menu", "/en/menu/buds/amnesia"], "type": "page" }
- */
 export async function POST(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -31,25 +18,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json().catch(() => ({}));
+    const body = (await req.json().catch(() => ({}))) as {
+      paths?: unknown;
+      path?: unknown;
+    };
     let paths: string[] = [];
 
     if (Array.isArray(body.paths)) {
-      paths = body.paths.filter((p: unknown): p is string => typeof p === "string" && p.trim().length > 0);
+      paths = body.paths.filter(
+        (p): p is string => typeof p === "string" && p.trim().length > 0
+      );
     } else if (typeof body.path === "string" && body.path.trim().length > 0) {
       paths = [body.path.trim()];
     }
 
     if (paths.length === 0) {
       return NextResponse.json(
-        { message: "Bad Request: No valid paths provided (expected 'path' string or 'paths' array)" },
+        {
+          message:
+            "Bad Request: No valid paths provided (expected 'path' string or 'paths' array)",
+        },
         { status: 400 }
       );
     }
 
+    revalidateTag("store-settings", { expire: 0 });
+    revalidateTag("categories", { expire: 0 });
+    revalidateTag("products", { expire: 0 });
+    revalidateTag("pages", { expire: 0 });
+    revalidateTag("google-reviews", { expire: 0 });
+
     for (const path of paths) {
       try {
-        revalidatePath(path, 'layout');
+        revalidatePath(path, "layout");
       } catch (err) {
         console.error(`Error revalidating path "${path}":`, err);
       }
@@ -62,19 +63,18 @@ export async function POST(req: NextRequest) {
       mode: "layout",
       now: Date.now(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("REVALIDATION_ROUTE_ERROR:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error?.message || error },
+      {
+        message: "Internal Server Error",
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
-/**
- * GET /api/revalidate?secret=...&path=...
- * Pratique pour les tests manuels ou les requêtes webhook simples.
- */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -94,11 +94,13 @@ export async function GET(req: NextRequest) {
 
     const path = searchParams.get("path");
     const rawPaths = searchParams.get("paths");
-    const type = searchParams.get("type") === "layout" ? "layout" : "page";
 
     let paths: string[] = [];
     if (rawPaths) {
-      paths = rawPaths.split(",").map((p) => p.trim()).filter(Boolean);
+      paths = rawPaths
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
     } else if (path) {
       paths = [path.trim()];
     }
@@ -110,9 +112,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    revalidateTag("store-settings", { expire: 0 });
+    revalidateTag("categories", { expire: 0 });
+    revalidateTag("products", { expire: 0 });
+    revalidateTag("pages", { expire: 0 });
+    revalidateTag("google-reviews", { expire: 0 });
+
     for (const p of paths) {
       try {
-        revalidatePath(p, 'layout');
+        revalidatePath(p, "layout");
       } catch (err) {
         console.error(`Error revalidating path "${p}":`, err);
       }
@@ -125,10 +133,13 @@ export async function GET(req: NextRequest) {
       mode: "layout",
       now: Date.now(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("REVALIDATION_ROUTE_ERROR:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error?.message || error },
+      {
+        message: "Internal Server Error",
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

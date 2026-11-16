@@ -38,6 +38,12 @@ export default async function ShopLayout({
     return (
         <SessionProvider session={serializedSession}>
             <div className="flex min-h-screen flex-col" suppressHydrationWarning>
+                <a
+                    href="#main-content"
+                    className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:shadow-lg"
+                >
+                    {lang === "fr" ? "Aller au contenu principal" : "Skip to main content"}
+                </a>
                 <Header
                     lang={lang}
                     dict={dict}
@@ -48,13 +54,14 @@ export default async function ShopLayout({
                     footerPages={footerPages}
                     socialLinks={storeSettings.socialLinks}
                 />
-                <main className="flex-1">
+                <main id="main-content" className="flex-1">
                     {children}
                 </main>
                 <Footer
                     lang={lang}
                     dict={dict}
                     pages={footerPages}
+                    categories={allCategories}
                     catalogTitle={storeSettings.catalogTitle}
                     catalogSlug={typeof storeSettings.catalogSlug === 'object' ? getLocalizedField(storeSettings.catalogSlug, lang) || 'shop' : (storeSettings.catalogSlug || 'shop')}
                     brandName={storeSettings.brandName}
