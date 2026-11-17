@@ -17,6 +17,46 @@ interface OrdersPageProps {
     params: Promise<{ lang: string }>;
 }
 
+interface OrderLineItem {
+    quantity?: number;
+}
+
+interface FirestoreTimestampLike {
+    toDate?: () => Date;
+}
+
+interface RawOrderRecord {
+    id: string;
+    status?: string;
+    totalAmount?: number;
+    currency?: string;
+    items?: OrderLineItem[];
+    createdAt?: FirestoreTimestampLike | string | Date | number | null;
+}
+
+async function fetchUserOrdersMap(userId: string, userEmail?: string | null) {
+    const ordersMap = new Map<string, RawOrderRecord>();
+    try {
+        const [userOrdersSnapshot, emailOrdersSnapshot] = await Promise.all([
+            adminDb.collection("orders").where("userId", "==", userId).get(),
+            userEmail
+                ? adminDb.collection("orders").where("customerEmail", "==", userEmail).get()
+                : Promise.resolve(null),
+        ]);
+
+        userOrdersSnapshot.forEach((doc) => {
+            ordersMap.set(doc.id, { id: doc.id, ...(doc.data() as Omit<RawOrderRecord, "id">) });
+        });
+
+        emailOrdersSnapshot?.forEach((doc) => {
+            ordersMap.set(doc.id, { id: doc.id, ...(doc.data() as Omit<RawOrderRecord, "id">) });
+        });
+    } catch (e) {
+        console.error("Error fetching user orders from Firestore:", e);
+    }
+    return ordersMap;
+}
+
 export default async function CustomerOrdersPage({ params }: OrdersPageProps) {
     const { lang } = await params;
     const session = await auth();
@@ -28,9 +68,10 @@ export default async function CustomerOrdersPage({ params }: OrdersPageProps) {
     const userId = session.user.id;
     const userEmail = session.user.email;
 
-    const [dict, storeSettings] = await Promise.all([
+    const [dict, storeSettings, ordersMap] = await Promise.all([
         getDictionary(lang as Locale),
         getStoreSettings(),
+        fetchUserOrdersMap(userId, userEmail),
     ]);
 
     const accountDict = dict.account || {};
@@ -41,43 +82,18 @@ export default async function CustomerOrdersPage({ params }: OrdersPageProps) {
 
     const defaultCurrency = storeSettings.defaultCurrency || "USD";
 
-    // Query orders associated with userId and/or customerEmail
-    const ordersMap = new Map<string, any>();
-
-    try {
-        const userOrdersSnapshot = await adminDb
-            .collection("orders")
-            .where("userId", "==", userId)
-            .get();
-
-        userOrdersSnapshot.forEach((doc) => {
-            ordersMap.set(doc.id, { id: doc.id, ...doc.data() });
-        });
-
-        if (userEmail) {
-            const emailOrdersSnapshot = await adminDb
-                .collection("orders")
-                .where("customerEmail", "==", userEmail)
-                .get();
-
-            emailOrdersSnapshot.forEach((doc) => {
-                ordersMap.set(doc.id, { id: doc.id, ...doc.data() });
-            });
-        }
-    } catch (e) {
-        console.error("Error fetching user orders from Firestore:", e);
-    }
-
     const orders = Array.from(ordersMap.values())
         .map((orderData) => {
-            const createdAtDate = orderData.createdAt?.toDate
-                ? orderData.createdAt.toDate()
-                : orderData.createdAt
-                ? new Date(orderData.createdAt)
-                : new Date();
+            const rawCreatedAt = orderData.createdAt;
+            const createdAtDate =
+                rawCreatedAt && typeof rawCreatedAt === "object" && "toDate" in rawCreatedAt && typeof rawCreatedAt.toDate === "function"
+                    ? rawCreatedAt.toDate()
+                    : rawCreatedAt
+                    ? new Date(rawCreatedAt as string | number | Date)
+                    : new Date();
 
             const itemsCount = Array.isArray(orderData.items)
-                ? orderData.items.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0)
+                ? orderData.items.reduce((acc, item) => acc + (item.quantity || 1), 0)
                 : 0;
 
             return {
@@ -125,10 +141,9 @@ export default async function CustomerOrdersPage({ params }: OrdersPageProps) {
 
     return (
         <div className="space-y-6">
-            {/* Page Header */}
             <div>
                 <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                    <ShoppingBag className="h-6 w-6 text-primary" />
+                    <ShoppingBag className="h-6 w-6 text-primary" aria-hidden="true" />
                     <span>{accountDict.orders || (lang === "fr" ? "Mes Commandes" : "My Orders")}</span>
                 </h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
@@ -180,7 +195,7 @@ export default async function CustomerOrdersPage({ params }: OrdersPageProps) {
                                             {format(new Date(order.createdAt), "PPP")}
                                         </TableCell>
                                         <TableCell>
-                                            {getStatusBadge(order.status)}
+                                            {getStatusBadge(order.status || "")}
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
                                             {order.itemsCount} {lang === "fr" ? (order.itemsCount > 1 ? "articles" : "article") : (order.itemsCount > 1 ? "items" : "item")}

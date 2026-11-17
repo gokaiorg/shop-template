@@ -19,7 +19,7 @@ export interface CategoryPillsNavProps {
 }
 
 export const BASE_PILL_CLASS =
-    "rounded-full border px-4 py-2 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap outline-none select-none";
+    "rounded-full border px-4 py-2 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1";
 
 export const INACTIVE_PILL_CLASS = cn(
     "border-border bg-transparent text-muted-foreground",
@@ -35,12 +35,10 @@ export const ACTIVE_PILL_CLASS = cn(
 
 export const TAB_TRIGGER_CLASS = cn(
     BASE_PILL_CLASS,
-    // Inactive state - ONLY apply hover when data-state is inactive
     "data-[state=inactive]:border-border data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground",
     "data-[state=inactive]:hover:bg-primary/10 data-[state=inactive]:hover:text-primary data-[state=inactive]:hover:border-primary/30",
     "dark:data-[state=inactive]:border-border dark:data-[state=inactive]:bg-transparent dark:data-[state=inactive]:text-muted-foreground",
     "dark:data-[state=inactive]:hover:bg-primary/15 dark:data-[state=inactive]:hover:text-primary dark:data-[state=inactive]:hover:border-primary/40",
-    // Active state - strictly identical to ACTIVE_PILL_CLASS
     "data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs",
     "data-[state=active]:hover:opacity-90 data-[state=active]:hover:bg-primary data-[state=active]:hover:text-primary-foreground",
     "dark:data-[state=active]:border-primary dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-xs",

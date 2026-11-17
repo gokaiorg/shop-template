@@ -4,15 +4,17 @@ import parse from 'html-react-parser';
 import DOMPurify from 'isomorphic-dompurify';
 import { brandConfig } from '@/config/brand.config';
 import { Page, Category, SocialLink } from '@/types/database';
+import { Dictionary } from '@/lib/dictionaries';
 import { getLocalizedField } from '@/lib/i18n';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAllPublishedCategories } from '@/lib/services/categories';
 import { getStoreSettings } from '@/lib/services/settings';
 import { AdminEditBadge } from '@/components/admin/AdminEditBadge';
 
 interface FooterProps {
     lang: string;
-    dict: any;
+    dict: Dictionary;
     pages?: Page[];
+    categories?: Category[];
     catalogTitle?: Record<string, string>;
     catalogSlug?: string | Record<string, string>;
     brandName?: string;
@@ -25,6 +27,7 @@ export async function Footer({
     lang,
     dict,
     pages = [],
+    categories: initialCategories,
     catalogTitle,
     catalogSlug = 'shop',
     brandName,
@@ -33,8 +36,7 @@ export async function Footer({
     footerRightMenuTitle,
 }: FooterProps) {
     if (!dict) return null;
-    
-    // Fetch settings if not fully passed as props
+
     const settings = (!brandName || !footerDescription || !socialLinks || !footerRightMenuTitle)
         ? await getStoreSettings()
         : null;
@@ -49,8 +51,8 @@ export async function Footer({
     const isFr = lang === 'fr';
     const activeFooterRightTitle = getLocalizedField(footerRightMenuTitle, lang) || getLocalizedField(settings?.footerRightMenuTitle, lang) || (isFr ? 'Légal' : 'Legal');
 
-    const legalDict = dict.legal || {};
-    const headerDict = dict.header || {};
+    const legalDict = (dict.legal || {}) as Record<string, string | undefined>;
+    const headerDict = (dict.header || {}) as Record<string, string | undefined>;
     const { navigation } = brandConfig;
     const description = getLocalizedField(activeFooterDesc, lang)
         || getLocalizedField(settings?.footerDescription, lang)
@@ -61,26 +63,19 @@ export async function Footer({
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const displayCatalogTitle = getLocalizedField(activeCatalogTitle, lang) || headerDict.shop || (isFr ? "Boutique" : "Shop");
 
-    let categories: Category[] = [];
-    try {
-        const catSnap = await adminDb.collection('categories').orderBy('order', 'asc').get();
-        categories = catSnap.docs
-            .map((doc) => ({ id: doc.id, ...doc.data() } as Category))
-            .filter((c) => (c.status ?? 'published') === 'published');
-        categories.sort((a, b) => {
+    const sourceCategories = initialCategories ?? await getAllPublishedCategories();
+    const categories = [...sourceCategories]
+        .filter((c) => (c.status ?? 'published') === 'published')
+        .sort((a, b) => {
             const orderDiff = (a.order ?? 0) - (b.order ?? 0);
             if (orderDiff !== 0) return orderDiff;
             const nameA = getLocalizedField(a.name, lang) || (isFr ? a.nameFr : a.nameEn) || '';
             const nameB = getLocalizedField(b.name, lang) || (isFr ? b.nameFr : b.nameEn) || '';
             return nameA.localeCompare(nameB, lang);
         });
-    } catch (e) {
-        console.error("Error fetching categories for footer:", e);
-    }
 
     return (
         <footer className="border-t bg-zinc-50 dark:bg-black py-12 mt-auto relative">
-            {/* Quick Edit shortcut for Footer & Social Links */}
             <AdminEditBadge
                 href="/admin/settings#footer-social-links"
                 locale={lang}
@@ -88,7 +83,7 @@ export async function Footer({
             />
             <div className="w-full max-w-7xl mx-auto px-6 md:px-16 grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
                 <div className="col-span-1 md:col-span-2">
-                    <h3 className="font-bold text-lg mb-4">{activeBrandName}</h3>
+                    <h2 className="font-bold text-lg mb-4">{activeBrandName}</h2>
                     {description ? (
                         <div className="text-muted-foreground text-sm max-w-sm leading-relaxed whitespace-pre-line [&_a]:underline [&_a]:hover:text-primary">
                             {parse(DOMPurify.sanitize(description, { ADD_ATTR: ['target'] }))}
@@ -112,11 +107,11 @@ export async function Footer({
                 </div>
                 
                 <div>
-                    <h3 className="font-bold mb-4">
+                    <h2 className="font-bold text-base mb-4">
                         <Link href={`/${lang}/${activeCatalogSlug}`} className="hover:text-primary transition-colors">
                             {displayCatalogTitle}
                         </Link>
-                    </h3>
+                    </h2>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {categories.slice(0, 6).map((category) => {
                             const catSlug = 
@@ -143,7 +138,7 @@ export async function Footer({
                 </div>
 
                 <div>
-                    <h3 className="font-bold mb-4">{activeFooterRightTitle || legalDict.title || (isFr ? "Informations & Légal" : "Legal")}</h3>
+                    <h2 className="font-bold text-base mb-4">{activeFooterRightTitle || legalDict.title || (isFr ? "Informations & Légal" : "Legal")}</h2>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {footerPages.length > 0 ? (
                             footerPages.map((page) => {

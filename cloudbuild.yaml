@@ -1,5 +1,4 @@
 steps:
-  # 1. Pull previous latest image for Docker layer caching (only 1 image, avoids --all-tags bottleneck)
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args:
@@ -8,7 +7,6 @@ steps:
         docker pull $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:latest || exit 0
     id: 'Pull-Cache'
 
-  # 2. Retrieve existing Cloud Run runtime NEXT_PUBLIC_* env vars into .env.production (failsafe bridge)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     entrypoint: 'bash'
     args:
@@ -17,7 +15,7 @@ steps:
         echo "Retrieving NEXT_PUBLIC_* variables from Cloud Run ($_SERVICE_NAME)..."
         gcloud run services describe $_SERVICE_NAME --region=$_DEPLOY_REGION --format="json" > /workspace/cr_service.json 2>/dev/null || true
         python3 -c "
-        import json, os
+        import json
         try:
             with open('/workspace/cr_service.json') as f:
                 data = json.load(f)
@@ -39,64 +37,56 @@ steps:
         " || true
     id: 'Sync-CloudRun-Env'
 
-  # 3. Build container with cache-from and build-args for Next.js build-time inlining
   - name: 'gcr.io/cloud-builders/docker'
+    env:
+      - 'DOCKER_BUILDKIT=1'
+    entrypoint: 'bash'
     args:
-      - 'build'
-      - '--cache-from'
-      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:latest'
-      - '-t'
-      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
-      - '-t'
-      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:latest'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_BRAND=${_NEXT_PUBLIC_BRAND}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_APP_URL=${_NEXT_PUBLIC_APP_URL}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_PROJECT_ID=${_NEXT_PUBLIC_FIREBASE_PROJECT_ID}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_DATABASE_ID=${_NEXT_PUBLIC_FIREBASE_DATABASE_ID}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${_NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_API_KEY=${_NEXT_PUBLIC_FIREBASE_API_KEY}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_APP_ID=${_NEXT_PUBLIC_FIREBASE_APP_ID}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_GTM_ID=${_NEXT_PUBLIC_GTM_ID}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_ENABLE_CART=${_NEXT_PUBLIC_ENABLE_CART}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_SUPPORTED_LOCALES=${_NEXT_PUBLIC_SUPPORTED_LOCALES}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_DEFAULT_LOCALE=${_NEXT_PUBLIC_DEFAULT_LOCALE}'
-      - '-f'
-      - 'Dockerfile'
-      - '.'
+      - '-c'
+      - |
+        BUILD_ARGS=()
+        for pair in \
+          "NEXT_PUBLIC_BRAND=${_NEXT_PUBLIC_BRAND}" \
+          "NEXT_PUBLIC_APP_URL=${_NEXT_PUBLIC_APP_URL}" \
+          "NEXT_PUBLIC_FIREBASE_PROJECT_ID=${_NEXT_PUBLIC_FIREBASE_PROJECT_ID}" \
+          "NEXT_PUBLIC_FIREBASE_DATABASE_ID=${_NEXT_PUBLIC_FIREBASE_DATABASE_ID}" \
+          "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${_NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}" \
+          "NEXT_PUBLIC_FIREBASE_API_KEY=${_NEXT_PUBLIC_FIREBASE_API_KEY}" \
+          "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}" \
+          "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}" \
+          "NEXT_PUBLIC_FIREBASE_APP_ID=${_NEXT_PUBLIC_FIREBASE_APP_ID}" \
+          "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}" \
+          "NEXT_PUBLIC_GTM_ID=${_NEXT_PUBLIC_GTM_ID}" \
+          "NEXT_PUBLIC_ENABLE_CART=${_NEXT_PUBLIC_ENABLE_CART}" \
+          "NEXT_PUBLIC_SUPPORTED_LOCALES=${_NEXT_PUBLIC_SUPPORTED_LOCALES}" \
+          "NEXT_PUBLIC_DEFAULT_LOCALE=${_NEXT_PUBLIC_DEFAULT_LOCALE}"; do
+          key="$${pair%%=*}"
+          val="$${pair#*=}"
+          if [ -n "$$val" ]; then
+            BUILD_ARGS+=("--build-arg" "$$key=$$val")
+          fi
+        done
+        docker build \
+          --cache-from "$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:latest" \
+          -t "$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA" \
+          -t "$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:latest" \
+          "$${BUILD_ARGS[@]}" \
+          -f Dockerfile \
+          .
     id: 'Build'
 
-  # 4. Push commit-tagged image for deployment
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
     id: 'Push-Commit-Image'
 
-  # 5. Push latest image for next build cache
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:latest'
     id: 'Push-Cache-Image'
 
-  # 6. Deploy directly to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     entrypoint: 'gcloud'
     args:

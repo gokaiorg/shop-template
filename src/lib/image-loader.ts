@@ -6,7 +6,20 @@ export interface ImageLoaderProps {
   quality?: number;
 }
 
-export default function customImageLoader({ src }: ImageLoaderProps): string {
+export default function customImageLoader({
+  src,
+  width,
+  quality,
+}: ImageLoaderProps): string {
+  const q = quality ?? 75;
+
+  if (
+    src.includes("lh3.googleusercontent.com") ||
+    src.includes(".googleusercontent.com")
+  ) {
+    return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${q}`;
+  }
+
   if (
     src.includes("firebasestorage.googleapis.com") ||
     src.includes("storage.googleapis.com") ||
@@ -15,5 +28,5 @@ export default function customImageLoader({ src }: ImageLoaderProps): string {
     return src;
   }
 
-  return src;
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${q}`;
 }

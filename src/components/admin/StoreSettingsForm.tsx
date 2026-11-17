@@ -64,11 +64,14 @@ import { updateGlobalSettings } from "@/actions/settings";
 import { uploadBrandAsset } from "@/lib/firebase-storage";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { getLocaleDisplayName } from "@/lib/i18n";
+import type { Dictionary } from "@/lib/dictionaries";
 
 interface StoreSettingsFormProps {
     initialData: StoreSettings;
     lang: string;
-    dict?: Record<string, string>;
+    dict?: Partial<Dictionary["admin"]> & {
+        back_to_dashboard?: string;
+    };
     children?: React.ReactNode;
 }
 

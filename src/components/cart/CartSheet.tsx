@@ -21,8 +21,15 @@ import { getLocalizedField } from "@/lib/i18n";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { formatPrice } from "@/lib/currency";
 
-export function CartSheet({ dict }: { dict?: any }) {
-    // Optimization: Use individual selectors to prevent unnecessary re-renders when other parts of the cart state change
+export interface CartSheetDictionary {
+    open_cart?: string;
+    cart_items?: string;
+    shopping_cart?: string;
+    title?: string;
+    [key: string]: string | undefined;
+}
+
+export function CartSheet({ dict }: { dict?: CartSheetDictionary }) {
     const items = useCart(state => state.items);
     const totalItems = useCart(state => state.totalItems);
     const totalPrice = useCart(state => state.totalPrice);
@@ -36,10 +43,8 @@ export function CartSheet({ dict }: { dict?: any }) {
     const { brand, currency, isCartEnabled } = useBrand();
     const [isLoading, setIsLoading] = useState(false);
 
-    // useMounted hook to prevent hydration mismatch since we are using localStorage
     const mounted = useMounted();
 
-    // Early return if cart is disabled globally
     if (!isCartEnabled) {
         return null;
     }
@@ -60,7 +65,6 @@ export function CartSheet({ dict }: { dict?: any }) {
             }
         } catch (error) {
             console.error("Checkout error:", error);
-            // You might want to add a toast notification here
         } finally {
             setIsLoading(false);
         }
@@ -83,7 +87,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                 disabled
                 suppressHydrationWarning
             >
-                <ShoppingCart className="h-5 w-5" />
+                <ShoppingCart className="h-5 w-5" aria-hidden="true" />
                 <span className="sr-only">{openCartLabel}</span>
             </Button>
         );
@@ -104,9 +108,9 @@ export function CartSheet({ dict }: { dict?: any }) {
                     className="relative cursor-pointer"
                     suppressHydrationWarning
                 >
-                    <ShoppingCart className="h-5 w-5" />
+                    <ShoppingCart className="h-5 w-5" aria-hidden="true" />
                     {totalItems > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white" aria-hidden="true">
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white" aria-hidden="true">
                             {totalItems}
                         </span>
                     )}
@@ -150,9 +154,10 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                 src={imageUrl}
                                                 alt={itemName}
                                                 fill
-                                                unoptimized
+                                                quality={75}
+                                                referrerPolicy="no-referrer"
                                                 className="object-cover"
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                sizes="64px"
                                             />
                                         </div>
                                         <div className="flex flex-1 flex-col justify-between">
@@ -170,7 +175,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                     className="h-8 w-8 text-muted-foreground hover:text-red-500 cursor-pointer"
                                                     onClick={() => removeItem(item.id)}
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                                                     <span className="sr-only">Remove {itemName}</span>
                                                 </Button>
                                             </div>
@@ -185,7 +190,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                                         disabled={isLoading}
                                                     >
-                                                        <Minus className="h-3 w-3" />
+                                                        <Minus className="h-3 w-3" aria-hidden="true" />
                                                         <span className="sr-only">Decrease quantity of {itemName}</span>
                                                     </Button>
                                                     <div className="flex h-8 w-8 items-center justify-center text-sm">
@@ -204,7 +209,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                                                                 item.quantity >= Math.floor(item.stock))
                                                         }
                                                     >
-                                                        <Plus className="h-3 w-3" />
+                                                        <Plus className="h-3 w-3" aria-hidden="true" />
                                                         <span className="sr-only">Increase quantity of {itemName}</span>
                                                     </Button>
                                                 </div>
@@ -232,7 +237,7 @@ export function CartSheet({ dict }: { dict?: any }) {
                             onClick={handleCheckout}
                             disabled={isLoading}
                         >
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                             {isLoading ? "Processing..." : "Checkout"}
                         </Button>
                     </div>

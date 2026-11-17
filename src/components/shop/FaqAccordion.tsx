@@ -63,8 +63,8 @@ export function FaqAccordion({
 
       <div className="w-full max-w-7xl mx-auto px-6 md:px-16">
         <div className="max-w-3xl mx-auto text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
-            <HelpCircle className="w-3.5 h-3.5 text-primary" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-border/60 text-muted-foreground text-xs md:text-sm font-semibold uppercase tracking-wider mb-4 backdrop-blur-md shadow-xs">
+            <HelpCircle className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
             <span>FAQ</span>
           </div>
           {title && (
@@ -94,7 +94,7 @@ export function FaqAccordion({
                   {item.question}
                 </span>
                 <span className="size-8 rounded-full flex items-center justify-center bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10 shrink-0 transition-all duration-300 group-open:bg-primary/10 group-open:border-primary/30 group-open:text-primary group-open:rotate-180">
-                  <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" aria-hidden="true" />
                 </span>
               </summary>
               <div className="pb-6 pt-1 text-base text-muted-foreground leading-relaxed whitespace-pre-line">

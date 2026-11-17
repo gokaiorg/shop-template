@@ -58,20 +58,18 @@ export function AddToCartButton({
         });
     };
 
-    // 2. Rendu conditionnel du sélecteur : N'affichez QUE SI product.stock > 1
     if (product.stock > 1 && maxAvailable > 1) {
         return (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                {/* Sélecteur de quantité */}
                 <div className="inline-flex items-center justify-between sm:justify-center border border-border/80 bg-muted/40 rounded-full p-1 h-11 shrink-0 select-none">
                     <button
                         type="button"
                         onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                         disabled={quantity <= 1}
                         aria-label={lang === "fr" ? "Diminuer la quantité" : "Decrease quantity"}
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-foreground hover:bg-muted/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer select-none"
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-foreground hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer select-none"
                     >
-                        <Minus className="w-4 h-4" />
+                        <Minus className="w-4 h-4" aria-hidden="true" />
                     </button>
                     <input
                         type="number"
@@ -87,20 +85,19 @@ export function AddToCartButton({
                             }
                         }}
                         aria-label={lang === "fr" ? "Quantité" : "Quantity"}
-                        className="w-12 text-center text-sm sm:text-base font-semibold bg-transparent border-none text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none select-none"
+                        className="w-12 text-center text-sm sm:text-base font-semibold bg-transparent border-none text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none select-none"
                     />
                     <button
                         type="button"
                         onClick={() => setQuantity((q) => Math.min(maxAvailable, q + 1))}
                         disabled={quantity >= product.stock || quantity >= maxAvailable}
                         aria-label={lang === "fr" ? "Augmenter la quantité" : "Increase quantity"}
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-foreground hover:bg-muted/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer select-none"
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-foreground hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer select-none"
                     >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-4 h-4" aria-hidden="true" />
                     </button>
                 </div>
 
-                {/* Bouton d'ajout au panier */}
                 <Button
                     size={size}
                     className={`rounded-full shadow-xs cursor-pointer ${className || ""}`}
@@ -113,7 +110,6 @@ export function AddToCartButton({
         );
     }
 
-    // Si product.stock <= 1, affichez uniquement le bouton "Add to cart" classique
     return (
         <Button
             size={size}

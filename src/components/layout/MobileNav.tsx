@@ -15,10 +15,6 @@ import { Page, Category, SocialLink } from "@/types/database";
 import { getLocalizedField } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-// =============================================================================
-// Minimalist Social SVG Icons
-// =============================================================================
-
 function SocialIcon({ platform }: { platform: string }) {
     const p = (platform || "").toLowerCase().trim();
 
@@ -80,7 +76,6 @@ function SocialIcon({ platform }: { platform: string }) {
         );
     }
 
-    // Generic link fallback
     return (
         <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
@@ -90,13 +85,15 @@ function SocialIcon({ platform }: { platform: string }) {
     );
 }
 
-// =============================================================================
-// Mobile Navigation Component
-// =============================================================================
+export interface MobileNavDictionary {
+    header?: Record<string, string>;
+    legal?: Record<string, string>;
+    contact?: string;
+}
 
 export interface MobileNavProps {
     lang: string;
-    dict: Record<string, any>;
+    dict: MobileNavDictionary;
     pages?: Page[];
     categories?: Category[];
     footerPages?: Page[];
@@ -118,26 +115,23 @@ export function MobileNav({
     const { logo } = brand.assets;
     const brandName = brand.identity.name;
 
-    const headerDict = dict?.header || dict || {};
-    const legalDict = dict?.legal || {};
+    const headerDict: Record<string, string | undefined> = dict?.header || {};
+    const legalDict: Record<string, string | undefined> = dict?.legal || {};
     const isFr = lang === "fr";
 
-    // 1. Catalog & Solutions Link
     const activeCatalogSlug = (typeof catalogSlug === "object" ? getLocalizedField(catalogSlug, lang) : catalogSlug) || "shop";
     const catalogHref = `/${lang}/${activeCatalogSlug}`;
     const isCatalogActive = pathname === catalogHref;
-    const catalogLabel = getLocalizedField(catalogTitle, lang) || headerDict.shop || (isFr ? "Solutions" : "Solutions");
+    const catalogLabel = getLocalizedField(catalogTitle, lang) || headerDict.shop || "Solutions";
 
-    // 2. Separate Main Pages vs Contact CTA
     const mainPages = pages.filter((p) => {
         const s = (typeof p.slug === "object" ? Object.values(p.slug).join(" ") : p.slug || p.id).toLowerCase();
         return !s.includes("contact");
     });
 
-    const contactLabel = headerDict.contact || dict?.contact || (isFr ? "Contactez-nous" : "Contact Us");
+    const contactLabel = headerDict.contact || (typeof dict?.contact === "string" ? dict.contact : undefined) || (isFr ? "Contactez-nous" : "Contact Us");
     const contactHref = `/${lang}/contact`;
 
-    // 3. Footer Legal Links (Discreet text links)
     const legalItems = footerPages.length > 0
         ? footerPages.map((p) => {
             const pageSlug = getLocalizedField(p.slug, lang) || (typeof p.slug === "string" ? p.slug : p.id);
@@ -151,7 +145,6 @@ export function MobileNav({
 
     const legalTitle = legalDict.title || (isFr ? "Légal" : "Legal");
 
-    // 4. Social Links (Minimalist SVG Icons)
     const activeSocials = socialLinks.length > 0
         ? socialLinks
         : (brand.navigation?.socials || []);
@@ -169,19 +162,17 @@ export function MobileNav({
                     className="md:hidden cursor-pointer bg-transparent text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors"
                     suppressHydrationWarning
                 >
-                    <Menu className="h-6 w-6 transition-colors" />
+                    <Menu className="h-6 w-6 transition-colors" aria-hidden="true" />
                     <span className="sr-only">{menuLabel}</span>
                 </Button>
             </SheetTrigger>
 
-            {/* 1. Structure Principale: Full height (h-screen / h-dvh), flex, flex-col, justify-between */}
             <SheetContent
                 id="mobile-nav-sheet"
                 side="left"
                 showCloseButton={false}
                 className="h-screen max-h-screen w-[310px] sm:w-[360px] p-6 flex flex-col justify-between overflow-hidden bg-background"
             >
-                {/* Brand Header & Centered Close Button */}
                 <SheetHeader className="text-left shrink-0 pb-4 border-b border-border/40">
                     <div className="flex items-center justify-between w-full">
                         <SheetTitle asChild>
@@ -196,7 +187,8 @@ export function MobileNav({
                                         alt={logo.alt || `${brandName} Logo`}
                                         fill
                                         sizes="32px"
-                                        unoptimized
+                                        quality={75}
+                                        referrerPolicy="no-referrer"
                                         className="object-contain transition-transform group-hover:scale-105"
                                     />
                                 </div>
@@ -214,7 +206,7 @@ export function MobileNav({
                                 aria-label={dict?.header?.close_menu || (isFr ? "Fermer le menu" : "Close menu")}
                                 className="cursor-pointer bg-transparent text-foreground hover:text-primary hover:bg-transparent focus-visible:text-primary transition-colors"
                             >
-                                <X className="h-6 w-6 transition-colors" />
+                                <X className="h-6 w-6 transition-colors" aria-hidden="true" />
                                 <span className="sr-only">
                                     {dict?.header?.close_menu || (isFr ? "Fermer le menu" : "Close menu")}
                                 </span>
@@ -223,10 +215,8 @@ export function MobileNav({
                     </div>
                 </SheetHeader>
 
-                {/* 2. Navigation Haute & Corps Déroulant */}
                 <div className="flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden py-5 space-y-6 pr-1">
                     <div className="flex flex-col gap-4">
-                        {/* Solutions Dropdown / Link */}
                         <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between w-full">
                                 <Link
@@ -243,20 +233,21 @@ export function MobileNav({
                                     <button
                                         type="button"
                                         onClick={() => setSolutionsExpanded(!solutionsExpanded)}
+                                        aria-expanded={solutionsExpanded}
                                         aria-label={solutionsExpanded ? "Collapse solutions" : "Expand solutions"}
-                                        className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+                                        className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
                                     >
                                         <ChevronDown
                                             className={cn(
                                                 "h-4 w-4 transition-transform duration-200",
                                                 solutionsExpanded && "rotate-180"
                                             )}
+                                            aria-hidden="true"
                                         />
                                     </button>
                                 )}
                             </div>
 
-                            {/* Sub-categories */}
                             {categories.length > 0 && solutionsExpanded && (
                                 <ul className="flex flex-col gap-1 pl-3 my-1 border-l-2 border-border/50">
                                     {categories.map((category) => {
@@ -293,7 +284,6 @@ export function MobileNav({
                             )}
                         </div>
 
-                        {/* Other Primary Pages (e.g. About) */}
                         {mainPages.map((page) => {
                             const pageSlug = getLocalizedField(page.slug, lang) || (typeof page.slug === "string" ? page.slug : page.id);
                             const href = `/${lang}/${pageSlug}`;
@@ -315,7 +305,6 @@ export function MobileNav({
                             );
                         })}
 
-                        {/* Full-width Contact CTA Button */}
                         <div className="w-full pt-2">
                             <Link
                                 href={contactHref}
@@ -327,10 +316,9 @@ export function MobileNav({
                         </div>
                     </div>
 
-                    {/* Discreet Legal Section */}
                     {legalItems.length > 0 && (
                         <div className="flex flex-col gap-2 pt-4 border-t border-border/40">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                 {legalTitle}
                             </span>
                             <ul className="flex flex-col gap-1.5">
@@ -350,21 +338,18 @@ export function MobileNav({
                     )}
                 </div>
 
-                {/* 3. Zone Basse (Sticky Bottom / Footer du menu) */}
                 <div className="mt-auto shrink-0 pt-4 border-t border-border/60 flex flex-col gap-3">
-                    {/* Aligned Currency, Language & Theme Toggles */}
                     <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground font-medium">
                             {isFr ? "Options" : "Options"}
                         </span>
                         <div className="flex items-center gap-1.5">
                             <CurrencySwitcher id="mobile-currency-switcher" />
-                            <ThemeToggle id="mobile-theme-toggle" dict={headerDict} />
-                            <LangToggle id="mobile-lang-toggle" lang={lang} dict={headerDict} />
+                            <ThemeToggle id="mobile-theme-toggle" dict={headerDict as Record<string, string>} />
+                            <LangToggle id="mobile-lang-toggle" lang={lang} dict={headerDict as Record<string, string>} />
                         </div>
                     </div>
 
-                    {/* Minimalist Horizontal SVG Social Icons Row (No horizontal overflow) */}
                     {activeSocials.length > 0 && (
                         <div className="flex flex-row justify-center items-center gap-3 flex-wrap max-w-full overflow-x-hidden pt-1">
                             {activeSocials.map((social, idx) => (

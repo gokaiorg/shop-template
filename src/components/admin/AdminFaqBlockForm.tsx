@@ -30,11 +30,12 @@ import { faqSectionSchema, FaqSectionFormData } from "@/schemas/settings";
 import { updateFaqBlockSettings } from "@/actions/settings";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { getLocaleDisplayName } from "@/lib/i18n";
+import type { Dictionary } from "@/lib/dictionaries";
 
 interface AdminFaqBlockFormProps {
     initialData: StoreSettings;
     lang: string;
-    dict?: Record<string, string>;
+    dict?: Partial<Dictionary["admin"]>;
 }
 
 export function AdminFaqBlockForm({ initialData, lang }: AdminFaqBlockFormProps) {

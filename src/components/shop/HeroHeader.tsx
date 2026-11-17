@@ -61,6 +61,7 @@ export function HeroHeader({
             fetchPriority="high"
             sizes="100vw"
             quality={75}
+            referrerPolicy="no-referrer"
             className="object-cover object-center pointer-events-none"
           />
           <div className="absolute inset-0 bg-black/25 dark:bg-black/45 pointer-events-none z-[1]" />
@@ -90,14 +91,13 @@ export function HeroHeader({
         </p>
 
         {ctaHref && ctaLabel && (
-          <Link href={ctaHref}>
-            <Button
-              size="lg"
-              className="rounded-full px-8 py-6 text-base font-semibold shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
-            >
-              {ctaLabel}
-            </Button>
-          </Link>
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full px-8 py-6 text-base font-semibold shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <Link href={ctaHref}>{ctaLabel}</Link>
+          </Button>
         )}
       </div>
     </section>

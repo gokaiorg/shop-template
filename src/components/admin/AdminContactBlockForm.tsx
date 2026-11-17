@@ -30,14 +30,15 @@ import { contactSectionSchema, ContactSectionFormData } from "@/schemas/settings
 import { updateContactBlockSettings } from "@/actions/settings";
 import { useBrand } from "@/components/providers/BrandProvider";
 import { getLocaleDisplayName } from "@/lib/i18n";
+import type { Dictionary } from "@/lib/dictionaries";
 
 interface AdminContactBlockFormProps {
     initialData: StoreSettings;
     lang: string;
-    dict?: Record<string, string>;
+    dict?: Partial<Dictionary["admin"]>;
 }
 
-export function AdminContactBlockForm({ initialData, lang, dict }: AdminContactBlockFormProps) {
+export function AdminContactBlockForm({ initialData, lang }: AdminContactBlockFormProps) {
     const router = useRouter();
     const { supportedLocales, defaultLocale, isMultiLocale } = useBrand();
     const [activeLang, setActiveLang] = useState<string>(defaultLocale || lang || "en");

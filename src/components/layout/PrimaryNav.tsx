@@ -37,7 +37,7 @@ export function PrimaryNav({
 
     return (
         <nav
-            aria-label="Primary Navigation"
+            aria-label={lang === "fr" ? "Principale" : "Primary"}
             className={cn(
                 className?.includes("hidden") ? "hidden md:flex items-center" : "flex items-center",
                 isColumn && "w-full"
@@ -57,7 +57,7 @@ export function PrimaryNav({
                         onClick={onNavClick}
                         aria-current={isCatalogActive ? "page" : undefined}
                         className={cn(
-                            "flex items-center text-sm font-medium transition-colors hover:text-primary leading-none",
+                            "flex items-center text-sm font-medium transition-colors hover:text-primary leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-sm",
                             isColumn && "text-lg",
                             isCatalogActive ? "text-primary font-semibold" : "text-muted-foreground"
                         )}
@@ -66,7 +66,6 @@ export function PrimaryNav({
                     </Link>
                 </li>
 
-                {/* Dynamic Categories with showInHeader === true */}
                 {categories.map((category) => {
                     const rawCatSlug =
                         (typeof category.slug === "object" && category.slug?.[lang])
@@ -89,7 +88,7 @@ export function PrimaryNav({
                                 onClick={onNavClick}
                                 aria-current={isActive ? "page" : undefined}
                                 className={cn(
-                                    "flex items-center text-sm font-medium transition-colors hover:text-primary leading-none",
+                                    "flex items-center text-sm font-medium transition-colors hover:text-primary leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-sm",
                                     isColumn && "text-lg",
                                     isActive ? "text-primary font-semibold" : "text-muted-foreground"
                                 )}
@@ -100,7 +99,6 @@ export function PrimaryNav({
                     );
                 })}
 
-                {/* Dynamic Pages with showInHeader === true */}
                 {pages.map((page) => {
                     const pageSlug = getLocalizedField(page.slug, lang) || (typeof page.slug === 'string' ? page.slug : page.id);
                     const href = `/${lang}/${pageSlug}`;
@@ -114,7 +112,7 @@ export function PrimaryNav({
                                 onClick={onNavClick}
                                 aria-current={isActive ? "page" : undefined}
                                 className={cn(
-                                    "flex items-center text-sm font-medium transition-colors hover:text-primary leading-none",
+                                    "flex items-center text-sm font-medium transition-colors hover:text-primary leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-sm",
                                     isColumn && "text-lg",
                                     isActive ? "text-primary font-semibold" : "text-muted-foreground"
                                 )}

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { adminDb } from "@/lib/firebase-admin";
 import { getDictionary } from "@/lib/dictionaries";
-import { Locale } from "@/app/i18n-config";
+import { getDefaultLocale, getSupportedLocales, Locale } from "@/app/i18n-config";
 import { Category, Product } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -15,13 +14,17 @@ import { HeroHeader } from "@/components/shop/HeroHeader";
 import { AdminQuickEdit } from "@/components/admin/AdminQuickEdit";
 import { brandConfig, getActiveBrand } from "@/config/brand.config";
 import { getStoreSettings } from "@/lib/services/settings";
+import { getAllPublishedCategories } from "@/lib/services/categories";
+import {
+  getAllProducts,
+  isProductInStock,
+} from "@/lib/services/products";
 import {
   getGooglePlaceReviews,
   GooglePlaceDetailsResponse,
 } from "@/lib/services/google-places";
 import { getLocalizedField } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { isProductInStock } from "@/lib/services/products";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import {
   buildBreadcrumbNode,
@@ -37,30 +40,11 @@ import {
   resolveSiteBaseUrl,
 } from "@/lib/seo/metadata";
 
-interface FirestoreTimestampLike {
-  toDate?: () => Date;
-}
-
 function stripHtml(text: string): string {
   return text
     .replace(/<[^>]*>?/gm, "")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function serializeTimestamp(value: unknown): string {
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    "toDate" in value &&
-    typeof (value as FirestoreTimestampLike).toDate === "function"
-  ) {
-    return (value as Required<FirestoreTimestampLike>).toDate().toISOString();
-  }
-  if (typeof value === "string" && value.length > 0) {
-    return value;
-  }
-  return new Date().toISOString();
 }
 
 async function fetchInitialReviews(
@@ -113,6 +97,13 @@ export async function generateMetadata({
     rawBrand.assets?.placeholderImage ||
     undefined;
 
+  const supportedLocales = getSupportedLocales();
+  const defaultLocale = getDefaultLocale();
+  const languageAlternates = Object.fromEntries([
+    ...supportedLocales.map((locale) => [locale, `${baseUrl}/${locale}`]),
+    ["x-default", `${baseUrl}/${defaultLocale}`],
+  ]);
+
   return constructLocalizedMetadata({
     locale: lang,
     title,
@@ -120,11 +111,7 @@ export async function generateMetadata({
     siteName: brandName,
     baseUrl,
     canonicalPath: `/${lang}`,
-    languages: {
-      en: `${baseUrl}/en`,
-      fr: `${baseUrl}/fr`,
-      "x-default": `${baseUrl}/en`,
-    },
+    languages: languageAlternates,
     imageUrl: heroImage,
     type: "website",
   });
@@ -137,29 +124,16 @@ export default async function Home({
 }) {
   const { lang } = await params;
 
-  const [dict, categoriesSnap, productsSnap, storeSettings, reviewsResult] =
+  const [dict, publishedCategories, cachedProducts, storeSettings, reviewsResult] =
     await Promise.all([
       getDictionary(lang as Locale),
-      adminDb.collection("categories").orderBy("order", "asc").get(),
-      adminDb.collection("products").orderBy("createdAt", "desc").get(),
+      getAllPublishedCategories(),
+      getAllProducts(),
       getStoreSettings(),
       fetchInitialReviews(lang),
     ]);
 
-  const rawCategories = categoriesSnap.docs
-    .map((doc) => {
-      const data = doc.data() as Record<string, unknown>;
-      return {
-        ...(data as unknown as Category),
-        id: doc.id,
-        order: typeof data.order === "number" ? data.order : 0,
-        createdAt: serializeTimestamp(data.createdAt),
-        updatedAt: serializeTimestamp(data.updatedAt),
-      };
-    })
-    .filter((cat) => (cat.status ?? "published") === "published");
-
-  const categories = rawCategories.sort((a, b) => {
+  const categories = [...publishedCategories].sort((a, b) => {
     const orderDiff = (a.order ?? 0) - (b.order ?? 0);
     if (orderDiff !== 0) return orderDiff;
     const nameA =
@@ -178,30 +152,25 @@ export default async function Home({
     categories.map((c) => [c.id, c])
   );
 
-  const rawProducts: Product[] = productsSnap.docs.map((doc) => {
-    const data = doc.data() as Record<string, unknown>;
-    const rawCatIds = Array.isArray(data.categoryIds)
-      ? data.categoryIds.filter((id): id is string => typeof id === "string")
-      : typeof data.categoryId === "string"
-        ? [data.categoryId]
-        : [];
+  const rawProducts: Product[] = cachedProducts.map((item) => {
+    const rawCatIds =
+      item.categoryIds && item.categoryIds.length > 0
+        ? item.categoryIds
+        : item.categoryId
+          ? [item.categoryId]
+          : [];
     const assignedCats = rawCatIds
       .map((id) => categoryMap.get(id))
       .filter((c): c is Category => Boolean(c));
 
     return {
-      ...(data as unknown as Product),
-      id: doc.id,
-      order: typeof data.order === "number" ? data.order : 0,
+      ...item,
+      order: typeof item.order === "number" ? item.order : 0,
       categoryIds: rawCatIds,
       categories: assignedCats,
       category:
         assignedCats[0] ||
-        (typeof data.categoryId === "string"
-          ? categoryMap.get(data.categoryId) || null
-          : null),
-      createdAt: serializeTimestamp(data.createdAt),
-      updatedAt: serializeTimestamp(data.updatedAt),
+        (item.categoryId ? categoryMap.get(item.categoryId) || null : null),
     };
   });
 
@@ -268,7 +237,13 @@ export default async function Home({
         .filter((item) => item.question.length > 0 && item.answer.length > 0)
     : [];
 
-  const orgConfig = resolveOrganizationSeoConfig(storeSettings, baseUrl);
+  const orgConfig = resolveOrganizationSeoConfig(storeSettings, baseUrl, {
+    locale: lang,
+    ratingValue: reviewsResult?.success ? reviewsResult.rating : undefined,
+    reviewCount: reviewsResult?.success
+      ? reviewsResult.userRatingsTotal
+      : undefined,
+  });
   const graphNodes: Array<Record<string, unknown>> = [
     buildOrganizationNode(orgConfig),
     buildWebsiteNode(baseUrl, brandName, lang),
@@ -420,19 +395,23 @@ export default async function Home({
                   </ul>
                   {categoryProducts.length > 0 && (
                     <div className="mt-12 flex justify-center">
-                      <Link href={categoryHref}>
-                        <Button
-                          variant="outline"
-                          size="lg"
-                          className="rounded-2xl px-8 shadow-soft transition-all cursor-pointer group"
-                        >
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="lg"
+                        className="rounded-2xl px-8 shadow-soft transition-all cursor-pointer group"
+                      >
+                        <Link href={categoryHref}>
                           <span>
                             {homeDict.view_all ||
                               (isFr ? "Voir tout" : "View All")}
                           </span>
-                          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 text-muted-foreground group-hover:text-primary" />
-                        </Button>
-                      </Link>
+                          <ArrowRight
+                            className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 text-muted-foreground group-hover:text-primary"
+                            aria-hidden="true"
+                          />
+                        </Link>
+                      </Button>
                     </div>
                   )}
                 </TabsContent>

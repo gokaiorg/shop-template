@@ -1,0 +1,20 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.st
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - HOSTNAME=0.0.0.0
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    restart: unless-stopped

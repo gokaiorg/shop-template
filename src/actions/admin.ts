@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { adminDb, adminStorage } from "@/lib/firebase-admin";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 
 import { categorySchema, productSchema, pageSchema } from "@/schemas/admin";
@@ -107,6 +107,7 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
         };
         await ref.set(categoryData);
 
+        revalidateTag("categories", { expire: 0 });
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/', 'layout');
         return { success: true, category: categoryData };
@@ -176,6 +177,7 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
         };
         await ref.update(categoryData);
 
+        revalidateTag("categories", { expire: 0 });
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/', 'layout');
         return { success: true, category: { id, ...categoryData } };
@@ -209,14 +211,15 @@ export async function reorderCategories(updates: { id: string; order: number }[]
         }
         await batch.commit();
 
+        revalidateTag("categories", { expire: 0 });
         revalidatePath('/[lang]/admin/categories', 'page');
         revalidatePath('/[lang]', 'layout');
         revalidatePath('/', 'layout');
 
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("REORDER_CATEGORIES_ERROR:", error);
-        return { success: false, error: error?.message || "Failed to reorder categories." };
+        return { success: false, error: error instanceof Error ? error.message : "Failed to reorder categories." };
     }
 }
 
@@ -318,6 +321,8 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
 
         await batch.commit();
 
+        revalidateTag("products", { expire: 0 });
+        revalidateTag("store-settings", { expire: 0 });
         revalidatePath('/', 'layout');
         revalidatePath('/[lang]', 'layout');
         revalidatePath('/[lang]/admin', 'layout');
@@ -443,6 +448,8 @@ export async function updateProduct(id: string, data: z.infer<typeof productSche
 
         await batch.commit();
 
+        revalidateTag("products", { expire: 0 });
+        revalidateTag("store-settings", { expire: 0 });
         revalidatePath('/', 'layout');
         revalidatePath('/[lang]', 'layout');
         revalidatePath('/[lang]/admin', 'layout');
@@ -484,6 +491,7 @@ export async function reorderProducts(updates: { id: string; order: number }[]) 
         }
         await batch.commit();
 
+        revalidateTag("products", { expire: 0 });
         revalidatePath('/[lang]/admin/products', 'page');
         revalidatePath('/[lang]', 'layout');
         revalidatePath('/[lang]/[slug]', 'layout');
@@ -592,6 +600,8 @@ export async function seedDemoData() {
         });
         await productBatch.commit();
 
+        revalidateTag("categories", { expire: 0 });
+        revalidateTag("products", { expire: 0 });
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/[lang]/[slug]', 'layout');
         return { success: true };
@@ -670,6 +680,7 @@ export async function createPage(data: z.infer<typeof pageSchema>) {
 
         await docRef.set(pageData);
 
+        revalidateTag("pages", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true, id: primarySlug };
     } catch (error: any) {
@@ -728,6 +739,7 @@ export async function updatePage(id: string, data: z.infer<typeof pageSchema>) {
         }
         await ref.set(pageData, { merge: true });
 
+        revalidateTag("pages", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true, page: { id, ...pageData } };
     } catch (error: any) {
@@ -760,14 +772,15 @@ export async function reorderPages(updates: { id: string; order: number }[]) {
         }
         await batch.commit();
 
+        revalidateTag("pages", { expire: 0 });
         revalidatePath('/[lang]/admin/pages', 'page');
         revalidatePath('/[lang]', 'layout');
         revalidatePath('/', 'layout');
 
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("REORDER_PAGES_ERROR:", error);
-        return { success: false, error: error?.message || "Failed to reorder pages." };
+        return { success: false, error: error instanceof Error ? error.message : "Failed to reorder pages." };
     }
 }
 
@@ -781,6 +794,8 @@ export async function deleteCategory(id: string) {
     try {
         await adminDb.collection("categories").doc(id).delete();
 
+        revalidateTag("categories", { expire: 0 });
+        revalidateTag("products", { expire: 0 });
         revalidatePath('/[lang]/admin', 'layout');
         revalidatePath('/[lang]/[slug]', 'layout');
         return { success: true };
@@ -830,6 +845,8 @@ export async function deleteProduct(id: string) {
 
         await productRef.delete();
 
+        revalidateTag("products", { expire: 0 });
+        revalidateTag("store-settings", { expire: 0 });
         revalidatePath('/', 'layout');
         revalidatePath('/[lang]', 'layout');
         revalidatePath('/[lang]/admin', 'layout');
@@ -858,6 +875,7 @@ export async function deletePage(id: string) {
     try {
         await adminDb.collection("pages").doc(id).delete();
 
+        revalidateTag("pages", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error) {

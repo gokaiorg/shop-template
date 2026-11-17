@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import { Geist } from "next/font/google";
 import { headers } from "next/headers";
 import {
-  ALL_FONT_CLASSES,
   GEIST_FONT_CLASSES,
+  geistMono,
+  getFontConfig,
   getStorefrontFontVariable,
 } from "@/app/fonts";
 import { StorefrontThemeManager } from "@/components/providers/StorefrontThemeManager";
@@ -27,13 +27,6 @@ import { getLocalizedField } from "@/lib/i18n";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { getContrastYIQ } from "@/lib/utils/colors";
 import "./globals.css";
-
-const primaryFont = Geist({
-  variable: "--font-primary-sans",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
-});
 
 type CustomCssVariables = CSSProperties & {
   "--font-storefront"?: string;
@@ -105,6 +98,13 @@ export async function generateMetadata({
     faviconUrl: storeSettings.faviconUrl,
   });
 
+  const supportedLocales = getSupportedLocales();
+  const defaultLocale = getDefaultLocale();
+  const languageAlternates = Object.fromEntries([
+    ...supportedLocales.map((locale) => [locale, `${baseUrl}/${locale}`]),
+    ["x-default", `${baseUrl}/${defaultLocale}`],
+  ]);
+
   const localizedMetadata = constructLocalizedMetadata({
     locale: lang,
     title: `${brandName} - Store`,
@@ -112,11 +112,7 @@ export async function generateMetadata({
     siteName: brandName,
     baseUrl,
     canonicalPath: `/${lang}`,
-    languages: {
-      en: `${baseUrl}/en`,
-      fr: `${baseUrl}/fr`,
-      "x-default": `${baseUrl}/en`,
-    },
+    languages: languageAlternates,
     imageUrl:
       storeSettings.heroBackgroundImageUrl ||
       rawBrand.assets.ogImage ||
@@ -236,38 +232,13 @@ export default async function RootLayout({
   const brandRadius =
     !isAdmin && isSquared ? "0px" : theme.radius || "0.625rem";
 
-  let storefrontFontVariable = "var(--font-geist-sans)";
-  switch (storeSettings.fontFamily) {
-    case "Space Grotesk":
-    case "space-grotesk":
-      storefrontFontVariable = "var(--font-space-grotesk)";
-      break;
-    case "Manrope":
-    case "manrope":
-      storefrontFontVariable = "var(--font-manrope)";
-      break;
-    case "Jersey 25":
-    case "jersey-25":
-    case "jersey":
-    case "Pixelify Sans":
-    case "pixelify-sans":
-    case "pixelify":
-      storefrontFontVariable = "var(--font-jersey-25)";
-      break;
-    case "Inter":
-    case "inter":
-      storefrontFontVariable = "var(--font-inter)";
-      break;
-    case "Geist":
-    case "geist":
-      storefrontFontVariable = "var(--font-geist-sans)";
-      break;
-    default:
-      storefrontFontVariable = getStorefrontFontVariable(
-        storeSettings.fontFamily
-      );
-      break;
-  }
+  const activeFontConfig = getFontConfig(storeSettings.fontFamily);
+  const storefrontFontVariable =
+    activeFontConfig?.cssVariable ||
+    getStorefrontFontVariable(storeSettings.fontFamily);
+  const activeFontClasses = isAdmin
+    ? GEIST_FONT_CLASSES
+    : `${activeFontConfig.fontClass} ${geistMono.variable}`;
 
   const fallbackPrimaryColor = brandKey === "art-fate" ? "#14B3F6" : "#0f172a";
   const primaryColor = storeSettings.primaryColor || fallbackPrimaryColor;
@@ -336,7 +307,7 @@ export default async function RootLayout({
       suppressHydrationWarning
       data-admin={isAdmin ? "true" : undefined}
       data-admin-root={isAdmin ? "true" : undefined}
-      className={`${primaryFont.variable} ${ALL_FONT_CLASSES} ${!isAdmin && isSquared ? "theme-squared" : ""} ${forcedTheme === "dark" || defaultTheme === "dark" ? "dark" : ""}`.trim()}
+      className={`${activeFontClasses} ${!isAdmin && isSquared ? "theme-squared" : ""} ${forcedTheme === "dark" || defaultTheme === "dark" ? "dark" : ""}`.trim()}
     >
       <head>
         {brand.assets.favicon && (
@@ -349,7 +320,7 @@ export default async function RootLayout({
         data-admin={isAdmin ? "true" : undefined}
         data-admin-root={isAdmin ? "true" : undefined}
         style={bodyStyle}
-        className={`${primaryFont.variable} ${isAdmin ? GEIST_FONT_CLASSES : ALL_FONT_CLASSES} antialiased font-sans`}
+        className={`${activeFontClasses} antialiased font-sans`}
       >
         <ThemeProvider
           attribute="class"

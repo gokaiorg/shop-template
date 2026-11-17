@@ -24,7 +24,6 @@ export default async function AccountLayout({
     const { lang } = await params;
     const session = await auth();
 
-    // Guard: Redirect to login if user is not authenticated
     if (!session) {
         redirect(`/${lang}/login`);
     }
@@ -36,7 +35,6 @@ export default async function AccountLayout({
 
     return (
         <div className="w-full max-w-7xl mx-auto py-8 md:py-12 px-6 md:px-16">
-            {/* Header / Greeting */}
             <div className="mb-8 border-b border-border pb-6">
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                     {accountDict.title || (lang === "fr" ? "Mon Compte" : "My Account")}
@@ -48,15 +46,14 @@ export default async function AccountLayout({
                 </p>
             </div>
 
-            {/* Layout Grid: Sidebar Navigation + Content Area */}
             <div className="flex flex-col md:flex-row gap-8 items-start">
                 <aside className="w-full md:w-64 shrink-0">
                     <AccountNav lang={lang} dict={dict} />
                 </aside>
 
-                <main className="flex-1 w-full min-w-0">
+                <div className="flex-1 w-full min-w-0">
                     {children}
-                </main>
+                </div>
             </div>
             <Toaster />
         </div>

@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { saveStoreSettings } from "@/lib/services/settings";
 import { 
     storeSettingsSchema, 
@@ -44,6 +44,7 @@ export async function updateCatalogSettings(data: CatalogSettingsFormData) {
 
     try {
         await saveStoreSettings(parsed.data);
+        revalidateTag("store-settings", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error: any) {
@@ -90,6 +91,7 @@ export async function updateGlobalSettings(data: GlobalSettingsFormData) {
             delete (updatePayload as any).reviewSection;
         }
         await saveStoreSettings(updatePayload);
+        revalidateTag("store-settings", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error: any) {
@@ -119,7 +121,7 @@ export async function updateBlocksSettings(data: BlocksFormData) {
     }
 
     try {
-        const updatePayload: Record<string, any> = {
+        const updatePayload: Record<string, unknown> = {
             aboutSection: parsed.data.aboutSection,
         };
         if (parsed.data.contactSection) {
@@ -132,11 +134,13 @@ export async function updateBlocksSettings(data: BlocksFormData) {
             updatePayload.reviewSection = parsed.data.reviewSection;
         }
         await saveStoreSettings(updatePayload);
+        revalidateTag("store-settings", { expire: 0 });
+        revalidateTag("google-reviews", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("[UPDATE_BLOCKS_SETTINGS_ACTION_ERROR]", error);
-        return { success: false, error: error?.message || "Failed to update blocks settings" };
+        return { success: false, error: error instanceof Error ? error.message : "Failed to update blocks settings" };
     }
 }
 
@@ -162,6 +166,7 @@ export async function updateAboutBlockSettings(data: AboutSectionFormData) {
 
     try {
         await saveStoreSettings({ aboutSection: parsed.data });
+        revalidateTag("store-settings", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error: any) {
@@ -192,6 +197,7 @@ export async function updateContactBlockSettings(data: ContactSectionFormData) {
 
     try {
         await saveStoreSettings({ contactSection: parsed.data });
+        revalidateTag("store-settings", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error: any) {
@@ -222,6 +228,7 @@ export async function updateFaqBlockSettings(data: FaqSectionFormData) {
 
     try {
         await saveStoreSettings({ faqSection: parsed.data });
+        revalidateTag("store-settings", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error: any) {
@@ -252,6 +259,8 @@ export async function updateReviewBlockSettings(data: ReviewSectionFormData) {
 
     try {
         await saveStoreSettings({ reviewSection: parsed.data });
+        revalidateTag("store-settings", { expire: 0 });
+        revalidateTag("google-reviews", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error: any) {
@@ -276,6 +285,8 @@ export async function updateStoreSettings(data: GlobalSettingsFormData | StoreSe
     if (parsedStore.success) {
         try {
             await saveStoreSettings(parsedStore.data);
+            revalidateTag("store-settings", { expire: 0 });
+            revalidateTag("google-reviews", { expire: 0 });
             revalidatePath("/", "layout");
             return { success: true };
         } catch (error: any) {
@@ -311,6 +322,7 @@ export async function updateStoreSettings(data: GlobalSettingsFormData | StoreSe
             delete (updatePayload as any).reviewSection;
         }
         await saveStoreSettings(updatePayload);
+        revalidateTag("store-settings", { expire: 0 });
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error: any) {

@@ -586,7 +586,7 @@ export function WysiwygEditor({
                             {uploadedUrl ? (
                                 <div className="space-y-2">
                                     <div className="relative rounded-lg border border-zinc-800 bg-zinc-900/50 p-2 flex items-center justify-center h-48 w-full overflow-hidden">
-                                        <Image src={uploadedUrl} alt="Preview" fill unoptimized className="object-contain rounded" />
+                                        <Image src={uploadedUrl} alt="Preview" fill quality={75} referrerPolicy="no-referrer" sizes="(max-width: 768px) 100vw, 480px" className="object-contain rounded" />
                                     </div>
                                     <div className="flex justify-end">
                                         <Button

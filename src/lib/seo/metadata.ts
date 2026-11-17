@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { z } from "zod";
 import { brandConfig } from "@/config/brand.config";
+import { getDefaultLocale, getSupportedLocales } from "@/app/i18n-config";
+import { getLocalizedField } from "@/lib/i18n";
 import {
   LocalizedAlternatesSchema,
+  normalizeCountryCode,
   OrganizationSeoConfig,
   OrganizationSeoConfigSchema,
   SupportedLocale,
-  SupportedLocaleSchema,
 } from "@/schemas/seo";
 import type { StoreSettings } from "@/types/database";
 
@@ -16,28 +19,45 @@ export interface ConstructLocalizedMetadataInput {
   siteName?: string;
   baseUrl?: string;
   canonicalPath: string;
-  languages?: {
-    en: string;
-    fr: string;
-    "x-default"?: string;
-  };
+  languages?: Record<string, string>;
   imageUrl?: string;
   type?: "website" | "article";
   absoluteTitle?: boolean;
   noIndex?: boolean;
 }
 
+const UrlSchema = z.string().url();
+const EmailSchema = z.string().email();
+
 function stripTrailingSlash(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
+function isLocalUrl(url: string): boolean {
+  return (
+    url.includes("localhost") ||
+    url.includes("127.0.0.1") ||
+    url.includes("0.0.0.0")
+  );
+}
+
 export function resolveSiteBaseUrl(customBaseUrl?: string): string {
-  const candidate =
+  const rawCandidate = (
     customBaseUrl ||
     process.env.NEXT_PUBLIC_APP_URL ||
     brandConfig.identity.url ||
-    "https://gokai.org";
-  return stripTrailingSlash(candidate);
+    (process.env.NODE_ENV === "production"
+      ? "https://gokai.org"
+      : "http://localhost:3000")
+  ).trim();
+  const normalized = stripTrailingSlash(rawCandidate);
+  const upgraded =
+    process.env.NODE_ENV === "production" &&
+    normalized.startsWith("http://") &&
+    !isLocalUrl(normalized)
+      ? normalized.replace(/^http:\/\//i, "https://")
+      : normalized;
+  return UrlSchema.safeParse(upgraded).success ? upgraded : "https://gokai.org";
 }
 
 export function toAbsoluteUrl(baseUrl: string, pathOrUrl: string): string {
@@ -54,10 +74,12 @@ export function toAbsoluteUrl(baseUrl: string, pathOrUrl: string): string {
 export function constructLocalizedMetadata(
   input: ConstructLocalizedMetadataInput
 ): Metadata {
-  const parsedLocaleResult = SupportedLocaleSchema.safeParse(input.locale);
-  const activeLocale: SupportedLocale = parsedLocaleResult.success
-    ? parsedLocaleResult.data
-    : "en";
+  const supportedLocales = getSupportedLocales();
+  const defaultLocale = getDefaultLocale();
+  const normalizedLocale = input.locale.toLowerCase();
+  const activeLocale = supportedLocales.includes(normalizedLocale)
+    ? normalizedLocale
+    : defaultLocale;
 
   const baseUrl = resolveSiteBaseUrl(input.baseUrl);
   const activeSiteName =
@@ -65,30 +87,28 @@ export function constructLocalizedMetadata(
 
   const canonicalUrl = toAbsoluteUrl(baseUrl, input.canonicalPath);
 
-  const defaultEnPath = input.canonicalPath.replace(/^\/(en|fr)(?=\/|$)/, "/en");
-  const defaultFrPath = input.canonicalPath.replace(/^\/(en|fr)(?=\/|$)/, "/fr");
+  const localePattern = new RegExp(`^\\/(${supportedLocales.join("|")})(?=\\/|$)`);
+  const languageMap: Record<string, string> = {};
 
-  const enUrl = toAbsoluteUrl(
-    baseUrl,
-    input.languages?.en || defaultEnPath || "/en"
-  );
-  const frUrl = toAbsoluteUrl(
-    baseUrl,
-    input.languages?.fr || defaultFrPath || "/fr"
-  );
-  const xDefaultUrl = toAbsoluteUrl(
-    baseUrl,
-    input.languages?.["x-default"] || input.languages?.en || enUrl
-  );
+  for (const loc of supportedLocales) {
+    const provided = input.languages?.[loc];
+    const fallbackPath = localePattern.test(input.canonicalPath)
+      ? input.canonicalPath.replace(localePattern, `/${loc}`)
+      : `/${loc}`;
+    languageMap[loc] = toAbsoluteUrl(baseUrl, provided || fallbackPath);
+  }
+
+  const defaultTarget =
+    input.languages?.["x-default"] ||
+    languageMap[defaultLocale] ||
+    languageMap[supportedLocales[0]] ||
+    canonicalUrl;
+  languageMap["x-default"] = toAbsoluteUrl(baseUrl, defaultTarget);
 
   const validatedAlternates = LocalizedAlternatesSchema.parse({
     locale: activeLocale,
     canonicalPath: canonicalUrl,
-    languages: {
-      en: enUrl,
-      fr: frUrl,
-      "x-default": xDefaultUrl,
-    },
+    languages: languageMap,
   });
 
   const rawImage =
@@ -154,32 +174,62 @@ export function constructLocalizedMetadata(
 
 export function resolveOrganizationSeoConfig(
   storeSettings?: Partial<StoreSettings> | null,
-  customBaseUrl?: string
+  customBaseUrl?: string,
+  options?: {
+    locale?: string;
+    ratingValue?: number | null;
+    reviewCount?: number | null;
+  }
 ): OrganizationSeoConfig {
   const baseUrl = resolveSiteBaseUrl(customBaseUrl);
   const name =
     storeSettings?.brandName?.trim() ||
     brandConfig.identity.name ||
     "Shop Template";
-  const legalName =
-    brandConfig.identity.companyName?.trim() || name;
+  const legalName = brandConfig.identity.companyName?.trim() || name;
+
+  const defaultEntityType =
+    brandConfig.identity.id === "green-ghost"
+      ? "Dispensary"
+      : brandConfig.identity.id === "art-fate"
+        ? "ArtGallery"
+        : "Store";
+  const entityType = storeSettings?.seoEntityType?.trim() || defaultEntityType;
 
   const rawLogo =
     storeSettings?.logoUrl?.trim() ||
     brandConfig.assets.logo.src ||
     "/brand/default/logo.webp";
-  const logo = toAbsoluteUrl(baseUrl, rawLogo);
+  const candidateLogo = toAbsoluteUrl(baseUrl, rawLogo);
+  const logo = UrlSchema.safeParse(candidateLogo).success
+    ? candidateLogo
+    : toAbsoluteUrl(baseUrl, "/brand/default/logo.webp");
 
   const rawEmail =
     storeSettings?.contactEmail?.trim() ||
     brandConfig.contact?.email?.trim() ||
     "contact@gokai.org";
-  const email = rawEmail.includes("@") ? rawEmail : "contact@gokai.org";
+  const email = EmailSchema.safeParse(rawEmail).success
+    ? rawEmail
+    : "contact@gokai.org";
 
   const telephone =
     storeSettings?.contactPhone?.trim() ||
     brandConfig.contact?.phone?.trim() ||
     "+33100000000";
+
+  const locale = options?.locale || getDefaultLocale();
+  const isFr = locale.startsWith("fr");
+  const openingHours =
+    (isFr ? storeSettings?.supportHoursFr : storeSettings?.supportHoursEn) ||
+    (storeSettings?.supportHoursEn || storeSettings?.supportHoursFr) ||
+    (brandConfig.contact?.supportHours
+      ? getLocalizedField(
+          brandConfig.contact.supportHours as Record<string, string>,
+          locale
+        )
+      : "") ||
+    undefined;
 
   const streetAddress =
     storeSettings?.seoAddressStreet?.trim() ||
@@ -193,25 +243,46 @@ export function resolveOrganizationSeoConfig(
     storeSettings?.seoPostalCode?.trim() ||
     brandConfig.contact?.address?.postalCode?.trim() ||
     "75002";
-  const addressCountry =
-    storeSettings?.seoCountry?.trim() ||
-    brandConfig.contact?.address?.country?.trim() ||
-    "FR";
+  const addressCountry = normalizeCountryCode(
+    storeSettings?.seoCountry || brandConfig.contact?.address?.country
+  );
 
   const rawSocialUrls = [
-    ...(storeSettings?.socialLinks?.map((s) => s.url) || []),
-    ...(brandConfig.navigation?.socials?.map((s) => s.url) || []),
-  ].filter((url): url is string => Boolean(url && (url.startsWith("http://") || url.startsWith("https://"))));
+    ...(storeSettings?.socialLinks?.map((s) => s.url?.trim()) || []),
+    ...(brandConfig.navigation?.socials?.map((s) => s.url?.trim()) || []),
+  ].filter(
+    (url): url is string =>
+      Boolean(url) && UrlSchema.safeParse(url).success
+  );
 
   const uniqueSameAs = Array.from(new Set(rawSocialUrls));
 
+  const validRating =
+    typeof options?.ratingValue === "number" &&
+    !isNaN(options.ratingValue) &&
+    options.ratingValue >= 1 &&
+    options.ratingValue <= 5 &&
+    typeof options?.reviewCount === "number" &&
+    !isNaN(options.reviewCount) &&
+    options.reviewCount > 0
+      ? {
+          ratingValue: Number(options.ratingValue.toFixed(1)),
+          reviewCount: Math.round(options.reviewCount),
+          bestRating: 5,
+          worstRating: 1,
+        }
+      : undefined;
+
   return OrganizationSeoConfigSchema.parse({
+    entityType,
     name,
     legalName,
     url: baseUrl,
     logo,
     email,
     telephone,
+    openingHours: openingHours?.trim() || undefined,
+    priceRange: "$$",
     address: {
       streetAddress,
       addressLocality,
@@ -223,5 +294,6 @@ export function resolveOrganizationSeoConfig(
       longitude: 2.3314,
     },
     sameAs: uniqueSameAs,
+    aggregateRating: validRating,
   });
 }
